@@ -6,6 +6,11 @@ export interface DemoMeta {
 
 export const demos: DemoMeta[] = [
     {
+        text: 'Graphing Calculator',
+        link: '/demos/graphing-calculator/',
+        description: 'A Desmos-style graphing calculator with an editable equation list, auto-detected parameter sliders, pan/zoom over adaptively re-sampled curves, implicit plots via marching squares, and orbitable 3D surfaces rendered with @ripl/3d.',
+    },
+    {
         text: 'Freeform Drawing',
         link: '/demos/freeform-drawing/',
         description: 'An Excalidraw-style freeform drawing canvas with pencil, pen, highlighter, shapes, smart connectors and text, plus pan/zoom via the Ripl navigator, selection, undo/redo and PNG/SVG export over a retained scene graph.',

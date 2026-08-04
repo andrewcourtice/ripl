@@ -1,0 +1,140 @@
+.graphing-calculator {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--vp-nav-height));
+    overflow: hidden;
+    border-top: 1px solid var(--vp-c-divider);
+}
+
+.graphing-calculator__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    flex-shrink: 0;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.graphing-calculator__intro {
+    min-width: 0;
+}
+
+.graphing-calculator__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--vp-c-text-1);
+}
+
+.graphing-calculator__subtitle {
+    margin: 0.25rem 0 0;
+    max-width: 60ch;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--vp-c-text-2);
+}
+
+.graphing-calculator__body {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.graphing-calculator__panel {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 21rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--vp-c-divider);
+    background-color: var(--vp-c-bg);
+}
+
+.graphing-calculator__section + .graphing-calculator__section {
+    border-top: 1px solid var(--vp-c-divider);
+}
+
+.graphing-calculator__section-title {
+    margin: 0;
+    padding: 0.625rem 0.75rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--vp-c-text-3);
+}
+
+.graphing-calculator__note {
+    margin: 0;
+    padding: 0.75rem;
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    color: var(--vp-c-text-3);
+    border-top: 1px solid var(--vp-c-divider);
+}
+
+.graphing-calculator__note code {
+    font-family: var(--vp-font-family-mono);
+}
+
+.graphing-calculator__stage {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.graphing-calculator__viewport {
+    position: absolute;
+    inset: 0;
+    touch-action: none;
+}
+
+.graphing-calculator__viewport canvas {
+    display: block;
+}
+
+.graphing-calculator__scrim {
+    display: none;
+}
+
+.graphing-calculator__drawer-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .graphing-calculator__panel {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 20;
+        width: min(21rem, 88%);
+        transform: translateX(-100%);
+        transition: transform 200ms ease-out;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .graphing-calculator__panel--open {
+        transform: translateX(0);
+    }
+
+    .graphing-calculator__scrim {
+        display: block;
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .graphing-calculator__drawer-toggle {
+        display: block;
+    }
+
+    .graphing-calculator__stage {
+        min-height: 60vh;
+    }
+}
