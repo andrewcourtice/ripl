@@ -6,6 +6,7 @@ import {
 
 import type {
     ContextOptions,
+    Point,
     RenderElement,
 } from '@ripl/core';
 
@@ -20,18 +21,24 @@ import {
     onDOMEvent,
 } from './dom';
 
+import {
+    createSurfaceOrigin,
+} from './surface';
+
 import type {
     DOMElementEventMap,
     DOMEventHandler,
 } from './dom';
+
+import type {
+    SurfaceOrigin,
+} from './surface';
 
 const INTERACTION_KEY = Symbol('interaction');
 const DRAG_EVENTS = ['dragstart', 'drag', 'dragend'];
 const PRESS_EVENTS = ['mousedown', ...DRAG_EVENTS];
 
 interface InteractionState {
-    left: number;
-    top: number;
     pointerButtons: Set<number>;
     dragElement: RenderElement | undefined;
     dragStartX: number;
@@ -54,7 +61,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     private _activeElements = new Set<RenderElement>();
     private _dragThreshold: number;
     private _interactionState?: InteractionState;
-    private _originDirty = true;
+    private _origin?: SurfaceOrigin;
 
     constructor(
         type: string,
@@ -92,10 +99,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.rescale(width, height);
 
-        this.retain(onDOMElementResize(this.root, ({ width, height }) => {
-            this._originDirty = true;
-            this.rescale(width, height);
-        }));
+        this.retain(onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height)));
 
         if (this._interactive) {
             this.enableInteraction();
@@ -104,29 +108,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
     private _attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
         this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), INTERACTION_KEY);
-    }
-
-    /**
-     * Re-reads where the surface sits in the viewport, at most once per invalidation.
-     *
-     * Pointer coordinates are `clientX/Y` minus this origin, so a stale origin offsets every event.
-     * It goes stale two ways: the page scrolls or the layout shifts under a pointer that never
-     * leaves, and a surface mounted under a stationary pointer never fires the `mouseenter` that
-     * would first record it.
-     */
-    private _refreshOrigin(force?: boolean): void {
-        if (!this._originDirty && !force) {
-            return;
-        }
-
-        const state = this._interactionState!;
-
-        ({
-            left: state.left,
-            top: state.top,
-        } = this.element.getBoundingClientRect());
-
-        this._originDirty = false;
     }
 
     /**
@@ -144,7 +125,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseEnter(): void {
-        this._refreshOrigin(true);
         this.emit('mouseenter', null);
     }
 
@@ -153,10 +133,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this.emit('mouseleave', null);
     }
 
-    private _getLogicalPoint(event: MouseEvent): [number, number] {
-        const state = this._interactionState!;
-
-        return [event.clientX - state.left, event.clientY - state.top];
+    private _getLogicalPoint(event: MouseEvent): Point {
+        return this._origin!.toLogicalPoint(event);
     }
 
     private _hitTestLogical(events: string[], x: number, y: number): RenderElement[] {
@@ -164,8 +142,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseDown(event: MouseEvent): void {
-        this._refreshOrigin();
-
         const state = this._interactionState!;
         const [x, y] = this._getLogicalPoint(event);
 
@@ -190,8 +166,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseMove(event: MouseEvent): void {
-        this._refreshOrigin();
-
         const state = this._interactionState!;
         const [x, y] = this._getLogicalPoint(event);
 
@@ -297,8 +271,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             return;
         }
 
-        this._refreshOrigin();
-
         const [x, y] = this._getLogicalPoint(event);
 
         const payload = {
@@ -340,8 +312,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             return;
         }
 
-        this._refreshOrigin();
-
         const [x, y] = this._getLogicalPoint(event);
 
         const payload = {
@@ -362,9 +332,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this._interactionEnabled = true;
 
+        this._origin = createSurfaceOrigin(this);
+        this.retain(this._origin, INTERACTION_KEY);
+
         this._interactionState = {
-            left: 0,
-            top: 0,
             pointerButtons: new Set(),
             dragElement: undefined,
             dragStartX: 0,
@@ -383,21 +354,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._attachInteractionEvent('mouseup', event => this._handleMouseUp(event));
         this._attachInteractionEvent('click', event => this._handleClick(event));
 
+        // A release outside the surface never reaches the element, stranding the drag with no `dragend`.
         if (hasWindow) {
-            // Capture phase: a scroll event doesn't bubble, so an ancestor scroll container is only visible here.
-            this.retain(onDOMEvent(window, 'scroll', () => this._originDirty = true, {
-                capture: true,
-                passive: true,
-            }), INTERACTION_KEY);
-
-            this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), INTERACTION_KEY);
-
-            // A release outside the surface never reaches the element, stranding the drag with no `dragend`.
             this.retain(onDOMEvent(window, 'mouseup', event => this._handleMouseUp(event)), INTERACTION_KEY);
         }
-
-        // Seeded now rather than on the first `mouseenter`, which never fires for a surface mounted under the pointer.
-        this._refreshOrigin(true);
     }
 
     /** Disables DOM interaction events, unwinding any hover with a final `mouseleave` per element. */
@@ -412,6 +372,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._flushActiveElements();
 
         this._interactionState = undefined;
+        this._origin = undefined;
         this.dispose(INTERACTION_KEY);
     }
 
