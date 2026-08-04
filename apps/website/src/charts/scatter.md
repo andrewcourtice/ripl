@@ -32,7 +32,7 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
                 <RiplInputRange
                     v-model="extras.maxRadius"
                     :min="5"
-                    :max="40"
+                    :max="30"
                     :step="1"
                 />
             </RiplField>
@@ -106,7 +106,7 @@ const seriesMeta = [
 const { extras, reset } = useChartExtras({
     sizeBy: true,
     minRadius: 5,
-    maxRadius: 25,
+    maxRadius: 15,
     markerSymbol: 'circle' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
     multiAxis: true,
 });
@@ -343,7 +343,7 @@ createScatterChart('#container', {
             yBy: 'profit',
             sizeBy: 'volume',
             minRadius: 5,
-            maxRadius: 25,
+            maxRadius: 15,
         },
     ],
 });
