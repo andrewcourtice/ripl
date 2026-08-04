@@ -86,13 +86,21 @@ yarn workspace @ripl/charts test:parity
 yarn workspace @ripl/charts test:hit
 ```
 
-`@playwright/test` is a root devDependency, so a workspace script only finds it when no other
-`playwright` shadows it on `PATH`. If a run dies with "Playwright Test did not expect
-test.describe() to be called here", a different Playwright is being used to load these specs —
-check `which playwright` and invoke the repo's binary instead:
+`@playwright/test` is a root devDependency, not a `@ripl/charts` one, so yarn builds no binary shim
+in this workspace. Two symptoms follow from that, and both are resolution problems rather than test
+failures:
+
+- `yarn playwright …` run from `packages/charts` fails with **"Couldn't find a script named
+  playwright"** — there is nothing to resolve there.
+- `yarn workspace @ripl/charts test:parity` finds a `playwright` on `PATH` instead, and if it is a
+  different version the specs die with **"Playwright Test did not expect test.describe() to be
+  called here"**.
+
+Run from the repository root, where the dependency is actually declared. The config derives every
+path from its own location, so the working directory does not matter — this is what CI does:
 
 ```bash
-cd packages/charts && npx playwright test -c test/visual/playwright.config.ts parity.spec.ts
+yarn playwright test -c packages/charts/test/visual/playwright.config.ts parity.spec.ts hit.spec.ts
 ```
 
 ### Browser binary
