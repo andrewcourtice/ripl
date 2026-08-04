@@ -1,4 +1,8 @@
 import {
+    SVG_BLEND_MODES,
+} from './constants';
+
+import {
     createSVGClipPathElement,
     createSVGGradientElement,
     createSVGPatternElement,
@@ -102,8 +106,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _clipCache: Map<string, ClipCacheEntry>;
     private _shadowCache: Map<string, ShadowCacheEntry>;
     private _usedDefs: Set<string>;
-    private _clipStack: (string | undefined)[];
-    private _currentClipId: string | undefined;
+    private _clipScopeStack: SVGVNode[];
     private _currentParentVNode: SVGVNode;
     private _vnodeStack: SVGVNode[];
 
@@ -116,6 +119,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         // Unlike a canvas, SVG `<text>` is selectable: a drag to pan or brush would sweep a selection over labels.
         svg.style.userSelect = 'none';
+
+        // Canvas composites against its own pixels only; without this a `mix-blend-mode` leaf would blend with the page behind the surface.
+        svg.style.setProperty('isolation', 'isolate');
 
         super('svg', target, svg, options);
 
@@ -151,8 +157,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._clipCache = new Map();
         this._shadowCache = new Map();
         this._usedDefs = new Set();
-        this._clipStack = [];
-        this._currentClipId = undefined;
+        this._clipScopeStack = [];
         this._defs = createSVGElement('defs');
         this.element.appendChild(this._defs);
 
@@ -297,21 +302,26 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         sweepDefsCache(this._patternCache, 'pattern', this._usedDefs, entry => entry.element);
     }
 
+    // `width`/`height` are the exported document's only intrinsic size: the inline `100%` has no containing block once the markup stands alone.
     protected rescale(width: number, height: number) {
         this.element.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this.element.setAttribute('width', width.toString());
+        this.element.setAttribute('height', height.toString());
         super.rescale(width, height);
     }
 
     private _setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
+        const blendMode = SVG_BLEND_MODES[this.currentState.globalCompositeOperation as string];
+
         Object.assign(element.definition.styles, mapSVGStyles({
             direction: this.currentState.direction,
             font: this.currentState.font,
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
-            alignmentBaseline: this.currentState.textBaseline,
             dominantBaseline: this.currentState.textBaseline,
             opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
+            ...(blendMode ? { mixBlendMode: blendMode } : {}),
             ...styles,
         }));
 
@@ -325,10 +335,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         if (transformStr) {
             element.definition.attributes.transform = transformStr;
-        }
-
-        if (this._currentClipId) {
-            element.definition.attributes['clip-path'] = `url(#${this._currentClipId})`;
         }
     }
 
@@ -363,12 +369,34 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
+    // A multi-path element (a segmented `Polyline`) mints run paths keyed `${id}:${index}`, which leak as stray nodes if only the primary is dropped.
     private _removeFromVTree(id: string): void {
-        const index = this._currentParentVNode.children.findIndex(c => c.id === id);
+        const prefix = `${id}:`;
 
-        if (index !== -1) {
-            this._currentParentVNode.children.splice(index, 1);
-        }
+        this._currentParentVNode.children = this._currentParentVNode.children.filter(child => child.id !== id && !child.id.startsWith(prefix));
+    }
+
+    private _openClipScope(pathId: string, clipId: string): void {
+        const scopeElement: SVGContextElement = {
+            id: `${pathId}:clip`,
+            definition: {
+                tag: 'g',
+                styles: {},
+                attributes: {
+                    'clip-path': `url(#${clipId})`,
+                },
+            },
+        };
+
+        const scopeVNode: SVGVNode = {
+            id: scopeElement.id,
+            tag: 'g',
+            element: scopeElement,
+            children: [],
+        };
+
+        this._currentParentVNode.children.push(scopeVNode);
+        this._currentParentVNode = scopeVNode;
     }
 
     private _render() {
@@ -408,18 +436,33 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._commit();
     }
 
-    /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
+    /**
+     * Captures a snapshot of the SVG surface and returns format-specific exporters (see
+     * {@link ContextExport}). Every object URL handed out by `toURL()` is tracked and revoked by
+     * `release()`.
+     */
     public export(): ContextExport {
         const markup = new XMLSerializer().serializeToString(this.element);
         const width = this.width;
         const height = this.height;
+        const urls = new Set<string>();
 
         return {
             toString: () => markup,
-            toURL: () => URL.createObjectURL(new Blob([markup], {
-                type: 'image/svg+xml',
-            })),
+            toURL: () => {
+                const url = URL.createObjectURL(new Blob([markup], {
+                    type: 'image/svg+xml',
+                }));
+
+                urls.add(url);
+
+                return url;
+            },
             toImage: () => svgMarkupToImageData(markup, width, height),
+            release: () => {
+                urls.forEach(url => URL.revokeObjectURL(url));
+                urls.clear();
+            },
         };
     }
 
@@ -490,12 +533,36 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._addToVTree(svgImage);
     }
 
+    // Resolving at the boundary keys the def by the group and writes the `url(#…)` back, so every leaf inherits one ramp across the group's box instead of restarting it over its own.
+    private _resolveGroupPaint(groupElement: SVGContextElement, groupId: string): void {
+        const fill = this.currentState.fill;
+        const stroke = this.currentState.stroke;
+
+        const resolvedFill = fill && this._resolveGradientStyle(fill, `${groupId}:fill`);
+        const resolvedStroke = stroke && this._resolveGradientStyle(stroke, `${groupId}:stroke`);
+
+        if (resolvedFill && resolvedFill !== fill) {
+            this.currentState.fill = resolvedFill;
+            groupElement.definition.styles.fill = resolvedFill;
+        }
+
+        if (resolvedStroke && resolvedStroke !== stroke) {
+            this.currentState.stroke = resolvedStroke;
+            groupElement.definition.styles.stroke = resolvedStroke;
+        }
+    }
+
     /**
      * Opens a group boundary as a nested `<g>` element: descends the reconciliation pointer
      * into a `<g>` keyed by the group's id and stamps the group's own transform onto it, so
      * descendants nest under the `<g>` and inherit the group transform via SVG's native
      * cascade. Resets the accumulated transform afterwards so leaves carry only their own
      * transform (avoiding a double application of the group transform).
+     *
+     * A gradient or pattern the group carries is resolved **once here**, against the group's own
+     * box, and stamped on the `<g>`; descendants inherit the resolved `url(#…)` rather than
+     * re-resolving the paint against their own box, which is what makes the group ramp continuously
+     * across its children and match what the canvas backend paints.
      */
     public pushGroup(group: RiplElement): void {
         const groupElement: SVGContextElement = {
@@ -519,6 +586,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentParentVNode = groupVNode;
 
         super.pushGroup(group);
+
+        this._resolveGroupPaint(groupElement, group.id);
 
         const transform = this._currentTransforms.join(' ');
 
@@ -545,17 +614,22 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentParentVNode = this._vnodeStack.pop() ?? this._vtree;
     }
 
-    /** Saves the current drawing state, transform, and clip onto their stacks. */
+    /** Saves the current drawing state, transform, and clip scope onto their stacks. */
     public save(): void {
         this._transformStack.push([...this._currentTransforms]);
-        this._clipStack.push(this._currentClipId);
+        this._clipScopeStack.push(this._currentParentVNode);
         super.save();
     }
 
-    /** Restores the most recently saved drawing state, transform, and clip from their stacks. */
+    /** Restores the most recently saved drawing state, transform, and clip scope from their stacks. */
     public restore(): void {
+        // The base `restore()` no-ops at depth 0, so popping unconditionally would discard the live transform and clip scope.
+        if (this.saveDepth === 0) {
+            return;
+        }
+
         this._currentTransforms = this._transformStack.pop() || [];
-        this._currentClipId = this._clipStack.pop();
+        this._currentParentVNode = this._clipScopeStack.pop() ?? this._vtree;
         super.restore();
     }
 
@@ -586,7 +660,14 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    /** Clips subsequent drawing operations to the given path. The backing `<clipPath>` def is swept once no render pass uses it. */
+    /**
+     * Clips subsequent drawing operations to the given path by opening a `<g clip-path>` scope and
+     * nesting them inside it, so the clip is expressed in the user space it was authored in rather
+     * than the referencing leaf's (which every intervening `<g transform>` would displace). Nesting
+     * the scopes is also what makes a second clip **intersect** the first, as `ctx.clip()` does,
+     * instead of replacing it. The scope closes with the enclosing `restore()` or `popGroup()`, and
+     * the backing `<clipPath>` def is swept once no render pass uses it.
+     */
     public applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
 
@@ -610,21 +691,26 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         if (fillRule) {
             cached.pathElement.setAttribute('clip-rule', fillRule);
+        } else {
+            cached.pathElement.removeAttribute('clip-rule');
         }
 
         this._removeFromVTree(path.id);
-        this._currentClipId = cached.clipId;
+        this._openClipScope(path.id, cached.clipId);
     }
 
     /**
      * Fills the given element using the current fill style, resolving linear and radial
      * gradients into `<defs>`. Conic gradients have no SVG equivalent and degrade to a solid
      * fill using the color stop nearest the middle of the gradient.
+     *
+     * @param element - The element to stamp the resolved fill onto.
+     * @param fillRule - Winding rule the fill is evaluated with; emitted as `fill-rule`.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this._setElementStyles(element, {
             fill: this._resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
+            ...(fillRule ? { fillRule } : {}),
         });
     }
 
@@ -663,6 +749,39 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     /** Tests whether a point lies on the stroked outline of a path. */
     public isPointInStroke(path: SVGPath, x: number, y: number): boolean {
         return this._isPointIn('stroke', path, x, y);
+    }
+
+    /** Resets the context to its initial state, dropping the accumulated transform, the open clip scopes, and the group nesting alongside the base drawing state. */
+    public reset(): void {
+        super.reset();
+
+        this._currentTransforms = [];
+        this._transformStack = [];
+        this._clipScopeStack = [];
+        this._vnodeStack = [];
+        this._currentParentVNode = this._vtree;
+    }
+
+    /** Destroys the context, releasing the reconciler's node cache, every `<defs>` cache, and the virtual tree it retained. */
+    public destroy(): void {
+        super.destroy();
+
+        this._defs.replaceChildren();
+        this._domCache.clear();
+        this._gradientCache.clear();
+        this._patternCache.clear();
+        this._textPathCache.clear();
+        this._clipCache.clear();
+        this._shadowCache.clear();
+        this._usedDefs.clear();
+
+        this._vtree = {
+            id: '__root__',
+            tag: 'svg',
+            children: [],
+        };
+
+        this.reset();
     }
 
 }

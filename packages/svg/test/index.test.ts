@@ -522,7 +522,7 @@ describe('SVG', () => {
 
         // ── applyClip ────────────────────────────────────────────
 
-        test('applyClip should add clip-path attribute to subsequent paths', () => {
+        test('applyClip should nest subsequent paths inside a clipped group', () => {
             const ctx = create();
             ctx.markRenderStart();
 
@@ -532,9 +532,45 @@ describe('SVG', () => {
 
             const path = ctx.createPath('content');
             ctx.applyFill(path);
-            expect(path.definition.attributes['clip-path']).toMatch(/^url\(#clip-/);
 
             ctx.markRenderEnd();
+
+            const scope = ctx.element.querySelector('g');
+
+            // A leaf resolves `clip-path` in its own user space, so the clip has to sit on the scope that authored it.
+            expect(path.definition.attributes['clip-path']).toBeUndefined();
+            expect(scope?.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+            expect(scope?.querySelector('#content')).not.toBeNull();
+
+            ctx.destroy();
+        });
+
+        test('applyClip should intersect an active clip rather than replace it', () => {
+            const ctx = create();
+            ctx.markRenderStart();
+
+            const outer = ctx.createPath('outer-clip');
+            outer.rect(0, 0, 50, 50);
+            ctx.applyClip(outer);
+
+            const inner = ctx.createPath('inner-clip');
+            inner.rect(25, 25, 50, 50);
+            ctx.applyClip(inner);
+
+            const path = ctx.createPath('content');
+            ctx.applyFill(path);
+
+            ctx.markRenderEnd();
+
+            const outerScope = ctx.element.querySelector('#outer-clip\\:clip');
+            const innerScope = outerScope?.querySelector('#inner-clip\\:clip');
+
+            // Canvas intersects on every `clip()`; a single scalar clip id silently discarded the outer one.
+            expect(outerScope?.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+            expect(innerScope?.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+            expect(innerScope?.getAttribute('clip-path')).not.toBe(outerScope?.getAttribute('clip-path'));
+            expect(innerScope?.querySelector('#content')).not.toBeNull();
+
             ctx.destroy();
         });
 
@@ -622,7 +658,9 @@ describe('SVG', () => {
 
         test('a group-scoped clip does not leak past the group boundary', () => {
             const ctx = create();
-            const group = createGroup({});
+            const group = createGroup({
+                id: 'G',
+            });
 
             ctx.markRenderStart();
             ctx.pushGroup(group);
@@ -635,16 +673,62 @@ describe('SVG', () => {
 
             const inside = ctx.createPath('inside');
             ctx.applyFill(inside);
-            expect(inside.definition.attributes['clip-path']).toBeDefined();
 
             ctx.popGroup();
 
-            // After the boundary, the dangling clip save is unwound — later elements are unclipped.
             const outside = ctx.createPath('outside');
             ctx.applyFill(outside);
-            expect(outside.definition.attributes['clip-path']).toBeUndefined();
 
             ctx.markRenderEnd();
+
+            const scope = ctx.element.querySelector('#G > #clip\\:clip');
+
+            expect(scope?.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+            expect(scope?.querySelector('#inside')).not.toBeNull();
+
+            // After the boundary, the dangling clip save is unwound — later elements are unclipped.
+            expect(outside.definition.attributes['clip-path']).toBeUndefined();
+            expect(ctx.element.querySelector(':scope > #outside')).not.toBeNull();
+
+            ctx.destroy();
+        });
+
+        test('a group-scoped clip lands on a group, not on the transformed leaf', () => {
+            const ctx = create();
+            const outer = createGroup({
+                id: 'OUTER',
+            });
+            const inner = createGroup({
+                id: 'INNER',
+            });
+
+            outer.translateX = 50;
+            inner.translateX = 20;
+
+            ctx.markRenderStart();
+            ctx.pushGroup(outer);
+
+            ctx.save();
+            const clipPath = ctx.createPath('clip');
+            clipPath.rect(0, 0, 40, 40);
+            ctx.applyClip(clipPath);
+
+            ctx.pushGroup(inner);
+            const leaf = ctx.createPath('leaf');
+            ctx.applyFill(leaf);
+            ctx.popGroup();
+
+            ctx.popGroup();
+            ctx.markRenderEnd();
+
+            const scope = ctx.element.querySelector('#OUTER > #clip\\:clip');
+
+            // The clip geometry is authored in OUTER's space; on the leaf it would resolve through INNER's transform too.
+            expect(scope?.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+            expect(leaf.definition.attributes['clip-path']).toBeUndefined();
+            expect(ctx.element.querySelector('#INNER')?.getAttribute('clip-path')).toBeNull();
+            expect(scope?.querySelector('#INNER > #leaf')).not.toBeNull();
+
             ctx.destroy();
         });
 
