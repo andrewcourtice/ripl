@@ -516,6 +516,10 @@ export default tseslint.config(
                 renderer: 'readonly',
             },
         },
+        rules: {
+            // An example subclassing Shape3D is plain JavaScript, which has no accessibility modifiers to declare.
+            '@typescript-eslint/explicit-member-accessibility': 'off',
+        },
     },
 
     // Prefer keyed object-lookup dispatch over `switch` in library and extension
