@@ -52,6 +52,42 @@ describe('createCanvasExport', () => {
         expect(url.startsWith('blob:')).toBe(true);
     });
 
+    // An unrevoked object URL pins its blob for the document's lifetime.
+    test('Should revoke every object URL it handed out on release', () => {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = 16;
+        canvas.height = 16;
+
+        const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+        const contextExport = createCanvasExport(canvas);
+
+        const first = contextExport.toURL();
+        const second = contextExport.toURL();
+
+        contextExport.release?.();
+
+        expect(revokeObjectURL).toHaveBeenCalledWith(first);
+        expect(revokeObjectURL).toHaveBeenCalledWith(second);
+        expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    });
+
+    test('Should be safe to release repeatedly', () => {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = 16;
+        canvas.height = 16;
+
+        const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+        const contextExport = createCanvasExport(canvas);
+
+        contextExport.toURL();
+        contextExport.release?.();
+        contextExport.release?.();
+
+        expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    });
+
     test('Should export the canvas as ImageData at the backing resolution', async () => {
         const canvas = document.createElement('canvas');
 

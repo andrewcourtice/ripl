@@ -90,6 +90,33 @@ describe('onDOMElementResize', () => {
         vi.unstubAllGlobals();
     });
 
+    // jsdom has no `ResizeObserver`, so leaving it unstubbed is what reaches the fallback branch.
+    test('Should report the content box when falling back to window resize', () => {
+        const el = document.createElement('div');
+        const handler = vi.fn();
+
+        el.style.padding = '10px';
+        el.style.border = '2px solid black';
+        document.body.appendChild(el);
+
+        vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+            width: 420,
+            height: 320,
+        } as DOMRect);
+
+        const disposable = onDOMElementResize(el, handler);
+
+        window.dispatchEvent(new Event('resize'));
+
+        expect(handler).toHaveBeenCalledWith({
+            width: 396,
+            height: 296,
+        });
+
+        disposable.dispose();
+        el.remove();
+    });
+
     test('Should return a disposable that disconnects the observer', () => {
         const el = document.createElement('div');
         const handler = vi.fn();

@@ -7,7 +7,8 @@
         "static": "npx tsx static.ts",
         "animated": "npx tsx animated.ts",
         "chart": "npx tsx chart.ts",
-        "charts": "npx tsx charts.ts"
+        "charts": "npx tsx charts.ts",
+        "sankey": "npx tsx sankey.ts"
     },
     "dependencies": {
         "@ripl/charts": "1.0.0-beta.0",

@@ -5,7 +5,13 @@ import {
 } from 'vitest';
 
 import {
+    TAU,
+} from '@ripl/core';
+
+import {
+    dashPixels,
     fillPolygon,
+    flattenEllipse,
     rasterizeArc,
     rasterizeCircle,
     rasterizeCubicBezier,
@@ -13,6 +19,7 @@ import {
     rasterizeLine,
     rasterizeQuadBezier,
     rasterizeRect,
+    thickenPixels,
 } from '../src/algorithms';
 
 import type {
@@ -123,14 +130,17 @@ describe('rasterizeCircle', () => {
 
 describe('rasterizeEllipse', () => {
 
-    test('Should plot a single point for zero radii', () => {
-        const pixels = collectPixels(plot => rasterizeEllipse(5, 5, 0, 0, plot));
+    /** A full, unrotated sweep — the arguments the midpoint path still handles. */
+    function rasterizeFull(cx: number, cy: number, rx: number, ry: number): [number, number][] {
+        return collectPixels(plot => rasterizeEllipse(cx, cy, rx, ry, 0, 0, TAU, false, plot));
+    }
 
-        expect(pixels).toEqual([[5, 5]]);
+    test('Should plot a single point for zero radii', () => {
+        expect(rasterizeFull(5, 5, 0, 0)).toEqual([[5, 5]]);
     });
 
     test('Should produce 4-way symmetric pixels', () => {
-        const pixels = collectPixels(plot => rasterizeEllipse(10, 10, 6, 3, plot));
+        const pixels = rasterizeFull(10, 10, 6, 3);
 
         expect(pixels.length).toBeGreaterThan(0);
 
@@ -148,13 +158,172 @@ describe('rasterizeEllipse', () => {
     });
 
     test('Should plot endpoints on the axes', () => {
-        const pixels = collectPixels(plot => rasterizeEllipse(10, 10, 6, 3, plot));
-        const set = pixelSet(pixels);
+        const set = pixelSet(rasterizeFull(10, 10, 6, 3));
 
         expect(set.has('16,10')).toBe(true); // right
         expect(set.has('4,10')).toBe(true); // left
         expect(set.has('10,13')).toBe(true); // bottom
         expect(set.has('10,7')).toBe(true); // top
+    });
+
+    // Both passes read only the first four arguments, so every ellipse drew as a full,
+    // unrotated one no matter what sweep or rotation the element asked for.
+    test('Should honor a partial sweep', () => {
+        const pixels = collectPixels(plot => rasterizeEllipse(20, 20, 15, 5, 0, 0, Math.PI, false, plot));
+
+        expect(Math.min(...pixels.map(([, y]) => y))).toBeGreaterThanOrEqual(20);
+        expect(Math.max(...pixels.map(([, y]) => y))).toBeCloseTo(25, 0);
+    });
+
+    test('Should honor sweep direction', () => {
+        const clockwise = collectPixels(plot => rasterizeEllipse(20, 20, 15, 5, 0, 0, Math.PI, false, plot));
+        const counter = collectPixels(plot => rasterizeEllipse(20, 20, 15, 5, 0, 0, Math.PI, true, plot));
+
+        expect(Math.min(...clockwise.map(([, y]) => y))).toBeGreaterThanOrEqual(20);
+        expect(Math.max(...counter.map(([, y]) => y))).toBeLessThanOrEqual(20);
+    });
+
+    test('Should honor rotation', () => {
+        const upright = pixelSet(rasterizeFull(20, 20, 15, 5));
+        const rotated = collectPixels(plot => rasterizeEllipse(20, 20, 15, 5, Math.PI / 2, 0, TAU, false, plot));
+        const set = pixelSet(rotated);
+
+        expect(upright.has('35,20')).toBe(true);
+        expect(set.has('35,20')).toBe(false);
+        expect(set.has('20,35')).toBe(true);
+    });
+
+});
+
+describe('flattenEllipse', () => {
+
+    test('Should close a full sweep without duplicating the start point', () => {
+        const points = flattenEllipse(0, 0, 10, 10);
+        const [first] = points;
+        const last = points[points.length - 1];
+
+        expect(first.x).not.toBeCloseTo(last.x, 6);
+    });
+
+    test('Should include both endpoints of a partial sweep', () => {
+        const points = flattenEllipse(0, 0, 10, 10, 0, 0, Math.PI);
+        const last = points[points.length - 1];
+
+        expect(points[0].x).toBeCloseTo(10, 6);
+        expect(last.x).toBeCloseTo(-10, 6);
+        expect(last.y).toBeCloseTo(0, 6);
+    });
+
+    test('Should rotate sampled points about the center', () => {
+        const points = flattenEllipse(0, 0, 10, 5, Math.PI / 2);
+
+        expect(points[0].x).toBeCloseTo(0, 6);
+        expect(points[0].y).toBeCloseTo(10, 6);
+    });
+
+});
+
+describe('dashPixels', () => {
+
+    test('Should pass every pixel through for an empty pattern', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 9, 0, dashPixels([], 0, plot)));
+
+        expect(pixels).toHaveLength(10);
+    });
+
+    test('Should drop pixels falling in a gap', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 9, 0, dashPixels([2, 2], 0, plot)));
+
+        expect(pixels.map(([x]) => x)).toEqual([0, 1, 4, 5, 8, 9]);
+    });
+
+    test('Should repeat an odd-length pattern to an even one', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 7, 0, dashPixels([2], 0, plot)));
+
+        expect(pixels.map(([x]) => x)).toEqual([0, 1, 4, 5]);
+    });
+
+    test('Should shift the pattern by the offset', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 7, 0, dashPixels([2, 2], 2, plot)));
+
+        expect(pixels.map(([x]) => x)).toEqual([2, 3, 6, 7]);
+    });
+
+    test('Should treat an all-zero pattern as solid', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 4, 0, dashPixels([0, 0], 0, plot)));
+
+        expect(pixels).toHaveLength(5);
+    });
+
+    test('Should treat a negative pattern as solid', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 0, 4, 0, dashPixels([2, -2], 0, plot)));
+
+        expect(pixels).toHaveLength(5);
+    });
+
+});
+
+describe('thickenPixels', () => {
+
+    /** Strokes a horizontal line of the given width and measures its depth clear of the round caps. */
+    function strokeThickness(width: number): number {
+        const pixels = collectPixels(plot => rasterizeLine(0, 20, 9, 20, thickenPixels(width, plot)));
+        const middle = pixels.filter(([x]) => x === 5).map(([, y]) => y);
+
+        return new Set(middle).size;
+    }
+
+    test('Should return the original callback for a hairline stroke', () => {
+        const plot: PixelCallback = () => {};
+
+        expect(thickenPixels(1, plot)).toBe(plot);
+        expect(thickenPixels(0, plot)).toBe(plot);
+    });
+
+    // The brush centres on a dot, so an even width rounds up to the next odd dot count.
+    test('Should widen a stroke to an odd number of dots', () => {
+        expect(strokeThickness(1)).toBe(1);
+        expect(strokeThickness(2)).toBe(3);
+        expect(strokeThickness(3)).toBe(3);
+        expect(strokeThickness(4)).toBe(5);
+        expect(strokeThickness(5)).toBe(5);
+    });
+
+    test('Should round the ends of a thick stroke', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 20, 9, 20, thickenPixels(5, plot)));
+        const depthAt = (x: number) => new Set(pixels.filter(p => p[0] === x).map(([, y]) => y)).size;
+
+        expect(depthAt(5)).toBe(5);
+        expect(depthAt(-2)).toBeLessThan(depthAt(5));
+        expect(depthAt(-2)).toBeGreaterThan(0);
+    });
+
+    test('Should centre the brush on the plotted pixel', () => {
+        const pixels = collectPixels(plot => thickenPixels(3, plot)(10, 10));
+        const set = pixelSet(pixels);
+
+        expect(set.has('10,10')).toBe(true);
+        expect(set.has('9,10')).toBe(true);
+        expect(set.has('11,10')).toBe(true);
+        expect(set.has('10,9')).toBe(true);
+        expect(set.has('10,11')).toBe(true);
+    });
+
+    test('Should keep a diagonal stroke the same thickness as an axis-aligned one', () => {
+        const diagonal = collectPixels(plot => rasterizeLine(0, 0, 9, 9, thickenPixels(5, plot)));
+        const set = pixelSet(diagonal);
+
+        // A round brush measures the same across any heading; a square one would inflate by √2.
+        expect(set.has('5,3')).toBe(true);
+        expect(set.has('5,7')).toBe(true);
+        expect(set.has('5,1')).toBe(false);
+    });
+
+    test('Should widen a curve as well as a line', () => {
+        const thin = collectPixels(plot => rasterizeCircle(20, 20, 8, plot));
+        const thick = collectPixels(plot => rasterizeCircle(20, 20, 8, thickenPixels(3, plot)));
+
+        expect(pixelSet(thick).size).toBeGreaterThan(pixelSet(thin).size);
     });
 
 });

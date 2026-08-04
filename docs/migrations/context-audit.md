@@ -342,15 +342,283 @@ where canvas derives the shadow from the filtered result (**S-20**).
 
 ## @ripl/dom
 
-_No entries yet._
+### Pointer payloads
+
+**Element `click`, `dragstart`, `drag` and `dragend` payloads** — **behaviour**. `x`/`y` (and
+`startX`/`startY`) carry **CSS pixels**, not device pixels. Element `mousemove` already reported CSS
+pixels, so the same pointer position produced payloads differing by the device pixel ratio depending
+on which event you read — `packages/charts/src/core/interaction.ts` documents `InteractionPoint` as
+"chart pixels" and feeds `onEnter`/`onLeave` from `mousemove` while `onClick` reads `click`. On a
+non-retina display nothing moves. Elsewhere, multiply by `devicePixelRatio` — or better, map through
+`Context.toSurfacePoint` — to recover the old values. Hit testing is unchanged: it still runs in
+surface space.
+
+### Pointer lifecycle
+
+**`DOMContext.disableInteraction`** — **behaviour**. Emits `mouseleave` on every element that was
+hovered before dropping the set, and cancels the pending hover frame. It used to clear
+`_activeElements` silently, so a bar stayed enlarged and its tooltip stayed painted with nothing left
+that could ever produce the leave. `destroy()` delegates here, so teardown is complete when it
+returns rather than a frame later. Any `mouseleave` handler must therefore tolerate running during
+teardown.
+
+**Surface `mouseleave`** — **behaviour**. Also unwinds the hovered element. The element-level
+`mouseleave` was only ever emitted from the hover hit test, which only runs on `mousemove`, so
+leaving the canvas left the last-hovered element hovered forever — the reason chart tooltips stayed
+on screen after the pointer left.
+
+**`mouseup`** — **behaviour**. Also bound at the window, so a release outside the surface ends the
+drag. A gesture released off-canvas previously never emitted `dragend` and resumed on re-entry with
+no button held. A `dragend` may now arrive with coordinates outside the surface bounds (including
+negatives); clamp if your handler assumes otherwise.
+
+**`mousedown`** — **behaviour**. Assigns drag state unconditionally instead of only when something
+is hit, so a press on empty canvas clears the previous gesture's `dragElement` and origin rather than
+making it the next gesture's delta baseline.
+
+**`click`** — **behaviour**. Suppressed once for the gesture that ended a drag. The DOM fires `click`
+after `mouseup`, so a drill-down or selection handler fired at the end of every drag. A click below
+the drag threshold is unaffected.
+
+### Reconciliation
+
+**`reconcileNode`** — **behaviour**. Sibling vnodes sharing an id each get their own DOM node.
+Duplicates previously collapsed onto one node — the second overwrote the first's attributes and
+subtree, and the reorder step desynchronised — so a duplicate key in chart data silently dropped a
+mark and reordered the rest. Node identity is stable across passes.
+
+**`reconcileNode`** — **behaviour**. Nodes matched by `excludeSelectors` keep their position instead
+of drifting to the end of the parent. The reorder step indexed the parent's children directly, which
+counts excluded nodes, so managed children were inserted before them and pushed them rightward.
+Harmless for a `<defs>`; not for a positioned overlay.
+
+### Resize
+
+**`onDOMElementResize`** — **behaviour**. The `window.resize` fallback reports the **content box**,
+matching what the `ResizeObserver` branch reports via `entry.contentRect`. It reported the border box
+before, so on a padded host the two branches of one function disagreed and the backing store was
+sized to a box the surface was never stretched over. Only reachable on engines without
+`ResizeObserver`.
+
+**`onDOMElementResize`** — **behaviour**. Returns an inert disposable outside a browser rather than
+throwing `ReferenceError: window is not defined`. `@ripl/dom` ships `sideEffects: false`, so an SSR
+consumer can import this helper directly.
+
+### Export
+
+**`createCanvasExport`** — **API**, additive. The returned `ContextExport` implements `release()`,
+revoking every object URL `toURL()` handed out. Without it each URL pinned its blob for the
+document's lifetime. Call `release()` when you are done with an export; it is safe to call
+repeatedly.
+
+### Navigator
+
+**`DOMNavigator`** — **behaviour**. Lifting one finger of a pinch hands the survivor back to panning.
+It previously cleared every gesture flag, leaving a finger still on the surface matching no branch at
+all until it was lifted and re-pressed.
+
+**`DOMNavigator`** — **behaviour**. Every tracked pointer is captured on `pointerdown`, not just the
+ones that pan or brush. A secondary-button gesture or the second finger of a pinch released off the
+element never reached the cleanup, and the leaked pointer id made the next single-touch gesture read
+as a pinch — a one-finger pan that zoomed.
+
+**`DOMNavigator`** — **behaviour**. The element origin is cached and invalidated on resize and
+scroll, instead of `getBoundingClientRect` being called on every `pointermove`. If you move the
+element by means that fire neither (a transform on an ancestor, say), invalidate by resizing or
+recreating the navigator.
+
+**`DOMNavigatorOptions.interactions`** — **behaviour**. `touchAction` is left alone when every
+interaction resolves to disabled. `{}` and `{ zoom: false, pan: false, brush: false }` are both
+truthy, so they used to suppress native scrolling over the chart with no gesture wired up.
 
 ## @ripl/node
 
-_No entries yet._
+**`factory.measureText`** — **behaviour**. Measures in braille cells — 2 logical units per character
+and ascent 4 at the default `10px monospace`, descent 0 — scaled by the requested font size, and
+anchors `actualBoundingBox*` on `textAlign`. It reported 8px per character with ascent 8 and descent
+2 regardless of the options passed, so text boxes were roughly 4x too wide and 2.5x too tall against
+what the terminal paints, and centred or right-aligned text was anchored at the wrong corner. Core
+falls back to this only before an element's first paint; anything rendered measures through
+`TerminalContext`. `textBaseline` is deliberately not modelled — the terminal paints one cell per
+glyph with no baseline variation.
+
+**`factory.requestAnimationFrame`** — **behaviour**. Returns an **unref'd** timer and invokes its
+callback with a `DOMHighResTimeStamp`. The render loop re-arms every frame with `autoStart` on, so a
+ref'd timer meant a process that drew one static chart never exited. A script that relied on the
+render loop to keep the event loop alive must now hold it open itself.
+
+**`factory.createElement`** and **`factory.createElementNS`** — **behaviour**. Return a duck-typed
+stub (`getContext()` → `null`, `getTotalLength()` → `0`, attribute accessors) instead of `{}`. Core's
+graceful-degradation guards are written against exactly those probes and could never run — the first
+property access threw a raw `TypeError`. `getPathLength` now returns `0` off-platform rather than
+throwing.
+
+**`factory.createContext`** — **behaviour**. Builds one `TerminalOutput` per process rather than one
+per context, and that output multiplexes its resize subscribers behind a single `SIGWINCH` handler;
+ten scenes used to trip Node's `MaxListenersExceededWarning`. A `TerminalOutput` passed as the target
+is honoured; any other target warns that it cannot be, instead of being discarded in silence.
+
+**`createTerminalOutput`** — **behaviour**. `onResize` registers its `SIGWINCH` handler on the first
+subscription and removes it with the last, rather than one handler per subscriber.
 
 ## @ripl/terminal
 
-_No entries yet._
+Almost every entry here changes the **bytes written to the terminal**. If you snapshot terminal
+output, expect to re-record.
+
+### Paint resolution
+
+**`colorToAnsiFg`** and **`colorToAnsiBg`** — **API**, return type widened to `string | undefined`,
+and **behaviour**. `''` used to mean both "transparent" and "unparseable", and `applyFill` painted
+for both, so a `transparent` fill drew solid braille. The two are now distinct: `undefined` means
+*do not paint* (`''`, `none`, `transparent`, or zero effective alpha) and `''` means *paint, but
+uncolored* (a real color this backend cannot resolve, e.g. `currentColor`). Both take an optional
+second `opacity` argument. A caller that assigned the result straight into a `string` must handle
+`undefined` — treat it as "skip this paint".
+
+**`colorToAnsiFg`** / **`colorToAnsiBg`** — **behaviour**. Resolution now covers the 148 CSS named
+colors, and follows a gradient to its first stop and a `pattern(...)` to its foreground. `red`,
+`#888`, `white` and `linear-gradient(...)` previously resolved to no color at all, so the geometry
+was rasterized uncolored and inherited whatever color the *previous, unrelated* element had left in
+that cell. Terminal output gains color everywhere those values are used, including this repo's own
+terminal demo.
+
+**`colorToAnsiFg`** / **`colorToAnsiBg`** — **behaviour**. Alpha is no longer discarded. A paint's
+own alpha, multiplied by `Context.opacity`, attenuates the emitted color toward the background. A
+character cell cannot composite, and the terminal background is unknowable, so the conventional dark
+one is assumed — the same assumption the rasterizer's light default foreground already encoded.
+`rgba(255, 0, 0, 0.5)` now emits a darker red than `#ff0000`.
+
+**`TerminalContext.applyFill`** / **`TerminalContext.applyStroke`** — **behaviour**. Read
+`Context.opacity`. It was maintained by the pipeline (element alpha via `CONTEXT_OPERATIONS`, group
+alpha composited at the boundary) and read by nobody, so `opacity: 0` rendered identically to
+`opacity: 1`. `@ripl/charts` parks crosshair lines at `opacity: 0` until hover and fades axis and
+legend elements in from `0`, so terminal charts drew that chrome permanently. Anything that relied
+on a zero-opacity element still being visible must set an explicit opacity.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Handles `ContextText`, drawing the glyphs in the
+stroke color. `Text.render` prefers stroke over fill, so text with a `stroke` set took the stroke
+branch and produced **no output at all** — an outlined label vanished rather than degrading.
+
+**`TerminalContext.applyFill`** — **behaviour**. Fills only; it no longer also rasterizes the path
+outline in the fill color. That painted one pixel beyond the even-odd interior (so adjacent filled
+shapes bled into each other) and painted something for a degenerate, zero-area fill, where canvas
+paints nothing. Fill-only shapes lose roughly a pixel of outline; set a `stroke` to keep it.
+
+### Rasterizer output
+
+**`BrailleRasterizer.serialize`** — **behaviour**. A cell with no color emits an SGR reset rather
+than nothing. An uncolored glyph previously inherited the preceding cell's color and suppressed the
+row's trailing reset, so a single stale color leaked across the rest of the row, the rest of the
+frame, and every frame after it.
+
+**`BrailleRasterizer.serialize`** — **behaviour**. The ANSI form appends `\x1b[K` to every row and
+`\x1b[J` below the last one. Nothing erased the display, so shrinking the terminal left the previous
+frame's rows and columns stranded on screen until something else scrolled. The plain-text form
+(`{ ansi: false }`) is unchanged.
+
+**`BrailleRasterizer.setPixel`** — **behaviour**. Ignores non-finite coordinates. `NaN` passes every
+bounds comparison, so a malformed element (one missing a required coordinate) indexed the braille dot
+map out of range and threw, taking the whole frame down.
+
+**`BrailleRasterizer.toImageData`** — **behaviour**. Character cells are rasterized as filled
+blocks. The loop read only the dot grid, so every glyph placed by `setChar` — axis labels, legend
+labels, titles — was absent from `export().toImage()` and from the exported PNG while
+`export().toString()` showed them. A 2×4-pixel cell cannot carry a letterform, so a block is the
+honest rasterization; whitespace glyphs stay transparent.
+
+### Geometry
+
+**`rasterizeEllipse`** — **API**, signature changed. Now
+`(cx, cy, rx, ry, rotation, startAngle, endAngle, counterclockwise, plot)`, matching
+`rasterizeArc`'s shape. Callers passing `(cx, cy, rx, ry, plot)` must insert `0, 0, TAU, false`
+before `plot`.
+
+**`flattenEllipse`** — **API**, additive. Takes optional `rotation`, `startAngle`, `endAngle` and
+`counterclockwise`. A full sweep samples as before (no duplicate closing point); a partial sweep
+includes both endpoints, so filling it closes with a chord exactly as canvas does.
+
+**`TerminalContext`** ellipse rendering — **behaviour**. Both command passes read only the first
+four recorded arguments, so an `Ellipse` element's `rotation`/`startAngle`/`endAngle`/direction were
+dropped and every ellipse drew whole and upright. They are honored now, so a partial or rotated
+ellipse renders different geometry than before — the geometry that was asked for.
+
+**`dashPixels`** — **API**, additive. Gates a plot callback on a dash pattern.
+
+**`thickenPixels`** — **API**, additive. Widens a plot callback by stamping a round brush at every
+pixel it plots.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Honors `lineDash`/`lineDashOffset`. Dashed grid
+lines and zero-lines were indistinguishable from solid data lines. Arc length is approximated by
+counting plotted pixels, which is exact for axis-aligned runs and up to √2 short on a diagonal.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Honors `lineWidth`. Every stroke was one dot
+wide regardless of width, which erased the encoding of any chart carrying its data in stroke
+thickness — a Sankey's links (`lineWidth` *is* the flow magnitude, 20–200px) all collapsed to
+identical hairline curves, and a radial bar's rings to concentric hairlines. Thickness quantises to
+an odd number of dots because the brush centres on one: widths of 1, 2, 3, 4 and 5 give strokes 1,
+3, 3, 5 and 5 dots across. **A scene that strokes anything wider than 1 now emits different bytes.**
+`lineCap`, `lineJoin` and `miterLimit` are still ignored — the round brush shapes every cap and
+join — so a gap narrower than the stroke is wide gets bridged by its caps, as it is on canvas.
+
+**`TerminalPath.arcTo`** — **behaviour**. Constructs the real tangent arc instead of two straight
+lines through the corner. Canvas `arcTo` never passes through `(x1, y1)`; the old approximation was
+the `radius === 0` degenerate case and was visibly wrong for large radii. Degenerate inputs (zero
+radius, collinear points) still fall back to a line.
+
+**`TerminalPath.arc`** / **`ellipse`** / **`lineTo`** / **`bezierCurveTo`** / **`quadraticCurveTo`**
+— **behaviour**. These open a subpath when none is current, so a `closePath()` after a bare
+`circle()` closes back to the arc's own start rather than the previous subpath's start (or the
+origin).
+
+**`TerminalPath.addPath`** — **behaviour**. Warns when handed a path from another backend instead of
+dropping it silently, which yielded an empty composed path with no indication why.
+
+### Sizing and lifecycle
+
+**`TerminalContext`** resize handling — **behaviour**. An explicit `width`/`height` survives a
+terminal resize. The handler forwarded the terminal's new dimensions unconditionally, so a
+deliberately fixed-size viewport silently became full-screen on the first `SIGWINCH`.
+
+**`TerminalContext.rescale`** — **behaviour**. The letterbox mapping is installed before `resize` is
+emitted. The base `rescale` resets `scaleX`/`scaleY` to identity and *then* emits, and a bound
+`Scene` repaints synchronously on that event, so the repaint placed points with identity scales and
+extents with the new raster scale. Under a running `Renderer` the next tick corrected it; a static
+scene kept the mis-placed frame.
+
+**`TerminalContext.reset`** — **API**, additive override. Calls `super.reset()` and clears the
+character grid. It was inherited as a no-op, so `reset()` left the previous frame on screen.
+
+**`TerminalContext.destroy`** — **behaviour**. Writes an SGR reset, shows the cursor, and parks it
+below the grid before tearing down. Nothing restored terminal state, so a colored final frame could
+leave the user's shell colored after the process exited.
+
+**`TerminalContext.export`** — **API**, additive. Implements `ContextExport.release()`, and mints the
+URL once so repeated `toURL()` calls no longer leak a new `Blob` URL each time.
+
+**`TerminalContext.supportsPathCaching`** — **behaviour**, now `true`. `createPath` is a plain
+`new TerminalPath(id)` with no per-frame registration, so cached paths stay valid and shapes stop
+re-tracing their whole command list every frame.
+
+**`TerminalContext.hitTestHonorsTransform`** — **behaviour**, now `true`. `Shape2D.intersectsWith`
+reads `false` as "the transform was applied at draw time, so map the point into local space". This
+backend applies no transform, so the point is already in the space it drew in. Latent today
+(`isPointInPath` always returns `false`), correct the moment hit testing exists.
+
+### Transforms and compositing
+
+**`TerminalContext.rotate`** / **`scale`** / **`translate`** / **`transform`** / **`setTransform`** —
+**behaviour**. Still no-ops, but a non-identity call now warns once per context. Transforms remain
+**unimplemented by decision**: a real matrix stack would have to run through the whole command
+pipeline, and rotation into a 2×4 braille lattice is lossy regardless. The class JSDoc previously
+claimed elements are "positioned through the context's own `scaleX`/`scaleY`/`rasterScale` mapping
+instead"; that mapping is a single global letterbox and never was a substitute. The docs now say
+transforms are *discarded* and name the casualties.
+
+**`TerminalContext.applyFill`** / **`applyStroke`** — **behaviour**. Warn once when
+`globalCompositeOperation` is `'destination-out'`. Shadows, filters and other composite modes stay
+silently ignored, but `destination-out` means canvas *erases* where the terminal *draws*, so the
+output is inverted rather than degraded.
 
 ## @ripl/3d
 
