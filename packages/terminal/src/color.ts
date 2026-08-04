@@ -10,10 +10,6 @@ import type {
     ColorRGBA,
 } from '@ripl/core';
 
-import {
-    CSS_COLOR_KEYWORDS,
-} from './constants';
-
 /** ANSI SGR reset sequence. */
 export const ANSI_RESET = '\x1b[0m';
 
@@ -35,32 +31,16 @@ const NO_PAINT_KEYWORDS = new Set([
  */
 const ZERO_ALPHA_REGEX = /^(?:rgba|hsla|hsva)\([^)]*,\s*0\s*\)$/i;
 
-/** Unpacks a `0xRRGGBB` integer into an opaque RGBA tuple. */
-function unpackKeyword(value: number): ColorRGBA {
-    return [
-        (value >> 16) & 255,
-        (value >> 8) & 255,
-        value & 255,
-        1,
-    ];
-}
-
 /**
- * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the CSS
- * named colors and the first stop of a gradient or pattern (a character cell cannot interpolate,
- * so the first stop is the closest single color available).
+ * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the first
+ * stop of a gradient or pattern (a character cell cannot interpolate, so the first stop is the
+ * closest single color available).
  */
 function resolvePaint(color: string): ColorRGBA | undefined {
     const parsed = parseColor(color);
 
     if (parsed) {
         return parsed;
-    }
-
-    const keyword = CSS_COLOR_KEYWORDS[color.trim().toLowerCase()];
-
-    if (keyword !== undefined) {
-        return unpackKeyword(keyword);
     }
 
     if (isGradientString(color)) {

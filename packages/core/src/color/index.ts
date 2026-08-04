@@ -3,6 +3,10 @@ import {
 } from './constants';
 
 import {
+    parseKeyword,
+} from './keywords';
+
+import {
     parseHEX,
     parseHSL,
     parseHSLA,
@@ -28,6 +32,7 @@ import type {
 } from './types';
 
 
+export * from './keywords';
 export * from './parsers';
 export * from './serializers';
 export * from './utilities';
@@ -78,11 +83,19 @@ export function getColorParser(value: string): ColorParser | undefined {
     return PARSER_MAP.find(({ pattern }) => pattern.test(value));
 }
 
-/** Parses any supported color string into an RGBA tuple, or returns `undefined` if no parser matches. */
+/**
+ * Parses any supported color string into an RGBA tuple, or returns `undefined` if nothing matches.
+ *
+ * The functional and hexadecimal formats are tried first via {@link getColorParser}; anything left
+ * over falls through to {@link parseKeyword}, so a CSS named color such as `red` or `transparent`
+ * resolves without a CSSOM.
+ */
 export function parseColor(value: string): ColorRGBA | undefined {
     const parser = getColorParser(value);
 
     if (parser) {
         return parser.parse(value);
     }
+
+    return parseKeyword(value);
 }

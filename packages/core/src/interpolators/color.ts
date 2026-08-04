@@ -1,5 +1,5 @@
 import {
-    getColorParser,
+    parseColor,
     serializeRGBA,
 } from '../color';
 
@@ -17,15 +17,12 @@ import type {
 
 /** Interpolator factory that smoothly transitions between two CSS color strings by interpolating their RGBA channels. */
 export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) => {
-    const parserA = getColorParser(valueA);
-    const parserB = getColorParser(valueB);
+    const rgbaA = parseColor(valueA);
+    const rgbaB = parseColor(valueB);
 
-    if (!(parserA && parserB)) {
+    if (!(rgbaA && rgbaB)) {
         return position => position > 0.5 ? valueB : valueA;
     }
-
-    const rgbaA = parserA.parse(valueA);
-    const rgbaB = parserB.parse(valueB);
 
     const interpolators = rgbaA.map((value, index) => {
         return interpolateNumber(value, rgbaB[index]);
@@ -40,4 +37,4 @@ export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) =>
 };
 
 /** Predicate that matches when the value is a parseable color string. */
-interpolateColor.test = value => typeIsString(value) && !!getColorParser(value);
+interpolateColor.test = value => typeIsString(value) && !!parseColor(value);

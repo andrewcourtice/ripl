@@ -4,7 +4,7 @@ outline: "deep"
 
 # Color
 
-Ripl includes a complete color toolkit for parsing, converting, and serializing colors across multiple color spaces. Any CSS color string you pass to `fill` or `stroke` is automatically parsed, but you can also use the color utilities directly for programmatic color manipulation, palette generation, and animation.
+Ripl includes a complete color toolkit for parsing, converting, and serializing colors across multiple color spaces. Every format in the [supported color spaces](#supported-color-spaces) table — hexadecimal, the functional notations, and the CSS named colors — is parsed automatically when you pass it to `fill` or `stroke`, but you can also use the color utilities directly for programmatic color manipulation, palette generation, and animation.
 
 > [!NOTE]
 > For the full API, see the [Color API Reference](/docs/api/@ripl/core/).
@@ -146,6 +146,9 @@ watch(pickedColor, redraw);
 | HSLA | `parseHSLA` | `serializeHSLA` | `hsla(216, 100%, 61%, 0.5)` |
 | HSV | `parseHSV` | `serializeHSV` | `hsv(216, 77%, 100%)` |
 | HSVA | `parseHSVA` | `serializeHSVA` | `hsva(216, 77%, 100%, 0.5)` |
+| Named | `parseKeyword` | — | `red`, `rebeccapurple`, `transparent` |
+
+Named colors are the CSS Color Module Level 4 keywords. They are matched case-insensitively, and `transparent` resolves to `rgba(0, 0, 0, 0)`. There is no serializer — a color rarely lands back on a keyword's exact value.
 
 ## Parsing Colors
 
@@ -159,6 +162,9 @@ import {
 parseColor('#3a86ff'); // [58, 134, 255, 1]
 parseColor('rgb(58, 134, 255)'); // [58, 134, 255, 1]
 parseColor('hsl(216, 100%, 61%)'); // [58, 134, 255, 1]
+parseColor('red'); // [255, 0, 0, 1]
+parseColor('transparent'); // [0, 0, 0, 0]
+parseColor('currentColor'); // undefined
 ```
 
 For a specific format, use the named parser:

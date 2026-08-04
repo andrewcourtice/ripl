@@ -58,6 +58,14 @@ describe('Interpolators', () => {
             expect(b).toBeCloseTo(127.5, 1);
         });
 
+        // Named colors had no parser, so the factory fell back to a hard step at the halfway point.
+        test('Should interpolate between named colors', () => {
+            const interpolator = interpolateColor('red', 'blue');
+            const result = interpolator(0.5);
+
+            expect(result).toBe('rgba(127.5, 0, 127.5, 1)');
+        });
+
         test('Should preserve alpha interpolation', () => {
             const interpolator = interpolateColor('rgba(0, 0, 0, 0.2)', 'rgba(0, 0, 0, 0.8)');
             const result = interpolator(0.5);

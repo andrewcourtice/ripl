@@ -72,8 +72,6 @@ describe('Shape3D', () => {
 
     describe('Fill parsing', () => {
 
-        // 3D-1: `parseColor` returns undefined for anything but hex/rgb/hsl, and the unguarded
-        // `triangulateFacesFlat` then threw out of the whole render pass.
         test('Should render a shape whose fill is a named colour', () => {
             const context = createFixture();
             const scene = createScene(context, {
@@ -89,20 +87,20 @@ describe('Shape3D', () => {
             expect(faceFills()).toHaveLength(6);
         });
 
+        // 3D-1: the unguarded `triangulateFacesFlat` threw out of the whole render pass here.
         test('Should degrade an unparseable fill to the raw style string', () => {
             const context = createFixture();
             const scene = createScene(context, {
                 children: [
                     createCube({
                         size: 1,
-                        fill: 'red',
+                        fill: 'currentColor',
                     }),
                 ],
             });
 
-            scene.render();
-
-            expect(faceFills()[0].fillStyle).toBe('red');
+            expect(() => scene.render()).not.toThrow();
+            expect(faceFills()[0].fillStyle).toBe('currentColor');
         });
 
         test('Should render a shape whose fill is a gradient', () => {

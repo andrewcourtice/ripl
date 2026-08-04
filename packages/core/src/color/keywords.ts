@@ -1,9 +1,15 @@
+import type {
+    ColorRGBA,
+} from './types';
+
 /**
  * The CSS Color Module Level 4 named colors, as packed `0xRRGGBB` integers.
  *
- * A terminal has no CSSOM to resolve a keyword against, so the table is the only way `fill: 'red'`
- * can reach the rasterizer as anything other than "no color". Not exported from the package
- * barrel — {@link colorToAnsiFg} is the public surface.
+ * Only a browser has a CSSOM to resolve a keyword against, so the table is the only way `fill:
+ * 'red'` reaches a canvas, SVG or terminal backend as anything other than "no color". Channels are
+ * packed into one number rather than a tuple to keep the table small; {@link parseKeyword} unpacks
+ * on lookup. `transparent` is absent — it is the one keyword carrying an alpha, and packing it here
+ * would make it read as opaque black.
  */
 export const CSS_COLOR_KEYWORDS: Record<string, number> = {
     aliceblue: 0xf0f8ff,
@@ -155,3 +161,32 @@ export const CSS_COLOR_KEYWORDS: Record<string, number> = {
     yellow: 0xffff00,
     yellowgreen: 0x9acd32,
 };
+
+/**
+ * Parses a CSS named color into an RGBA tuple, tolerating any casing and surrounding whitespace.
+ *
+ * Unlike the format parsers this returns `undefined` rather than throwing, because a keyword cannot
+ * be recognised by shape — an unknown name is indistinguishable from a name of a color space Ripl
+ * does not implement.
+ *
+ * @param value - The color keyword, e.g. `red`, `REBECCAPURPLE`, or `transparent`.
+ * @returns The RGBA tuple, or `undefined` when the name is not a CSS color keyword.
+ */
+export function parseKeyword(value: string): ColorRGBA | undefined {
+    const keyword = value.trim().toLowerCase();
+
+    if (keyword === 'transparent') {
+        return [0, 0, 0, 0];
+    }
+
+    const packed = CSS_COLOR_KEYWORDS[keyword];
+
+    if (packed !== undefined) {
+        return [
+            (packed >> 16) & 255,
+            (packed >> 8) & 255,
+            packed & 255,
+            1,
+        ];
+    }
+}
