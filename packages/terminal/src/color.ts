@@ -25,11 +25,7 @@ const NO_PAINT_KEYWORDS = new Set([
     'transparent',
 ]);
 
-/**
- * A functional paint whose alpha argument is an explicit integer zero. The shared `rgba`/`hsla`/
- * `hsva` patterns only accept a fractional or percentage alpha, so `rgba(0, 0, 0, 0)` parses as
- * nothing at all and would otherwise be painted as an unresolvable color rather than skipped.
- */
+/** A zero alpha written loosely enough that the shared patterns reject it (`hsla(0, 100, 50, 0)`, stray whitespace), which would otherwise paint as an unresolvable color rather than being skipped. */
 const ZERO_ALPHA_REGEX = /^(?:rgba|hsla|hsva)\([^)]*,\s*0\s*\)$/i;
 
 /**

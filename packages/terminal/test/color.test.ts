@@ -54,11 +54,13 @@ describe('colorToAnsiFg', () => {
         expect(colorToAnsiFg('rgba(255, 0, 0, 0.0)')).toBeUndefined();
     });
 
-    // The shared rgba/hsla/hsva patterns reject an integer alpha, so this parses as nothing at all
-    // and has to be recognised as transparent before it reaches the parsers.
-    test('Should return undefined for an integer zero alpha the shared parsers reject', () => {
+    test('Should return undefined for an integer zero alpha', () => {
         expect(colorToAnsiFg('rgba(255, 0, 0, 0)')).toBeUndefined();
         expect(colorToAnsiFg('hsla(0, 100%, 50%, 0)')).toBeUndefined();
+    });
+
+    test('Should return undefined for a zero alpha the shared patterns reject', () => {
+        expect(colorToAnsiFg('hsla(0, 100, 50, 0)')).toBeUndefined();
     });
 
     test('Should return undefined for zero opacity', () => {
