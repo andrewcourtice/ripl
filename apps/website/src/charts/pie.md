@@ -1,6 +1,6 @@
 # Pie Chart
 
-The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Hover any slice to see a tooltip, and adjust the inner radius in the demo below.
+The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Slices are filled with their solid series color and separated by a constant-width gap (`padWidth`). Hover any slice to see a tooltip and dim the rest, and adjust the inner radius in the demo below.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -19,6 +19,9 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
         <RiplChartConfig :config="config" extra-title="Pie" :extras-reset="reset">
             <RiplField label="Inner radius" option="innerRadius">
                 <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.9" :step="0.05" />
+            </RiplField>
+            <RiplField label="Segment gap" option="padWidth">
+                <RiplInputRange v-model="extras.padWidth" :min="0" :max="10" :step="1" />
             </RiplField>
             <RiplField label="Labels" option="labels">
                 <RiplSelect v-model="extras.labels">
@@ -63,6 +66,7 @@ const COUNTRIES = [
 
 const { extras, reset } = useChartExtras({
     innerRadius: 0,
+    padWidth: 2,
     labels: 'off' as 'off' | 'inside' | 'outside',
 });
 
@@ -98,6 +102,7 @@ let data = COUNTRIES.map(label => getDataItem(label));
 function buildOptions() {
     return {
         innerRadius: extras.innerRadius,
+        padWidth: extras.padWidth,
         labels: labelsOption(),
         ...buildCommonOptions(config),
     };
@@ -251,6 +256,8 @@ createPieChart('#container', {
     // Non-zero turns the pie into a donut. A value of 1 or less is a fraction of the outer
     // radius; anything larger is read as absolute pixels.
     innerRadius: 60,
+    // Segments are filled solid and separated by a gap of this constant width, in pixels.
+    padWidth: 2,
     labels: 'outside',
     legend: { position: 'right' },
     format: 'percentage',

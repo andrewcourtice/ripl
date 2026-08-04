@@ -78,7 +78,8 @@ all.
   scale with the segment. `padWidth` takes precedence wherever it is
   **provided** — `padWidth: 0` means *no padding*, not *fall back to
   `padAngle`* — so animating it up from `0` is continuous. It is distinct from
-  `gap`, which separates non-radial marks along an axis.
+  `gap`, which separates non-radial marks along an axis. Charts drawing radial
+  segments (`pie`, `polar-area`, `sunburst`, `chord`) default it to `2`.
 - **Radii accept `number | \`${number}%\``**: a value ≤ 1 or a percent string is a
   fraction of the outer radius, a value > 1 is pixels. `innerRadius`,
   `outerRadius`.

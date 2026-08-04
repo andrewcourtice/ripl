@@ -1,6 +1,6 @@
 # Polar Area Chart
 
-The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle; only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default).
+The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle; only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default). Segments are filled with their solid series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -23,8 +23,8 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
             <RiplField label="Max radius" option="maxRadiusRatio">
                 <RiplInputRange v-model="extras.maxRadiusRatio" :min="0.2" :max="0.5" :step="0.05" />
             </RiplField>
-            <RiplField label="Segment gap" option="padAngle">
-                <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.1" :step="0.01" />
+            <RiplField label="Segment gap" option="padWidth">
+                <RiplInputRange v-model="extras.padWidth" :min="0" :max="10" :step="1" />
             </RiplField>
             <RiplField label="Grid rings" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="2" :max="8" :step="1" />
@@ -69,7 +69,7 @@ const LABELS = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Sta
 const { extras, reset } = useChartExtras({
     innerRadius: 0.15,
     maxRadiusRatio: 0.45,
-    padAngle: 0.02,
+    padWidth: 2,
     levels: 4,
     labels: 'off' as 'off' | 'inside' | 'outside',
 });
@@ -107,7 +107,7 @@ function buildOptions() {
     return {
         innerRadius: extras.innerRadius,
         maxRadiusRatio: extras.maxRadiusRatio,
-        padAngle: extras.padAngle,
+        padWidth: extras.padWidth,
         levels: extras.levels,
         labels: labelsOption(),
         ...buildCommonOptions(config),
@@ -253,7 +253,9 @@ createPolarAreaChart('#container', {
     // How far the longest segment reaches, as a fraction of the chart size. 0.5 touches the
     // edge, so this is the outer bound (0–0.5).
     maxRadiusRatio: 0.45,
-    // Gap between adjacent segments, in radians.
+    // Gap between adjacent segments, in pixels — a constant width whatever the radius.
+    padWidth: 2,
+    // Deprecated: an angular gap, in radians, that widens with radius. Ignored while `padWidth` is set.
     padAngle: 0.02,
     // Concentric grid rings.
     levels: 4,

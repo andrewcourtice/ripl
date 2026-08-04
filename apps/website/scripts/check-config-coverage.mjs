@@ -124,6 +124,13 @@ const CHART_EXCLUSIONS = {
     scatter: {
         overview: 'the scrub strip is category-axis only; scatter has a continuous x, so it draws none',
     },
+    // The panel drives `padWidth`, which wins wherever it is set, so a `padAngle` control would be inert.
+    'polar-area': {
+        padAngle: 'deprecated in favour of `padWidth`, which the panel controls',
+    },
+    chord: {
+        padAngle: 'deprecated in favour of `padWidth`, which the panel controls',
+    },
 };
 
 /** Reads the `option="…"` attributes inside a chunk of template markup. */

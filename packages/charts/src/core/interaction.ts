@@ -47,10 +47,10 @@ export interface HoverHighlightOptions<TElement extends Element> {
         /** Easing applied to the highlight/restore transition. */
         ease: Ease;
     };
-    /** Target state applied while hovered. */
-    highlight: StateOf<TElement>;
-    /** Target state applied when the pointer leaves. */
-    restore: StateOf<TElement>;
+    /** Target state applied while hovered. Omit for a chart whose hover treatment is carried entirely by `onEnter`/`onLeave`. */
+    highlight?: StateOf<TElement>;
+    /** Target state applied when the pointer leaves. Omit alongside `highlight`. */
+    restore?: StateOf<TElement>;
     /** Optional tooltip to show/hide alongside the highlight. */
     tooltip?: HoverTooltip;
     /** Resolves the tooltip anchor point (called on enter). */
@@ -130,6 +130,10 @@ export function applyHoverHighlight<TElement extends Element>(
 
         onEnter?.({ ...pointer });
 
+        if (!highlight) {
+            return;
+        }
+
         const { duration, ease } = animation();
 
         renderer.transition(element, {
@@ -143,6 +147,10 @@ export function applyHoverHighlight<TElement extends Element>(
         tooltip?.hide();
 
         onLeave?.({ ...pointer });
+
+        if (!restore) {
+            return;
+        }
 
         const { duration, ease } = animation();
 

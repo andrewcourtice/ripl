@@ -21,6 +21,7 @@ import type {
 } from '../core/options';
 
 import {
+    DEFAULT_SEGMENT_PAD_WIDTH,
     normalizeSegmentLabels,
     resolveValueFormat,
 } from '../core/options';
@@ -73,7 +74,6 @@ import {
     createPolyline,
     elementIsArc,
     scaleContinuous,
-    setColorAlpha,
     TAU,
 } from '@ripl/core';
 
@@ -81,9 +81,6 @@ import {
     arrayJoin,
     numberSum,
 } from '@ripl/utilities';
-
-/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.55;
 
 /** Slices narrower than this angle (radians) omit their label to avoid clutter. */
 const MIN_LABEL_ANGLE = 0.15;
@@ -102,6 +99,8 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     colorBy?: keyof TData | ((item: TData) => string);
     /** Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values are absolute pixels. Defaults to 0 (a solid pie). */
     innerRadius?: number;
+    /** Gap between adjacent segments, in logical pixels. Segments face each other with parallel edges a constant distance apart, rather than a wedge that widens with radius. Defaults to 2; pass 0 for touching segments. */
+    padWidth?: number;
     /** Legend configuration. Shown by default; pass `false` to hide. */
     legend?: ChartLegendInput;
     /**
@@ -166,7 +165,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
     public async render() {
         return super.render((scene, renderer) => {
-            const { data, key, value, label, colorBy } = this.options;
+            const { data, key, value, label, colorBy, padWidth = DEFAULT_SEGMENT_PAD_WIDTH } = this.options;
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
@@ -204,7 +203,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             const total = numberSum(activeData, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
             const offset = TAU / 4;
-            const padAngle = activeData.length <= 1 ? 0 : 0.1 / activeData.length;
+            const segmentPad = activeData.length <= 1 ? 0 : padWidth;
 
             let startAngle = -offset;
 
@@ -233,7 +232,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     cy,
                     startAngle,
                     endAngle,
-                    padAngle,
+                    padWidth: segmentPad,
                     radius,
                     innerRadius,
                     item,
@@ -260,7 +259,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     cy: segmentCy,
                     startAngle: segmentStart,
                     endAngle: segmentEnd,
-                    padAngle: segmentPad,
+                    padWidth: segmentPad,
                     radius,
                     innerRadius,
                 } = item;
@@ -270,10 +269,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     cx: segmentCx,
                     cy: segmentCy,
                     startAngle: segmentStart,
-                    padAngle: segmentPad,
-                    stroke: segmentColor,
-                    fill: setColorAlpha(segmentColor, REST_ALPHA),
-                    lineWidth: 2,
+                    padWidth: segmentPad,
+                    fill: segmentColor,
                     endAngle: segmentStart,
                     radius: 0,
                     innerRadius: 0,
@@ -285,7 +282,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 });
 
                 this._attachSegmentHover(segmentArc, {
-                    color: segmentColor,
                     value: segmentValue,
                     label: segmentLabel,
                     key: segmentKey,
@@ -336,14 +332,14 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     innerRadius,
                     startAngle: segmentStart,
                     endAngle: segmentEnd,
-                    padAngle: segmentPad,
+                    padWidth: segmentPad,
                 } = item;
 
                 const arc = group.query('arc') as Arc;
                 const labelText = group.query('text') as Text;
                 const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? (arc.stroke as string);
+                const resolvedColor = item.color ?? (arc.fill as string);
 
                 const arcData = {
                     cx: segmentCx,
@@ -352,14 +348,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     innerRadius,
                     startAngle: segmentStart,
                     endAngle: segmentEnd,
-                    padAngle: segmentPad,
-                    stroke: resolvedColor,
-                    fill: setColorAlpha(resolvedColor, REST_ALPHA),
+                    fill: resolvedColor,
                 } as Partial<ArcState>;
 
+                arc.padWidth = segmentPad;
                 arc.data = arcData;
                 this._attachSegmentHover(arc, {
-                    color: resolvedColor,
                     value: item.value,
                     label: item.label,
                     key: item.key,
@@ -473,11 +467,10 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
         });
     }
 
-    private _attachSegmentHover(arc: Arc, segment: { color: string;
-        value: number;
+    private _attachSegmentHover(arc: Arc, segment: { value: number;
         label: string;
         key: string; }) {
-        const { color, value, label, key } = segment;
+        const { value, label, key } = segment;
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -501,10 +494,15 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 };
             },
             content: () => formatValue(value),
-            highlight: { fill: color },
-            restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
+            // Segments are solid at rest, so the hover reads as the others dimming rather than this one lifting.
+            onEnter: point => {
+                this.highlightSeries(key);
+                this.emit('segmententer', payload(point));
+            },
+            onLeave: point => {
+                this.highlightSeries(null);
+                this.emit('segmentleave', payload(point));
+            },
             onClick: point => this.emit('segmentclick', payload(point)),
         });
     }

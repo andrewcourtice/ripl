@@ -1,6 +1,6 @@
 # Sunburst Chart
 
-The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update.
+The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update. Segments are filled with their solid series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -14,7 +14,11 @@ The **Sunburst Chart** displays hierarchical data as concentric rings, where eac
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Sunburst" :extras-reset="reset">
+            <RiplField label="Segment gap" option="padWidth">
+                <RiplInputRange v-model="extras.padWidth" :min="0" :max="10" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +30,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -36,6 +41,10 @@ import {
     ref,
     watch,
 } from 'vue';
+
+const { extras, reset } = useChartExtras({
+    padWidth: 2,
+});
 
 const config = useChartConfig({
     features: {
@@ -101,14 +110,21 @@ let data = generateData();
 
 const example = ref();
 
+function buildOptions() {
+    return {
+        padWidth: extras.padWidth,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createSunburstChart(context, {
         data,
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 
 function randomize() {
@@ -194,6 +210,8 @@ createSunburstChart('#container', {
     // Each node carries `id`, `label`, `value` and optional `children`; the ring depth follows
     // the nesting.
     data,
+    // Gap between adjacent segments, in pixels — a constant width whatever the radius.
+    padWidth: 2,
     legend: { position: 'right' },
     format: 'number',
 });
