@@ -15,8 +15,43 @@ export const PARITY_SCENE_IDS = [
     'group-opacity',
 ] as const;
 
-/** A single parity scene id. */
-export type ParitySceneId = typeof PARITY_SCENE_IDS[number];
+/**
+ * Scenes where canvas and SVG are **known** to diverge, each pinned to a band around the mismatch
+ * measured when it was characterized rather than to the parity threshold. They keep a decided gap
+ * honest: the suite stays green, the number is on the record, and either direction fails — a
+ * regression that widens the gap, or a fix that closes it without anyone updating the band.
+ *
+ * - `group-shadow` — `svg.md` S-18, measured at **14.3%**. `<feDropShadow>` writes
+ *   `dx`/`dy`/`stdDeviation` in the filter's user space, which inherits every ancestor `<g>`
+ *   transform; canvas shadow geometry is explicitly CTM-independent, so inside a `scale(2)` group
+ *   SVG casts the shadow at twice the offset and blur. Not fixed: `<feDropShadow>` takes one scalar
+ *   `stdDeviation` and an axis-aligned offset, so counter-transforming it closes the uniform-scale
+ *   case and still cannot reproduce canvas under rotation or a non-uniform scale.
+ * - `filter-shadow-order` — `svg.md` S-20, measured at **9.1%**. `_resolveElementFilter` emits
+ *   `filter="url(#shadow-…) <cssFilter>"`, so a CSS `blur()` blurs the shape **and** its drop
+ *   shadow; canvas derives the shadow from the filtered result and does not re-blur it. Not fixed:
+ *   correcting the order means composing both into one `<filter>` chain rather than concatenating
+ *   two `filter` list entries.
+ */
+export const KNOWN_DIVERGENCE_SCENES = [
+    {
+        id: 'group-shadow',
+        maxMismatch: 0.18,
+    },
+    {
+        id: 'filter-shadow-order',
+        maxMismatch: 0.12,
+    },
+] as const;
+
+/** A single parity scene id, whether it must match or is a pinned known divergence. */
+export type ParitySceneId = typeof PARITY_SCENE_IDS[number] | typeof KNOWN_DIVERGENCE_SCENES[number]['id'];
+
+/** Every scene the harness mounts, in mount order. */
+export const ALL_PARITY_SCENE_IDS = [
+    ...PARITY_SCENE_IDS,
+    ...KNOWN_DIVERGENCE_SCENES.map(scene => scene.id),
+] as ParitySceneId[];
 
 /** The width, in CSS pixels, every parity surface is mounted at. */
 export const PARITY_WIDTH = 260;

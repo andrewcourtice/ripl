@@ -36,7 +36,9 @@
         "build": "tsdown",
         "test:visual": "playwright test -c test/visual/playwright.config.ts charts.spec.ts",
         "test:visual:update": "playwright test -c test/visual/playwright.config.ts charts.spec.ts --update-snapshots",
-        "test:parity": "playwright test -c test/visual/playwright.config.ts parity.spec.ts"
+        "test:parity": "playwright test -c test/visual/playwright.config.ts parity.spec.ts",
+        "test:hit": "playwright test -c test/visual/playwright.config.ts hit.spec.ts",
+        "test:browser": "playwright test -c test/visual/playwright.config.ts parity.spec.ts hit.spec.ts"
     },
     "dependencies": {
         "@ripl/canvas": "workspace:^",

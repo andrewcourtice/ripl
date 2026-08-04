@@ -87,6 +87,7 @@ import type {
 
 import {
     stringUniqueId,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 type SVGVNode = VNode<SVGContextElement>;
@@ -109,6 +110,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _clipScopeStack: SVGVNode[];
     private _currentParentVNode: SVGVNode;
     private _vnodeStack: SVGVNode[];
+    private _inverseCTMCache: Map<Element, DOMMatrix | null>;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -125,7 +127,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         super('svg', target, svg, options);
 
-        // SVG hit testing runs against live DOM geometry, which already composes ancestor `<g>` transforms.
+        // `_isPointIn` maps the hit point through the live DOM's own CTM, so callers must not pre-map it.
         this.hitTestHonorsTransform = true;
         this._vtree = {
             id: '__root__',
@@ -158,6 +160,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._shadowCache = new Map();
         this._usedDefs = new Set();
         this._clipScopeStack = [];
+        this._inverseCTMCache = new Map();
         this._defs = createSVGElement('defs');
         this.element.appendChild(this._defs);
 
@@ -347,17 +350,40 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             : this.element.getElementById(id);
     }
 
+    // `getCTM` flushes layout, and a hit test runs against every rendered element on each pointer move.
+    private _resolveInverseCTM(element: SVGGraphicsElement): DOMMatrix | null {
+        if (this._inverseCTMCache.has(element)) {
+            return this._inverseCTMCache.get(element) ?? null;
+        }
+
+        // A partial DOM declares neither `getCTM` nor a transform to map through, so the raw point stands.
+        const ctm = typeIsFunction(element.getCTM) ? element.getCTM() : null;
+        const inverse = ctm ? ctm.inverse() : null;
+
+        this._inverseCTMCache.set(element, inverse);
+
+        return inverse;
+    }
+
     private _isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
         const element = this._resolveHitNode(path.id);
+
+        if (!(element instanceof SVGGeometryElement)) {
+            return false;
+        }
+
         const point = this.element.createSVGPoint();
 
         point.x = x;
         point.y = y;
 
-        return element instanceof SVGGeometryElement && (method === 'stroke'
-            ? element.isPointInStroke(point)
-            : element.isPointInFill(point)
-        );
+        // SVG 2 reads this point in the element's own space, but a hit arrives in the root's.
+        const inverse = this._resolveInverseCTM(element);
+        const local = inverse ? point.matrixTransform(inverse) : point;
+
+        return method === 'stroke'
+            ? element.isPointInStroke(local)
+            : element.isPointInFill(local);
     }
 
     private _addToVTree(contextElement: SVGContextElement): void {
@@ -407,6 +433,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _commit() {
         this._render();
         this._sweepDefs();
+
+        // A transform can change on any frame, so the inverses cannot outlive the DOM they were read from.
+        this._inverseCTMCache.clear();
     }
 
     /** Signals the start of a render pass; resets the virtual DOM tree, group-nesting pointer, and `<defs>` usage tracking at the outermost depth. */
@@ -774,6 +803,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._clipCache.clear();
         this._shadowCache.clear();
         this._usedDefs.clear();
+        this._inverseCTMCache.clear();
 
         this._vtree = {
             id: '__root__',
