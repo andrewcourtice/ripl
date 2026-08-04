@@ -163,6 +163,14 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
     private _depth = 0;
     private _getCachedFaces: CachedFunction<() => Face3D[]>;
+    private _hitFaceCount = 0;
+    private _hitFaceOffsets = new Uint32Array(0);
+
+    // Reused across frames and overwritten in place, so a frame no one hit-tests allocates nothing.
+    private _hitPoints = new Float32Array(0);
+
+    // Not `_hitFaceCount > 0`: a rendered shape with no faces hit-tests as an empty path, not a box.
+    private _hasHitGeometry = false;
 
     /** The X position of the shape's origin in world space. */
     public get x() {
@@ -348,7 +356,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const baseRGBA = parseColor(baseFillStyle);
             const matrix = this.getModelMatrix();
 
+            // The projection moves every frame, so any built path is dropped and rebuilt on demand.
             this.hitPath = undefined;
+            this._hasHitGeometry = false;
 
             if (context.renderStrategy !== 'gpu') {
                 return this._renderCPU(context, faces, baseRGBA, baseFillStyle, matrix);
@@ -370,13 +380,16 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     // any shape that is not a closed, consistently wound solid. The cost is that every face of a
     // closed shape is filled, and with `fill` alpha below 1 the hidden ones bleed through.
     private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
-        const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
 
         // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
         const state = context.captureFaceState(this.getWorldTransform());
 
+        this._resetHitGeometry(faces);
+
         let nearestDepth = Infinity;
+        let hitCursor = 0;
+        let hitFace = 0;
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
@@ -399,17 +412,20 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 state,
             });
 
-            this._traceFaceHitPath(hitPath, points);
+            hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
         }
 
-        this.hitPath = hitPath;
+        this._hasHitGeometry = true;
         this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
+    // Redundant-looking on a backend that holds the geometry, but it is the only source of `_depth`.
     private _renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
-        const hitPath = context.createPath(`${this.id}:hit`);
+        this._resetHitGeometry(faces);
 
         let nearestDepth = Infinity;
+        let hitCursor = 0;
+        let hitFace = 0;
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
@@ -417,25 +433,79 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
             nearestDepth = Math.min(nearestDepth, numberSum(points, p => p[2]) / points.length);
 
-            this._traceFaceHitPath(hitPath, points);
+            hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
         }
 
-        this.hitPath = hitPath;
+        this._hasHitGeometry = true;
         this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
-    private _traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {
-        hitPath.moveTo(points[0][0], points[0][1]);
+    private _resetHitGeometry(faces: Face3D[]): void {
+        const coordinateCount = countFaceVertices(faces) * 2;
 
-        for (let idx = 1; idx < points.length; idx++) {
-            hitPath.lineTo(points[idx][0], points[idx][1]);
+        if (this._hitPoints.length < coordinateCount) {
+            this._hitPoints = new Float32Array(coordinateCount);
+        }
+
+        if (this._hitFaceOffsets.length < faces.length + 1) {
+            this._hitFaceOffsets = new Uint32Array(faces.length + 1);
+        }
+
+        this._hitFaceCount = faces.length;
+    }
+
+    private _writeFaceHitPoints(faceIndex: number, offset: number, points: ProjectedPoint[]): number {
+        const buffer = this._hitPoints;
+
+        let cursor = offset;
+
+        for (const point of points) {
+            buffer[cursor++] = point[0];
+            buffer[cursor++] = point[1];
+        }
+
+        this._hitFaceOffsets[faceIndex] = offset;
+        this._hitFaceOffsets[faceIndex + 1] = cursor;
+
+        return cursor;
+    }
+
+    private _getHitPath(): ContextPath | undefined {
+        if (!this._hasHitGeometry || !this.context) {
+            return undefined;
+        }
+
+        return this.hitPath ??= this._buildHitPath(this.context);
+    }
+
+    private _buildHitPath(context: Context): ContextPath {
+        const hitPath = context.createPath(`${this.id}:hit`);
+        const offsets = this._hitFaceOffsets;
+
+        for (let idx = 0; idx < this._hitFaceCount; idx++) {
+            this._traceFaceHitPath(hitPath, offsets[idx], offsets[idx + 1]);
+        }
+
+        return hitPath;
+    }
+
+    private _traceFaceHitPath(hitPath: ContextPath, start: number, end: number): void {
+        const points = this._hitPoints;
+
+        hitPath.moveTo(points[start], points[start + 1]);
+
+        for (let idx = start + 2; idx < end; idx += 2) {
+            hitPath.lineTo(points[idx], points[idx + 1]);
         }
 
         hitPath.closePath();
     }
 
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        if (!this.context || !this.hitPath) {
+        const context = this.context;
+        const hitPath = this._getHitPath();
+
+        if (!context || !hitPath) {
             return super.intersectsWith(x, y, options);
         }
 
@@ -443,9 +513,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             isPointer = false,
         } = options || {};
 
-        const isAnyIntersecting = () => !!(this.hitPath && this.context) && (
-            this.context.isPointInStroke(this.hitPath, x, y) ||
-            this.context.isPointInPath(this.hitPath, x, y)
+        const isAnyIntersecting = () => (
+            context.isPointInStroke(hitPath, x, y) ||
+            context.isPointInPath(hitPath, x, y)
         );
 
         if (!isPointer) {
@@ -455,7 +525,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
 
         return hitTest
-            ? hitTest(this.context, this.hitPath, x, y)
+            ? hitTest(context, hitPath, x, y)
             : isAnyIntersecting();
     }
 
@@ -482,14 +552,18 @@ function computeTriangleNormal(a: Vector3, b: Vector3, c: Vector3): Vector3 {
     return [nx / len, ny / len, nz / len];
 }
 
-function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
-    let vertexCount = 0;
+function countFaceVertices(faces: Face3D[]): number {
+    let count = 0;
 
     for (const face of faces) {
-        vertexCount += face.vertices.length;
+        count += face.vertices.length;
     }
 
-    const data = new Float32Array(vertexCount * 10);
+    return count;
+}
+
+function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
+    const data = new Float32Array(countFaceVertices(faces) * 10);
     const cr = color[0] / 255;
     const cg = color[1] / 255;
     const cb = color[2] / 255;

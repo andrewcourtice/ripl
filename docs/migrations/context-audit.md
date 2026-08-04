@@ -834,6 +834,18 @@ not a preference: `new WebGPUContext3D(…, { meta: { renderStrategy: 'cpu' } })
 shape into the CPU painter, which that class neither draws nor clears — a blank canvas plus a face
 buffer growing without bound. A `meta.renderStrategy` supplied by a caller is now ignored.
 
+### Performance
+
+**`Shape3D`'s hit path** — **behaviour**. Built on demand the first time `intersectsWith` needs it,
+instead of traced face by face on every render. `_renderCPU` and `_renderGPU` called
+`context.createPath` and then one `moveTo`, N-1 `lineTo` and one `closePath` per face, every frame,
+whether or not anything ever hit-tested the shape: on a 9 000-face mesh that is a fresh `Path2D`
+and ~45 000 native calls per frame, thrown away unread. The projection loop is unchanged — it is
+still what produces `_depth`, and so `zIndex` — and now writes the projected screen-space points
+into a `Float32Array` reused across frames. `intersectsWith` answers identically, `pointerEvents`
+semantics and the never-rendered bounding-box fallback included; the path is a pure function of the
+projected points, so no output changes.
+
 ### Known gaps (decided, not fixed)
 
 **No back-face culling on the CPU path.** Every face of a closed shape is transformed, shaded,
