@@ -73,7 +73,7 @@ public get children() {
 
 **Issue:** `_transitionMap` and a per-call symbol-keyed `scopedTransitions` map held the same entries under the same keys, with removal hand-written in both the completion callback and the `onAbort` path.
 
-**Status:** Resolved. The per-call scope is a flat array of `{ elementId, transitionId, entry }` handles into the one map, and both removal paths go through a single `_removeTransition`. The entry reference is deliberately retained in the handle: `Transition.seek()` is valid after a transition has completed and must still drive its interpolator, which a map lookup would no longer find.
+**Status:** Resolved. The per-call scope is a flat array of `{ elementId, transitionId, entry }` handles into the one map, and both removal paths go through a single `_removeTransition`. The array is append-only and so outlives the map entries it points at, deliberately: `Transition.seek()` is valid after a transition has completed and must still drive its interpolator, which a map lookup would no longer find. Retention is unchanged from before the refactor — the previous per-call `Map` held the same entries for the same lifetime.
 
 ---
 
@@ -83,9 +83,15 @@ public get children() {
 
 **Issue:** Every hit test built a `flatMap` array, a `filter` array and an `arrayDedupe` `Set`-round-trip, plus — on any test with ≥2 hits — a `new Map` over *every* rendered element to recover paint order. Worse, `renderedElements` is rebuilt each frame in `markRenderStart` while `_getTrackedElements`' memo was only invalidated on a graph rebuild, so the memo could hand back elements from an older frame while paint order came from the current one (missing entries scored `-1`).
 
-**Status:** Resolved. Hits are collected in one pass into a single result array with a `Set` for dedupe; paint order is a memo rebuilt only when `renderedElements` changes; and `markRenderStart` invalidates the tracked-element memo at depth 0, so it can never outlive its frame. Regression test: *"hitTest should see an element that gained a listener after the memo was primed"* (`packages/core/test/context/context.test.ts`).
+**Status:** Resolved. Hits are collected in one pass into a single result array with a `Set` for dedupe; paint order is a memo rebuilt only when `renderedElements` changes; and `markRenderEnd` invalidates the tracked-element memo at depth 0, so it can never outlive its frame. Regression test: *"hitTest should see an element that gained a listener after the memo was primed"* (`packages/core/test/context/context.test.ts`).
+
+The invalidation sits at `markRenderEnd`, not `markRenderStart`, and a hit test issued while a pass is open bypasses the memo entirely. `Renderer._tick` runs user `onComplete` handlers inside `context.batch`, so a consumer can hit-test mid-paint; priming the memo there would have cached a *partial* `renderedElements` and served that truncated list until the next frame. Regression test: *"hitTest should not memoize the partial list a mid-frame hit test walks"*.
 
 The `element.has(event)` re-filter inside the collect pass looks redundant against the memo's own predicate but is **not** — `off()`, a spent `once()` and `destroy()` all leave the memo stale *within* a frame, and three existing tests cover exactly that. It stays.
+
+**Cost of the per-frame invalidation.** Only a frame that actually painted invalidates, and only the first hit test after it rebuilds. The hover path asks for three event names, so that rebuild is three `renderedElements.filter` passes plus the paint-order `Map`, where the previous code amortised the filters across frames and rebuilt the `Map` on every hit test. Measured on this machine (Node, synthetic list, one in four elements tracking the event): 131 µs → 158 µs per frame at 2 000 elements, 987 µs → 1 459 µs at 10 000. The `Map` build dominates either way; the marginal cost is the filters, and it is paid only while animating *and* hovering. A change-detection pass over the previous frame's list would recover it, at the price of retaining that list — not worth it at these numbers.
+
+**Known constraint.** The paint-order memo and the tracked-element memo both key off `Context.renderedElements`, and both are invalidated only where the context itself writes to it (`currentRenderElement`, `markRenderStart`, `markRenderEnd`). The field is public and mutable, so a caller that splices it directly would bypass all three invalidation points and get stale ordering. No in-repo code does. The field arguably wants to be a getter over a private array; that is an API change for a later PR.
 
 ---
 
@@ -117,23 +123,27 @@ The `element.has(event)` re-filter inside the collect pass looks redundant again
 
 **Issue:** `reconcileChildren` called `element.matches(selector)` per DOM child in the removal pass and again in the insert-position walk — a live DOM query per child per frame under SVG's `excludeSelectors: ['defs']`.
 
-**Status:** Resolved. Exclusions are resolved once per parent into a `Set`, which both passes read; a reconciler with no `excludeSelectors` shares a frozen empty set and allocates nothing.
+**Status:** Resolved. Exclusions are resolved once per parent into a `Set`, which both passes read; a reconciler with no `excludeSelectors` shares one empty set — typed `ReadonlySet` so no caller can write to it, though nothing enforces that at runtime — and allocates nothing.
 
 **Deferred:** the `wantedIds` / `existingChildren` / `claimed` allocations. Each is load-bearing (duplicate sibling ids, id→node lists, cache-fallback claims) and lazily allocating them buys a Map per parent at the cost of shared-mutable-state hazards.
 
 ---
 
-## 14. ~~Four independent surface↔screen mappings~~ ✅ FIXED
+## 14. ~~Five independent surface↔screen mappings~~ ✅ FIXED
 
-**Files:** `packages/dom/src/navigator.ts`, `packages/charts/src/components/navigator.ts`, `packages/devtools/src/highlight.ts`, `packages/webgpu/src/context.ts`
+**Files:** `packages/dom/src/context.ts`, `packages/dom/src/navigator.ts`, `packages/charts/src/components/navigator.ts`, `packages/devtools/src/highlight.ts`, `packages/webgpu/src/context.ts`
 
-**Issue:** Four hand-rolled implementations of the same mapping, disagreeing on the details: `DOMNavigator` cached the origin but applied **no scale at all**; the chart overview strip read `getBoundingClientRect()` **per pointer event**; devtools computed its own `rect.width / context.width`; webgpu duplicated `rescaleCanvas`'s DPR sizing and transform.
+**Issue:** Five hand-rolled implementations of the same mapping, disagreeing on the details: `DOMContext` subtracted a cached `getBoundingClientRect()` origin with **no scale at all**; `DOMNavigator` did the same; the chart overview strip read `getBoundingClientRect()` **per pointer event**; devtools computed its own `rect.width / context.width`; webgpu duplicated `rescaleCanvas`'s DPR sizing and transform.
 
-**Status:** Resolved. `packages/dom/src/surface.ts` now owns one `getSurfaceRect` / `createSurfaceOrigin` pair — a lazily re-measured origin with scroll, window-resize and context-resize invalidation, mapping to and from *logical* space per the coordinate doctrine. All three DOM consumers adopt it; webgpu delegates its hit-canvas sizing to `rescaleCanvas`.
+**Status:** Resolved. `packages/dom/src/surface.ts` owns one `getSurfaceRect` / `createSurfaceOrigin` pair — a lazily re-measured origin with scroll, window-resize, context-resize and pointer-enter invalidation, mapping to and from *logical* space per the coordinate doctrine. All four DOM consumers adopt it; webgpu delegates its hit-canvas sizing to `rescaleCanvas`.
 
-**Behaviour changes (intentional, both bugs):**
+**Behaviour changes (intentional, all bugs):**
 - The navigators now divide by the surface scale, so a CSS-scaled surface no longer mistakes display pixels for logical ones. Regression test: *"Should map gestures through the surface scale, not raw client pixels"* (`packages/dom/test/navigator.test.ts`).
+- `DOMContext` divides by the same scale, so hover, click and drag payloads land where the navigator's pan/zoom anchor does. On a CSS-scaled chart they previously disagreed by the scale factor. Regression test: *"Should map pointer coordinates through the surface scale"* (`packages/dom/test/context.test.ts`).
+- A cached origin is re-measured when the pointer enters the surface, so a layout shift that translates the chart without scrolling or resizing it (a dismissed banner above it) cannot strand every consumer on a stale origin — `DOMContext` already guarded this on `mouseenter`; the shared origin now does it for the navigators too. Regression tests: *"Should re-measure when the pointer enters after a layout translation"* (`packages/dom/test/surface.test.ts`) and *"Should follow the surface after a layout translation"* (`packages/charts/test/overview-navigator.test.ts`).
 - webgpu's `scaleX`/`scaleY` now describe the exact DPR transform its hit canvas installs rather than the floored backing store, matching every other canvas-backed context.
+
+Each consumer owns its own `SurfaceOrigin` (its own cache and its own listeners) — a chart with two navigators takes two measurements. One mapping, not one instance.
 
 ---
 
@@ -161,7 +171,7 @@ The `element.has(event)` re-filter inside the collect pass looks redundant again
 
 **Fixed (items 1–5, 7):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimized. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`. `stringUniqueId` builds its hex string via `Array.from(...).join('')`. SVG rendering reorders through the O(n) `reconcileNode` pass.
 
-**Fixed (items 8–10, 12–15):** The scene's render buffer became a derived view of the instruction stream; the renderer collapsed onto one transition store; `hitTest` dropped its per-move allocations and stopped reusing a previous frame's memo; SVG resolves a gradient's box once per element per frame; the vdom resolves exclusions once per parent; one shared surface-origin helper replaced four mappings (fixing the navigators' missing scale); and band/discrete scales convert through a keyed lookup.
+**Fixed (items 8–10, 12–15):** The scene's render buffer became a derived view of the instruction stream; the renderer collapsed onto one transition store; `hitTest` dropped its per-move allocations and stopped reusing a previous frame's memo; SVG resolves a gradient's box once per element per frame; the vdom resolves exclusions once per parent; one shared surface-origin helper replaced five mappings (fixing the missing scale in the navigators *and* in `DOMContext`); and band/discrete scales convert through a keyed lookup.
 
 **Remaining:**
 1. **Group.children caching** (#6) — deferred by design: callers (e.g. `Scene._collectInstructions`' z-index sort) mutate the returned array, so it must stay a fresh copy.

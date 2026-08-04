@@ -513,7 +513,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? options
             : () => options || {} as RendererTransitionOptions<TElement>;
 
-        // A per-call index into the transition map, not a second copy of it: the entries are shared.
+        // Append-only handles on the map's entries, kept past completion because `seek()` still has to drive their interpolators.
         const scope: ScopedTransition[] = [];
 
         const forEachScoped = (body: (entry: RendererTransition) => void) => scope.forEach(({ entry }) => body(entry));
