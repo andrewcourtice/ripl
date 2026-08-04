@@ -458,6 +458,47 @@ export function dashPixels(pattern: number[], offset: number, plot: PixelCallbac
     };
 }
 
+/**
+ * Widens a rasterization pass by stamping a round brush at every pixel it plots, so a stroke can be
+ * more than one dot thick. Thickness is geometry, not color depth: a braille cell is 2×4 dots, so a
+ * width is perfectly expressible even though each dot is only lit or unlit.
+ *
+ * The brush centres on a dot, so thickness quantises to an **odd** number of dots — widths of 1, 2,
+ * 3, 4 and 5 produce strokes 1, 3, 3, 5 and 5 dots across. Because the brush is round, caps and
+ * joins are always round; `lineCap`, `lineJoin` and `miterLimit` have no effect.
+ *
+ * Compose this *inside* {@link dashPixels}, never outside it: dash measures arc length by counting
+ * the pixels it receives, so thickening first would advance the pattern once per stamped dot rather
+ * than once per centreline dot.
+ *
+ * @param width - Stroke width in raster pixels.
+ * @param plot - The callback to widen.
+ * @returns A callback that stamps a brush per pixel, or `plot` itself for a hairline stroke.
+ */
+export function thickenPixels(width: number, plot: PixelCallback): PixelCallback {
+    if (!(width > 1)) {
+        return plot;
+    }
+
+    const radius = width / 2;
+    const extent = Math.floor(radius);
+    const offsets: number[] = [];
+
+    for (let dy = -extent; dy <= extent; dy++) {
+        for (let dx = -extent; dx <= extent; dx++) {
+            if (dx * dx + dy * dy <= radius * radius) {
+                offsets.push(dx, dy);
+            }
+        }
+    }
+
+    return (x, y) => {
+        for (let i = 0; i < offsets.length; i += 2) {
+            plot(x + offsets[i], y + offsets[i + 1]);
+        }
+    };
+}
+
 /** Computes the x-coordinates where a horizontal scanline crosses the edges of the given contours. */
 function scanlineCrossings(contours: Vertex[][], scanY: number): number[] {
     const crossings: number[] = [];

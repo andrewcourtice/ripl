@@ -28,7 +28,7 @@ The terminal context is a rasterizer onto a character grid, so parts of the canv
 | **Fill rule** | Even-odd only; a `nonzero` fill rule is ignored. |
 | **Gradients and patterns** | Resolved to a single color — the gradient's first stop, or the pattern's foreground. |
 | **Opacity and alpha** | A cell is lit or unlit, so `opacity` and a paint's own alpha darken the color toward an assumed dark background. Zero alpha draws nothing. |
-| **Stroke geometry** | `lineWidth`, `lineCap`, `lineJoin` and `miterLimit` are ignored — strokes are always one raster pixel wide. `lineDash`/`lineDashOffset` **are** honored, with arc length approximated by plotted-pixel count. |
+| **Stroke geometry** | `lineWidth` **is** honored, by stamping a round brush along the path. The brush centres on a dot, so thickness quantises to an odd number of dots — widths of 1, 2, 3, 4 and 5 give strokes 1, 3, 3, 5 and 5 dots across. `lineCap`, `lineJoin` and `miterLimit` are ignored: the brush makes every cap and join round. `lineDash`/`lineDashOffset` **are** honored, with arc length measured along the centreline and approximated by plotted-pixel count. |
 | **Shadows, filters, compositing** | Ignored. `globalCompositeOperation: 'destination-out'` warns: canvas *erases* where the terminal *draws*, so that geometry renders inverted rather than merely degraded. |
 
 Charts that rely on transforms (rotated axis titles, rotated symbols) render legibly but not identically to canvas.
