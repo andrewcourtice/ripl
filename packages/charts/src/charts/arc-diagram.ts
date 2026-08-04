@@ -462,6 +462,8 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                     stroke: setColorAlpha(color, 0.4),
                     lineWidth: linkWidth(link),
                     opacity: 0,
+                    // An open path's fill test closes it against its chord, so a large arc would swallow every smaller one beneath it.
+                    pointerEvents: 'stroke',
                     data: {
                         points,
                         opacity: 1,

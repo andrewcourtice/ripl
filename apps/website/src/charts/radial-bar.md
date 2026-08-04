@@ -1,6 +1,6 @@
 # Radial Bar Chart
 
-The **Radial Bar Chart** lays each category out as a concentric ring whose arc length encodes its value. This circular take on the bar chart reads well for a handful of comparable metrics or progress-style values. Each ring has a faint track behind a colored value arc that sweeps clockwise from the top.
+The **Radial Bar Chart** lays each category out as a concentric ring whose arc length encodes its value. This circular take on the bar chart reads well for a handful of comparable metrics or progress-style values. Each ring has a faint track behind a colored value arc that sweeps clockwise from the top. Value arcs are hit-tested on their stroke, so every ring is hoverable rather than only the outermost.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

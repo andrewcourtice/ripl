@@ -341,6 +341,8 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     stroke: setColorAlpha(itemColor, REST_ALPHA),
                     lineWidth: thickness,
                     lineCap,
+                    // An open arc's fill test closes it against its chord, so an outer bar would swallow every inner ring.
+                    pointerEvents: 'stroke',
                     data: {
                         endAngle,
                     } as Partial<ArcState>,
