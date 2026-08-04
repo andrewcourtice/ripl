@@ -32,8 +32,8 @@ export interface InteractionPoint {
     y: number;
 }
 
-/** Options describing how an element should respond to hover. */
-export interface HoverHighlightOptions<TElement extends Element> {
+/** Options describing how an element should respond to hover, beyond its {@link HoverHighlightStates}. */
+export interface HoverHighlightOptions {
     /** Renderer used to run the highlight/restore transitions. */
     renderer: Renderer;
     /**
@@ -47,10 +47,6 @@ export interface HoverHighlightOptions<TElement extends Element> {
         /** Easing applied to the highlight/restore transition. */
         ease: Ease;
     };
-    /** Target state applied while hovered. Omit for a chart whose hover treatment is carried entirely by `onEnter`/`onLeave`. */
-    highlight?: StateOf<TElement>;
-    /** Target state applied when the pointer leaves. Omit alongside `highlight`. */
-    restore?: StateOf<TElement>;
     /** Optional tooltip to show/hide alongside the highlight. */
     tooltip?: HoverTooltip;
     /** Resolves the tooltip anchor point (called on enter). */
@@ -70,6 +66,24 @@ export interface HoverHighlightOptions<TElement extends Element> {
     onClick?: (point: InteractionPoint) => void;
 }
 
+/**
+ * The pair of states a hover transitions between, given together or not at all: an element handed a
+ * `highlight` without the `restore` that undoes it would be stranded highlighted once the pointer left.
+ *
+ * @typeParam TElement - The element type the states are applied to.
+ */
+export type HoverHighlightStates<TElement extends Element> = {
+    /** Target state applied while hovered. */
+    highlight: StateOf<TElement>;
+    /** Target state applied when the pointer leaves, undoing `highlight`. */
+    restore: StateOf<TElement>;
+} | {
+    /** Omitted for a chart whose hover treatment is carried entirely by `onEnter`/`onLeave`. */
+    highlight?: undefined;
+    /** Omitted alongside `highlight`. */
+    restore?: undefined;
+};
+
 const HOVER_DISPOSERS = Symbol('hover-disposers');
 
 interface HoverHost {
@@ -83,7 +97,7 @@ interface HoverHost {
  */
 export function applyHoverHighlight<TElement extends Element>(
     element: TElement,
-    options: HoverHighlightOptions<TElement>
+    options: HoverHighlightOptions & HoverHighlightStates<TElement>
 ): void {
     const host = element as unknown as HoverHost;
 
