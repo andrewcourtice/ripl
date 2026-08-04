@@ -10,8 +10,11 @@ import type {
  * packed into one number rather than a tuple to keep the table small; {@link parseKeyword} unpacks
  * on lookup. `transparent` is absent — it is the one keyword carrying an alpha, and packing it here
  * would make it read as opaque black.
+ *
+ * Not exported from the package barrel — {@link parseKeyword} is the public surface. The table is
+ * mutable, so exporting it would let a consumer redefine `red` for every backend at once.
  */
-export const CSS_COLOR_KEYWORDS: Record<string, number> = {
+const CSS_COLOR_KEYWORDS: Record<string, number> = {
     aliceblue: 0xf0f8ff,
     antiquewhite: 0xfaebd7,
     aqua: 0x00ffff,

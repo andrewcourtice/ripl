@@ -32,13 +32,14 @@ import type {
 } from './types';
 
 
-export * from './keywords';
 export * from './parsers';
 export * from './serializers';
 export * from './utilities';
 export * from './scales';
 export * from './schemes';
 export * from './types';
+
+export { parseKeyword } from './keywords';
 
 const PARSER_MAP = [
     {
