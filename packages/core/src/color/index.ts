@@ -28,13 +28,6 @@ import type {
 } from './types';
 
 
-export * from './parsers';
-export * from './serializers';
-export * from './utilities';
-export * from './scales';
-export * from './schemes';
-export * from './types';
-
 const PARSER_MAP = [
     {
         pattern: PATTERNS.hex,
@@ -86,3 +79,10 @@ export function parseColor(value: string): ColorRGBA | undefined {
         return parser.parse(value);
     }
 }
+
+export * from './parsers';
+export * from './serializers';
+export * from './utilities';
+export * from './scales';
+export * from './schemes';
+export * from './types';
