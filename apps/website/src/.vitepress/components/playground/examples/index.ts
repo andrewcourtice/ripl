@@ -2,6 +2,8 @@ import animationCode from './animation.js?raw';
 
 import bezierEditorCode from './bezier-editor.js?raw';
 
+import boidsCode from './boids.js?raw';
+
 import circleCode from './circle.js?raw';
 
 import cubeCode from './cube.js?raw';
@@ -13,6 +15,8 @@ import multiple3dShapesCode from './multiple-3d-shapes.js?raw';
 import multipleShapesCode from './multiple-shapes.js?raw';
 
 import particleFountainCode from './particle-fountain.js?raw';
+
+import pongCode from './pong.js?raw';
 
 import rectangleCode from './rectangle.js?raw';
 
@@ -75,6 +79,16 @@ export const EXAMPLES: PlaygroundExample[] = [
         label: 'Particle Fountain',
         mode: '2d',
         code: particleFountainCode,
+    },
+    {
+        label: 'Boids Flocking',
+        mode: '2d',
+        code: boidsCode,
+    },
+    {
+        label: 'Pong',
+        mode: '2d',
+        code: pongCode,
     },
     {
         label: 'Cube',
