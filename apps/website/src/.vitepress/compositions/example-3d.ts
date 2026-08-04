@@ -72,6 +72,11 @@ export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Cam
             const radius = 5;
             const height = 1.5;
 
+            // Nothing in the scene moves under a camera orbit, so a world-fixed light would hold one face lit forever.
+            if (context.value) {
+                context.value.lightMode = 'camera';
+            }
+
             const loop = () => {
                 angle += speed;
                 camera.position = [

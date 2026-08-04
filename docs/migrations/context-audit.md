@@ -763,8 +763,21 @@ treat it as the fix arriving, not as a regression**:
   colours through a full rotation. `apps/website/src/demos/jet-engine`, `jet-engine-webgpu` and
   `piston-mechanism` all spin such parts.
 
-To keep the old appearance on a specific scene, set `lightMode: 'camera'` — which now genuinely
-means "headlight" — rather than reverting anything.
+The fix also makes the pairing between a light and what moves matter for the first time. An orbiting
+camera under a world-fixed light can look *more* static than it did before, because that is what a
+fixed light does when nothing in the scene actually moves: the same faces stay lit for the whole
+orbit, and the shape falls dark as the camera swings behind the light. Pair an orbiting camera with
+`lightMode: 'camera'`, which now genuinely means "headlight", and keep the default `'world'` for
+scenes that rotate their objects under a static camera. The website's shared `startRotation` helper
+sets `'camera'` for exactly this reason; the jet-engine and piston demos spin geometry and stay on
+`'world'`.
+
+One trap is worth calling out, because the old behaviour hid it. A world-fixed light aimed down an
+object's body diagonal sits at equal angles to three of its faces: the default
+`LIGHT_DIRECTION.topLeftFront` (`[-0.577, -0.577, -0.577]`) lights a cube's `+X`, `+Y` and `+Z` at
+an identical `0.704`, so correct shading renders it as an edgeless hexagon. The counter-rotating
+light used to break that tie by accident. Offset the light, or switch to `'camera'`, rather than
+reading it as a regression.
 
 ### Camera
 
