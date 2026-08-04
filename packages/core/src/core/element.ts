@@ -764,6 +764,9 @@ export class Element<
      * box when `local` is `true`. The world box applies this element's own and every ancestor
      * group's transform (mirroring the DOM's `getBoundingClientRect`); a rotated element yields a
      * conservative axis-aligned box.
+     *
+     * The box is a copy the caller owns: it is safe to mutate, and mutating it cannot corrupt the
+     * cache it was read from.
      * @param local - when `true`, returns the untransformed authored geometry instead of the world box.
      */
     public getBoundingBox(local = false): Box {
