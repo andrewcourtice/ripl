@@ -25,8 +25,6 @@ import type {
     DOMEventHandler,
 } from './dom';
 
-const INTERACTION_KEY = Symbol('interaction');
-
 interface InteractionState {
     left: number;
     top: number;
@@ -39,6 +37,8 @@ interface InteractionState {
     suppressClick: boolean;
     scheduleHitTest: ReturnType<typeof createFrameBuffer>;
 }
+
+const INTERACTION_KEY = Symbol('interaction');
 
 /** DOM-aware rendering context that extends the base `Context` with element mounting, resize observation, and interaction handling. */
 export abstract class DOMContext<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends Context<TElement, TMeta> {
