@@ -428,6 +428,33 @@ export class TerminalContext extends Context<Element> {
         this.emit('resize', null);
     }
 
+    /**
+     * Maps a point from the braille raster grid back into the logical space elements are authored
+     * in, undoing the letterbox mapping {@link TerminalContext.rescale} installs.
+     *
+     * The base implementation reads only the slope of `scaleX`/`scaleY` and so would drop the
+     * centring offset, placing a hit test on the non-limiting axis by the letterbox margin.
+     *
+     * @param x - X coordinate in raster space.
+     * @param y - Y coordinate in raster space.
+     * @returns The `[x, y]` pair in logical space.
+     */
+    public toLogicalPoint(x: number, y: number): [number, number] {
+        return [(x - this._offsetX) / this._rasterScale, (y - this._offsetY) / this._rasterScale];
+    }
+
+    /**
+     * Maps a point from logical space into the braille raster grid, matching what `scaleX`/`scaleY`
+     * do when drawing. The inverse of {@link TerminalContext.toLogicalPoint}.
+     *
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @returns The `[x, y]` pair in raster space.
+     */
+    public toSurfacePoint(x: number, y: number): [number, number] {
+        return [x * this._rasterScale + this._offsetX, y * this._rasterScale + this._offsetY];
+    }
+
     /** Homes the cursor and clears the rasterizer grid. */
     public clear(): void {
         this._output.write('\x1b[H');

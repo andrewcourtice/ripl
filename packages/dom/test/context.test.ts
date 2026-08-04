@@ -292,10 +292,11 @@ describe('DOMContext pointer state machine', () => {
         return element.events.map(({ type }) => type);
     }
 
-    function mouse(context: ReturnType<typeof create>, type: string, clientX: number, clientY: number): void {
+    function mouse(context: ReturnType<typeof create>, type: string, clientX: number, clientY: number, button = 0): void {
         context.element.dispatchEvent(new MouseEvent(type, {
             clientX,
             clientY,
+            button,
             bubbles: true,
         }));
     }
@@ -541,6 +542,22 @@ describe('DOMContext pointer state machine', () => {
         expect(releases).toHaveLength(1);
     });
 
+    // A boolean press flag lost the second release, leaving the gesture one mouseup short.
+    test('Should emit one mouseup per button across an overlapping press', () => {
+        const context = create();
+        const events: string[] = [];
+
+        context.on('mousedown', () => events.push('mousedown'));
+        context.on('mouseup', () => events.push('mouseup'));
+
+        mouse(context, 'mousedown', 50, 50);
+        mouse(context, 'mousedown', 50, 50, 2);
+        mouse(context, 'mouseup', 50, 50, 2);
+        mouse(context, 'mouseup', 50, 50);
+
+        expect(events).toEqual(['mousedown', 'mousedown', 'mouseup', 'mouseup']);
+    });
+
     test('Should not emit mouseup for a release that began outside the surface', () => {
         const context = create();
         const releases: unknown[] = [];
@@ -594,6 +611,30 @@ describe('DOMContext pointer state machine', () => {
 
         expect(contextEvents).toEqual(['mouseup']);
         expect(typesOf(element)).toEqual(['dragstart', 'mouseup', 'dragend']);
+    });
+
+    // No `click` follows a release outside the surface, so the flag stranded and swallowed the next one.
+    test('Should not suppress a later click after a drag released outside the surface', () => {
+        const context = create();
+        const element = createMockElement('a', [...DRAG_EVENTS, 'click']);
+        const contextEvents: string[] = [];
+
+        register(context, [element]);
+
+        context.on('click', () => contextEvents.push('click'));
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+
+        window.dispatchEvent(new MouseEvent('mouseup', {
+            clientX: 900,
+            clientY: 900,
+        }));
+
+        mouse(context, 'click', 100, 100);
+
+        expect(contextEvents).toEqual(['click']);
+        expect(typesOf(element)).toContain('click');
     });
 
     test('Should emit mousedown and mouseup on the topmost hit element', () => {

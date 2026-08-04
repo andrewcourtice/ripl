@@ -93,7 +93,7 @@ export interface ContextEventMap extends EventMap {
         /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
-    /** Emitted when a pointer button is released, carrying the release position; fires once per press, even when the release lands outside the surface. */
+    /** Emitted when a pointer button is released, carrying the release position; fires once per button press, even when the release lands outside the surface. */
     mouseup: {
         /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;

@@ -32,7 +32,7 @@ const PRESS_EVENTS = ['mousedown', ...DRAG_EVENTS];
 interface InteractionState {
     left: number;
     top: number;
-    pointerDown: boolean;
+    pointerButtons: Set<number>;
     dragElement: RenderElement | undefined;
     dragStartX: number;
     dragStartY: number;
@@ -180,7 +180,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         // Assigned unconditionally: a press that hits nothing must not inherit the last gesture's origin.
         state.dragElement = hitElements.find(element => DRAG_EVENTS.some(dragEvent => element.has(dragEvent)));
-        state.pointerDown = true;
+        state.pointerButtons.add(event.button);
         state.dragStartX = x;
         state.dragStartY = y;
         state.dragStarted = false;
@@ -277,6 +277,11 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         }));
     }
 
+    /** Whether a logical-space point lies inside the surface, and so will be followed by a `click`. */
+    private _isWithinSurface(x: number, y: number): boolean {
+        return x >= 0 && x <= this.width && y >= 0 && y <= this.height;
+    }
+
     /**
      * Closes out the gesture in flight, wherever the button was released.
      *
@@ -287,12 +292,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     private _handleMouseUp(event: MouseEvent): void {
         const state = this._interactionState;
 
-        // Both bindings see an in-surface release; clearing the press first makes the second a no-op.
-        if (!state?.pointerDown) {
+        // Per button, so a second button gets its own `mouseup` and the double-bound handler dedupes.
+        if (!state?.pointerButtons.delete(event.button)) {
             return;
         }
-
-        state.pointerDown = false;
 
         this._refreshOrigin();
 
@@ -320,7 +323,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             this.emit('dragend', dragPayload);
             state.dragElement?.emit('dragend', dragPayload);
 
-            state.suppressClick = true;
+            // Only an in-surface release is followed by a `click`; arming otherwise strands the flag onto a later one.
+            state.suppressClick = this._isWithinSurface(x, y);
         }
 
         state.dragElement = undefined;
@@ -361,7 +365,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._interactionState = {
             left: 0,
             top: 0,
-            pointerDown: false,
+            pointerButtons: new Set(),
             dragElement: undefined,
             dragStartX: 0,
             dragStartY: 0,
