@@ -99,6 +99,16 @@ Record the coverage summary from that run (`.reports/coverage/coverage-summary.j
 The thresholds in `vitest.config.ts` are a ratchet (`lines 70`, `statements 70`,
 `functions 62`, `branches 57`) — the final `yarn test` must still clear them.
 
+### Day-1 spike: measure mathjs throughput
+
+Every sampling, marching-squares and mesh budget in this plan is expressed as an
+**evaluation count** against an assumed 0.5-1.5 µs per compiled evaluation. That
+assumption is the single load-bearing number in the whole design, so measure it
+before anyone tunes against it: a 100k-iteration loop over `sin(x)*exp(-x^2)`
+and over `x^2+y^2-4`, using `parse(src).compile()` plus a reused `Map` scope.
+Publish the result to the other workstreams; if it lands 2-3× off, the budgets
+below re-tune from one constant rather than being rediscovered per phase.
+
 **Success criteria**
 
 - `yarn.lock` contains mathjs and is committed. CI runs `yarn install --immutable`;
@@ -106,6 +116,7 @@ The thresholds in `vitest.config.ts` are a ratchet (`lines 70`, `statements 70`,
 - `apps/website/package.json` lists `mathjs` under `dependencies`.
 - Baseline `yarn lint`, `yarn typecheck`, `yarn test` all pass and the coverage
   numbers are written down for later comparison.
+- The measured µs-per-evaluation figure is recorded and shared.
 
 ---
 
@@ -256,27 +267,93 @@ Ripl. This is the most testable part of the demo and must be covered.
   `compile`, `evaluate`, `simplify`, `derivative`, `Parser`, and the AST node
   classes (`SymbolNode`, `OperatorNode`, `FunctionNode`, …) — everything below
   needs, plus `derivative` if a "show the derivative" toggle is added later.
+  **Two traps in the package metadata.** First, `mathjs/number` ships the *full*
+  type declarations: both `"."` and `"./number"` map to `types/index.d.ts`, so
+  `import { bignumber } from 'mathjs/number'` type-checks cleanly and is
+  `undefined` at runtime. Keep the import surface reviewed. Second, tree-shaking
+  will not save you: the impure entry carries no `#__PURE__` annotations and
+  eagerly populates a table from all 162 pure functions, so importing `parse` or
+  `compile` retains essentially the whole number build. Budget for that and
+  verify with a bundle visualizer before merge rather than trusting an estimate.
+  VitePress code-splits per route, so the cost is paid only on this page.
 - `classify.ts` — turn a raw input line into an `ExpressionKind` plus a
   normalized body: `y = …`, `x = …`, `r = …` (polar, accepting `theta`/`θ`), `(f(t), g(t))`
   (parametric), `… = …` with both `x` and `y` (implicit), `z = …` (surface), and
   a bare expression in `x` treated as implied `y =`.
-- `compile.ts` — `math.parse()` → `.compile()` once per expression, evaluated
-  with a **single reused scope object** (allocating a scope per sample is the
-  main throughput trap). Wrap evaluation so a throw yields `NaN` rather than
-  killing the frame.
-- `params.ts` — walk the parsed AST for `SymbolNode`s that are not the
-  expression's own variables and not mathjs builtins, and return them as the
-  parameter list that drives the sliders.
-- `sample.ts` — adaptive sampling of `y = f(x)` producing `SampledBranch[]`:
-  subdivide where curvature is high, and **split the branch** on NaN/±∞ and on
-  asymptote signatures so `tan(x)`, `1/x`, `floor(x)` and `sqrt(x)`'s domain edge
-  render correctly instead of drawing vertical spikes. Also sample polar and
-  parametric forms.
-- `implicit.ts` — marching squares over a scalar field for `f(x,y) = g(x,y)`,
-  with linear interpolation on cell edges and a defined resolution for the
-  ambiguous saddle case.
-- `surface.ts` — evaluate `z = f(x,y)` over a grid into a typed array, returning
-  the height extent alongside so the colormap can band it.
+- `compile.ts` — `parse(src).compile()` once per expression, evaluated against a
+  **single reused `Map`**, not a plain object. `Node.compile()`'s `evaluate` runs
+  `createMap(scope)`, which returns a `Map` untouched but wraps a plain object in
+  a fresh `ObjectWrappingMap` on **every call**. That is the easiest 10-20% of
+  throughput to leave on the table.
+  ```
+  const scope = new Map();
+  const code = parse(src).compile();
+  scope.set('x', x);
+  const y = code.evaluate(scope);
+  ```
+  Do not use the `f(x) = …` function-assignment trick: `FunctionAssignmentNode`
+  wraps the body in `typed()` and does `Object.create(args)` per invocation. It
+  is slower and costs you AST control.
+- `guard.ts` — an **AST allowlist**, run once at parse time, is the primary
+  defence. The expression language has no loops, so the hang vector is
+  allocation: `1:1e9`, `zeros(1e8)`, `ones(…)`, `combinations(1e9, 5e8)` are all
+  reachable in the number build. Reject any `FunctionNode` whose callee is not in
+  an explicit scalar allowlist (~60 names), and reject `RangeNode`, `ArrayNode`,
+  `ObjectNode`, `AccessorNode`, `BlockNode` and (outside a definition row)
+  `AssignmentNode`/`FunctionAssignmentNode`. This is the same allowlist mathjs's
+  own security guidance recommends, so it also closes the sandbox-escape class
+  that historically routed through `AccessorNode`. Back it with a probe
+  evaluation (reject unless `typeof result === 'number'`), a node-count × sample
+  -count budget cap, and a sampler that checks `performance.now()` every 256
+  samples and renders what it has.
+- `params.ts` — walk the AST with `node.traverse((node, path, parent) => …)` for
+  `SymbolNode`s. Two traps: `FunctionNode.forEach` emits its own callee as a
+  `SymbolNode` with `path === 'fn'`, so a naive `filter(n => n.isSymbolNode)`
+  picks up every function name; and filtering on `name in math` would swallow a
+  user parameter innocently named `size`, `map`, `mode` or `version`. Exclude by
+  `path === 'fn'`, `parent.type === 'AccessorNode'`, an explicit constant set
+  (`pi`, `e`, `tau`, `phi`, `Infinity`, `NaN`, `LN2`, …), the expression's own
+  plot variables, and names bound by an earlier row.
+- `sample.ts` — adaptive sampling of `y = f(x)` producing `SampledBranch[]`.
+  Threshold everything in **screen space** (that is what makes it zoom-invariant)
+  and divide pixel tolerances by DPR, since canvas coordinates are CSS logical
+  pixels (`rescaleCanvas` sets `setTransform(dpr,0,0,dpr,0,0)`). Seed every ~2px,
+  subdivide on perpendicular chord deviation (~0.35/dpr px) to a depth cap, and
+  when an interval is still unresolved below ~0.4/dpr px, **classify** it:
+  - one endpoint finite, one not → bisect ~20× for the domain edge, emit it, then
+    break. Without this `sqrt(x)` visibly starts late at high zoom.
+  - both non-finite → break, skip the NaN region.
+  - both `|py|` beyond ~4× plot height → pole; break. This gets `tan`, `1/x`,
+    `1/x²` and `sec` right. Poles and merely-steep functions are not
+    distinguishable by sampling alone; this is the standard discriminator.
+  - finite, bounded, but a ≥24px jump across a sub-pixel Δx → step
+    discontinuity; break. This is `floor`, `sign`, `mod`.
+  - otherwise it is just steep: emit and continue.
+
+  In `mathjs/number`, `sqrt(-1)` and `log(-1)` return `NaN` (raw `Math.*`) rather
+  than throwing, and `1/0` returns `Infinity`, so `Number.isFinite()` is the one
+  sufficient test. The full mathjs build returns *complex numbers* for both and
+  would silently produce garbage; this is a real correctness reason for the
+  number entry, not just a size one. Clamp `py` before emitting. Cap total
+  evaluations per curve (~4,000) and render a partial curve rather than drop a
+  frame.
+- `implicit.ts` — marching squares for `f(x,y) = g(x,y)`. Build the scalar field
+  with `new OperatorNode('-', 'subtract', [lhsNode, rhsNode]).compile()`; do
+  **not** string-split on `=` (it breaks on `==`/`>=`/`<=`, and
+  `parse('x^2+y^2 = 4')` throws because the LHS is not a symbol). Evaluate into a
+  reused `Float64Array`; a NaN vertex invalidates its four incident cells, or
+  `log(x) + y = 0` emits garbage along `x = 0`. Linear edge interpolation
+  (`t = v0 / (v0 - v1)`, guarded and clamped) is not optional — the contour is
+  visibly blocky without it at any affordable cell size. Resolve the ambiguous
+  saddles (cases 5 and 10) with the **asymptotic decider** computed from the four
+  corners, `fc = (bl*tr - br*tl) / (bl + tr - br - tl)` — it is the correct
+  resolution of the bilinear interpolant and costs **zero** extra evaluations,
+  where a center evaluation costs a full extra grid. Stitch segments into runs
+  before rendering so ~4,000 `moveTo`/`lineTo` pairs collapse to ~60 `moveTo`
+  plus 4,000 `lineTo` with correct joins.
+- `surface.ts` — evaluate `z = f(x,y)` at **vertices** (N², shared between
+  adjacent quads), not per quad, into a `Float64Array` held outside the element,
+  returning the height extent alongside so the colormap can band it.
 
 **Testing** — colocated `*.test.ts` (precedent: `demos/piston-mechanism/elements/elements.test.ts`,
 which `yarn test` already picks up). Cover at minimum:
@@ -288,9 +365,15 @@ which `yarn test` already picks up). Cover at minimum:
   (proves the subdivision is curvature-driven, not blanket oversampling)
 - marching squares on `x² + y² = 1` closes a loop whose sampled radius is within
   tolerance of 1
-- free-variable detection: `a*sin(b*x)` → `['a', 'b']`, and `sin(x)` → `[]`
-- a hostile input (`x^x^x^x`, unbalanced parens, `while`) neither throws out of
-  the module nor hangs
+- free-variable detection: `a*sin(b*x)` → `['a', 'b']`, `sin(x)` → `[]`, and a
+  parameter named `size`/`map`/`mode` is still detected (proving the filter is
+  not `name in math`)
+- the guard rejects `1:1e9`, `zeros(1e8)`, `combinations(1e9, 5e8)` and an
+  `AccessorNode` expression at parse time, and unbalanced parens surface as an
+  inline error rather than a throw
+- the implicit field is built by AST subtraction: `x^2+y^2 = 4` compiles (it
+  throws under `parse()` on the whole string), and `x >= 2` is rejected rather
+  than silently split on `=`
 
 **Success criteria**
 
@@ -314,21 +397,93 @@ knows nothing about Vue.
   visible window is the user's. Instead reuse the existing 1–2–5 decade helper
   `numberNice` (`packages/utilities/src/number.ts:100`) to pick the step, then
   emit `ceil(min/step)*step … floor(max/step)*step` inside the exact domain.
-  Major and minor gridlines; labels that stay readable across ~10 orders of zoom;
-  an optional multiples-of-π mode for trig-friendly views. Axis lines pin to the
-  origin and **clamp to the viewport edge** when the origin scrolls off (Desmos
-  behavior), with the labels moving with them.
+  Build the scale with **no `nice` and no `padToTicks`** — either rewrites the
+  scale's own domain and silently desynchronizes the axis from the plotted
+  region. Pass an **ascending** domain (`numberNice` of a negative extent is
+  `NaN`, which collapses the axis to a single tick); for y use
+  `scaleContinuous([yMin, yMax], [height, 0])`. Never accumulate `value += step`
+  — float drift produces `0.30000000000000004` labels; always `i * step`.
+  Derive label precision from the *step*, not the value
+  (`decimals = clamp(-floor(log10(step)), 0, 15)`), and switch to exponential
+  outside roughly `[1e-4, 1e6]`.
+
+  Major and minor gridlines; an optional multiples-of-π mode for trig-friendly
+  views, auto-enabled when the AST contains a trig `FunctionNode` and picking
+  from a π-fraction ladder so labels read `π/2`, `3π/2`, `2π`. Axis lines pin to
+  the origin and **clamp to the viewport edge** when the origin scrolls off
+  (Desmos behavior), with tick labels flipping to the inside of that edge over a
+  semi-transparent backing band so they stay readable against a curve.
+- **Element topology matters more than the tick math.** Two `Line` elements for
+  the axes; **two `Path` elements for the gridlines** (one major, one minor),
+  each a `pathRenderer` walking the tick array. Do *not* create one `Line` per
+  gridline: 60 majors plus 300 minors is 360 elements churning the graph on every
+  zoom step, each firing a full instruction rebuild plus
+  `invalidateTrackedElements()`. Labels come from a **fixed pool** of ~32 `Text`
+  elements per axis — update `content`/`x`/`y` on the first n, set `opacity: 0`
+  on the rest. Assert the element count is constant across a zoom sweep.
 - **Curves** — one `createPath` per expression with `cachePath: false`, its
-  `pathRenderer` walking `SampledBranch[]` and issuing `moveTo` per branch.
+  `pathRenderer` walking `SampledBranch[]` and issuing `moveTo` per branch. One
+  `Path` rather than N `Polyline`s: branch count is unbounded and data-dependent
+  (`tan(x)` over a wide view is hundreds of branches), and adding/removing
+  elements per re-sample fires `scene.on('graph')` → full instruction rebuild +
+  `invalidateTrackedElements()` on every pan frame. `Path._getLocalBoundingBox()`
+  is also O(1) from `x/y/width/height` where `Polyline`'s is an O(n) extent over
+  every point — so set the `Path`'s rect honestly to the plot area.
   Everything lives in a group whose first child is a `createRect({ clip: true })`
-  covering the plot area, so curves cannot bleed over the axis gutter.
-- **Pan/zoom** via `createNavigator(context, { interactions: { pan: true, zoom: true } })`.
-  On `change`, derive the new domain, **re-sample**, and redraw — do not merely
-  scale a stale polyline; re-sampling on zoom is the whole point. Keep units-per-pixel
-  equal on both axes so circles stay circular. Re-derive on `context.on('resize')`.
+  covering the plot area, so curves cannot bleed over the axis gutter. The clip
+  shape renders with `skipRestore`, so it **must** be inside its own `Group` for
+  `popGroup` to unwind it, or the clip leaks onto later siblings.
+- **The repaint trap.** A `Path` with `cachePath: false` never becomes `$dirty`,
+  and the renderer returns before painting when nothing is dirty — `autoStop:
+  false` keeps the rAF *loop* alive, not the *painting*. Every write to the
+  sample buffers must be followed by `scene.invalidate()`. Symptom if missed: the
+  curve freezes while panning and it looks like a sampler bug. Write the test for
+  this first.
+- **No allocation in `pathRenderer`** — it runs every frame. Back the samples
+  with preallocated `Float32Array` xs/ys plus a `Uint8Array` break flag, and walk
+  them with a plain `for`. No `.map`, no object literals, no per-call closures.
+- **Pan/zoom** via `createNavigator(context, { interactions: { pan: true, zoom: true },
+  scaleExtent: [1e-7, 1e7] })`. The default extent is `[0.001, 1000]` — only ~6
+  decades, which fails the zoom range below. Three rules:
+  1. **Never re-sample in the `change` handler.** It fires at wheel/pointer rate
+     (60-120 events/s on a trackpad flick); 4-13 ms of work per event makes
+     panning unusable. Set a dirty flag, re-sample once per `renderer.on('tick')`.
+  2. **Keep an immutable *base* scale as the source of truth** and derive the
+     live domain with `rescaleDomain(base, transform, range)`. It is stateless
+     and drift-free. Rebuild the base **only** on mount, resize and reset —
+     rebuilding it from the derived domain composes the transform twice and the
+     view runs away exponentially, which reads as a sensitivity bug.
+  3. **Mind the y flip.** With `scaleContinuous([yMin, yMax], [height, 0])` the
+     range is descending, so `rescaleDomain` returns `[yMax', yMin']`.
+     Destructuring it the obvious way silently mirrors the plot vertically.
+
+  Square aspect then comes free: `Navigator` carries a single uniform `k`, so if
+  both base scales are built from one `unitsPerPixel` scalar the identity
+  `(xMax-xMin)/width === (yMax-yMin)/height` holds for every transform. Assert it
+  in dev — it is the cheapest possible regression test for this subsystem.
+  On `context.on('resize')`, capture `unitsPerPixel` **before** rebuilding, keep
+  the center, rebuild the base, then call `navigator.reset()` so the transform
+  returns to identity against the new base. Same pattern for "reset view" and
+  "zoom to fit".
 - **Trace readout** — on `context.on('mousemove')`, invert the pointer to data
-  space, evaluate each visible expression, and draw a marker plus a coordinate
-  label; snap to the nearest sampled point for parametric/polar.
+  space, evaluate each visible expression directly, and draw a marker plus a
+  coordinate label; snap to the nearest sampled point for parametric/polar.
+  **Do not attach pointer listeners to the curve `Path`.** Only elements that
+  registered a listener are hit-tested, so a listener would opt the curve into
+  `isPointInStroke` over a 2,000-segment path every hover frame. One direct
+  evaluation is both cheaper and more accurate.
+- **Implicit curves are stored in *data* space, never screen space.** A readable
+  contour needs ~8px cells, which for a 1200×700 plot is ~13,400 vertex
+  evaluations — a dropped frame on its own, so it can never run per pan frame.
+  While the gesture is live, only **re-project** the stored segments through the
+  current scales (zero evaluations, ~0.1 ms): pan is exact, zoom is exact but
+  sampled at the old resolution, which is visually indistinguishable mid-gesture.
+  On settle (~140 ms after the last `change`; below ~80 ms it re-fires mid-flick)
+  run a coarse pass at ~24px cells for instant feedback, then a fine pass at 8px
+  **chunked across frames** at ~2,000 evaluations per tick, swapping in when
+  complete. Skip the Web Worker: a compiled mathjs node is not
+  structured-cloneable, so the worker would re-parse, and you would own a message
+  protocol for a job you have already amortized.
 - **Theme** — resolve canvas colors from the `--vp-c-*` custom properties on
   `document.documentElement`, and re-resolve when the site theme flips. Use
   `const { isDark } = useData()` from `vitepress` and `watch` it — that is the
@@ -337,13 +492,17 @@ knows nothing about Vue.
 
 **Success criteria**
 
-- `sin(x)`, `tan(x)`, `1/x`, `floor(x)`, `sqrt(x)`, `x^2`, `e^x`, `ln(x)` all
-  render correctly with no spurious vertical connectors at discontinuities.
+- A **golden-image fixture suite** built up front — `tan(x)`, `1/x`, `1/x^2`,
+  `floor(x)`, `sqrt(x)`, `log(x)`, `sign(x)`, `x^5`, `sin(1/x)`, each at four
+  zoom levels — renders with no spurious vertical connectors at a discontinuity
+  and no false break in a merely-steep curve. This is the most visible possible
+  failure mode, so it gets fixtures rather than eyeballing.
 - Zooming from a `[-10, 10]` window to `[-0.001, 0.001]` and back keeps curves
   smooth and tick labels legible at both ends, with no visible re-sampling
-  staircase.
+  staircase. Zoom is clamped once `(xMax - xMin) < |center| * 1e-12` — past the
+  float64 floor, ticks jitter and labels flicker between adjacent doubles.
 - Panning holds an interactive frame rate; the plot re-samples rather than
-  stretching.
+  stretching, and the element count is constant across a zoom sweep.
 - Light and dark themes both legible; switching theme live updates colors
   without a reload.
 
@@ -365,17 +524,61 @@ knows nothing about Vue.
   (`packages/core/src/color/{scales,schemes}.ts`) rather than hand-rolling a
   gradient; the CPU renderer then lambert-shades each band's fill per face
   (`shadeFaceColor` in `packages/3d/src/core/shading.ts`), so color and lighting
-  compose for free.
-- **Adaptive resolution.** The CPU painter's algorithm projects, depth-sorts and
-  fills every face each frame, and also traces a hit `Path2D` over every face
-  unconditionally. Budget accordingly: a coarse grid while orbiting or while a
-  parameter slider is animating, refined when idle. Phase 5 must **measure**
-  rather than guess — pick the two resolutions from the FPS overlay on the
-  target machine and document the numbers in the module.
+  compose for free. Use **12-16 perceptually-spaced stops**: within one band you
+  only get lambert variation off the single `fill`, not a gradient, and a quad
+  straddling a boundary belongs wholly to one band, so the transition is a
+  staircase along quad edges. At 12-16 bands that reads as a contour map, which
+  arguably suits a graphing calculator better than a smooth ramp.
+- **Two constraints on the banded approach, both correctness rather than taste.**
+  First, **nothing may paint between the bands**: `applyFill`, `applyStroke`,
+  `drawImage` and `applyClip` each call `flushFaces()` first, and `popGroup`
+  flushes a pending clip, so a single axis-label `Text` or legend `Rect` rendered
+  between two bands splits the global sort and produces visibly wrong occlusion
+  that is intermittent and orientation-dependent. Put every band in one dedicated
+  `Group` with no 2D siblings and give all 2D overlays a higher `zIndex`. Comment
+  it at the construction site. Second, **do not depend on band draw order** —
+  `Shape3D.zIndex` derives from projected depth and is only re-sorted at graph
+  rebuild, so element order is arbitrary and stale. Harmless, because the face
+  sort is what matters, but nothing else may rely on it.
+- **Resolution: the axis is camera-moving vs. camera-still, not idle vs. active.**
+  `computeFaces()` is cached and only invalidated by `setStateValue`, and the
+  renderer skips the paint entirely when nothing is dirty — so orbiting
+  re-projects but does not rebuild, and a settled surface costs **zero**. Ship
+  48×48 vertices (~2,200 quads) while the camera is in flight and 80×80 (~6,200
+  quads) once it settles, swapping by setting a `segments` state value on
+  pointerdown and ~150 ms after pointerup; that costs exactly one rebuild. Expose
+  32/48/64/80/96 behind a quality control. Rough budget from the per-face cost
+  (projection, the global depth sort, the unconditional hit-`Path2D` trace, and
+  one canvas `fill()` per face, ~2-3 µs all in): **4,000-6,000 faces for 60fps,
+  10,000-14,000 for 30fps**; beyond ~20,000 the sort alone is ~5 ms and it is off
+  the table. Confirm against the FPS overlay and record the measured numbers in
+  the module.
+- **Never call mathjs inside `computeFaces()`** — it fires on every cache
+  invalidation, including every `setStateValue` and every `interpolate` tick.
+  Evaluate the vertex grid once into the `Float64Array` from `surface.ts` and
+  have `computeFaces()` read from it. A rebuild is 2,300 evaluations at 48×48 and
+  9,200 at 96×96; synchronous is fine, since a one-off ~9 ms hitch when the
+  camera settles is imperceptible and a worker would have to re-parse anyway.
+- **Never enable `debug: { boundingBoxes: true }` on the 3D view.** `Shape3D`
+  opts out of bounds caching and re-projects every vertex on `getBoundingBox()`,
+  which the debug overlay calls for every buffered element — ~36,000 vertex
+  projections per frame, and it looks like a rendering bug. Note it in the source.
 - Axes/bounding box, tick marks along each axis, and a `createCamera(context,
   { interactions: { pivot: true, zoom: true, pan: true } })` orbit rig.
 - Rebuild the mesh only when the expression, domain, resolution or a parameter
   changes — never per frame for a static surface.
+
+> **Upgrade path, not for v1.** `faceBuffer` and `captureFaceState` are public and
+> `@ripl/3d` re-exports the matrix/vector helpers, so a single element extending
+> `Shape` (from `@ripl/core`) rather than `Shape3D` could push faces with a
+> per-face color interpolated from vertex heights — one element, a genuinely
+> smooth colormap, and no `_traceFaceHitPath` at all, which is ~2-4 ms/frame of
+> pure waste at 9,000 faces when nothing listens for pointer events. This cannot
+> be done by subclassing `Shape3D` (`_renderCPU` is private and `super.render()`
+> re-enters). Better still would be a small upstream change gating the hit trace
+> on whether the element has any tracked listener, which would benefit every
+> `@ripl/3d` consumer. Both are out of scope here (see Non-goals); raise them
+> separately rather than widening this diff.
 
 **Success criteria**
 
@@ -420,11 +623,15 @@ apps/website/src/demos/graphing-calculator/
   as `piston-mechanism.vue:76` does) rather than adding a global import to
   `theme/index.ts` — it keeps the change local.
 - **mathjs must not reach the SSR graph.** `vitepress build` server-renders every
-  page; `<ClientOnly>` stops the *render*, not the *import*. Load the engine with
-  a dynamic `import()` inside `onMounted`, and if SSR still trips, add `mathjs`
-  to `vite.ssr.noExternal` in `.vitepress/config.mts`. This must be proven by an
-  actual `yarn workspace @ripl/website build`, not assumed — CI does not build
-  the website, so nothing else will catch it.
+  page, and `<ClientOnly>` stops the *render*, not the *module evaluation* — the
+  `.md` statically imports the `.vue`, so every transitive import is evaluated in
+  Node. Load the engine with a dynamic `import('mathjs/number')` inside
+  `onMounted`, with a loading state covering the one-frame gap. Adding `mathjs`
+  to `vite.ssr.noExternal` is the weaker option: it makes the SSR bundle
+  deterministic but does not stop it executing, so it is strictly more build work
+  for a module the server never needs. Prove it with an actual
+  `yarn workspace @ripl/website build` — CI does not build the website, so
+  nothing else will catch a regression here.
 - Persist state (expressions, params, viewport, mode) to the URL hash so a graph
   is shareable, mirroring the playground's `encodeState`/`decodeState`.
 - Responsive: the expression panel collapses to a drawer under ~768px; the
@@ -544,3 +751,24 @@ preset.
   (the events doc is wrong); in-place array mutation does not mark an element
   dirty, so reassign or call `scene.invalidate()`; elements are hit-testable only
   after their first render, and only if they registered that listener themselves.
+
+### The five failures most likely to cost a day
+
+Ranked by how long they take to diagnose, not by how likely they are:
+
+1. **Silent no-repaint after re-sampling.** A `cachePath: false` `Path` never goes
+   `$dirty` and the renderer returns before painting. Presents as a frozen curve
+   that looks like a sampler bug. `scene.invalidate()` after every buffer write.
+2. **The mathjs throughput assumption is wrong by 2-3×**, invalidating every
+   budget here. Hence the Phase 0 spike, and hence budgets stated as evaluation
+   counts rather than milliseconds.
+3. **Re-sampling inside the navigator `change` handler.** 60-120 events/s × 4-13
+   ms. Flag on `change`, work once per `tick`. Non-negotiable.
+4. **`rescaleDomain` double-composition** from rebuilding the base scale per
+   event — the view accelerates exponentially and it reads as a sensitivity bug.
+5. **A 2D element interleaved among the 3D bands**, splitting the global face
+   sort. Wrong occlusion, intermittent and orientation-dependent.
+
+Two more that present as rendering bugs rather than code bugs: `debug:
+{ boundingBoxes: true }` on the 3D surface (~36k vertex re-projections/frame),
+and per-gridline `Line` elements churning the scene graph on every zoom step.
