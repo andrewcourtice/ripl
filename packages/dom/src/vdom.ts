@@ -100,6 +100,17 @@ function isExcluded(element: Element, selectors: string[]): boolean {
     return false;
 }
 
+function countChildIds<TElement>(children: VNode<TElement>[]): Map<string, number> {
+    const counts = new Map<string, number>();
+
+    for (let i = 0; i < children.length; i++) {
+        const id = children[i].id;
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+
+    return counts;
+}
+
 function reconcileChildren<TElement = unknown>(
     domParent: Element,
     vnode: VNode<TElement>,
@@ -115,8 +126,9 @@ function reconcileChildren<TElement = unknown>(
         getChildId = defaultGetChildId,
     } = options;
 
-    const desiredIds = new Set(vnode.children.map(c => c.id));
-    const existingChildren = new Map<string, Element>();
+    // Counted, not a set: siblings may share an id, and each occurrence still needs its own node.
+    const wantedIds = countChildIds(vnode.children);
+    const existingChildren = new Map<string, Element[]>();
 
     for (let i = domParent.children.length - 1; i >= 0; i--) {
         const child = domParent.children[i];
@@ -126,9 +138,18 @@ function reconcileChildren<TElement = unknown>(
         }
 
         const childId = getChildId(child);
+        const wanted = childId ? wantedIds.get(childId) ?? 0 : 0;
 
-        if (childId && desiredIds.has(childId)) {
-            existingChildren.set(childId, child);
+        if (childId && wanted > 0) {
+            wantedIds.set(childId, wanted - 1);
+
+            const matches = existingChildren.get(childId);
+
+            if (matches) {
+                matches.unshift(child);
+            } else {
+                existingChildren.set(childId, [child]);
+            }
         } else {
             child.remove();
             state.removed = true;
@@ -139,9 +160,19 @@ function reconcileChildren<TElement = unknown>(
         }
     }
 
+    const claimed = new Set<Element>();
+
+    let domIndex = 0;
+
     for (let i = 0; i < vnode.children.length; i++) {
         const childVNode = vnode.children[i];
-        let domChild = existingChildren.get(childVNode.id) || domCache.get(childVNode.id);
+        const cached = domCache.get(childVNode.id);
+
+        let domChild = existingChildren.get(childVNode.id)?.shift();
+
+        if (!domChild && cached && !claimed.has(cached)) {
+            domChild = cached;
+        }
 
         if (!domChild) {
             const tag = childVNode.element
@@ -151,11 +182,18 @@ function reconcileChildren<TElement = unknown>(
             domCache.set(childVNode.id, domChild);
         }
 
+        claimed.add(domChild);
+
         if (childVNode.element) {
             updateElement(domChild, childVNode.element);
         }
 
-        const currentAtIndex = domParent.children[i] as Element | undefined;
+        // Excluded nodes hold an index without being managed, so step over them rather than displace them.
+        while (excludeSelectors.length > 0 && domIndex < domParent.children.length && isExcluded(domParent.children[domIndex], excludeSelectors)) {
+            domIndex++;
+        }
+
+        const currentAtIndex = domParent.children[domIndex] as Element | undefined;
 
         if (currentAtIndex !== domChild) {
             if (currentAtIndex) {
@@ -164,6 +202,8 @@ function reconcileChildren<TElement = unknown>(
                 domParent.appendChild(domChild);
             }
         }
+
+        domIndex++;
 
         // Also when the vnode has no children but the node does: that pass is what empties it.
         if (childVNode.children.length > 0 || domChild.children.length > 0) {

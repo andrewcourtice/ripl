@@ -112,6 +112,26 @@ each digit doubled, as CSS specifies. `#f00` previously matched no parser at all
 nothing on every backend, so a shorthand fill silently painted the inherited or default colour.
 Colours that used to fall through to a default now resolve.
 
+**`PATTERNS.rgba`**, **`PATTERNS.hsla`** and **`PATTERNS.hsva`** — **behaviour**. An integer `0`
+alpha is accepted. The alternation matched `1`, `.5`, `0.5` and `50%` but had no integer branch, so
+`rgba(255, 0, 0, 0)` — the idiomatic fully-transparent form — matched no parser and resolved to
+nothing. Canvas hid it by falling through to a raw `fillStyle` assignment; the terminal painted it
+opaque. Fully-transparent paints that used to render now correctly render nothing.
+
+### Runtime
+
+**`Factory.set`** — **behaviour**. Copies property descriptors instead of spreading, so an accessor
+passed in stays an accessor. `@ripl/web` supplies `devicePixelRatio` as a live getter over
+`window.devicePixelRatio`; the spread invoked it once and froze the number, so no surface ever
+re-rasterised after a browser zoom or a move to a monitor with a different ratio. A platform layer
+can now supply any option as a getter and have it read live.
+
+**`interpolateImage`** and **`ImageElement.getBoundingBox`** — **behaviour**. Image sources are
+sized by naming each DOM constructor and skipping runtimes that never declare it. Only
+`OffscreenCanvas` was guarded before, so the first `instanceof HTMLImageElement` threw a
+`ReferenceError` on any runtime without the DOM globals — `@ripl/node` hit it immediately. Sizing an
+unrecognised source still yields `[0, 0]`.
+
 ### Lifecycle
 
 **`Context.destroy`** — **behaviour**. Clears `renderedElements`, `renderElement`, and the
@@ -147,7 +167,81 @@ set `font` explicitly on the scene or the host.
 
 ## @ripl/canvas
 
-_No entries yet._
+### Paint state
+
+**`Context.fill`** and **`Context.stroke`** — **behaviour**. The resolved paint strings are pushed and
+popped alongside the native drawing state by `save()`/`restore()`, so the getters report the paint the
+context is actually painting with. They were plain instance fields outside the stack, so once a paint
+had been assigned inside any scope the getter reported that value for the life of the context — a
+lying getter, not a wrong pixel, since nothing in the render pipeline reads them back.
+
+**`Context.fill`** and **`Context.stroke`** — **behaviour**. Assigning an empty string is ignored.
+Native canvas rejects an invalid colour, so `fill = ''` neither cleared the paint nor reported the
+failure; it only blanked the tracked value and unmasked whatever the native context still held. To
+clear a paint, assign a transparent colour (`'transparent'`, `'rgba(0, 0, 0, 0)'`).
+
+### Sizing
+
+**`rescaleCanvas`** — **behaviour**. The returned scales map logical coordinates onto `width * dpr` —
+the exact transform drawing goes through — instead of the floored backing-store size. The backing
+store is still floored to whole device pixels. Pointer mapping and drawing disagreed by up to a device
+pixel at the far edge of a surface whose scaled size is not an integer.
+
+**`CanvasContext.rescale`** — **behaviour**. Assigns the DPR-aware scales *before* emitting `resize`,
+and no longer delegates to `Context.rescale`, which installs identity scales and emits from inside
+that window. Any `resize` handler reading `context.scaleX`/`scaleY` — including `Scene`'s own
+synchronous re-render — saw the identity mapping. A `Context` subclass that overrides `rescale` to
+install its own scales has to do the same.
+
+### Text and images
+
+**`renderTextAlongPath`** — **behaviour**. Each glyph is placed at the point its own `textAlign`
+anchors it to rather than always at its mid-point, which was only correct for `center`; under the
+canvas default of `start` every glyph slid forward by half its own advance. `startOffset` is clamped
+to `[0, 1]` (a negative value stacked the leading glyphs on the path start, because the sampler
+clamps but the layout kept advancing from a negative distance) and `maxWidth` caps the run's advance
+instead of being ignored. Text on a path moves back by half a glyph wherever `pathData` is used.
+
+**`canvasDrawImage`** — **behaviour**. A width supplied without a height (or the reverse) is honoured,
+with the missing dimension taken from the image's intrinsic size; it used to fall through to the
+three-argument form and draw at natural size. A `0` is honoured too and draws nothing, rather than
+reading as "no size given".
+
+### Lifecycle
+
+**`Context.reset`** — **behaviour**. Calls `super.reset()` and re-installs the
+`setTransform(dpr, 0, 0, dpr, 0, 0)` matrix the surface is drawn through. Native `reset()` clears the
+state stack, the clip **and** the transform, so on a 2× display everything after a `reset()` rendered
+at half size in the top-left quadrant, while `Context.saveDepth` kept counting saves the native stack
+no longer held and a later `popGroup()` unwound to the wrong depth.
+
+**`CanvasContext.destroy`** — **API**, additive override. Releases the gradients and patterns cached
+against the context, together with the offscreen tile canvases the patterns hold, and zeroes the
+canvas backing store (`width × height × 4` bytes, otherwise held until collection). Do not draw into a
+context after `destroy()`.
+
+**`toCanvasPattern`** — **behaviour**. Cached per context *and* string rather than in one module-global
+map. A destroyed context's `CanvasPattern` was handed to the next context that asked for the same
+string, and neither it nor its tile canvas was ever released.
+
+**`releaseCanvasPaintCache`** — **API**, additive. Drops every `CanvasGradient` and `CanvasPattern`
+cached against a native context. Call it from the teardown of a backend that composes
+`canvas2DStateMixin` itself.
+
+### Performance
+
+**`setCanvasFill`** and **`setCanvasStroke`** — **behaviour**. The native `CanvasGradient` is cached
+per context, paint string and bounds instead of rebuilt on every assignment — 500 gradient elements at
+60 fps allocated 30 000 gradients a second. **`renderTextAlongPath`** caches path length and glyph
+sample points per `d` string and distance, so a text element parses its path once rather than once per
+glyph per frame. Both are pure functions of their inputs; no output changes.
+
+### Known limitation
+
+**Group `globalCompositeOperation`** — unchanged. A group's blend mode is still applied to each
+descendant independently rather than to the subtree as a unit, so it does not match SVG's
+`<g mix-blend-mode>`. True group compositing needs an offscreen layer and real blending, neither of
+which the jsdom stub can express; left for the pixel harness.
 
 ## @ripl/svg
 
@@ -155,11 +249,124 @@ _No entries yet._
 
 ## @ripl/dom
 
-_No entries yet._
+### Pointer payloads
+
+**Element `click`, `dragstart`, `drag` and `dragend` payloads** — **behaviour**. `x`/`y` (and
+`startX`/`startY`) carry **CSS pixels**, not device pixels. Element `mousemove` already reported CSS
+pixels, so the same pointer position produced payloads differing by the device pixel ratio depending
+on which event you read — `packages/charts/src/core/interaction.ts` documents `InteractionPoint` as
+"chart pixels" and feeds `onEnter`/`onLeave` from `mousemove` while `onClick` reads `click`. On a
+non-retina display nothing moves. Elsewhere, multiply by `devicePixelRatio` — or better, map through
+`Context.toSurfacePoint` — to recover the old values. Hit testing is unchanged: it still runs in
+surface space.
+
+### Pointer lifecycle
+
+**`DOMContext.disableInteraction`** — **behaviour**. Emits `mouseleave` on every element that was
+hovered before dropping the set, and cancels the pending hover frame. It used to clear
+`_activeElements` silently, so a bar stayed enlarged and its tooltip stayed painted with nothing left
+that could ever produce the leave. `destroy()` delegates here, so teardown is complete when it
+returns rather than a frame later. Any `mouseleave` handler must therefore tolerate running during
+teardown.
+
+**Surface `mouseleave`** — **behaviour**. Also unwinds the hovered element. The element-level
+`mouseleave` was only ever emitted from the hover hit test, which only runs on `mousemove`, so
+leaving the canvas left the last-hovered element hovered forever — the reason chart tooltips stayed
+on screen after the pointer left.
+
+**`mouseup`** — **behaviour**. Also bound at the window, so a release outside the surface ends the
+drag. A gesture released off-canvas previously never emitted `dragend` and resumed on re-entry with
+no button held. A `dragend` may now arrive with coordinates outside the surface bounds (including
+negatives); clamp if your handler assumes otherwise.
+
+**`mousedown`** — **behaviour**. Assigns drag state unconditionally instead of only when something
+is hit, so a press on empty canvas clears the previous gesture's `dragElement` and origin rather than
+making it the next gesture's delta baseline.
+
+**`click`** — **behaviour**. Suppressed once for the gesture that ended a drag. The DOM fires `click`
+after `mouseup`, so a drill-down or selection handler fired at the end of every drag. A click below
+the drag threshold is unaffected.
+
+### Reconciliation
+
+**`reconcileNode`** — **behaviour**. Sibling vnodes sharing an id each get their own DOM node.
+Duplicates previously collapsed onto one node — the second overwrote the first's attributes and
+subtree, and the reorder step desynchronised — so a duplicate key in chart data silently dropped a
+mark and reordered the rest. Node identity is stable across passes.
+
+**`reconcileNode`** — **behaviour**. Nodes matched by `excludeSelectors` keep their position instead
+of drifting to the end of the parent. The reorder step indexed the parent's children directly, which
+counts excluded nodes, so managed children were inserted before them and pushed them rightward.
+Harmless for a `<defs>`; not for a positioned overlay.
+
+### Resize
+
+**`onDOMElementResize`** — **behaviour**. The `window.resize` fallback reports the **content box**,
+matching what the `ResizeObserver` branch reports via `entry.contentRect`. It reported the border box
+before, so on a padded host the two branches of one function disagreed and the backing store was
+sized to a box the surface was never stretched over. Only reachable on engines without
+`ResizeObserver`.
+
+**`onDOMElementResize`** — **behaviour**. Returns an inert disposable outside a browser rather than
+throwing `ReferenceError: window is not defined`. `@ripl/dom` ships `sideEffects: false`, so an SSR
+consumer can import this helper directly.
+
+### Export
+
+**`createCanvasExport`** — **API**, additive. The returned `ContextExport` implements `release()`,
+revoking every object URL `toURL()` handed out. Without it each URL pinned its blob for the
+document's lifetime. Call `release()` when you are done with an export; it is safe to call
+repeatedly.
+
+### Navigator
+
+**`DOMNavigator`** — **behaviour**. Lifting one finger of a pinch hands the survivor back to panning.
+It previously cleared every gesture flag, leaving a finger still on the surface matching no branch at
+all until it was lifted and re-pressed.
+
+**`DOMNavigator`** — **behaviour**. Every tracked pointer is captured on `pointerdown`, not just the
+ones that pan or brush. A secondary-button gesture or the second finger of a pinch released off the
+element never reached the cleanup, and the leaked pointer id made the next single-touch gesture read
+as a pinch — a one-finger pan that zoomed.
+
+**`DOMNavigator`** — **behaviour**. The element origin is cached and invalidated on resize and
+scroll, instead of `getBoundingClientRect` being called on every `pointermove`. If you move the
+element by means that fire neither (a transform on an ancestor, say), invalidate by resizing or
+recreating the navigator.
+
+**`DOMNavigatorOptions.interactions`** — **behaviour**. `touchAction` is left alone when every
+interaction resolves to disabled. `{}` and `{ zoom: false, pan: false, brush: false }` are both
+truthy, so they used to suppress native scrolling over the chart with no gesture wired up.
 
 ## @ripl/node
 
-_No entries yet._
+**`factory.measureText`** — **behaviour**. Measures in braille cells — 2 logical units per character
+and ascent 4 at the default `10px monospace`, descent 0 — scaled by the requested font size, and
+anchors `actualBoundingBox*` on `textAlign`. It reported 8px per character with ascent 8 and descent
+2 regardless of the options passed, so text boxes were roughly 4x too wide and 2.5x too tall against
+what the terminal paints, and centred or right-aligned text was anchored at the wrong corner. Core
+falls back to this only before an element's first paint; anything rendered measures through
+`TerminalContext`. `textBaseline` is deliberately not modelled — the terminal paints one cell per
+glyph with no baseline variation.
+
+**`factory.requestAnimationFrame`** — **behaviour**. Returns an **unref'd** timer and invokes its
+callback with a `DOMHighResTimeStamp`. The render loop re-arms every frame with `autoStart` on, so a
+ref'd timer meant a process that drew one static chart never exited. A script that relied on the
+render loop to keep the event loop alive must now hold it open itself.
+
+**`factory.createElement`** and **`factory.createElementNS`** — **behaviour**. Return a duck-typed
+stub (`getContext()` → `null`, `getTotalLength()` → `0`, attribute accessors) instead of `{}`. Core's
+graceful-degradation guards are written against exactly those probes and could never run — the first
+property access threw a raw `TypeError`. `getPathLength` now returns `0` off-platform rather than
+throwing.
+
+**`factory.createContext`** — **behaviour**. Builds one `TerminalOutput` per process rather than one
+per context, and that output multiplexes its resize subscribers behind a single `SIGWINCH` handler;
+ten scenes used to trip Node's `MaxListenersExceededWarning`. A `TerminalOutput` passed as the target
+is honoured; any other target warns that it cannot be, instead of being discarded in silence.
+
+**`createTerminalOutput`** — **behaviour**. `onResize` registers its `SIGWINCH` handler on the first
+subscription and removes it with the last, rather than one handler per subscriber.
 
 ## @ripl/terminal
 

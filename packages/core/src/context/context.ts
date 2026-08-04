@@ -527,6 +527,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      */
     public batch<TResult = void>(body: () => TResult): TResult {
         const depth = this.saveDepth;
+        const groupDepth = this._groupStack.length;
 
         if (this.renderDepth === 0) {
             this.clear();
@@ -539,6 +540,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return body();
         } finally {
             this.markRenderEnd();
+
+            // Scene.render walks a flat instruction stream, so a throw skips the matching pops.
+            while (this._groupStack.length > groupDepth) {
+                this.popGroup();
+            }
 
             while (this.saveDepth > depth) {
                 this.restore();

@@ -88,10 +88,8 @@ class Factory {
 
     /** Merges the given platform implementations into the factory's state. */
     public set(options: Partial<FactoryOptions>) {
-        this._state = {
-            ...this._state,
-            ...options,
-        };
+        // Descriptors, not values: a spread would call a live getter like `devicePixelRatio` once and freeze it.
+        Object.defineProperties(this._state, Object.getOwnPropertyDescriptors(options));
     }
 
     constructor(options?: Partial<FactoryOptions>) {

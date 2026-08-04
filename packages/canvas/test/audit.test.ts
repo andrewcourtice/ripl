@@ -20,9 +20,16 @@ import {
 import {
     createCircle,
     createScene,
+    factory,
+} from '@ripl/core';
+
+import type {
+    MeasureTextOptions,
 } from '@ripl/core';
 
 polyfillPath2D();
+
+const PATTERN = 'pattern(diagonal, #1a6, #fff, 8)';
 
 /**
  * Regression tests for the context audit (see `docs/audits/`). A skipped test pins a confirmed
@@ -40,6 +47,9 @@ describe('Canvas audit findings', () => {
 
     afterEach(() => {
         el.remove();
+        factory.set({
+            devicePixelRatio: 1,
+        });
         vi.restoreAllMocks();
     });
 
@@ -138,7 +148,7 @@ describe('Canvas audit findings', () => {
 
     // CANVAS-3: `_fillCSS`/`_strokeCSS` are plain fields outside the save/restore stack, so the
     // public getters report a paint the underlying context is no longer using.
-    test.skip('Should report the restored paint from the fill and stroke getters', () => {
+    test('Should report the restored paint from the fill and stroke getters', () => {
         mockCanvasState(mockCanvasContext());
         sizeHost(400, 300);
 
@@ -164,6 +174,165 @@ describe('Canvas audit findings', () => {
         context.fill = '#ff0000';
 
         expect(context.fill).toBe('#ff0000');
+    });
+
+    // A paint written only inside a scope must not outlive it, or the getter reports a value the
+    // outer scope never held.
+    test('Should fall back to the native default for a paint set only inside a scope', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.save();
+        context.fill = '#123456';
+        context.restore();
+
+        expect(context.fill).toBe('#000000');
+    });
+
+    // Native canvas rejects an invalid colour, so recording one unmasked the stale native value.
+    test('Should ignore an empty fill and keep reporting the paint in force', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.fill = '#ff0000';
+        context.fill = '';
+
+        expect(context.fill).toBe('#ff0000');
+    });
+
+    test('Should ignore an empty stroke and keep reporting the paint in force', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.stroke = '#00ff00';
+        context.stroke = '';
+
+        expect(context.stroke).toBe('#00ff00');
+    });
+
+    // CANVAS-8: native `reset()` drops the transform, taking the DPR matrix the surface draws through.
+    test('Should re-install the device pixel ratio transform on reset', () => {
+        factory.set({
+            devicePixelRatio: 2,
+        });
+
+        const stub = mockCanvasState(mockCanvasContext());
+
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.translate(30, 40);
+        context.reset();
+
+        expect(stub.getMatrix()).toEqual([2, 0, 0, 2, 0, 0]);
+    });
+
+    test('Should resynchronise the save depth on reset', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.save();
+        context.save();
+        context.reset();
+
+        expect((context as unknown as { saveDepth: number }).saveDepth).toBe(0);
+    });
+
+    test('Should not unwind past a reset on a later restore', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.lineWidth = 2;
+        context.save();
+        context.lineWidth = 8;
+        context.reset();
+        context.restore();
+
+        expect(context.lineWidth).toBe(8);
+    });
+
+    // CANVAS-9: `Context.rescale` installs identity scales and emits before the DPR ones land.
+    test('Should emit resize with the device pixel ratio scales already applied', () => {
+        factory.set({
+            devicePixelRatio: 2,
+        });
+
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const scales: number[] = [];
+
+        context.on('resize', () => scales.push(context.scaleX(100)));
+        context['rescale'](800, 600);
+
+        expect(scales).toEqual([200]);
+    });
+
+    // CANVAS-16: the pattern cache was module-global, so it outlived the context that built it.
+    test('Should release the canvas backing store on destroy', () => {
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const canvas = context.element;
+
+        context.destroy();
+
+        expect(canvas.width).toBe(0);
+        expect(canvas.height).toBe(0);
+    });
+
+    test('Should not hand a destroyed context cached paint to the next context', () => {
+        sizeHost(400, 300);
+
+        const first = createContext(el);
+
+        first.fill = PATTERN;
+        first.destroy();
+
+        const stub = mockCanvasContext();
+        const second = createContext(el);
+
+        second.fill = PATTERN;
+
+        expect(stub.createPattern).toHaveBeenCalledTimes(1);
+    });
+
+    // CANVAS-14: `actualBoundingBox*` is anchor-relative, so the alignment has to reach the measurer.
+    test('Should measure text through the context alignment and baseline', () => {
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const measured: (MeasureTextOptions | undefined)[] = [];
+        const measurer = factory.measureText;
+
+        factory.set({
+            measureText: (text, options) => {
+                measured.push(options);
+                return measurer(text, options);
+            },
+        });
+
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.measureText('hello');
+
+        factory.set({
+            measureText: measurer,
+        });
+
+        expect(measured[0]?.textAlign).toBe('center');
+        expect(measured[0]?.textBaseline).toBe('middle');
     });
 
 });
