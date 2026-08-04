@@ -32,6 +32,9 @@ export interface ReconcilerOptions<TElement = unknown> {
     getChildId?: (domNode: Element) => string | null;
 }
 
+/** Shared read-only stand-in for the common case of a reconciler with no exclusion selectors. */
+const EMPTY_EXCLUSIONS: ReadonlySet<Element> = new Set();
+
 function defaultGetChildId(domNode: Element): string | null {
     return domNode.getAttribute('id');
 }
@@ -100,6 +103,21 @@ function isExcluded(element: Element, selectors: string[]): boolean {
     return false;
 }
 
+/** The DOM children this pass must leave alone, resolved once so the insert loop never re-queries the live DOM. */
+function collectExcluded(domParent: Element, selectors: string[]): Set<Element> {
+    const excluded = new Set<Element>();
+
+    for (let i = 0; i < domParent.children.length; i++) {
+        const child = domParent.children[i];
+
+        if (isExcluded(child, selectors)) {
+            excluded.add(child);
+        }
+    }
+
+    return excluded;
+}
+
 function countChildIds<TElement>(children: VNode<TElement>[]): Map<string, number> {
     const counts = new Map<string, number>();
 
@@ -126,6 +144,10 @@ function reconcileChildren<TElement = unknown>(
         getChildId = defaultGetChildId,
     } = options;
 
+    const excluded = excludeSelectors.length > 0
+        ? collectExcluded(domParent, excludeSelectors)
+        : EMPTY_EXCLUSIONS;
+
     // Counted, not a set: siblings may share an id, and each occurrence still needs its own node.
     const wantedIds = countChildIds(vnode.children);
     const existingChildren = new Map<string, Element[]>();
@@ -133,7 +155,7 @@ function reconcileChildren<TElement = unknown>(
     for (let i = domParent.children.length - 1; i >= 0; i--) {
         const child = domParent.children[i];
 
-        if (excludeSelectors.length > 0 && isExcluded(child, excludeSelectors)) {
+        if (excluded.has(child)) {
             continue;
         }
 
@@ -189,7 +211,7 @@ function reconcileChildren<TElement = unknown>(
         }
 
         // Excluded nodes hold an index without being managed, so step over them rather than displace them.
-        while (excludeSelectors.length > 0 && domIndex < domParent.children.length && isExcluded(domParent.children[domIndex], excludeSelectors)) {
+        while (domIndex < domParent.children.length && excluded.has(domParent.children[domIndex])) {
             domIndex++;
         }
 
