@@ -59,23 +59,75 @@ export function getImageSourceSize(image: CanvasImageSource): [number, number] {
     return [0, 0];
 }
 
-/** Draws a `CanvasImageSource` onto an offscreen canvas at the given size and returns its data URL. */
-export function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, height?: number): string {
-    const [sourceWidth, sourceHeight] = getImageSourceSize(image);
-    const imgWidth = width ?? sourceWidth;
-    const imgHeight = height ?? sourceHeight;
+const IMAGE_DATA_URL_CACHE = new WeakMap<object, Map<string, string>>();
+
+// A canvas or a video repaints between frames, so only a source whose pixels are fixed can be keyed and memoized.
+function getImageDataURLKey(image: CanvasImageSource, width: number, height: number): string | undefined {
+    if (image instanceof HTMLImageElement) {
+        return `${image.src}|${width}|${height}`;
+    }
+
+    // Guarded: a runtime with a partial DOM (jsdom, a worker) may not declare these at all.
+    if (typeof SVGImageElement !== 'undefined' && image instanceof SVGImageElement) {
+        return `${image.href.baseVal}|${width}|${height}`;
+    }
+
+    if (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap) {
+        return `${width}|${height}`;
+    }
+}
+
+function encodeImageSource(image: CanvasImageSource, width: number, height: number): string {
     const canvas = document.createElement('canvas');
 
-    canvas.width = imgWidth;
-    canvas.height = imgHeight;
+    canvas.width = width;
+    canvas.height = height;
 
     const ctx = canvas.getContext('2d');
 
     if (ctx) {
-        ctx.drawImage(image, 0, 0, imgWidth, imgHeight);
+        ctx.drawImage(image, 0, 0, width, height);
     }
 
     return canvas.toDataURL();
+}
+
+/**
+ * Draws a `CanvasImageSource` onto an offscreen canvas at the given size and returns its data URL.
+ *
+ * The encode is a synchronous full PNG + base64 pass, so the result is memoized per source and
+ * size — an unchanged image would otherwise be re-encoded on every frame it is drawn. Sources whose
+ * pixels change without their identity changing (a canvas, an `OffscreenCanvas`, a video) are never
+ * memoized and re-encode each call.
+ *
+ * @param image - The source to encode.
+ * @param width - Width to draw the source at; defaults to its intrinsic width.
+ * @param height - Height to draw the source at; defaults to its intrinsic height.
+ * @returns The PNG data URL for the source at that size.
+ */
+export function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, height?: number): string {
+    const [sourceWidth, sourceHeight] = getImageSourceSize(image);
+    const imgWidth = width ?? sourceWidth;
+    const imgHeight = height ?? sourceHeight;
+    const cacheKey = getImageDataURLKey(image, imgWidth, imgHeight);
+
+    if (!cacheKey) {
+        return encodeImageSource(image, imgWidth, imgHeight);
+    }
+
+    const entries = IMAGE_DATA_URL_CACHE.get(image) ?? new Map<string, string>();
+    const cached = entries.get(cacheKey);
+
+    if (cached) {
+        return cached;
+    }
+
+    const dataURL = encodeImageSource(image, imgWidth, imgHeight);
+
+    entries.set(cacheKey, dataURL);
+    IMAGE_DATA_URL_CACHE.set(image, entries);
+
+    return dataURL;
 }
 
 /** Rasterizes serialized SVG markup to `ImageData` by decoding it through an `Image` onto a canvas. */
