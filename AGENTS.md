@@ -64,6 +64,17 @@ EventBus<TEventMap>
 
 `Context` is the rendering abstraction. `@ripl/web` is the main entry point for browser usage — it re-exports everything from `@ripl/core` (elements, scene, renderer, animation, scales, etc.) and `@ripl/canvas` (Canvas context), and sets up browser-specific platform bindings. For SVG rendering, import `createContext` from `@ripl/svg` instead. All elements render through `Context`, making them context-agnostic.
 
+### Coordinate Spaces
+
+Two spaces, and one seam between them:
+
+- **Logical space** — CSS pixels relative to the surface origin. Elements are authored here, and every public pointer event payload (`mousemove`, `mousedown`, `mouseup`, `click`, `dragstart`, `drag`, `dragend`, on both the context and elements) carries logical coordinates.
+- **Surface space** — the backend's own drawing coordinates. `Context.hitTest` and `RenderElement.intersectsWith` take surface space, as do `isPointInPath`/`isPointInStroke`.
+
+The two agree on SVG, differ by the device pixel ratio on canvas, and differ by a scale *and an origin offset* on the terminal, which letterboxes its content into character cells.
+
+**Convert only through `Context.toLogicalPoint`/`toSurfacePoint`.** Never multiply by `scaleX`/`scaleY` or a device pixel ratio at a call site: a backend whose mapping carries an origin offset overrides the helpers, and a raw scale read silently ignores that. The helpers are the single seam — a handler holding a pointer's logical coordinates maps them once, at the hit test.
+
 ### Scenegraph
 
 Elements are organized in `Group` trees. `Scene` maintains a **hoisted buffer** — a flattened list of all renderable elements — converting render traversal from O(n^c) to O(n). The `Renderer` drives the animation loop via `requestAnimationFrame`.

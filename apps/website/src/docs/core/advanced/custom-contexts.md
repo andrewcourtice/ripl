@@ -238,6 +238,35 @@ The base `Context` class manages a state stack via `save()` and `restore()`. You
 
 Key state properties to handle include `fill`, `stroke`, `lineWidth`, `lineCap`, `lineJoin`, `opacity`, `font`, `textAlign`, and `textBaseline`.
 
+## Coordinate Spaces
+
+Ripl works in two coordinate spaces, and your context defines the mapping between them:
+
+- **Logical space** — CSS pixels relative to the surface origin. Elements are authored here, and every pointer event payload (`mousemove`, `mousedown`, `mouseup`, `click`, `dragstart`, `drag`, `dragend`, on both the context and elements) reports logical coordinates.
+- **Surface space** — your backend's own drawing coordinates. `hitTest`, `intersectsWith`, `isPointInPath`, and `isPointInStroke` all take surface space.
+
+The two spaces are identical for SVG, differ by the device pixel ratio for canvas, and differ by a scale *and* a centering offset for the terminal, which [letterboxes](/docs/core/contexts/terminal#logical-sizing) a logical space into its character grid.
+
+Conversion happens in exactly two methods:
+
+```ts
+class MyContext extends Context {
+
+    // Surface -> logical
+    toLogicalPoint(x: number, y: number): [number, number] {
+        return [(x - this.offsetX) / this.factor, (y - this.offsetY) / this.factor];
+    }
+
+    // Logical -> surface
+    toSurfacePoint(x: number, y: number): [number, number] {
+        return [x * this.factor + this.offsetX, y * this.factor + this.offsetY];
+    }
+
+}
+```
+
+The base implementation derives the mapping from the slope of `scaleX`/`scaleY`, which is correct for any context whose `rescale` sets those scales and which introduces no origin offset — canvas and SVG both qualify. **Override both methods if your surface is offset, letterboxed, or otherwise not expressible as a pure scale factor**, and never convert a point by multiplying by `scaleX`/`scaleY` (or a device pixel ratio) at a call site: those helpers are the only seam elements and interaction handlers go through.
+
 ## Persistent Path Keys
 
 When `createPath(key)` is called with a key, the key acts as a persistent identifier for that path across renders. This is critical for contexts that maintain a DOM (like SVG) because it allows efficient diffing and reconciliation instead of recreating elements every frame.
