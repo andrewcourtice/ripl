@@ -355,6 +355,15 @@ describe('Color', () => {
             expect(parseColor('notacolor')).toBeUndefined();
         });
 
+        // A plain-object lookup reached Object.prototype, and `Number(Object) >> 16` is 0, so every
+        // inherited member resolved to opaque black.
+        test('Should return undefined for an Object.prototype member name', () => {
+            expect(parseColor('constructor')).toBeUndefined();
+            expect(parseColor('__proto__')).toBeUndefined();
+            expect(parseColor('hasOwnProperty')).toBeUndefined();
+            expect(parseColor('toString')).toBeUndefined();
+        });
+
     });
 
     describe('Zero alpha', () => {

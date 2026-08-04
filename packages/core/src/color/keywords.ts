@@ -179,14 +179,17 @@ export function parseKeyword(value: string): ColorRGBA | undefined {
         return [0, 0, 0, 0];
     }
 
+    // An inherited key such as `constructor` packs to NaN, and `NaN >> 16` is a perfectly valid 0.
+    if (!Object.hasOwn(CSS_COLOR_KEYWORDS, keyword)) {
+        return undefined;
+    }
+
     const packed = CSS_COLOR_KEYWORDS[keyword];
 
-    if (packed !== undefined) {
-        return [
-            (packed >> 16) & 255,
-            (packed >> 8) & 255,
-            packed & 255,
-            1,
-        ];
-    }
+    return [
+        (packed >> 16) & 255,
+        (packed >> 8) & 255,
+        packed & 255,
+        1,
+    ];
 }
