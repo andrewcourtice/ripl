@@ -162,6 +162,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
     private _groups: Group[] = [];
     private _gridGroup?: Group;
+    private _gridLabelGroup?: Group;
     private _gridRings: Circle[] = [];
     private _gridLabels: Text[] = [];
     private _gridLines: Line[] = [];
@@ -201,7 +202,15 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 zIndex: 0,
             });
 
+            // Segments are opaque, so the value labels are read off a band that paints above them.
+            this._gridLabelGroup = createGroup({
+                id: 'polar-grid-labels',
+                class: 'polar-grid',
+                zIndex: 1,
+            });
+
             this.scene.add(this._gridGroup);
+            this.scene.add(this._gridLabelGroup);
         }
 
         // --- Concentric rings ---
@@ -279,7 +288,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 },
             });
 
-            this._gridGroup!.add(label);
+            this._gridLabelGroup!.add(label);
 
             return label;
         });
@@ -358,7 +367,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         ];
 
         // Animate: staggered entry for new elements, smooth transition for updates
-        const allElements = this._gridGroup!.children;
+        const allElements = [
+            ...this._gridGroup!.children,
+            ...this._gridLabelGroup!.children,
+        ];
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({
