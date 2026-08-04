@@ -53,6 +53,13 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
+/** A transition owned by one `transition()` call, addressing its entry in the renderer's transition map. */
+interface ScopedTransition {
+    elementId: string;
+    transitionId: symbol;
+    entry: RendererTransition;
+}
+
 /** Alias for the transition playback direction within the renderer. */
 export type RendererTransitionDirection = TransitionDirection;
 
@@ -317,6 +324,16 @@ export class Renderer extends EventBus<RendererEventMap> {
         });
     }
 
+    private _removeTransition(elementId: string, transitionId: symbol): void {
+        const transitions = this._transitionMap.get(elementId);
+
+        transitions?.delete(transitionId);
+
+        if (!transitions?.size) {
+            this._transitionMap.delete(elementId);
+        }
+    }
+
     private _processTransition(entry: RendererTransition): void {
         if (entry.paused) {
             if (entry.pauseOffset > 0) {
@@ -496,14 +513,16 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? options
             : () => options || {} as RendererTransitionOptions<TElement>;
 
-        const scopedTransitions = new Map<symbol, { elementId: Element['id'];
-            entry: RendererTransition; }>();
+        // A per-call index into the transition map, not a second copy of it: the entries are shared.
+        const scope: ScopedTransition[] = [];
+
+        const forEachScoped = (body: (entry: RendererTransition) => void) => scope.forEach(({ entry }) => body(entry));
 
         const hooks = {
             onPause: () => {
                 const now = factory.now();
 
-                scopedTransitions.forEach(({ entry }) => {
+                forEachScoped(entry => {
                     entry.pauseOffset = now - entry.startTime;
                     entry.paused = true;
                 });
@@ -511,7 +530,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             onPlay: () => {
                 const now = factory.now();
 
-                scopedTransitions.forEach(({ entry }) => {
+                forEachScoped(entry => {
                     entry.startTime = now - entry.pauseOffset;
                     entry.paused = false;
                 });
@@ -519,7 +538,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this.start();
             },
             onSeek: (position: number) => {
-                scopedTransitions.forEach(({ entry }) => {
+                forEachScoped(entry => {
                     entry.pauseOffset = position * entry.duration;
                     entry.paused = true;
 
@@ -557,14 +576,9 @@ export class Renderer extends EventBus<RendererEventMap> {
                 const startTime = factory.now() + delay;
 
                 const callback = () => {
-                    const elementTransitions = this._transitionMap.get(element.id);
-
                     completeCount += 1;
-                    elementTransitions?.delete(transitionId);
 
-                    if (!elementTransitions?.size) {
-                        this._transitionMap.delete(element.id);
-                    }
+                    this._removeTransition(element.id, transitionId);
 
                     try {
                         onComplete(element);
@@ -591,8 +605,9 @@ export class Renderer extends EventBus<RendererEventMap> {
                     interpolator: element.interpolate(state),
                 };
 
-                scopedTransitions.set(transitionId, {
+                scope.push({
                     entry,
+                    transitionId,
                     elementId: element.id,
                 });
 
@@ -601,15 +616,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             });
 
             onAbort(() => {
-                scopedTransitions.forEach(({ elementId }, id) => {
-                    const elementTransitions = this._transitionMap.get(elementId);
-                    elementTransitions?.delete(id);
-
-                    if (!elementTransitions?.size) {
-                        this._transitionMap.delete(elementId);
-                    }
-                });
-
+                scope.forEach(({ elementId, transitionId }) => this._removeTransition(elementId, transitionId));
                 this._stopOnIdle();
             });
         }, hooks);
