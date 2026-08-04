@@ -31,16 +31,17 @@ const NODES = [
     { id: 'f' },
 ];
 
+// The large link is declared last so it is drawn on top, where an unfixed fill test resolves the hover to it.
 const LINKS = [
-    {
-        source: 'a',
-        target: 'f',
-        value: 10,
-    },
     {
         source: 'c',
         target: 'd',
         value: 1,
+    },
+    {
+        source: 'a',
+        target: 'f',
+        value: 10,
     },
 ];
 
@@ -179,6 +180,8 @@ describe('arc diagram hit testing', () => {
             context: { hitTest(events: string[], x: number, y: number): { id: string }[] };
         }).context.hitTest(['mousemove', 'mouseenter', 'mouseleave'], x, y);
 
+        // The DOM context dispatches to the first hit, so the large link topping the list is the user-visible failure.
+        expect(hits[0]?.id).toBe('arc-c~d');
         expect(hits.map(hit => hit.id)).toEqual(['arc-c~d']);
     });
 
