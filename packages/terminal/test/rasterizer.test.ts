@@ -54,6 +54,15 @@ describe('BrailleRasterizer', () => {
         expect(output).not.toMatch(/[\u2801-\u28FF]/);
     });
 
+    // NaN passes every bounds comparison, then indexes the dot map out of range and throws.
+    test('Should ignore non-finite pixels', () => {
+        const rasterizer = new BrailleRasterizer(10, 5);
+
+        expect(() => rasterizer.setPixel(NaN, 0, '')).not.toThrow();
+        expect(() => rasterizer.setPixel(0, Infinity, '')).not.toThrow();
+        expect(rasterizer.serialize()).not.toMatch(/[⠁-⣿]/);
+    });
+
     test('Should ignore out-of-bounds pixels (beyond dimensions)', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
@@ -186,15 +195,71 @@ describe('BrailleRasterizer', () => {
         expect(output).toContain(ANSI_RESET);
     });
 
+    // The blank-cell branch already reset; an uncolored *glyph* did not, so it inherited the
+    // previous cell's color and leaked it to the rest of the frame and every frame after.
+    test('Should reset before an uncolored character following a colored cell', () => {
+        const rasterizer = new BrailleRasterizer(4, 1);
+
+        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
+        rasterizer.setChar(1, 0, 'X', '');
+
+        expect(rasterizer.serialize()).toContain(`\x1b[38;2;255;0;0m⠁${ANSI_RESET}X`);
+    });
+
+    test('Should reset before an uncolored braille cell following a colored one', () => {
+        const rasterizer = new BrailleRasterizer(4, 1);
+
+        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
+        rasterizer.setPixel(2, 0, '');
+
+        expect(rasterizer.serialize()).toContain(`\x1b[38;2;255;0;0m⠁${ANSI_RESET}⠁`);
+    });
+
+    test('Should never leave a color open past the cells it applies to', () => {
+        const rasterizer = new BrailleRasterizer(4, 2);
+
+        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
+        rasterizer.setChar(3, 0, 'X', '');
+        rasterizer.setChar(0, 1, 'Y', '\x1b[38;2;0;255;0m');
+
+        const output = rasterizer.serialize();
+        const trailing = output.slice(output.lastIndexOf('\x1b[38;2;0;255;0m'));
+
+        expect(trailing).toContain(ANSI_RESET);
+    });
+
     test('Empty grid should produce spaces for all cells', () => {
         const rasterizer = new BrailleRasterizer(3, 1);
         const output = rasterizer.serialize();
 
         // After cursor positioning, should have 3 spaces
         // eslint-disable-next-line no-control-regex
-        const afterCursor = output.replace(/\x1b\[[^m]*[mH]/g, '');
+        const afterCursor = output.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, '');
 
         expect(afterCursor).toBe('   ');
+    });
+
+    // ── erasing stale output ──────────────────────────────────────
+
+    test('Should erase past the end of every row so a narrower grid strands no columns', () => {
+        const rasterizer = new BrailleRasterizer(3, 2);
+        const output = rasterizer.serialize();
+
+        expect(output.split('\x1b[K')).toHaveLength(3);
+    });
+
+    test('Should erase below the last row so a shorter grid strands no rows', () => {
+        const rasterizer = new BrailleRasterizer(3, 2);
+
+        expect(rasterizer.serialize()).toContain('\x1b[3;1H\x1b[J');
+    });
+
+    test('Should omit erase sequences from the plain-text form', () => {
+        const rasterizer = new BrailleRasterizer(3, 2);
+
+        expect(rasterizer.serialize({
+            ansi: false,
+        })).not.toContain('\x1b');
     });
 
     test('Should include color escape before colored braille character', () => {

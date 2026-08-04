@@ -89,8 +89,8 @@ export function rasterizeCircle(cx: number, cy: number, radius: number, plot: Pi
     }
 }
 
-/** Rasterizes an ellipse outline at (cx,cy) with the given radii using the midpoint algorithm. */
-export function rasterizeEllipse(cx: number, cy: number, rx: number, ry: number, plot: PixelCallback): void {
+/** Rasterizes a full, unrotated ellipse outline at (cx,cy) using the midpoint algorithm. */
+function rasterizeFullEllipse(cx: number, cy: number, rx: number, ry: number, plot: PixelCallback): void {
     const icx = Math.round(cx);
     const icy = Math.round(cy);
     const irx = Math.round(rx);
@@ -323,21 +323,139 @@ export function rasterizeArc(
     rasterizePolyline(flattenArc(cx, cy, radius, startAngle, endAngle, counterclockwise), plot);
 }
 
-/** Samples a full ellipse outline into a closed polyline of points. */
-export function flattenEllipse(cx: number, cy: number, rx: number, ry: number): Vertex[] {
-    const steps = Math.max(16, Math.ceil((Math.abs(rx) + Math.abs(ry))));
+/** Whether an ellipse sweep covers the full turn, in which case the closed-curve sampling applies. */
+function isFullSweep(startAngle: number, endAngle: number): boolean {
+    return Math.abs(endAngle - startAngle) >= TAU - 0.001;
+}
+
+/**
+ * Samples an ellipse outline into a polyline of points.
+ *
+ * @param cx - X coordinate of the ellipse center.
+ * @param cy - Y coordinate of the ellipse center.
+ * @param rx - Radius along the ellipse's own x axis.
+ * @param ry - Radius along the ellipse's own y axis.
+ * @param rotation - Rotation of the ellipse about its center, in radians.
+ * @param startAngle - Angle the sweep starts at, in radians.
+ * @param endAngle - Angle the sweep ends at, in radians.
+ * @param counterclockwise - Whether the sweep runs counterclockwise.
+ * @returns The sampled points. A full sweep omits the duplicate closing point (the curve is closed
+ * implicitly); a partial sweep includes both endpoints, so filling it closes the segment with a chord
+ * exactly as canvas does.
+ */
+export function flattenEllipse(
+    cx: number, cy: number,
+    rx: number, ry: number,
+    rotation: number = 0,
+    startAngle: number = 0,
+    endAngle: number = TAU,
+    counterclockwise: boolean = false
+): Vertex[] {
+    const full = isFullSweep(startAngle, endAngle);
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+
+    let end = endAngle;
+
+    if (!full && counterclockwise && end > startAngle) {
+        end -= TAU;
+    } else if (!full && !counterclockwise && end < startAngle) {
+        end += TAU;
+    }
+
+    const sweep = full ? TAU : end - startAngle;
+    const radius = Math.max(Math.abs(rx), Math.abs(ry));
+    const steps = Math.max(16, Math.ceil(Math.abs(sweep) * radius / 2));
+    const count = full ? steps : steps + 1;
     const points: Vertex[] = [];
 
-    for (let i = 0; i < steps; i++) {
-        const angle = (i / steps) * TAU;
+    for (let i = 0; i < count; i++) {
+        const angle = startAngle + sweep * (i / steps);
+        const ax = rx * Math.cos(angle);
+        const ay = ry * Math.sin(angle);
 
         points.push({
-            x: cx + rx * Math.cos(angle),
-            y: cy + ry * Math.sin(angle),
+            x: cx + ax * cos - ay * sin,
+            y: cy + ax * sin + ay * cos,
         });
     }
 
     return points;
+}
+
+/**
+ * Rasterizes an ellipse outline at (cx,cy), honoring rotation and sweep.
+ *
+ * @param cx - X coordinate of the ellipse center.
+ * @param cy - Y coordinate of the ellipse center.
+ * @param rx - Radius along the ellipse's own x axis.
+ * @param ry - Radius along the ellipse's own y axis.
+ * @param rotation - Rotation of the ellipse about its center, in radians.
+ * @param startAngle - Angle the sweep starts at, in radians.
+ * @param endAngle - Angle the sweep ends at, in radians.
+ * @param counterclockwise - Whether the sweep runs counterclockwise.
+ * @param plot - Invoked for each rasterized pixel.
+ */
+export function rasterizeEllipse(
+    cx: number, cy: number,
+    rx: number, ry: number,
+    rotation: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise: boolean,
+    plot: PixelCallback
+): void {
+    if (!rotation && isFullSweep(startAngle, endAngle)) {
+        rasterizeFullEllipse(cx, cy, rx, ry, plot);
+        return;
+    }
+
+    rasterizePolyline(flattenEllipse(cx, cy, rx, ry, rotation, startAngle, endAngle, counterclockwise), plot);
+}
+
+/**
+ * Wraps a plot callback so pixels landing in a dash gap are dropped.
+ *
+ * Arc length is approximated by counting plotted pixels, which is exact for axis-aligned runs and
+ * up to √2 short on a diagonal — indistinguishable at braille resolution, and far cheaper than
+ * re-parameterizing every command by true arc length. A pattern with an odd number of entries is
+ * repeated to an even length, as canvas specifies.
+ *
+ * @param pattern - The dash pattern, alternating dash and gap lengths in pixels.
+ * @param offset - Distance into the pattern at which the first dash starts.
+ * @param plot - The callback to gate.
+ * @returns A callback that forwards only the pixels falling within a dash, or `plot` itself when
+ * the pattern describes a solid line.
+ */
+export function dashPixels(pattern: number[], offset: number, plot: PixelCallback): PixelCallback {
+    const segments = pattern.length % 2 ? pattern.concat(pattern) : pattern;
+    const cycle = segments.reduce((total, length) => total + length, 0);
+
+    if (!cycle || segments.some(length => !(length >= 0))) {
+        return plot;
+    }
+
+    let distance = offset;
+
+    return (x, y) => {
+        const position = ((distance % cycle) + cycle) % cycle;
+
+        distance += 1;
+
+        let travelled = 0;
+
+        for (let i = 0; i < segments.length; i++) {
+            travelled += segments[i];
+
+            if (position < travelled) {
+                if (i % 2 === 0) {
+                    plot(x, y);
+                }
+
+                return;
+            }
+        }
+    };
 }
 
 /** Computes the x-coordinates where a horizontal scanline crosses the edges of the given contours. */
