@@ -26,6 +26,7 @@ import {
 
 const context = createContext('.mount-element');
 context.lightDirection = [-1, -1, -1];
+context.lightMode = 'camera';
 
 const cubeLeft = createCube({
     x: -1.5,
@@ -110,11 +111,31 @@ const color = shadeFaceColor('rgb(200, 100, 50)', 0.5);
 
 ## Automatic Shading
 
-`Shape3D` elements automatically apply flat shading during rendering. The light direction is read from `context.lightDirection` (defaults to `[0, 0, -1]`).
+`Shape3D` elements automatically apply flat shading during rendering. The light direction is read from `context.lightDirection` (defaults to `LIGHT_DIRECTION.topLeftFront`, `[-0.577, -0.577, -0.577]`).
 
 ```ts
 context.lightDirection = [1, -1, -1]; // top-right light
 ```
+
+## Light Modes
+
+`context.lightMode` decides what `lightDirection` is measured against.
+
+| Mode | Behaviour |
+|--------|-----------|
+| `'world'` (default) | The light is fixed in world space. A face keeps its brightness wherever the camera moves, so the highlight stays anchored to the geometry and only changes when the object itself rotates. |
+| `'camera'` | The light is locked to the viewer, like a headlight. Whichever face is turned towards the camera is the brightest, so a shape stays readable from every angle. |
+
+Pick the mode that matches what moves. The demo above orbits the camera around two stationary
+cubes, and nothing in the scene actually changes — under `'world'` the same faces would stay lit for
+the whole orbit and the cubes would go dark as the camera swung behind the light, so it uses
+`'camera'`. A scene that spins its objects under a static camera wants `'world'`, where the shading
+sweeps across the faces as they turn.
+
+> [!TIP]
+> Avoid aiming a world-fixed light straight down an object's body diagonal. `[-1, -1, -1]` sits at
+> exactly equal angles to a cube's `+X`, `+Y` and `+Z` faces, lighting all three identically and
+> flattening the shape into an edgeless silhouette.
 
 <script lang="ts" setup>
 import {

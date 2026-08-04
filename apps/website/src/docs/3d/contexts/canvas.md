@@ -75,6 +75,7 @@ const context = createContext('#app', {
 - **`projectionMatrix`** (`Matrix4`): the current projection matrix
 - **`viewProjectionMatrix`** (`Matrix4`): combined view × projection matrix
 - **`lightDirection`** (`Vector3`): direction of the light source for shading
+- **`lightMode`** (`'world' | 'camera'`): whether `lightDirection` is fixed in world space (default) or locked to the viewer like a headlight
 
 ## Methods
 

@@ -19,6 +19,7 @@ import {
     rasterizeLine,
     rasterizeQuadBezier,
     rasterizeRect,
+    thickenPixels,
 } from '../src/algorithms';
 
 import type {
@@ -258,6 +259,71 @@ describe('dashPixels', () => {
         const pixels = collectPixels(plot => rasterizeLine(0, 0, 4, 0, dashPixels([2, -2], 0, plot)));
 
         expect(pixels).toHaveLength(5);
+    });
+
+});
+
+describe('thickenPixels', () => {
+
+    /** Strokes a horizontal line of the given width and measures its depth clear of the round caps. */
+    function strokeThickness(width: number): number {
+        const pixels = collectPixels(plot => rasterizeLine(0, 20, 9, 20, thickenPixels(width, plot)));
+        const middle = pixels.filter(([x]) => x === 5).map(([, y]) => y);
+
+        return new Set(middle).size;
+    }
+
+    test('Should return the original callback for a hairline stroke', () => {
+        const plot: PixelCallback = () => {};
+
+        expect(thickenPixels(1, plot)).toBe(plot);
+        expect(thickenPixels(0, plot)).toBe(plot);
+    });
+
+    // The brush centres on a dot, so an even width rounds up to the next odd dot count.
+    test('Should widen a stroke to an odd number of dots', () => {
+        expect(strokeThickness(1)).toBe(1);
+        expect(strokeThickness(2)).toBe(3);
+        expect(strokeThickness(3)).toBe(3);
+        expect(strokeThickness(4)).toBe(5);
+        expect(strokeThickness(5)).toBe(5);
+    });
+
+    test('Should round the ends of a thick stroke', () => {
+        const pixels = collectPixels(plot => rasterizeLine(0, 20, 9, 20, thickenPixels(5, plot)));
+        const depthAt = (x: number) => new Set(pixels.filter(p => p[0] === x).map(([, y]) => y)).size;
+
+        expect(depthAt(5)).toBe(5);
+        expect(depthAt(-2)).toBeLessThan(depthAt(5));
+        expect(depthAt(-2)).toBeGreaterThan(0);
+    });
+
+    test('Should centre the brush on the plotted pixel', () => {
+        const pixels = collectPixels(plot => thickenPixels(3, plot)(10, 10));
+        const set = pixelSet(pixels);
+
+        expect(set.has('10,10')).toBe(true);
+        expect(set.has('9,10')).toBe(true);
+        expect(set.has('11,10')).toBe(true);
+        expect(set.has('10,9')).toBe(true);
+        expect(set.has('10,11')).toBe(true);
+    });
+
+    test('Should keep a diagonal stroke the same thickness as an axis-aligned one', () => {
+        const diagonal = collectPixels(plot => rasterizeLine(0, 0, 9, 9, thickenPixels(5, plot)));
+        const set = pixelSet(diagonal);
+
+        // A round brush measures the same across any heading; a square one would inflate by √2.
+        expect(set.has('5,3')).toBe(true);
+        expect(set.has('5,7')).toBe(true);
+        expect(set.has('5,1')).toBe(false);
+    });
+
+    test('Should widen a curve as well as a line', () => {
+        const thin = collectPixels(plot => rasterizeCircle(20, 20, 8, plot));
+        const thick = collectPixels(plot => rasterizeCircle(20, 20, 8, thickenPixels(3, plot)));
+
+        expect(pixelSet(thick).size).toBeGreaterThan(pixelSet(thin).size);
     });
 
 });

@@ -40,6 +40,7 @@ import {
     rasterizeLine,
     rasterizeQuadBezier,
     rasterizeRect,
+    thickenPixels,
 } from './algorithms';
 
 import type {
@@ -645,7 +646,20 @@ export class TerminalContext extends Context<Element> {
             return;
         }
 
-        this._executeCommands(path, this._dashPlot(plot));
+        this._executeCommands(path, this._dashPlot(this._thickPlot(plot)));
+    }
+
+    /**
+     * Widens a plot callback to the current stroke width, mapped from logical units into raster
+     * pixels. Nested inside {@link TerminalContext._dashPlot} so the dash pattern still measures
+     * arc length along the centreline rather than across the brush.
+     */
+    private _thickPlot(plot: PixelCallback): PixelCallback {
+        // A brush wider than the grid is stamped entirely out of bounds, so cap the wasted work.
+        const limit = Math.max(this._rasterizer.pixelWidth, this._rasterizer.pixelHeight);
+        const width = Math.min(this.lineWidth * this._rasterScale, limit);
+
+        return thickenPixels(width, plot);
     }
 
     /** Gates a plot callback on the current dash pattern, mapped from logical units into raster pixels. */

@@ -25,7 +25,7 @@ import {
     createCube,
 } from '@ripl/3d';
 
-const context = createContext('.mount-element');
+const context = createContext('.mount-element', { lightMode: 'camera' });
 const camera = createCamera(context, {
     position: [0, 1.5, 5],
     target: [0, 0, 0],
@@ -44,6 +44,8 @@ function loop() {
 loop();
 ```
 :::
+
+Both demos pair the moving camera with `lightMode: 'camera'`. See [Light Modes](/docs/3d/essentials/shading#light-modes) for why a world-fixed light looks frozen when the camera moves and the geometry does not.
 
 ## Creation
 

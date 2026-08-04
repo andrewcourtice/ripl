@@ -545,11 +545,21 @@ ellipse renders different geometry than before — the geometry that was asked f
 
 **`dashPixels`** — **API**, additive. Gates a plot callback on a dash pattern.
 
+**`thickenPixels`** — **API**, additive. Widens a plot callback by stamping a round brush at every
+pixel it plots.
+
 **`TerminalContext.applyStroke`** — **behaviour**. Honors `lineDash`/`lineDashOffset`. Dashed grid
 lines and zero-lines were indistinguishable from solid data lines. Arc length is approximated by
 counting plotted pixels, which is exact for axis-aligned runs and up to √2 short on a diagonal.
-`lineWidth`, `lineCap`, `lineJoin` and `miterLimit` remain ignored — a 1-bit raster has no form for
-them.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Honors `lineWidth`. Every stroke was one dot
+wide regardless of width, which erased the encoding of any chart carrying its data in stroke
+thickness — a Sankey's links (`lineWidth` *is* the flow magnitude, 20–200px) all collapsed to
+identical hairline curves, and a radial bar's rings to concentric hairlines. Thickness quantises to
+an odd number of dots because the brush centres on one: widths of 1, 2, 3, 4 and 5 give strokes 1,
+3, 3, 5 and 5 dots across. **A scene that strokes anything wider than 1 now emits different bytes.**
+`lineCap`, `lineJoin` and `miterLimit` are still ignored — the round brush shapes every cap and
+join — so a gap narrower than the stroke is wide gets bridged by its caps, as it is on canvas.
 
 **`TerminalPath.arcTo`** — **behaviour**. Constructs the real tangent arc instead of two straight
 lines through the corner. Canvas `arcTo` never passes through `(x1, y1)`; the old approximation was
@@ -736,6 +746,39 @@ froze the lighting in world space. `'world'` is now the identity, and `'camera'`
 rotation — note the old formula was not even correct for camera mode; it aimed the lamp backwards.
 **A scene that selected `'camera'` to get world-fixed lighting must now say `'world'`, and vice
 versa.**
+
+### Every 3D scene renders differently
+
+The two shading fixes above are the only changes to what a 3D scene looks like, and between them
+they touch every scene that moves. Nothing about the diffuse or ambient maths changed —
+`computeFaceBrightness`, `shadeFaceColor` and the `0.3` ambient term are untouched on both the CPU
+and GPU paths. What changed is the two inputs that were wrong, so **expect a visible difference and
+treat it as the fix arriving, not as a regression**:
+
+- **A camera that orbits** now leaves the lighting where it is instead of carrying it around, because
+  the default `lightMode: 'world'` finally means what it says: a lit face stays lit and the camera
+  simply views it from elsewhere. Every shape page under `apps/website/src/docs/3d/shapes/` calls
+  `startRotation`, so all of them change.
+- **Geometry that spins** now re-shades as it turns. Anything built from elements that hard-code
+  normals — `Cube`, `Plane`, `Cylinder` caps, `Cone` base — previously held byte-identical face
+  colours through a full rotation. `apps/website/src/demos/jet-engine`, `jet-engine-webgpu` and
+  `piston-mechanism` all spin such parts.
+
+The fix also makes the pairing between a light and what moves matter for the first time. An orbiting
+camera under a world-fixed light can look *more* static than it did before, because that is what a
+fixed light does when nothing in the scene actually moves: the same faces stay lit for the whole
+orbit, and the shape falls dark as the camera swings behind the light. Pair an orbiting camera with
+`lightMode: 'camera'`, which now genuinely means "headlight", and keep the default `'world'` for
+scenes that rotate their objects under a static camera. The website's shared `startRotation` helper
+sets `'camera'` for exactly this reason; the jet-engine and piston demos spin geometry and stay on
+`'world'`.
+
+One trap is worth calling out, because the old behaviour hid it. A world-fixed light aimed down an
+object's body diagonal sits at equal angles to three of its faces: the default
+`LIGHT_DIRECTION.topLeftFront` (`[-0.577, -0.577, -0.577]`) lights a cube's `+X`, `+Y` and `+Z` at
+an identical `0.704`, so correct shading renders it as an edgeless hexagon. The counter-rotating
+light used to break that tie by accident. Offset the light, or switch to `'camera'`, rather than
+reading it as a regression.
 
 ### Camera
 

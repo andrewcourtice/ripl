@@ -108,7 +108,7 @@ camera.flush();
 | `near` | `number` | `0.1` | Near clipping plane |
 | `far` | `number` | `1000` | Far clipping plane |
 | `lightDirection` | `Vector3` | `[-0.577, -0.577, -0.577]` | Light direction vector |
-| `lightMode` | `'world' \| 'camera'` | `'world'` | Whether light is in world or camera space |
+| `lightMode` | `'world' \| 'camera'` | `'world'` | Whether `lightDirection` is fixed in world space or locked to the viewer like a headlight. Pair `'camera'` with an orbiting camera, `'world'` with rotating objects |
 | `sampleCount` | `number` | `4` | MSAA sample count (1 to disable) |
 | `clearColor` | `[r, g, b, a]` | `[0, 0, 0, 0]` | Background clear color (0–1 range) |
 
