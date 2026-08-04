@@ -62,69 +62,6 @@ import type {
     TerminalOutput,
 } from './output';
 
-/** Converts a base64 data URL into a `Blob` synchronously. */
-function dataURLToBlob(dataURL: string): Blob {
-    const [header, data] = dataURL.split(',');
-    const mimeMatch = /:(.*?);/.exec(header);
-    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-
-    return new Blob([bytes], {
-        type: mime,
-    });
-}
-
-/**
- * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
- * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
- */
-function terminalSnapshotToURL(imageData: ImageData, text: string): string {
-    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
-        const canvas = document.createElement('canvas');
-
-        canvas.width = imageData.width;
-        canvas.height = imageData.height;
-
-        const context = canvas.getContext('2d');
-
-        if (context) {
-            context.putImageData(imageData, 0, 0);
-
-            const dataURL = canvas.toDataURL('image/png');
-
-            if (dataURL?.startsWith('data:image')) {
-                return URL.createObjectURL(dataURLToBlob(dataURL));
-            }
-        }
-    }
-
-    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
-}
-
-/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
-const TEXT_ALIGN_FACTORS: Record<string, number> = {
-    left: 0,
-    start: 0,
-    center: 0.5,
-    right: 1,
-    end: 1,
-};
-
-/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
-const TEXT_BASELINE_FACTORS: Record<string, number> = {
-    top: 0,
-    hanging: 0,
-    middle: 0.5,
-    alphabetic: 1,
-    ideographic: 1,
-    bottom: 1,
-};
-
 /** Options for constructing a terminal rendering context. */
 export interface TerminalContextOptions extends ContextOptions {
     /** Grid width in terminal columns. Defaults to the output adapter's `columns`. */
@@ -169,6 +106,25 @@ interface TerminalCommandHandler {
     toContour(context: ContourContext, args: number[]): void;
     rasterize(context: RasterContext, args: number[]): void;
 }
+
+/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
+const TEXT_ALIGN_FACTORS: Record<string, number> = {
+    left: 0,
+    start: 0,
+    center: 0.5,
+    right: 1,
+    end: 1,
+};
+
+/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
+const TEXT_BASELINE_FACTORS: Record<string, number> = {
+    top: 0,
+    hanging: 0,
+    middle: 0.5,
+    alphabetic: 1,
+    ideographic: 1,
+    bottom: 1,
+};
 
 /**
  * Dispatch table keyed by path command type, replacing the parallel `switch` statements in
@@ -274,6 +230,50 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
         },
     },
 };
+
+/** Converts a base64 data URL into a `Blob` synchronously. */
+function dataURLToBlob(dataURL: string): Blob {
+    const [header, data] = dataURL.split(',');
+    const mimeMatch = /:(.*?);/.exec(header);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([bytes], {
+        type: mime,
+    });
+}
+
+/**
+ * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
+ * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
+ */
+function terminalSnapshotToURL(imageData: ImageData, text: string): string {
+    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+
+        const context = canvas.getContext('2d');
+
+        if (context) {
+            context.putImageData(imageData, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/png');
+
+            if (dataURL?.startsWith('data:image')) {
+                return URL.createObjectURL(dataURLToBlob(dataURL));
+            }
+        }
+    }
+
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+}
 
 /**
  * Terminal rendering context that rasterizes Ripl elements into character-based output via a
