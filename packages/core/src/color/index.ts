@@ -79,7 +79,13 @@ const PARSER_MAP = [
     },
 ] as ColorParser[];
 
-/** Finds the first color parser whose pattern matches the given color string. */
+/**
+ * Finds the first color parser whose pattern matches the given color string.
+ *
+ * Matching is purely pattern-based, so a CSS named color such as `red` has no parser and returns
+ * `undefined` here even though {@link parseColor} resolves it. Reach for {@link parseColor} to ask
+ * whether a string is a color Ripl understands.
+ */
 export function getColorParser(value: string): ColorParser | undefined {
     return PARSER_MAP.find(({ pattern }) => pattern.test(value));
 }
