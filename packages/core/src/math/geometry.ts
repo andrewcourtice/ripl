@@ -71,6 +71,30 @@ export function getThetaPoint(angle: number, distance: number, cx?: number, cy?:
     ];
 }
 
+/**
+ * Returns the angular inset, in radians, that trims an arc at `radius` back from a gap of
+ * `padWidth` logical pixels centred on the boundary angle — `asin(padWidth / (2 * radius))`.
+ *
+ * Applying it per radius (rather than insetting by a fixed angle) leaves the straight edge on a
+ * line offset `padWidth / 2` from the radial centreline, so neighbouring segments face each other
+ * with parallel edges a constant `padWidth` apart instead of a wedge that widens outward.
+ *
+ * Saturates at a quarter turn where the gap is at least as wide as the diameter — inside
+ * `radius < padWidth / 2` nothing of the arc survives — and returns `0` for a non-positive or
+ * non-finite `padWidth` or a negative `radius`.
+ *
+ * @param padWidth - The gap width, in logical pixels, held constant at every radius.
+ * @param radius - The radius at which the inset is measured.
+ * @returns The angular inset to apply at each end of the arc, in radians.
+ */
+export function getPadAngleAtRadius(padWidth: number, radius: number): number {
+    if (!(padWidth > 0) || !(radius >= 0)) {
+        return 0;
+    }
+
+    return Math.asin(Math.min(padWidth / (2 * radius), 1));
+}
+
 /** Generates the vertex points of a regular polygon centered at `(cx, cy)` with the given radius and number of sides. */
 export function getPolygonPoints(
     sides: number,

@@ -67,6 +67,14 @@ all.
   internally. `startAngle`, `endAngle`, `padAngle`.
 - **`gap` is always pixels.** A proportional gap between band-scaled marks is
   `bandPadding` (0–1), matching band-scale terminology.
+- **`padWidth` is pixels, between radial segments.** It is the linear sibling of
+  `padAngle`: where `padAngle` insets each end of a sector by a fixed *angle* and
+  so opens a wedge that widens with radius, `padWidth` insets each radius by
+  `asin(padWidth / 2r)` and so opens a gap of constant width whose facing edges
+  are parallel. Use `padWidth` when the gap must read the same at the inner and
+  outer edge of a donut; use `padAngle` when the gap should scale with the
+  segment. `padWidth` takes precedence where both are set. It is distinct from
+  `gap`, which separates non-radial marks along an axis.
 - **Radii accept `number | \`${number}%\``**: a value ≤ 1 or a percent string is a
   fraction of the outer radius, a value > 1 is pixels. `innerRadius`,
   `outerRadius`.
@@ -93,6 +101,13 @@ One shape per property name, across every chart:
 
 `palette` and `gradient` are distinct because a positional palette and a
 sequential ramp are not interchangeable — they were both called `colors`.
+
+`borderRadius` on the **Arc** element is the one exception to that shape: it is a
+plain `number`. An annular sector's corners have no `[tl, tr, br, bl]` order to
+address, and the radius is clamped per-corner to half the band thickness and to
+what the sector's span allows, so a `'full'` sentinel would mean nothing beyond
+passing a large number. Anything laying out arcs (pie, donut, radial, gauge)
+passes a scalar through.
 
 A shared shape may still be *narrower* on a chart where the wider form has no
 meaning. `TrendChartOptions.stacked` takes `boolean` rather than

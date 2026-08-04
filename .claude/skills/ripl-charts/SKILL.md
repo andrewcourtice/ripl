@@ -150,13 +150,21 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
 
 ## Element toolkit (`@ripl/core`)
 
-`createCircle` (`cx,cy,radius`), `createArc` (`cx,cy,radius,innerRadius?,startAngle,endAngle,padAngle?`),
+`createCircle` (`cx,cy,radius`), `createArc` (`cx,cy,radius,innerRadius?,startAngle,endAngle,padAngle?,padWidth?,borderRadius?`),
 `createLine` (`x1,y1,x2,y2`), `createPolyline` (`points`, `renderer`), `createText`, `createGroup`,
 `createRect`. Shapes take `autoFill`/`autoStroke` toggles.
 
-- **Rounded radial/progress bars**: draw an **open arc** (no `innerRadius`) on the band centerline,
-  stroked with `lineWidth = band thickness` and `lineCap: 'round'` — a round cap rounds the sweeping
-  end. `Arc`'s `borderRadius` is not implemented in render; don't rely on it.
+- **Rounded radial/progress bars**: prefer a **filled** annular arc (`innerRadius` + `radius` at the
+  band edges) with a scalar `borderRadius` — it rounds all four corners and clamps itself to half the
+  band thickness, so an over-rounded segment becomes a capsule rather than self-intersecting. The
+  **stroked open arc** (no `innerRadius`, on the band centerline, `lineWidth = band thickness`,
+  `lineCap: 'round'`) is still the right tool for a genuinely **stroke-only** bar — a track/value pair
+  where you want caps without a fill, or where the band is a stroke you also dash. An open arc's
+  `borderRadius` rounds only its two outer corners and keeps a sharp center point.
+- **Arc padding**: `padAngle` (radians) opens a wedge that widens with radius; `padWidth` (pixels)
+  insets each radius by `asin(padWidth / 2r)` so the gap keeps a constant width and neighbouring
+  segments have parallel edges. `padWidth` wins where both are set, and padding is applied before
+  corner rounding.
 - **Polyline curves**: `renderer` is a named type (`'linear' | 'spline' | 'cardinal' | 'monotoneX' | …`)
   or a custom `(context, path, points) => void`. Resolve a named one with `resolvePolylineRenderer`.
 - **`matches`/`closest`** are on **every `Element`** (via the `Queryable` contract), not just `Group`:
@@ -263,7 +271,8 @@ Add a `create<Name>Chart(mount('<name>'), { animation: false, … })` block to
 - **Non-tweenable props** (`renderer`, `lineCap`, `lineDash`, `stroke`, text `content`) must be set
   **directly** on the element, not put in the transition `state` — the tween would snap them at t=0.5.
 - **Curved area fills** gap against the line unless you use the `core/fill.ts` band renderers.
-- **Stroked arcs** for rounded bars; `Arc.borderRadius` does nothing.
+- **`Arc.borderRadius` is a scalar**, not the Rect family's `number | [tl, tr, br, bl] | 'full'`; it
+  clamps to half the band thickness, so passing a huge number gives a capsule, not an error.
 - **Reweight/reflow** should animate from current positions — persist layout state (force positions,
   morph keys) between renders.
 - Call **`this.init()` last** in the constructor; it triggers the first render.

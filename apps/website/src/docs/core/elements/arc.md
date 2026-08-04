@@ -4,7 +4,9 @@ outline: "deep"
 
 # Arc
 
-An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, making it easy to position labels on pie or donut slices.
+An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` and `padWidth` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, making it easy to position labels on pie or donut slices.
+
+`padAngle` insets both ends by a fixed **angle**, so the resulting gap is a wedge — narrow at the inner radius and wide at the outer. `padWidth` insets each radius by `asin(padWidth / 2r)` instead, so the gap keeps a constant width in **pixels** and neighbouring segments face each other with parallel edges. When both are set, `padWidth` wins.
 
 ## Example
 
@@ -17,10 +19,12 @@ An **Arc** draws a circular or annular (donut) arc segment defined by a center p
             <RiplInputRange v-model="endAnglePct" :min="0" :max="100" :step="1" @update:model-value="redraw" />
             <span>Inner Radius %</span>
             <RiplInputRange v-model="innerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redraw" />
-            <span>Pad Angle</span>
+            <span>Pad Angle (set Pad Width to 0)</span>
             <RiplInputRange v-model="padAngleVal" :min="0" :max="20" :step="1" @update:model-value="redraw" />
+            <span>Pad Width</span>
+            <RiplInputRange v-model="padWidthVal" :min="0" :max="40" :step="1" @update:model-value="redraw" />
             <span>Border Radius</span>
-            <RiplInputRange v-model="borderRadiusVal" :min="0" :max="20" :step="1" @update:model-value="redraw" />
+            <RiplInputRange v-model="borderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redraw" />
         </RiplControlGroup>
     </template>
 </ripl-example>
@@ -39,8 +43,8 @@ createArc({
     radius: 80,
     innerRadius: 40,
     startAngle: 0,
-    endAngle: TAU * 0.75,
-    padAngle: 0.05,
+    endAngle: TAU * 0.25,
+    padWidth: 6,
     borderRadius: 4,
 }).render(context);
 ```
@@ -65,10 +69,12 @@ import {
 } from 'vue';
 
 const TAU = Math.PI * 2;
+const SEGMENT_FILLS = ['#3a86ff', '#8338ec', '#ff006e'];
 const endAnglePct = ref(75);
 const innerRadiusPct = ref(50);
-const padAngleVal = ref(2);
-const borderRadiusVal = ref(4);
+const padAngleVal = ref(0);
+const padWidthVal = ref(8);
+const borderRadiusVal = ref(6);
 let currentContext: Context | undefined;
 
 function renderDemo(context: Context) {
@@ -77,23 +83,26 @@ function renderDemo(context: Context) {
     const r = Math.min(w, h) / 3;
 
     context.batch(() => {
-        const endAngle = TAU * (endAnglePct.value / 100);
+        const sweep = TAU * (endAnglePct.value / 100);
         const innerRadius = r * (innerRadiusPct.value / 100);
         const padAngle = padAngleVal.value * 0.01;
 
-        createArc({
-            fill: '#3a86ff',
-            cx: w / 2, cy: h / 2, radius: r,
-            innerRadius,
-            startAngle: 0,
-            endAngle,
-            padAngle,
-            borderRadius: borderRadiusVal.value,
-        }).render(context);
+        SEGMENT_FILLS.forEach((fill, index) => {
+            createArc({
+                fill,
+                cx: w / 2, cy: h / 2, radius: r,
+                innerRadius,
+                startAngle: sweep * (index / SEGMENT_FILLS.length),
+                endAngle: sweep * ((index + 1) / SEGMENT_FILLS.length),
+                padAngle,
+                padWidth: padWidthVal.value,
+                borderRadius: borderRadiusVal.value,
+            }).render(context);
+        });
 
         createText({
             x: w / 2, y: h / 2 + r + 24,
-            content: `endAngle: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  pad: ${padAngleVal.value}  radius: ${borderRadiusVal.value}`,
+            content: `sweep: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  padAngle: ${padAngleVal.value}  padWidth: ${padWidthVal.value}  radius: ${borderRadiusVal.value}`,
             fill: '#666', textAlign: 'center', font: '12px sans-serif',
         }).render(context);
     });
@@ -131,7 +140,9 @@ const arc = createArc({
 
 ## Properties
 
-The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (spacing between segments), and `borderRadius` (corner rounding).
+The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (angular spacing between segments, in radians), `padWidth` (constant-width spacing between segments, in pixels — takes precedence over `padAngle`), and `borderRadius` (corner rounding).
+
+`borderRadius` is a single number — unlike the Rect family, an annular sector has no meaningful per-corner order, so the `[tl, tr, br, bl]` tuple form is not accepted. It is clamped to half the band thickness (`(radius - innerRadius) / 2`) and to what the sector's span allows, so an over-rounded segment degrades into a capsule rather than self-intersecting. An annular sector rounds all four corners; an open arc rounds its two outer corners and keeps a sharp center point. Padding is applied before rounding, so gaps stay constant.
 
 > [!NOTE]
 > For the full property list, see the [Arc API Reference](/docs/api/@ripl/core/).
