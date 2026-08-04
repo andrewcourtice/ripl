@@ -755,9 +755,10 @@ they touch every scene that moves. Nothing about the diffuse or ambient maths ch
 and GPU paths. What changed is the two inputs that were wrong, so **expect a visible difference and
 treat it as the fix arriving, not as a regression**:
 
-- **A camera that orbits** now sweeps highlights across static geometry instead of carrying the
-  lighting with it, because the default `lightMode: 'world'` finally means what it says. Every
-  shape page under `apps/website/src/docs/3d/shapes/` calls `startRotation`, so all of them change.
+- **A camera that orbits** now leaves the lighting where it is instead of carrying it around, because
+  the default `lightMode: 'world'` finally means what it says: a lit face stays lit and the camera
+  simply views it from elsewhere. Every shape page under `apps/website/src/docs/3d/shapes/` calls
+  `startRotation`, so all of them change.
 - **Geometry that spins** now re-shades as it turns. Anything built from elements that hard-code
   normals — `Cube`, `Plane`, `Cylinder` caps, `Cone` base — previously held byte-identical face
   colours through a full rotation. `apps/website/src/demos/jet-engine`, `jet-engine-webgpu` and
