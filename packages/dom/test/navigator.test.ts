@@ -257,6 +257,171 @@ describe('DOMNavigator interactions', () => {
         sharp.destroy();
     });
 
+    test('Should pan with the finger that survives a pinch', () => {
+        const navigator = createNavigator(fakeContext(), {
+            interactions: {
+                pan: true,
+                zoom: true,
+            },
+        });
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 100,
+            clientY: 100,
+        });
+        fire('pointerdown', {
+            pointerId: 2,
+            clientX: 200,
+            clientY: 100,
+        });
+        fire('pointermove', {
+            pointerId: 2,
+            clientX: 240,
+            clientY: 100,
+        });
+        fire('pointerup', {
+            pointerId: 2,
+            clientX: 240,
+            clientY: 100,
+        });
+
+        const panned = navigator.transform.x;
+
+        fire('pointermove', {
+            pointerId: 1,
+            clientX: 130,
+            clientY: 100,
+        });
+
+        expect(navigator.transform.x).toBe(panned + 30);
+
+        navigator.destroy();
+    });
+
+    // An uncaptured pointer never reaches `endPointer`, so the next gesture reads as a pinch.
+    test('Should not misread a gesture that follows an uncaptured release as a pinch', () => {
+        const navigator = createNavigator(fakeContext(), {
+            interactions: {
+                pan: true,
+                zoom: true,
+            },
+        });
+
+        const setPointerCapture = vi.fn();
+        const onZoom = vi.fn();
+
+        element.setPointerCapture = setPointerCapture;
+        navigator.on('zoom', onZoom);
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 10,
+            button: 2,
+        });
+
+        expect(setPointerCapture).toHaveBeenCalledWith(1);
+
+        fire('pointerup', {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 10,
+        });
+
+        fire('pointerdown', {
+            pointerId: 2,
+            clientX: 100,
+            clientY: 100,
+        });
+        fire('pointermove', {
+            pointerId: 2,
+            clientX: 130,
+            clientY: 100,
+        });
+
+        expect(navigator.transform.x).toBe(30);
+        expect(onZoom).not.toHaveBeenCalled();
+
+        navigator.destroy();
+    });
+
+    test('Should measure the element once per gesture, not once per pointer move', () => {
+        const navigator = createNavigator(fakeContext(), {
+            interactions: {
+                pan: true,
+            },
+        });
+
+        const getBoundingClientRect = vi.spyOn(element, 'getBoundingClientRect');
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 100,
+            clientY: 100,
+        });
+
+        getBoundingClientRect.mockClear();
+
+        for (let i = 0; i < 10; i++) {
+            fire('pointermove', {
+                pointerId: 1,
+                clientX: 100 + i,
+                clientY: 100,
+            });
+        }
+
+        expect(getBoundingClientRect).not.toHaveBeenCalled();
+
+        navigator.destroy();
+    });
+
+    test('Should re-measure the element after a scroll', () => {
+        const navigator = createNavigator(fakeContext(), {
+            interactions: {
+                pan: true,
+            },
+        });
+
+        const getBoundingClientRect = vi.spyOn(element, 'getBoundingClientRect');
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 100,
+            clientY: 100,
+        });
+
+        getBoundingClientRect.mockClear();
+
+        window.dispatchEvent(new Event('scroll'));
+
+        fire('pointermove', {
+            pointerId: 1,
+            clientX: 130,
+            clientY: 100,
+        });
+
+        expect(getBoundingClientRect).toHaveBeenCalledOnce();
+
+        navigator.destroy();
+    });
+
+    test('Should leave touchAction alone when every interaction is disabled', () => {
+        element.style.touchAction = 'pan-y';
+
+        const navigator = createNavigator(fakeContext(), {
+            interactions: {
+                zoom: false,
+                pan: false,
+                brush: false,
+            },
+        });
+
+        expect(element.style.touchAction).toBe('pan-y');
+
+        navigator.destroy();
+    });
+
     test('Should warn and stay inert on a non-DOM context', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

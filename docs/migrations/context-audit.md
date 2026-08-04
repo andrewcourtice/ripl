@@ -249,11 +249,124 @@ _No entries yet._
 
 ## @ripl/dom
 
-_No entries yet._
+### Pointer payloads
+
+**Element `click`, `dragstart`, `drag` and `dragend` payloads** — **behaviour**. `x`/`y` (and
+`startX`/`startY`) carry **CSS pixels**, not device pixels. Element `mousemove` already reported CSS
+pixels, so the same pointer position produced payloads differing by the device pixel ratio depending
+on which event you read — `packages/charts/src/core/interaction.ts` documents `InteractionPoint` as
+"chart pixels" and feeds `onEnter`/`onLeave` from `mousemove` while `onClick` reads `click`. On a
+non-retina display nothing moves. Elsewhere, multiply by `devicePixelRatio` — or better, map through
+`Context.toSurfacePoint` — to recover the old values. Hit testing is unchanged: it still runs in
+surface space.
+
+### Pointer lifecycle
+
+**`DOMContext.disableInteraction`** — **behaviour**. Emits `mouseleave` on every element that was
+hovered before dropping the set, and cancels the pending hover frame. It used to clear
+`_activeElements` silently, so a bar stayed enlarged and its tooltip stayed painted with nothing left
+that could ever produce the leave. `destroy()` delegates here, so teardown is complete when it
+returns rather than a frame later. Any `mouseleave` handler must therefore tolerate running during
+teardown.
+
+**Surface `mouseleave`** — **behaviour**. Also unwinds the hovered element. The element-level
+`mouseleave` was only ever emitted from the hover hit test, which only runs on `mousemove`, so
+leaving the canvas left the last-hovered element hovered forever — the reason chart tooltips stayed
+on screen after the pointer left.
+
+**`mouseup`** — **behaviour**. Also bound at the window, so a release outside the surface ends the
+drag. A gesture released off-canvas previously never emitted `dragend` and resumed on re-entry with
+no button held. A `dragend` may now arrive with coordinates outside the surface bounds (including
+negatives); clamp if your handler assumes otherwise.
+
+**`mousedown`** — **behaviour**. Assigns drag state unconditionally instead of only when something
+is hit, so a press on empty canvas clears the previous gesture's `dragElement` and origin rather than
+making it the next gesture's delta baseline.
+
+**`click`** — **behaviour**. Suppressed once for the gesture that ended a drag. The DOM fires `click`
+after `mouseup`, so a drill-down or selection handler fired at the end of every drag. A click below
+the drag threshold is unaffected.
+
+### Reconciliation
+
+**`reconcileNode`** — **behaviour**. Sibling vnodes sharing an id each get their own DOM node.
+Duplicates previously collapsed onto one node — the second overwrote the first's attributes and
+subtree, and the reorder step desynchronised — so a duplicate key in chart data silently dropped a
+mark and reordered the rest. Node identity is stable across passes.
+
+**`reconcileNode`** — **behaviour**. Nodes matched by `excludeSelectors` keep their position instead
+of drifting to the end of the parent. The reorder step indexed the parent's children directly, which
+counts excluded nodes, so managed children were inserted before them and pushed them rightward.
+Harmless for a `<defs>`; not for a positioned overlay.
+
+### Resize
+
+**`onDOMElementResize`** — **behaviour**. The `window.resize` fallback reports the **content box**,
+matching what the `ResizeObserver` branch reports via `entry.contentRect`. It reported the border box
+before, so on a padded host the two branches of one function disagreed and the backing store was
+sized to a box the surface was never stretched over. Only reachable on engines without
+`ResizeObserver`.
+
+**`onDOMElementResize`** — **behaviour**. Returns an inert disposable outside a browser rather than
+throwing `ReferenceError: window is not defined`. `@ripl/dom` ships `sideEffects: false`, so an SSR
+consumer can import this helper directly.
+
+### Export
+
+**`createCanvasExport`** — **API**, additive. The returned `ContextExport` implements `release()`,
+revoking every object URL `toURL()` handed out. Without it each URL pinned its blob for the
+document's lifetime. Call `release()` when you are done with an export; it is safe to call
+repeatedly.
+
+### Navigator
+
+**`DOMNavigator`** — **behaviour**. Lifting one finger of a pinch hands the survivor back to panning.
+It previously cleared every gesture flag, leaving a finger still on the surface matching no branch at
+all until it was lifted and re-pressed.
+
+**`DOMNavigator`** — **behaviour**. Every tracked pointer is captured on `pointerdown`, not just the
+ones that pan or brush. A secondary-button gesture or the second finger of a pinch released off the
+element never reached the cleanup, and the leaked pointer id made the next single-touch gesture read
+as a pinch — a one-finger pan that zoomed.
+
+**`DOMNavigator`** — **behaviour**. The element origin is cached and invalidated on resize and
+scroll, instead of `getBoundingClientRect` being called on every `pointermove`. If you move the
+element by means that fire neither (a transform on an ancestor, say), invalidate by resizing or
+recreating the navigator.
+
+**`DOMNavigatorOptions.interactions`** — **behaviour**. `touchAction` is left alone when every
+interaction resolves to disabled. `{}` and `{ zoom: false, pan: false, brush: false }` are both
+truthy, so they used to suppress native scrolling over the chart with no gesture wired up.
 
 ## @ripl/node
 
-_No entries yet._
+**`factory.measureText`** — **behaviour**. Measures in braille cells — 2 logical units per character
+and ascent 4 at the default `10px monospace`, descent 0 — scaled by the requested font size, and
+anchors `actualBoundingBox*` on `textAlign`. It reported 8px per character with ascent 8 and descent
+2 regardless of the options passed, so text boxes were roughly 4x too wide and 2.5x too tall against
+what the terminal paints, and centred or right-aligned text was anchored at the wrong corner. Core
+falls back to this only before an element's first paint; anything rendered measures through
+`TerminalContext`. `textBaseline` is deliberately not modelled — the terminal paints one cell per
+glyph with no baseline variation.
+
+**`factory.requestAnimationFrame`** — **behaviour**. Returns an **unref'd** timer and invokes its
+callback with a `DOMHighResTimeStamp`. The render loop re-arms every frame with `autoStart` on, so a
+ref'd timer meant a process that drew one static chart never exited. A script that relied on the
+render loop to keep the event loop alive must now hold it open itself.
+
+**`factory.createElement`** and **`factory.createElementNS`** — **behaviour**. Return a duck-typed
+stub (`getContext()` → `null`, `getTotalLength()` → `0`, attribute accessors) instead of `{}`. Core's
+graceful-degradation guards are written against exactly those probes and could never run — the first
+property access threw a raw `TypeError`. `getPathLength` now returns `0` off-platform rather than
+throwing.
+
+**`factory.createContext`** — **behaviour**. Builds one `TerminalOutput` per process rather than one
+per context, and that output multiplexes its resize subscribers behind a single `SIGWINCH` handler;
+ten scenes used to trip Node's `MaxListenersExceededWarning`. A `TerminalOutput` passed as the target
+is honoured; any other target warns that it cannot be, instead of being discarded in silence.
+
+**`createTerminalOutput`** — **behaviour**. `onResize` registers its `SIGWINCH` handler on the first
+subscription and removes it with the last, rather than one handler per subscriber.
 
 ## @ripl/terminal
 
