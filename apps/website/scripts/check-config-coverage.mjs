@@ -340,7 +340,7 @@ function main() {
 
             const exclusions = CHART_EXCLUSIONS[page] ?? {};
             const required = [...new Set([...shape.options, ...shape.series])]
-                .filter(option => !excludedBy.has(option) && !(option in exclusions));
+                .filter(option => !excludedBy.has(option) && !Object.hasOwn(exclusions, option));
 
             const missing = required.filter(option => !covered.has(option));
 
