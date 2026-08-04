@@ -310,7 +310,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             } = this.options;
 
             const padWidth = resolveSegmentPadWidth(this.options.padWidth, this.options.padAngle);
-            const padAngle = padWidth === undefined ? this.options.padAngle! : 0;
+            const padAngle = padWidth === undefined ? (this.options.padAngle ?? 0) : 0;
 
             const colorGenerator = this.colorGenerator;
 
