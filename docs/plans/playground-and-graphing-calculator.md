@@ -34,10 +34,12 @@ curated gallery of visually interesting 2D and 3D equations.
 
 ## Non-goals
 
-- No changes to any `packages/*` library source. Everything lands under
-  `apps/website/`, plus one 1-line ESLint globals addition and one `data/demos.ts`
-  entry. If a workstream believes it needs a library change, it must stop and
-  escalate rather than widen the diff.
+- No changes to any `packages/*` library source **on the demos branch**.
+  Everything there lands under `apps/website/`, plus one 1-line ESLint globals
+  addition and one `data/demos.ts` entry. If a workstream believes it needs a
+  library change, it must stop and escalate rather than widen the diff. One
+  library change is planned, as its own branch and PR: see Phase 8, which is
+  fully independent and blocks nothing here.
 - No inequalities/shading, no regression/statistics, no LaTeX rendering, no
   saved-graph persistence beyond the URL hash. Say so on the page.
 - No WebGPU variant of the calculator.
@@ -571,14 +573,11 @@ knows nothing about Vue.
 > **Upgrade path, not for v1.** `faceBuffer` and `captureFaceState` are public and
 > `@ripl/3d` re-exports the matrix/vector helpers, so a single element extending
 > `Shape` (from `@ripl/core`) rather than `Shape3D` could push faces with a
-> per-face color interpolated from vertex heights — one element, a genuinely
-> smooth colormap, and no `_traceFaceHitPath` at all, which is ~2-4 ms/frame of
-> pure waste at 9,000 faces when nothing listens for pointer events. This cannot
-> be done by subclassing `Shape3D` (`_renderCPU` is private and `super.render()`
-> re-enters). Better still would be a small upstream change gating the hit trace
-> on whether the element has any tracked listener, which would benefit every
-> `@ripl/3d` consumer. Both are out of scope here (see Non-goals); raise them
-> separately rather than widening this diff.
+> per-face color interpolated from vertex heights, giving one element and a
+> genuinely smooth colormap. This cannot be done by subclassing `Shape3D`
+> (`_renderCPU` is private and `super.render()` re-enters), so it stays out of
+> scope here. The related per-frame hit-path waste is fixed upstream instead, in
+> **Phase 8**; this phase must not assume it has landed.
 
 **Success criteria**
 
@@ -724,6 +723,185 @@ preset.
 
 ---
 
+## Phase 8 — `@ripl/3d`: build the hit path on demand (own branch, own PR)
+
+**This is not part of the demos work.** It is a library change, cut from `main`
+and targeting `main`, and it merges in either order relative to the demos branch.
+The graphing calculator ships against unmodified `@ripl/3d` at whatever face
+budget Phase 5 measures; if this lands first, Phase 5 re-measures and raises it.
+Neither branch may block the other.
+
+- **Branch** `claude/3d-lazy-hit-path`, cut from `main`. CI only fires on PRs to
+  `main`, so anything else gets no CI at all.
+- **Commit** `perf(3d): build the hit path on demand, not every frame`
+- **PR title** (sentence style, no `type(scope):` prefix): *Build a 3D shape's hit
+  path on demand instead of on every frame*
+
+### The problem
+
+`Shape3D._renderCPU` and `_renderGPU` (`packages/3d/src/core/shape.ts:373`,
+`:410`) each call `context.createPath()` with a per-element hit id, and then
+`_traceFaceHitPath` once per face, unconditionally, every frame. `createPath` is
+not pooled — `packages/canvas/src/mixins.ts:418` returns `new CanvasPath(id)`,
+which allocates a native `Path2D` — and each face costs one `moveTo`, N-1
+`lineTo` and one `closePath`, every one a JS-to-native call with no batching.
+For a quad that is 5 native calls per face per frame: at 9,000 faces, ~45,000
+native calls and one fresh `Path2D` per frame, entirely wasted whenever nothing
+hit-tests the shape. Nothing in the repo hit-tests a `Shape3D` today.
+
+Two supporting facts worth quoting in the PR body: the `id` argument buys nothing
+here (paths are not cached or pooled by id; it is only the SVG vdom diff key and
+a debugging aid), and on WebGPU the trace is pure overhead against an offscreen
+hit canvas that never paints.
+
+### Why not the obvious gate
+
+The tempting fix is to skip the trace when `this.has(...)` is false for every
+`TRACKED_EVENT`, mirroring what `Context.hitTest` already does
+(`packages/core/src/context/context.ts:775`, which filters
+`renderedElements.filter(el => el.has(event))` before ever calling
+`intersectsWith`). Reject it. Four independent reasons:
+
+1. **It breaks a documented contract.** `apps/website/src/docs/core/essentials/shape.md:108`
+   promises "pixel-accurate hit testing through the `intersectsWith` method.
+   Instead of using a simple bounding box check (like the base `Element`), shapes
+   test whether a point is inside the actual path geometry" — and the worked
+   example calls `circle.intersectsWith(mouseX, mouseY)` with no listener
+   attached. A gate silently downgrades that to a box test.
+2. **`Element.intersectsWith` ignores `options` entirely**
+   (`packages/core/src/core/element.ts:815`), so falling back to the box makes a
+   `pointerEvents: 'none'` shape *more* hittable than before, not less.
+3. **Listener-added-after-last-paint.** `Element.on` invalidates the tracked
+   element memo but schedules no repaint, so a shape that gains a listener
+   between frames would hit-test against its projected AABB until the next
+   frame — and in a static scene, possibly forever.
+4. It widens the reach of the known stale-bounds defect (audit 3D-6), which names
+   the absent-`hitPath` fallback as its poisoned consumer.
+
+Lazy construction avoids all four and is never worse than today: nobody
+hit-testing pays nothing, an orbiting camera with a still pointer pays nothing,
+and a live hover pays once per pointer frame instead of once per render frame.
+
+### The fix
+
+- **Keep the per-face projection loop.** It also computes `nearestDepth` →
+  `_depth` → `zIndex`, which `Group.render` and `Scene._collectInstructions` sort
+  on and which `packages/3d/test/shape.test.ts:242` pins. Skip only the trace, not
+  the loop. In `_renderGPU` the loop exists *solely* for depth and the hit path,
+  so it is especially tempting to delete; do not.
+- Replace the per-face `_traceFaceHitPath` call with a write of the projected
+  screen-space points into a **reused `Float32Array`** plus a face-offset index,
+  grown on demand and retained across frames. This is strictly less GC pressure
+  than today: it replaces a per-frame `Path2D` with one buffer that is written in
+  place.
+- Make `hitPath` lazily built from that buffer on first use in `intersectsWith`.
+  The invalidation point already exists — `render()` clears `this.hitPath` at
+  `shape.ts:351`, so keep that line and let it mean "the buffer moved; rebuild on
+  next demand".
+- **Preserve `intersectsWith`'s current ordering exactly**, in particular the
+  `pointerEvents` dispatch relative to the no-path fallback. Behavior must be
+  bit-identical; the only change is *when* the path is built.
+
+`hitPath` is `protected`, `_renderCPU`/`_renderGPU` are `private`, and nothing
+outside `packages/3d/src/core/shape.ts` references either — no subclass, no test,
+no devtools, not `@ripl/webgpu`. The change surface is fully internal.
+
+### Tests
+
+`packages/3d` currently has **no** coverage of `Shape3D` hit testing at all, so
+this PR adds the first. Extend `packages/3d/test/shape.test.ts` (its
+`mockPaintLog` harness cannot observe the hit trace, so existing assertions do
+not move). At minimum:
+
+- **The regression pin:** `vi.spyOn(context, 'createPath')`, render, assert it
+  was never called with `` `${cube.id}:hit` ``. Direct precedent — the 3D-14 test
+  in the same file does `vi.spyOn(context, 'submitMesh')` and asserts
+  `not.toHaveBeenCalled()`. This is the test that must fail at the branch point.
+- **Parity:** `intersectsWith` returns the same answers as before for a point
+  inside a face and a point outside it, both with and without `isPointer`.
+- **Build-once:** the path is constructed at most once across several
+  `intersectsWith` calls within one rendered frame, and rebuilt after the next
+  render (move the camera and assert the answer changes).
+- **`pointerEvents: 'none'`** still returns `false` under `isPointer`, and the
+  existing picking-depth test at `shape.test.ts:242` still passes untouched.
+
+Add `packages/3d/test/core/hit-path.bench.ts` — the first benchmark in the
+package. Model it on `packages/core/test/core/shape-cache.bench.ts`: a hand-rolled
+minimal context, an explicit blackhole sink so the JIT cannot elide the trace, and
+an A/B pair per scenario at a few face counts. Note in the file, as that one does,
+that benches never run in CI and that jsdom's `Path2D` is a no-op, so the numbers
+are a lower bound on the real win.
+
+### Docs
+
+One short entry in `docs/migrations/context-audit.md` under the existing
+`## @ripl/3d` section. There is exact precedent there for this class of change —
+the `Shape3D.render` / `submitMesh` entry, and the `## @ripl/canvas` →
+`### Performance` entry which records a pure-perf fix with the note "Both are pure
+functions of their inputs; no output changes". Say the same here: the hit path is
+now built on demand, and no observable behavior changes.
+
+Leave `docs/audits/3d-webgpu.md` and `docs/audits/README.md` alone. Those are a
+historical snapshot of an already-merged effort and are slated for deletion; the
+migration doc is the artifact that survives. The evidence belongs in the PR body,
+matching the existing `perf(canvas)` and `perf(svg)` commits.
+
+`packages/3d/README.md` and `apps/website/src/docs/3d/` need no change — neither
+documents hit testing or pointer events. The generated API reference picks up any
+JSDoc automatically.
+
+### Verification
+
+The repo requires proving the test fails at the branch point, and this is the
+step that is easy to skip:
+
+```bash
+git stash                                  # or check out the branch point
+yarn test packages/3d/test/shape.test.ts   # MUST fail on the createPath pin
+git stash pop
+yarn test packages/3d/test/shape.test.ts   # MUST pass
+```
+
+Then the full gate, plus the doc gate for a touched package:
+
+```bash
+yarn lint
+yarn typecheck
+yarn build && yarn typecheck:dist
+yarn test
+yarn test:bench                            # record before/after numbers for the PR body
+```
+
+Report real counts and the measured benchmark delta. Never "tests pass", and if
+something could not run in this environment, say so plainly and say what was
+substituted instead.
+
+### Success criteria
+
+- No `createPath` call and no path tracing during render when nothing hit-tests.
+- `intersectsWith` is behaviorally identical: same answers, same `pointerEvents`
+  semantics, same fallback when the shape has never rendered.
+- `zIndex` / picking depth unchanged; the existing picking test passes untouched.
+- The benchmark shows a measured reduction at 1k/5k/10k faces, and the PR body
+  quotes the real numbers rather than the estimate in this plan.
+- `yarn lint`, `yarn typecheck`, `yarn build`, `yarn typecheck:dist` and
+  `yarn test` all pass, with coverage still clearing the ratchet.
+- No new runtime dependency; no public API added or changed; every touched public
+  member still carries JSDoc.
+
+### Explicitly not in this PR
+
+- The `pointerEvents: 'none'` fast path (it would change programmatic
+  `intersectsWith`, per reason 2 above).
+- Camera-versioned caching of the built path across frames. It is a real further
+  win for a hit-tested scene with a still camera, and `Context3D.updateViewProjectionMatrix`
+  is the single choke point where a version counter would go, but it touches
+  `Context3D` as well and belongs in its own change.
+- Anything in `_renderGPU` beyond the trace, even though its projection loop is
+  otherwise redundant on a backend that already has the geometry.
+
+---
+
 ## Coordination notes for the orchestrator
 
 - **Serialize Phase 0 and Phase 1.** Everything after them is parallel-safe
@@ -737,9 +915,14 @@ preset.
   | 5 | `graphing-calculator/graph/surface-3d.ts`, `graph-3d.ts` |
   | 6 | `graphing-calculator/*.vue`, `components/**`, `styles/**`, `index.md` |
   | 7 | `data/demos.ts`, `AGENTS.md` |
+  | 8 | `packages/3d/**`, `docs/migrations/context-audit.md` — **separate branch** |
 
   Only `examples/index.ts` is shared, and only between 2a and 2b — have one of
   them own the file and the other hand over its two entries.
+- **Phase 8 is a different branch and a different PR.** Cut it from `main`, not
+  from the demos branch, and never let a demos workstream reach into
+  `packages/3d`. It can start at any time, including in parallel with Phase 0 —
+  it needs the workspace installed but nothing else from this plan.
 - Give every implementation agent the two paste-in templates it needs rather than
   making it rediscover them: `demos/piston-mechanism/piston-mechanism.vue` is the
   canonical mount/tick/teardown shape for a Ripl demo, and
