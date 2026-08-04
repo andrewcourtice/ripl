@@ -1,10 +1,15 @@
 # Chart visual tests
 
-Two Playwright suites share one Vite server and one browser:
+Three Playwright suites share one Vite server and one browser:
 
 - **`charts.spec.ts`** — snapshots of every chart against committed baselines.
 - **`parity.spec.ts`** — the canvas↔SVG parity harness, which diffs the two backends **against each
   other** rather than against a baseline.
+- **`hit.spec.ts`** — canvas↔SVG hit testing, which compares what a click *reaches* rather than
+  what the backends *paint*.
+
+The directory is named for the first of those, but what the three share is needing a real browser,
+not comparing pixels. `hit.spec.ts` takes no screenshots.
 
 ## Visual regression (`charts.spec.ts`)
 
@@ -35,8 +40,32 @@ resolving against the group's composed box (`canvas.md` 3 / `svg.md` S-4), and g
 compositing multiplicatively (`canvas.md` 11 / `svg.md` S-5). Both currently measure a mismatch of
 **0** with a maximum channel delta of 1; reverting either fix moves a quarter of the frame or more.
 
+A second describe block covers `KNOWN_DIVERGENCE_SCENES` — gaps that were **decided rather than
+fixed**, each asserted to stay inside a band around its measured mismatch. The assertion runs from
+both sides, so a regression that widens the gap fails and so does a fix that closes it without
+updating the record. Currently `group-shadow` (S-18) at 14.3% and `filter-shadow-order` (S-20) at
+9.1%; see `parity-ids.ts` for why neither is fixed.
+
 ```bash
 yarn workspace @ripl/charts test:parity
+```
+
+## Canvas ↔ SVG hit testing (`hit.spec.ts`)
+
+Pins `svg.md` S-19. `SVGContext._isPointIn` used to hand `isPointInFill`/`isPointInStroke` a point
+in the SVG root's user space, which SVG 2 specifies to read in the **element's own** space, so hit
+testing was wrong for anything transformed. A pixel diff cannot see that, hence a separate suite.
+
+Every scene transforms its target and clicks a point that lies inside the rendered shape but
+**outside** its untransformed geometry, so a hit test that skips the mapping has to miss. Canvas maps
+the point itself through `Element.getWorldTransform`, so it is the reference — and the spec asserts
+canvas hits too, which is what proves the click point is valid rather than merely unreachable.
+
+```bash
+yarn workspace @ripl/charts test:hit
+
+# Or both browser suites together, which is what CI runs
+yarn workspace @ripl/charts test:browser
 ```
 
 ## Running
@@ -52,6 +81,9 @@ yarn workspace @ripl/charts test:visual
 
 # Diff the canvas and SVG backends against each other
 yarn workspace @ripl/charts test:parity
+
+# Compare which element a click reaches on each backend
+yarn workspace @ripl/charts test:hit
 ```
 
 `@playwright/test` is a root devDependency, so a workspace script only finds it when no other

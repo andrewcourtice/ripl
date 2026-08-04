@@ -12,8 +12,8 @@
 import '@ripl/web';
 
 import {
+    ALL_PARITY_SCENE_IDS,
     PARITY_HEIGHT,
-    PARITY_SCENE_IDS,
     PARITY_WIDTH,
 } from './parity-ids';
 
@@ -45,6 +45,7 @@ type ParityBackend = 'canvas' | 'svg';
 
 const GRADIENT = 'linear-gradient(90deg, rgb(255, 0, 0), rgb(0, 0, 255))';
 const OPAQUE_BLACK = 'rgb(0, 0, 0)';
+const SHADOW = 'rgb(255, 0, 0)';
 
 const LEFT = {
     x: 20,
@@ -99,6 +100,45 @@ const SCENES: Record<ParitySceneId, (context: Context) => Scene> = {
                         ...RIGHT,
                     }),
                 ],
+            }),
+        ],
+    }),
+    // S-18: the scaled group doubles the SVG shadow's offset and blur; canvas ignores the CTM.
+    'group-shadow': context => createScene(context, {
+        children: [
+            createGroup({
+                id: 'shadow-scale',
+                transformScaleX: 2,
+                transformScaleY: 2,
+                children: [
+                    createRect({
+                        id: 'shadow-rect',
+                        fill: OPAQUE_BLACK,
+                        shadowColor: SHADOW,
+                        shadowOffsetX: 4,
+                        shadowOffsetY: 4,
+                        shadowBlur: 8,
+                        x: 20,
+                        y: 15,
+                        width: 45,
+                        height: 40,
+                    }),
+                ],
+            }),
+        ],
+    }),
+    // S-20: SVG applies the CSS blur to the shape and its drop shadow; canvas blurs only the shape.
+    'filter-shadow-order': context => createScene(context, {
+        children: [
+            createRect({
+                id: 'filtered-shadow',
+                fill: OPAQUE_BLACK,
+                filter: 'blur(4px)',
+                shadowColor: SHADOW,
+                shadowOffsetX: 10,
+                shadowOffsetY: 10,
+                shadowBlur: 4,
+                ...LEFT,
             }),
         ],
     }),
@@ -185,7 +225,7 @@ async function diff(left: string, right: string, tolerance: number): Promise<Par
     };
 }
 
-PARITY_SCENE_IDS.forEach(id => {
+ALL_PARITY_SCENE_IDS.forEach(id => {
     Object.entries(CONTEXTS).forEach(([backend, createContext]) => {
         SCENES[id](createContext(mount(id, backend as ParityBackend))).render();
     });
@@ -195,7 +235,7 @@ window.riplParity = {
     diff,
 };
 
-const mounted = PARITY_SCENE_IDS.every(id => document.querySelectorAll(`[data-parity="${id}"]`).length === 2);
+const mounted = ALL_PARITY_SCENE_IDS.every(id => document.querySelectorAll(`[data-parity="${id}"]`).length === 2);
 
 requestAnimationFrame(() => {
     if (mounted) {

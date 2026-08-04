@@ -97,9 +97,22 @@ describe('SVG commit', () => {
         ctx.element.createSVGPoint = vi.fn(() => ({
             x: 0,
             y: 0,
+            matrixTransform: (matrix: unknown) => `mapped:${matrix}`,
         })) as never;
 
         return isPointInFill;
+    }
+
+    function stubCTM(id: string) {
+        const getCTM = vi.fn(() => ({
+            inverse: () => 'inverse-ctm',
+        }));
+
+        Object.assign(ctx.element.querySelector(`#${id}`)!, {
+            getCTM,
+        });
+
+        return getCTM;
     }
 
     test('Should hit test against the node committed in the same pass', () => {
@@ -133,6 +146,50 @@ describe('SVG commit', () => {
 
         expect(ctx.isPointInPath(ctx.createPath('unknown'), 5, 5)).toBe(false);
         expect(getElementById).toHaveBeenCalledWith('unknown');
+    });
+
+    // S-19: the point arrives in the root's space, but SVG 2 reads it in the element's own.
+    test('Should map the hit point into the element space through the inverse CTM', () => {
+        renderPass(() => drawRect('hit'));
+
+        const isPointInFill = makeHitTestable('hit');
+
+        stubCTM('hit');
+
+        ctx.isPointInPath(ctx.createPath('hit'), 5, 5);
+
+        expect(isPointInFill).toHaveBeenCalledWith('mapped:inverse-ctm');
+    });
+
+    // jsdom declares no `getCTM`, and neither does any other partial DOM this could run under.
+    test('Should hit test against the raw point when the DOM declares no getCTM', () => {
+        renderPass(() => drawRect('hit'));
+
+        const isPointInFill = makeHitTestable('hit');
+
+        expect(ctx.isPointInPath(ctx.createPath('hit'), 5, 5)).toBe(true);
+        expect(isPointInFill).toHaveBeenCalledWith(expect.objectContaining({
+            x: 5,
+            y: 5,
+        }));
+    });
+
+    test('Should re-read the CTM after a commit rather than reusing the previous frame’s', () => {
+        renderPass(() => drawRect('hit'));
+
+        makeHitTestable('hit');
+
+        const getCTM = stubCTM('hit');
+
+        ctx.isPointInPath(ctx.createPath('hit'), 5, 5);
+        ctx.isPointInPath(ctx.createPath('hit'), 5, 5);
+
+        expect(getCTM).toHaveBeenCalledTimes(1);
+
+        renderPass(() => drawRect('hit'));
+        ctx.isPointInPath(ctx.createPath('hit'), 5, 5);
+
+        expect(getCTM).toHaveBeenCalledTimes(2);
     });
 
 });
