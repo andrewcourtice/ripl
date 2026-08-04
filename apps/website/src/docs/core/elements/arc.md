@@ -6,7 +6,7 @@ outline: "deep"
 
 An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` and `padWidth` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, making it easy to position labels on pie or donut slices.
 
-`padAngle` insets both ends by a fixed **angle**, so the resulting gap is a wedge — narrow at the inner radius and wide at the outer. `padWidth` insets each radius by `asin(padWidth / 2r)` instead, so the gap keeps a constant width in **pixels** and neighbouring segments face each other with parallel edges. When both are set, `padWidth` wins.
+`padAngle` insets both ends by a fixed **angle**, so the resulting gap is a wedge — narrow at the inner radius and wide at the outer. `padWidth` insets each radius by `asin(padWidth / 2r)` instead, so the gap keeps a constant width in **pixels**. On an annular sector (one with an `innerRadius`) that makes neighbouring segments face each other with parallel edges; an **open** arc has no inner edge to inset, so `padWidth` degenerates to a single trim at the outer radius and adjacent edges converge to nothing at the centre. `padWidth` wins wherever it is **provided** — including `padWidth: 0`, which means *no padding* rather than *fall back to `padAngle`*, so animating `padWidth` up from `0` is continuous.
 
 ## Example
 
@@ -95,7 +95,7 @@ function renderDemo(context: Context) {
                 startAngle: sweep * (index / SEGMENT_FILLS.length),
                 endAngle: sweep * ((index + 1) / SEGMENT_FILLS.length),
                 padAngle,
-                padWidth: padWidthVal.value,
+                padWidth: padWidthVal.value || undefined,
                 borderRadius: borderRadiusVal.value,
             }).render(context);
         });
@@ -140,9 +140,12 @@ const arc = createArc({
 
 ## Properties
 
-The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (angular spacing between segments, in radians), `padWidth` (constant-width spacing between segments, in pixels — takes precedence over `padAngle`), and `borderRadius` (corner rounding).
+The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (angular spacing between segments, in radians), `padWidth` (constant-width spacing between segments, in pixels — takes precedence over `padAngle` wherever it is provided), and `borderRadius` (corner rounding).
 
 `borderRadius` is a single number — unlike the Rect family, an annular sector has no meaningful per-corner order, so the `[tl, tr, br, bl]` tuple form is not accepted. It is clamped to half the band thickness (`(radius - innerRadius) / 2`) and to what the sector's span allows, so an over-rounded segment degrades into a capsule rather than self-intersecting. An annular sector rounds all four corners; an open arc rounds its two outer corners and keeps a sharp center point. Padding is applied before rounding, so gaps stay constant.
+
+> [!WARNING]
+> On an **open** arc (no `innerRadius`), `borderRadius` also changes the path's topology. At `borderRadius: 0` the arc is a bare arc command, which a fill closes with a chord — a circular *segment*. Any non-zero `borderRadius` closes the path through the centre instead, making it a *wedge*. Filled area, the `isPointInPath` hit region, and the stroke (which gains two radial spokes to the centre) all jump at that boundary, so do not animate an open arc's `borderRadius` up from `0`. Annular sectors are unaffected — set an `innerRadius` if you need to animate corner rounding.
 
 > [!NOTE]
 > For the full property list, see the [Arc API Reference](/docs/api/@ripl/core/).

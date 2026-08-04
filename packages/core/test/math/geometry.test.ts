@@ -127,6 +127,11 @@ describe('Math', () => {
                 expect(getPadAngleAtRadius(10, 5)).toBe(Math.PI / 2);
                 expect(getPadAngleAtRadius(10, 1)).toBe(Math.PI / 2);
                 expect(getPadAngleAtRadius(10, 0)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(Infinity, 50)).toBe(Math.PI / 2);
+            });
+
+            test('Should return zero for an infinite radius', () => {
+                expect(getPadAngleAtRadius(10, Infinity)).toBe(0);
             });
 
             test('Should return zero for a gap or radius that cannot produce an inset', () => {

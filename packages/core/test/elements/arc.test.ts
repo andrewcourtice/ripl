@@ -120,6 +120,21 @@ function createRandom(seed: number) {
     };
 }
 
+/** Spans biased towards the half turn, where `sin(span / 2)` rounds to exactly 1 and the corner clamp divides by zero. */
+function randomSpan(random: () => number): number {
+    const roll = random();
+
+    if (roll < 0.15) {
+        return Math.PI - random() * 2e-8;
+    }
+
+    if (roll < 0.25) {
+        return Math.PI + (random() - 0.5) * 1e-7;
+    }
+
+    return random() * TAU;
+}
+
 describe('Arc', () => {
 
     test('Should create with state', () => {
@@ -445,18 +460,46 @@ describe('Arc padWidth', () => {
         expect(withBoth).toEqual(withWidthOnly);
     });
 
-    test('Should fall back to padAngle when padWidth is zero', () => {
-        const withZero = renderCommands({
+    test('Should fall back to padAngle only when padWidth is absent', () => {
+        const base = {
             cx: 0,
             cy: 0,
             radius: 100,
             startAngle: 0,
             endAngle: 1,
             padAngle: 0.4,
-            padWidth: 0,
-        });
+        };
 
-        expect(withZero).toEqual([['arc', 0, 0, 100, 0.2, 0.8]]);
+        expect(renderCommands(base)).toEqual([['arc', 0, 0, 100, 0.2, 0.8]]);
+        expect(renderCommands({
+            ...base,
+            padWidth: 0,
+        })).toEqual([['arc', 0, 0, 100, 0, 1]]);
+    });
+
+    test('Should stay continuous across the padWidth zero boundary when padAngle is also set', () => {
+        const base = {
+            cx: 0,
+            cy: 0,
+            radius: 100,
+            innerRadius: 50,
+            startAngle: 0,
+            endAngle: 1,
+            padAngle: 0.2,
+        };
+
+        const [zeroOuter] = arcCommands(renderCommands({
+            ...base,
+            padWidth: 0,
+        }));
+
+        const [epsilonOuter] = arcCommands(renderCommands({
+            ...base,
+            padWidth: 1e-9,
+        }));
+
+        expect(epsilonOuter[4]).toBeCloseTo(zeroOuter[4], 9);
+        expect(epsilonOuter[5]).toBeCloseTo(zeroOuter[5], 9);
     });
 
     test('Should collapse a sliver to its mid-angle without inverting', () => {
@@ -742,21 +785,28 @@ describe('Arc path validity', () => {
     test('Should emit finite, non-inverted arcs across random sectors', () => {
         const random = createRandom(20260804);
 
-        for (let index = 0; index < 400; index++) {
+        for (let index = 0; index < 600; index++) {
             const radius = random() * 200;
             const startAngle = (random() - 0.5) * TAU;
+            const padWidth = random() < 0.5 ? random() * 30 : undefined;
             const options: Shape2DOptions<ArcState> = {
                 cx: (random() - 0.5) * 50,
                 cy: (random() - 0.5) * 50,
                 radius,
                 startAngle,
-                endAngle: startAngle + random() * TAU,
-                padWidth: random() < 0.5 ? random() * 30 : undefined,
+                endAngle: startAngle + randomSpan(random),
+                padWidth,
                 padAngle: random() < 0.5 ? random() * 0.5 : undefined,
                 borderRadius: random() < 0.5 ? random() * 100 : undefined,
             };
 
-            if (random() < 0.75) {
+            const innerRoll = random();
+
+            if (innerRoll < 0.15) {
+                options.innerRadius = 0;
+            } else if (innerRoll < 0.3) {
+                options.innerRadius = (padWidth ?? 0) / 2;
+            } else if (innerRoll < 0.8) {
                 options.innerRadius = random() * radius;
             }
 
@@ -771,6 +821,37 @@ describe('Arc path validity', () => {
                 expect(Math.abs(to - from)).toBeLessThanOrEqual(TAU + 1e-9);
             });
         }
+    });
+
+    test('Should stay finite where the half-span sine rounds to exactly one', () => {
+        const endAngle = 0.49999999999999994 * TAU;
+
+        expect(Math.sin(endAngle / 2)).toBe(1);
+
+        const base = {
+            cx: 0,
+            cy: 0,
+            radius: 100,
+            startAngle: 0,
+            endAngle,
+            borderRadius: 10,
+        };
+
+        [
+            {
+                ...base,
+                innerRadius: 0,
+            },
+            {
+                ...base,
+                innerRadius: 20,
+                padWidth: 40,
+            },
+        ].forEach(options => {
+            renderCommands(options).flat().forEach(value => {
+                expect(typeof value === 'string' || typeof value === 'boolean' || Number.isFinite(value)).toBe(true);
+            });
+        });
     });
 
     test('Should keep every traced sub-command connected to the previous point', () => {

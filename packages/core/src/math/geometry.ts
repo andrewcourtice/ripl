@@ -80,8 +80,9 @@ export function getThetaPoint(angle: number, distance: number, cx?: number, cy?:
  * with parallel edges a constant `padWidth` apart instead of a wedge that widens outward.
  *
  * Saturates at a quarter turn where the gap is at least as wide as the diameter — inside
- * `radius < padWidth / 2` nothing of the arc survives — and returns `0` for a non-positive or
- * non-finite `padWidth` or a negative `radius`.
+ * `radius < padWidth / 2` nothing of the arc survives, and an infinite `padWidth` saturates like
+ * any other over-wide gap. Returns `0` for a `padWidth` that is non-positive or `NaN`, and for a
+ * `radius` that is negative or `NaN`.
  *
  * @param padWidth - The gap width, in logical pixels, held constant at every radius.
  * @param radius - The radius at which the inset is measured.

@@ -70,10 +70,14 @@ all.
 - **`padWidth` is pixels, between radial segments.** It is the linear sibling of
   `padAngle`: where `padAngle` insets each end of a sector by a fixed *angle* and
   so opens a wedge that widens with radius, `padWidth` insets each radius by
-  `asin(padWidth / 2r)` and so opens a gap of constant width whose facing edges
-  are parallel. Use `padWidth` when the gap must read the same at the inner and
-  outer edge of a donut; use `padAngle` when the gap should scale with the
-  segment. `padWidth` takes precedence where both are set. It is distinct from
+  `asin(padWidth / 2r)` and so opens a gap of constant width. The facing edges
+  are parallel on an **annular** sector; an open arc has no inner edge to inset,
+  so `padWidth` becomes a single trim at the outer radius and adjacent edges
+  converge to nothing at the centre. Use `padWidth` when the gap must read the
+  same at the inner and outer edge of a donut; use `padAngle` when the gap should
+  scale with the segment. `padWidth` takes precedence wherever it is
+  **provided** — `padWidth: 0` means *no padding*, not *fall back to
+  `padAngle`* — so animating it up from `0` is continuous. It is distinct from
   `gap`, which separates non-radial marks along an axis.
 - **Radii accept `number | \`${number}%\``**: a value ≤ 1 or a percent string is a
   fraction of the outer radius, a value > 1 is pixels. `innerRadius`,
@@ -107,7 +111,11 @@ plain `number`. An annular sector's corners have no `[tl, tr, br, bl]` order to
 address, and the radius is clamped per-corner to half the band thickness and to
 what the sector's span allows, so a `'full'` sentinel would mean nothing beyond
 passing a large number. Anything laying out arcs (pie, donut, radial, gauge)
-passes a scalar through.
+passes a scalar through. On an **open** arc (no `innerRadius`) it also flips the
+path's topology: `0` leaves a bare arc that a fill closes with a chord (a
+circular segment), any non-zero value closes it through the centre (a wedge).
+Filled area, hit region and stroke all jump at that boundary, so never animate an
+open arc's `borderRadius` up from `0` — give it an `innerRadius` instead.
 
 A shared shape may still be *narrower* on a chart where the wider form has no
 meaning. `TrendChartOptions.stacked` takes `boolean` rather than

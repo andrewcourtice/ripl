@@ -16,6 +16,7 @@ import {
     Box,
     getPadAngleAtRadius,
     getThetaPoint,
+    HALF_PI,
     TAU,
 } from '../math';
 
@@ -50,15 +51,13 @@ export interface ArcState extends BaseElementState {
     radius: number;
     /** The inner radius of the arc, producing an annular sector when set. */
     innerRadius?: number;
-    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link ArcState.padWidth} for a gap of constant width. Ignored when `padWidth` is set. */
+    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link ArcState.padWidth} for a gap of constant width. Ignored whenever `padWidth` is provided, `0` included. A `padAngle` wider than the sector collapses it onto its `endAngle`, where an oversized `padWidth` collapses it onto its mid-angle. */
     padAngle?: number;
-    /** The padding between the arc and its neighbors, in logical pixels, held constant at every radius so adjacent segments face each other with parallel edges. Takes precedence over {@link ArcState.padAngle}. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link ArcState.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
     padWidth?: number;
-    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. */
+    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. A non-zero value on an open arc also closes the path through the center, turning a chord-closed segment into a wedge and so changing its filled area, hit region and stroke — do not animate it up from `0` on an open arc. */
     borderRadius?: number;
 }
-
-const HALF_PI = Math.PI / 2;
 
 /** Insets a sector by `inset` at both ends, collapsing it to its mid-angle rather than inverting it. */
 function insetSector(startAngle: number, endAngle: number, inset: number): [number, number] {
@@ -103,6 +102,15 @@ function getCornerCenterOffset(centerRadius: number, halfGap: number, cornerRadi
     return Math.asin(Math.min(offset / centerRadius, 1));
 }
 
+/** Clamps a corner radius to `limit`, resolving the `0 / 0` a half-span sine of exactly 1 produces to the value either side of it. */
+function clampCornerRadius(limit: number, numerator: number, denominator: number): number {
+    if (!(denominator > 0)) {
+        return numerator > 0 ? limit : 0;
+    }
+
+    return Math.max(0, Math.min(limit, numerator / denominator));
+}
+
 /** Clamps a requested corner radius to the band thickness and to what the sector's span allows, per arc. */
 function getCornerRadii(radius: number, innerRadius: number, span: number, halfGap: number, cornerRadius: number): [number, number] {
     const limit = Math.min(cornerRadius, (radius - innerRadius) / 2);
@@ -118,8 +126,8 @@ function getCornerRadii(radius: number, innerRadius: number, span: number, halfG
     const halfSpanSine = Math.sin(span / 2);
 
     return [
-        Math.max(0, Math.min(limit, (halfSpanSine * radius - halfGap) / (1 + halfSpanSine))),
-        Math.max(0, Math.min(limit, (halfSpanSine * innerRadius - halfGap) / (1 - halfSpanSine))),
+        clampCornerRadius(limit, halfSpanSine * radius - halfGap, 1 + halfSpanSine),
+        clampCornerRadius(limit, halfSpanSine * innerRadius - halfGap, 1 - halfSpanSine),
     ];
 }
 
@@ -246,7 +254,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('innerRadius', value);
     }
 
-    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link Arc.padWidth} for a gap of constant width. Ignored when `padWidth` is set. */
+    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link Arc.padWidth} for a gap of constant width. Ignored whenever `padWidth` is provided, `0` included. A `padAngle` wider than the sector collapses it onto its `endAngle`, where an oversized `padWidth` collapses it onto its mid-angle. */
     public get padAngle() {
         return this.getStateValue('padAngle');
     }
@@ -255,7 +263,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('padAngle', value);
     }
 
-    /** The padding between the arc and its neighbors, in logical pixels, held constant at every radius so adjacent segments face each other with parallel edges. Takes precedence over {@link Arc.padAngle}. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link Arc.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
     public get padWidth() {
         return this.getStateValue('padWidth');
     }
@@ -264,7 +272,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('padWidth', value);
     }
 
-    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. */
+    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. A non-zero value on an open arc also closes the path through the center, turning a chord-closed segment into a wedge and so changing its filled area, hit region and stroke — do not animate it up from `0` on an open arc. */
     public get borderRadius() {
         return this.getStateValue('borderRadius');
     }
@@ -348,7 +356,8 @@ export class Arc extends Shape2D<ArcState> {
 
         const radius = Math.max(0, this.radius);
         const innerRadius = typeIsNil(this.innerRadius) ? this.innerRadius : Math.max(0, this.innerRadius);
-        const gap = padWidth && padWidth > 0 ? padWidth : 0;
+        const hasPadWidth = !typeIsNil(padWidth);
+        const gap = typeIsNil(padWidth) ? 0 : Math.max(0, padWidth);
 
         let {
             startAngle,
@@ -356,7 +365,7 @@ export class Arc extends Shape2D<ArcState> {
         } = this;
 
         return super.render(context, path => {
-            if (padAngle && !gap) {
+            if (padAngle && !hasPadWidth) {
                 const offset = padAngle / 2;
 
                 startAngle = Math.min(startAngle + offset, endAngle);

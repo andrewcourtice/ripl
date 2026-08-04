@@ -160,11 +160,16 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
   **stroked open arc** (no `innerRadius`, on the band centerline, `lineWidth = band thickness`,
   `lineCap: 'round'`) is still the right tool for a genuinely **stroke-only** bar — a track/value pair
   where you want caps without a fill, or where the band is a stroke you also dash. An open arc's
-  `borderRadius` rounds only its two outer corners and keeps a sharp center point.
+  `borderRadius` rounds only its two outer corners and keeps a sharp center point. **It also flips the
+  open arc's topology**: `0` emits a bare arc (a fill closes it with a chord — a circular segment),
+  any non-zero value closes it through the centre (a wedge), so filled area, `isPointInPath` hit
+  region and the stroke (which gains two radial spokes) all jump at that boundary. Never animate an
+  open arc's `borderRadius` up from `0` — use an annular arc if the rounding must animate.
 - **Arc padding**: `padAngle` (radians) opens a wedge that widens with radius; `padWidth` (pixels)
-  insets each radius by `asin(padWidth / 2r)` so the gap keeps a constant width and neighbouring
-  segments have parallel edges. `padWidth` wins where both are set, and padding is applied before
-  corner rounding.
+  insets each radius by `asin(padWidth / 2r)` so the gap keeps a constant width — parallel facing
+  edges on an annular sector, a single outer-radius trim on an open arc. `padWidth` wins wherever it
+  is *provided* (`padWidth: 0` means no padding, not "use `padAngle`", so animating it up from `0` is
+  continuous), and padding is applied before corner rounding.
 - **Polyline curves**: `renderer` is a named type (`'linear' | 'spline' | 'cardinal' | 'monotoneX' | …`)
   or a custom `(context, path, points) => void`. Resolve a named one with `resolvePolylineRenderer`.
 - **`matches`/`closest`** are on **every `Element`** (via the `Queryable` contract), not just `Group`:
