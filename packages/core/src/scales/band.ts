@@ -1,4 +1,5 @@
 import {
+    createDomainIndex,
     createScale,
 } from './_base';
 
@@ -50,11 +51,12 @@ export function scaleBand<TDomain = string>(
     const step = rangeLength / Math.max(1, domainLength + outerPadding * 2);
     const bandwidth = step * (1 - innerPadding);
     const adjustedMin = rangeMin + (rangeLength - step * domainLength) * alignment;
+    const indexOf = createDomainIndex(domain);
 
     const scale = createScale({
         domain,
         range,
-        convert: value => adjustedMin + (domain.indexOf(value) * step),
+        convert: value => adjustedMin + (indexOf(value) * step),
         invert: value => domain[Math.floor(value / step)],
     }) as BandScale<TDomain>;
 
