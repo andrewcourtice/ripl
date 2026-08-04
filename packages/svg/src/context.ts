@@ -71,6 +71,8 @@ import type {
     ContextOptions,
     ContextText,
     FillRule,
+    GradientBounds,
+    RenderElement,
     Element as RiplElement,
     TextOptions,
 } from '@ripl/core';
@@ -111,6 +113,10 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _currentParentVNode: SVGVNode;
     private _vnodeStack: SVGVNode[];
     private _inverseCTMCache: Map<Element, DOMMatrix | null>;
+    private _gradientBounds?: {
+        element: RenderElement;
+        bounds: GradientBounds;
+    };
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -195,6 +201,30 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         return `url(#${patternId})`;
     }
 
+    /**
+     * The box a gradient on the current render element resolves against, memoized for the element's
+     * paint so a fill and a stroke sharing it resolve one box — which for a group means one subtree
+     * walk per frame rather than one per paint, since group boxes are never cached.
+     */
+    private _resolveGradientBounds(): GradientBounds {
+        const element = this.currentRenderElement;
+        const cached = this._gradientBounds;
+
+        if (cached && cached.element === element) {
+            return cached.bounds;
+        }
+
+        // The element's own box, not the path node's, so a multi-path element ramps once across all of them.
+        const bounds = getGradientBounds(element?.getBoundingBox?.(true), this.width, this.height);
+
+        this._gradientBounds = element && {
+            element,
+            bounds,
+        };
+
+        return bounds;
+    }
+
     private _resolveGradientStyle(value: string, cacheKey: string): string {
         if (isPatternString(value)) {
             return this._resolvePatternStyle(value, cacheKey);
@@ -217,8 +247,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         this._usedDefs.add(`gradient:${cacheKey}`);
 
-        // The element's own box, not the path node's, so a multi-path element ramps once across all of them.
-        const bounds = getGradientBounds(this.currentRenderElement?.getBoundingBox?.(true), this.width, this.height);
+        const bounds = this._resolveGradientBounds();
         const cached = this._gradientCache.get(cacheKey);
 
         if (cached) {
@@ -449,6 +478,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             this._currentParentVNode = this._vtree;
             this._vnodeStack = [];
             this._usedDefs.clear();
+
+            // Boxes move between frames, so the memo must not outlive the pass that measured them.
+            this._gradientBounds = undefined;
         }
 
         super.markRenderStart();
