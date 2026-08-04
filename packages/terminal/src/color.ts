@@ -1,6 +1,7 @@
 import {
     isGradientString,
     isPatternString,
+    isTransparentColor,
     parseColor,
     parseGradientCached,
     parsePatternCached,
@@ -32,9 +33,19 @@ const NO_PAINT_KEYWORDS = new Set([
 const ZERO_ALPHA_REGEX = /^(?:rgba|hsla|hsva)\([^)]*,\s*0\s*\)$/i;
 
 /**
- * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the first
- * stop of a gradient or pattern (a character cell cannot interpolate, so the first stop is the
- * closest single color available).
+ * Resolves the single color that stands in for a multi-color paint: the first that is not fully
+ * transparent, so a mostly opaque gradient or pattern still paints rather than vanishing.
+ */
+function resolveRepresentative(colors: string[]): ColorRGBA | undefined {
+    const representative = colors.find(color => !isTransparentColor(color)) ?? colors[0];
+
+    return representative ? resolvePaint(representative) : undefined;
+}
+
+/**
+ * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the
+ * representative color of a gradient or pattern (a character cell cannot interpolate, so one of its
+ * colors is the closest available).
  */
 function resolvePaint(color: string): ColorRGBA | undefined {
     const parsed = parseColor(color);
@@ -44,15 +55,15 @@ function resolvePaint(color: string): ColorRGBA | undefined {
     }
 
     if (isGradientString(color)) {
-        const stop = parseGradientCached(color)?.stops[0];
+        const stops = parseGradientCached(color)?.stops ?? [];
 
-        return stop ? resolvePaint(stop.color) : undefined;
+        return resolveRepresentative(stops.map(stop => stop.color));
     }
 
     if (isPatternString(color)) {
         const pattern = parsePatternCached(color);
 
-        return pattern ? resolvePaint(pattern.foreground) : undefined;
+        return pattern ? resolveRepresentative([pattern.foreground, pattern.background]) : undefined;
     }
 }
 
@@ -94,7 +105,8 @@ function toAnsiSequence(parameter: number, color: string, opacity: number): stri
  *
  * @param color - The paint to resolve. Named colors, hex (including shorthand), `rgb()`/`rgba()`,
  * `hsl()`/`hsla()`, `hsv()`/`hsva()`, gradients and patterns are all supported; a gradient or
- * pattern resolves to its first stop, which is the closest single color a character cell can show.
+ * pattern resolves to its first non-transparent color, the closest single color a character cell
+ * can show.
  * @param opacity - Additional alpha to composite over the paint's own, typically
  * `Context.opacity`. Defaults to `1`.
  * @returns The escape sequence; `''` when the paint is a color the terminal cannot resolve (draw
