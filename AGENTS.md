@@ -613,8 +613,9 @@ Reusable UI components live in `apps/website/src/.vitepress/components/` and are
 
 The playground (`apps/website/src/.vitepress/components/playground/`) provides a live code editor:
 - `sandbox.ts` — Builds iframe `srcdoc` with import maps, setup code, and user code
-- `defaults.ts` — Default 2D/3D code snippets
-- `examples.ts` — Example code snippets shown in the examples dropdown
+- `examples/` — One plain `.js` file per example, registered in `examples/index.ts` via a `?raw` import plus an `EXAMPLES` entry
+- Examples are authored against the ambient `context`, `scene` and `renderer` bindings the sandbox injects, plus `camera` in 3D mode
+- Defaults come from the **first** `EXAMPLES` entry per mode, so append rather than prepend or the playground's opening snippet changes
 - `PlaygroundSettings` — Controls renderer `autoStop` and camera `interactions` (3D mode only)
 - Canvas/SVG toggle is hidden when in 3D mode
 

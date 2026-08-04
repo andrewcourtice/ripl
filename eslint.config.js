@@ -502,13 +502,15 @@ export default tseslint.config(
         },
     },
 
-    // Playground examples run inside the docs editor with `context`, `scene` and
-    // `renderer` injected into scope, so treat them as read-only globals.
+    // Playground examples run inside the docs editor with `context`, `scene`,
+    // `renderer` and (in 3D mode) `camera` injected into scope, so treat them as
+    // read-only globals.
     {
         name: 'ripl/playground-examples',
         files: ['apps/website/src/.vitepress/components/playground/examples/**/*.js'],
         languageOptions: {
             globals: {
+                camera: 'readonly',
                 context: 'readonly',
                 scene: 'readonly',
                 renderer: 'readonly',
