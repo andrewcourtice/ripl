@@ -72,6 +72,7 @@ import {
     arrayJoin,
     functionIdentity,
     numberExtent,
+    numberMaxOf,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
@@ -378,7 +379,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const ys = simNodes.map(node => node.y);
             const [minX, maxX] = xs.length ? numberExtent(xs, functionIdentity) : [-1, 1];
             const [minY, maxY] = ys.length ? numberExtent(ys, functionIdentity) : [-1, 1];
-            const maxNodeR = Math.max(nodeRadius, ...activeNodes.map(nodeRadiusFor));
+            const maxNodeR = Math.max(nodeRadius, numberMaxOf(activeNodes, nodeRadiusFor));
             const spanX = Math.max(1e-3, maxX - minX);
             const spanY = Math.max(1e-3, maxY - minY);
             const pad = maxNodeR + 12;
@@ -435,7 +436,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 }
             }
 
-            const maxDepth = depthById.size ? Math.max(...depthById.values()) : 0;
+            const maxDepth = depthById.size ? numberMaxOf(Array.from(depthById.values()), functionIdentity) : 0;
             const depthOf = (id: string) => depthById.get(id) ?? maxDepth + 1;
 
             const rootPlaced = rootId ? placed.get(rootId) : undefined;

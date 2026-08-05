@@ -77,6 +77,8 @@ import {
 
 import {
     arrayJoin,
+    functionIdentity,
+    numberMaxOf,
     numberSum,
 } from '@ripl/utilities';
 
@@ -265,7 +267,7 @@ function computeSankeyLayout<TData>(
         }
     });
 
-    const maxDepth = Math.max(...Array.from(depthMap.values()), 0);
+    const maxDepth = Math.max(0, numberMaxOf(Array.from(depthMap.values()), functionIdentity));
 
     // Compute node values
     const nodeValueMap = new Map<string, number>();
@@ -414,11 +416,12 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
      * those labels inside the chart instead of running off its edge.
      */
     private _measureLabelBand(layoutNodes: LayoutNode<TData>[]): number {
-        const maxDepth = Math.max(...layoutNodes.map(node => node.depth), 0);
+        const maxDepth = Math.max(0, numberMaxOf(layoutNodes, node => node.depth));
 
-        const widest = layoutNodes
-            .filter(node => node.depth === maxDepth)
-            .reduce((max, node) => Math.max(max, this.scene.context.measureText(node.label, SEGMENT_LABEL_FONT).width), 0);
+        const widest = numberMaxOf(
+            layoutNodes.filter(node => node.depth === maxDepth),
+            node => this.scene.context.measureText(node.label, SEGMENT_LABEL_FONT).width
+        );
 
         return widest > 0 ? widest + NODE_LABEL_GAP : 0;
     }

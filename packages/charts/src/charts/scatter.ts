@@ -81,6 +81,7 @@ import {
     arrayJoin,
     functionIdentity,
     numberExtent,
+    numberMaxOf,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -213,7 +214,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
     private _getMaxBubbleRadius(): number {
         const { series } = this.options;
         const radii = this.filterActive(series).map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
-        const largest = radii.length > 0 ? Math.max(...radii) : 3;
+        const largest = radii.length > 0 ? numberMaxOf(radii, functionIdentity) : 3;
 
         return largest + 2;
     }

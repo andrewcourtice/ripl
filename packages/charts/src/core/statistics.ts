@@ -5,6 +5,8 @@
 
 import {
     comparitorNumeric,
+    functionIdentity,
+    numberExtent,
     numberNice,
     numberSum,
 } from '@ripl/utilities';
@@ -115,10 +117,7 @@ export function bin(values: number[], options?: BinOptions): Bin[] {
     const [
         min,
         max,
-    ] = options?.domain ?? [
-        Math.min(...values),
-        Math.max(...values),
-    ];
+    ] = options?.domain ?? numberExtent(values, functionIdentity);
 
     let thresholds = options?.thresholds;
 

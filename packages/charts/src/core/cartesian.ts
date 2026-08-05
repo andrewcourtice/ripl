@@ -144,7 +144,9 @@ import type {
 } from '@ripl/utilities';
 
 import {
+    functionIdentity,
     numberClamp,
+    numberExtent,
     typeIsArray,
     typeIsDate,
     typeIsNumber,
@@ -1323,8 +1325,7 @@ export abstract class CartesianChart<
         }
 
         const times = keys.map(key => new Date(key).getTime()).filter(Number.isFinite);
-        const min = times.length > 0 ? Math.min(...times) : 0;
-        const max = times.length > 0 ? Math.max(...times) : 1;
+        const [min, max] = times.length > 0 ? numberExtent(times, functionIdentity) : [0, 1];
 
         return this._timeScaleFacade([min, max], left, right);
     }

@@ -74,6 +74,7 @@ import {
 import {
     functionIdentity,
     numberExtent,
+    objectForEach,
     typeIsArray,
 } from '@ripl/utilities';
 
@@ -215,7 +216,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     public push(values: Record<string, number>): void {
         const maxLen = this._getWindowSize();
 
-        Object.entries(values).forEach(([seriesId, value]) => {
+        objectForEach(values, (seriesId, value) => {
             let buffer = this._buffers.get(seriesId);
 
             if (!buffer) {

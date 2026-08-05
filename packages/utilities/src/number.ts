@@ -34,14 +34,15 @@ export function numberClamp(value: number, lower: number, upper: number): number
     return Math.min(trueUpper, Math.max(trueLower, value));
 }
 
-/** Returns the minimum numeric value extracted from an array via the accessor. */
+/** Returns the minimum numeric value extracted from an array via the accessor (`Infinity` when empty). */
 export function numberMinOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return Math.min(...values.map(accessor));
+    // Folded rather than spread into `Math.min`, whose argument count is capped by the stack.
+    return values.reduce((min, value) => Math.min(min, accessor(value)), Infinity);
 }
 
-/** Returns the maximum numeric value extracted from an array via the accessor. */
+/** Returns the maximum numeric value extracted from an array via the accessor (`-Infinity` when empty). */
 export function numberMaxOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return Math.max(...values.map(accessor));
+    return values.reduce((max, value) => Math.max(max, accessor(value)), -Infinity);
 }
 
 /** Returns the fractional part of a number (e.g. `numberFractional(3.7)` → `0.7`). */
