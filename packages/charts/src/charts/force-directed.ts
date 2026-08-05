@@ -175,7 +175,7 @@ export interface ForceDirectedChartEventMap<TData = unknown> extends EventMap {
     linkleave: ForceDirectedLinkEvent;
 }
 
-interface PlacedNode {
+interface PlacedNode<TData> {
     id: string;
     label: string;
     value: number;
@@ -183,6 +183,7 @@ interface PlacedNode {
     x: number;
     y: number;
     r: number;
+    data?: TData;
 }
 
 /**
@@ -214,7 +215,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
         this.init();
     }
 
-    private _attachNodeHover(circle: Circle, node: PlacedNode, content: string) {
+    private _attachNodeHover(circle: Circle, node: PlacedNode<TData>, content: string) {
 
         const payload = (point: { x: number;
             y: number; }): ForceDirectedNodeEvent<TData> => ({
@@ -223,7 +224,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             id: node.id,
             label: node.label,
             value: node.value,
-            data: this.options.nodes.find(candidate => candidate.id === node.id)?.data,
+            data: node.data,
         });
 
         applyHoverHighlight(circle, {
@@ -386,7 +387,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const midX = (minX + maxX) / 2;
             const midY = (minY + maxY) / 2;
 
-            const placed = new Map<string, PlacedNode>();
+            const placed = new Map<string, PlacedNode<TData>>();
 
             activeNodes.forEach(node => {
                 const sim = simById.get(node.id)!;
@@ -398,6 +399,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     x: cx + (sim.x - midX) * scale,
                     y: cy + (sim.y - midY) * scale,
                     r: nodeRadiusFor(node),
+                    data: node.data,
                 });
             });
 
@@ -551,7 +553,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             nodeExits.forEach(group => group.destroy());
 
-            const nodeContent = (node: PlacedNode) => `${node.label}: ${formatValue(node.value)}`;
+            const nodeContent = (node: PlacedNode<TData>) => `${node.label}: ${formatValue(node.value)}`;
 
             const entryNodeGroups = nodeEntries.map(node => {
                 const placedNode = placed.get(node.id)!;

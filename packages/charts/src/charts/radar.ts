@@ -30,6 +30,10 @@ import {
 } from '../core/interaction';
 
 import {
+    createIndexLookup,
+} from '../core/data';
+
+import {
     ANIMATION_REFERENCE,
     exitElement,
 } from '../core/animation';
@@ -582,18 +586,20 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 return group;
             }
 
+            const pointIndex = createIndexLookup(pointsData);
+
             const {
                 left: labelEntries,
                 inner: labelUpdates,
                 right: labelExits,
-            } = arrayJoin(pointsData, labels, (pd, label) => label.id === `${srs.id}-label-${pointsData.indexOf(pd)}`);
+            } = arrayJoin(pointsData, labels, (pd, label) => label.id === `${srs.id}-label-${pointIndex(pd)}`);
 
             labelExits.forEach(label => {
                 void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
             });
 
             labelEntries.forEach(pd => {
-                const label = buildLabel(srs.id, pd, pointsData.indexOf(pd));
+                const label = buildLabel(srs.id, pd, pointIndex(pd));
 
                 group.add(label);
                 enteringLabels.push(label);

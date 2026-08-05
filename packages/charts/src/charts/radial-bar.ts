@@ -36,6 +36,7 @@ import {
 } from '../core/animation';
 
 import {
+    createIndexLookup,
     resolveAccessor,
 } from '../core/data';
 
@@ -243,6 +244,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const holeRadius = outerRadius * innerRadius;
 
             const activeData = this.filterActive(data, getKey);
+            const activeIndex = createIndexLookup(activeData);
 
             const values = activeData.map(getValue);
             const [, dataMax] = values.length ? numberExtent(values, functionIdentity) : [0, 1];
@@ -310,7 +312,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             exits.forEach(group => group.destroy());
 
             const entryGroups = entries.map(item => {
-                const i = activeData.indexOf(item);
+                const i = activeIndex(item);
                 const itemColor = colorFor(item);
                 const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 
@@ -376,7 +378,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const updatingLabels: Text[] = [];
 
             updates.forEach(([item, group]) => {
-                const i = activeData.indexOf(item);
+                const i = activeIndex(item);
                 const itemColor = colorFor(item);
                 const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 

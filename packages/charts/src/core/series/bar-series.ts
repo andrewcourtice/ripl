@@ -43,6 +43,7 @@ import {
 
 import {
     computeStackOffset,
+    createIndexLookup,
     resolveAccessor,
 } from '../data';
 
@@ -85,6 +86,12 @@ interface EntryTiming {
     columnIndex: number;
 }
 
+/** The index of the last same-sign series contributing to a column, per sign; `-1` when none does. */
+interface OutermostStack {
+    positive: number;
+    negative: number;
+}
+
 /** Per-render precompute for the bar renderer. */
 interface BarPrepared<TData> {
     series: BarSeriesLike<TData>[];
@@ -93,11 +100,15 @@ interface BarPrepared<TData> {
     cornerRadius: number;
     /** Grouping sub-scale (offsets each series within a category slot); undefined when stacked. */
     seriesScale?: BandScale<string>;
+    /** Series → its index in the stack, so stacking never rescans the series array. */
+    seriesIndex: (series: BarSeriesLike<TData>) => number;
     /** Category key → its index in the data (column order). */
     keyIndex: Map<string, number>;
     /** Per-column positive/negative totals, for stacked rounding and entry timing. */
     columnTotals: Map<string, { pos: number;
         neg: number; }>;
+    /** Per-item outermost stacked segment; empty when the series are not stacked. */
+    outermostStack: Map<TData, OutermostStack>;
     /** Entry timing per stacked segment id, populated as bars are built. */
     entryTiming: Map<string, EntryTiming>;
 }
@@ -123,33 +134,41 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
             return 0;
         }
 
-        return computeStackOffset(prepared.series, current, item, (srs, dataItem) => this._seriesValue(srs, dataItem));
+        return computeStackOffset(prepared.series, current, item, (srs, dataItem) => this._seriesValue(srs, dataItem), prepared.seriesIndex(current));
     }
 
-    /** The index of the last same-sign series contributing to a column (its outermost segment). */
-    private _outermostStackIndex(item: TData, positive: boolean, prepared: BarPrepared<TData>): number {
-        let outer = -1;
+    /** The index of the last same-sign series contributing to each column (its outermost segment). */
+    private _outermostStacks(series: BarSeriesLike<TData>[], ctx: BarSeriesContext<TData>): Map<TData, OutermostStack> {
+        const outermost = new Map<TData, OutermostStack>();
 
-        prepared.series.forEach((srs, index) => {
-            const value = this._seriesValue(srs, item);
+        ctx.data.forEach(item => {
+            const outer: OutermostStack = {
+                positive: -1,
+                negative: -1,
+            };
 
-            if (value === 0) {
-                return;
-            }
+            series.forEach((srs, index) => {
+                const value = this._seriesValue(srs, item);
 
-            if ((value >= 0) === positive) {
-                outer = index;
-            }
+                if (value > 0) {
+                    outer.positive = index;
+                } else if (value < 0) {
+                    outer.negative = index;
+                }
+            });
+
+            outermost.set(item, outer);
         });
 
-        return outer;
+        return outermost;
     }
 
     private _stackedBorderRadius(series: BarSeriesLike<TData>, item: TData, value: number, prepared: BarPrepared<TData>): number | BorderRadius {
         const positive = value >= 0;
         const { cornerRadius, horizontal } = prepared;
+        const outermost = prepared.outermostStack.get(item);
 
-        if (prepared.series.indexOf(series) !== this._outermostStackIndex(item, positive, prepared)) {
+        if (prepared.seriesIndex(series) !== (positive ? outermost?.positive ?? -1 : outermost?.negative ?? -1)) {
             return 0;
         }
 
@@ -379,8 +398,10 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
             stacked,
             cornerRadius: ctx.borderRadius,
             seriesScale,
+            seriesIndex: createIndexLookup(series),
             keyIndex,
             columnTotals,
+            outermostStack: stacked ? this._outermostStacks(series, ctx) : new Map(),
             entryTiming: new Map(),
         };
     }

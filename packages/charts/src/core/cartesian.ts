@@ -36,6 +36,10 @@ import type {
     ResolvedAnimation,
 } from './animation';
 
+import {
+    createIndexLookup,
+} from './data';
+
 import type {
     ChartAxisInput,
     ChartAxisItemOptions,
@@ -1282,9 +1286,10 @@ export abstract class CartesianChart<
      */
     protected pointScale(keys: string[], left: number, right: number): Scale<string> {
         const span = Math.max(1, keys.length - 1);
+        const keyIndex = createIndexLookup(keys);
 
         const convert = (value: string) => {
-            const index = keys.indexOf(value);
+            const index = keyIndex(value);
             const t = index < 0 ? 0 : index / span;
             return left + t * (right - left);
         };

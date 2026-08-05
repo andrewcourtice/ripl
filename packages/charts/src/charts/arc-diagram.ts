@@ -20,6 +20,10 @@ import {
 } from '../core/interaction';
 
 import {
+    createKeyedLookup,
+} from '../core/data';
+
+import {
     ANIMATION_REFERENCE,
     stagger,
 } from '../core/animation';
@@ -270,6 +274,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             })));
 
             const colorFor = (node: ArcDiagramNode) => node.color ?? this.getSeriesColor(node.group ?? node.id);
+            const nodeById = createKeyedLookup(nodes, node => node.id);
 
             const activeNodes = this.filterActive(nodes, node => node.group ?? node.id);
             const activeNodeIds = new Set(activeNodes.map(node => node.id));
@@ -435,7 +440,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             const linkId = (link: ArcDiagramLink) => `arc-${link.source}~${link.target}`;
 
             const arcColor = (link: ArcDiagramLink) => {
-                const source = nodes.find(node => node.id === link.source);
+                const source = nodeById(link.source);
                 return source ? colorFor(source) : '#94a3b8';
             };
 

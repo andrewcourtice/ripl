@@ -47,6 +47,7 @@ import {
 } from '../morph';
 
 import {
+    createIndexLookup,
     resolveAccessor,
 } from '../data';
 
@@ -100,6 +101,8 @@ interface AreaPrepared<TData> {
         bottomPoints: Point[]; }>;
     /** Paint rank per series id (0 = backmost); largest area at the back when unstacked. */
     orderRank: Map<string, number>;
+    /** A data item's index in `ctx.data`, so reconciling markers never rescans the dataset. */
+    dataIndex: (item: TData) => number;
 }
 
 /**
@@ -252,9 +255,11 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             });
         }
 
+        const seriesIndexOf = createIndexLookup(series);
+
         const getSeriesValue = (srs: AreaSeriesLike<TData>, item: TData, dataIndex: number) => {
             const raw = this._rawValue(srs, item);
-            const seriesIndex = series.indexOf(srs);
+            const seriesIndex = seriesIndexOf(srs);
 
             if (ctx.stacked && seriesIndex >= 0) {
                 return stackedTop[dataIndex]?.[seriesIndex] ?? raw;
@@ -264,7 +269,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         };
 
         const getPrevSeriesValue = (srs: AreaSeriesLike<TData>, dataIndex: number) => {
-            const seriesIndex = series.indexOf(srs);
+            const seriesIndex = seriesIndexOf(srs);
 
             if (ctx.stacked && seriesIndex >= 0) {
                 return stackedBottom[dataIndex]?.[seriesIndex] ?? 0;
@@ -278,6 +283,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             getPrevSeriesValue,
             entryReveal: new Map(),
             orderRank: this._computeOrderRank(series, ctx),
+            dataIndex: createIndexLookup(data),
         };
     }
 
@@ -421,11 +427,11 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         }));
 
         if (series.markers !== false) {
-            markerEntries.forEach(item => group.add(this._buildMarker(series, item, ctx.data.indexOf(item), ctx, prepared)));
+            markerEntries.forEach(item => group.add(this._buildMarker(series, item, prepared.dataIndex(item), ctx, prepared)));
         }
 
         markerUpdates.forEach(([item, marker]) => {
-            const dataIndex = ctx.data.indexOf(item);
+            const dataIndex = prepared.dataIndex(item);
             const x = ctx.xScale(ctx.getKey(item));
             const y = this._valueScale(series, ctx)(prepared.getSeriesValue(series, item, dataIndex));
 
@@ -453,7 +459,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             ctx,
             exitAnimation,
             item => `${series.id}-marker-${ctx.getKey(item)}-label`,
-            item => this._labelSpec(series, item, ctx.data.indexOf(item), ctx, prepared),
+            item => this._labelSpec(series, item, prepared.dataIndex(item), ctx, prepared),
             batch
         );
 
