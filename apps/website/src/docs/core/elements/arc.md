@@ -11,20 +11,33 @@ An **Arc** draws a circular or annular (donut) arc segment defined by a center p
 ## Example
 
 :::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
+== Single
+<ripl-example @context-changed="singleChanged">
     <template #footer>
         <RiplControlGroup>
             <span>End Angle</span>
-            <RiplInputRange v-model="endAnglePct" :min="0" :max="100" :step="1" @update:model-value="redraw" />
+            <RiplInputRange v-model="singleEndAnglePct" :min="0" :max="100" :step="1" @update:model-value="redrawSingle" />
             <span>Inner Radius %</span>
-            <RiplInputRange v-model="innerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redraw" />
-            <span>Pad Angle (set Pad Width to 0)</span>
-            <RiplInputRange v-model="padAngleVal" :min="0" :max="20" :step="1" @update:model-value="redraw" />
-            <span>Pad Width</span>
-            <RiplInputRange v-model="padWidthVal" :min="0" :max="40" :step="1" @update:model-value="redraw" />
+            <RiplInputRange v-model="singleInnerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redrawSingle" />
             <span>Border Radius</span>
-            <RiplInputRange v-model="borderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redraw" />
+            <RiplInputRange v-model="singleBorderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redrawSingle" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Stacked
+<ripl-example @context-changed="stackedChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>End Angle</span>
+            <RiplInputRange v-model="stackedEndAnglePct" :min="0" :max="100" :step="1" @update:model-value="redrawStacked" />
+            <span>Inner Radius %</span>
+            <RiplInputRange v-model="stackedInnerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redrawStacked" />
+            <span>Pad Width (px, takes precedence)</span>
+            <RiplInputRange v-model="stackedPadWidthVal" :min="0" :max="40" :step="1" @update:model-value="redrawStacked" />
+            <span>Pad Angle (applies only at Pad Width 0)</span>
+            <RiplInputRange v-model="stackedPadAngleVal" :min="0" :max="20" :step="1" @update:model-value="redrawStacked" />
+            <span>Border Radius</span>
+            <RiplInputRange v-model="stackedBorderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redrawStacked" />
         </RiplControlGroup>
     </template>
 </ripl-example>
@@ -50,6 +63,8 @@ createArc({
 ```
 :::
 
+**Single** is one `createArc` call. **Stacked** is three of them sharing a centre, which is the only arrangement where padding has anything to separate — hence the two extra controls.
+
 <script lang="ts" setup>
 import {
     useRiplExample,
@@ -70,22 +85,51 @@ import {
 
 const TAU = Math.PI * 2;
 const SEGMENT_FILLS = ['#3a86ff', '#8338ec', '#ff006e'];
-const endAnglePct = ref(75);
-const innerRadiusPct = ref(50);
-const padAngleVal = ref(0);
-const padWidthVal = ref(8);
-const borderRadiusVal = ref(6);
-let currentContext: Context | undefined;
 
-function renderDemo(context: Context) {
+const singleEndAnglePct = ref(75);
+const singleInnerRadiusPct = ref(50);
+const singleBorderRadiusVal = ref(6);
+let singleContext: Context | undefined;
+
+const stackedEndAnglePct = ref(100);
+const stackedInnerRadiusPct = ref(50);
+const stackedPadWidthVal = ref(8);
+const stackedPadAngleVal = ref(0);
+const stackedBorderRadiusVal = ref(6);
+let stackedContext: Context | undefined;
+
+function renderSingle(context: Context) {
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 3;
 
     context.batch(() => {
-        const sweep = TAU * (endAnglePct.value / 100);
-        const innerRadius = r * (innerRadiusPct.value / 100);
-        const padAngle = padAngleVal.value * 0.01;
+        createArc({
+            fill: '#3a86ff',
+            cx: w / 2, cy: h / 2, radius: r,
+            innerRadius: r * (singleInnerRadiusPct.value / 100),
+            startAngle: 0,
+            endAngle: TAU * (singleEndAnglePct.value / 100),
+            borderRadius: singleBorderRadiusVal.value,
+        }).render(context);
+
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `endAngle: ${singleEndAnglePct.value}%  inner: ${singleInnerRadiusPct.value}%  borderRadius: ${singleBorderRadiusVal.value}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
+}
+
+function renderStacked(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const r = Math.min(w, h) / 3;
+
+    context.batch(() => {
+        const sweep = TAU * (stackedEndAnglePct.value / 100);
+        const innerRadius = r * (stackedInnerRadiusPct.value / 100);
+        const padAngle = stackedPadAngleVal.value * 0.01;
 
         SEGMENT_FILLS.forEach((fill, index) => {
             createArc({
@@ -95,29 +139,41 @@ function renderDemo(context: Context) {
                 startAngle: sweep * (index / SEGMENT_FILLS.length),
                 endAngle: sweep * ((index + 1) / SEGMENT_FILLS.length),
                 padAngle,
-                padWidth: padWidthVal.value || undefined,
-                borderRadius: borderRadiusVal.value,
+                padWidth: stackedPadWidthVal.value || undefined,
+                borderRadius: stackedBorderRadiusVal.value,
             }).render(context);
         });
 
         createText({
             x: w / 2, y: h / 2 + r + 24,
-            content: `sweep: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  padAngle: ${padAngleVal.value}  padWidth: ${padWidthVal.value}  radius: ${borderRadiusVal.value}`,
+            content: `sweep: ${stackedEndAnglePct.value}%  inner: ${stackedInnerRadiusPct.value}%  padWidth: ${stackedPadWidthVal.value}  padAngle: ${stackedPadAngleVal.value}  borderRadius: ${stackedBorderRadiusVal.value}`,
             fill: '#666', textAlign: 'center', font: '12px sans-serif',
         }).render(context);
     });
 }
 
 const {
-    contextChanged
+    contextChanged: singleChanged
 } = useRiplExample(context => {
-    currentContext = context;
-    renderDemo(context);
-    context.on('resize', () => renderDemo(context));
+    singleContext = context;
+    renderSingle(context);
+    context.on('resize', () => renderSingle(context));
 });
 
-function redraw() {
-    if (currentContext) renderDemo(currentContext);
+const {
+    contextChanged: stackedChanged
+} = useRiplExample(context => {
+    stackedContext = context;
+    renderStacked(context);
+    context.on('resize', () => renderStacked(context));
+});
+
+function redrawSingle() {
+    if (singleContext) renderSingle(singleContext);
+}
+
+function redrawStacked() {
+    if (stackedContext) renderStacked(stackedContext);
 }
 </script>
 
@@ -133,8 +189,10 @@ const arc = createArc({
     cx: 200,
     cy: 200,
     radius: 100,
+    innerRadius: 50,
     startAngle: 0,
-    endAngle: Math.PI,
+    endAngle: Math.PI * 1.5,
+    borderRadius: 6,
 });
 ```
 
