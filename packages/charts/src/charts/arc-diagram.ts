@@ -70,7 +70,7 @@ import {
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.9;
+const NODE_REST_ALPHA = 0.9;
 
 /** Opacity applied to a link arc's stroke at rest; lighter than a node so the arcs stay a backdrop. */
 const LINK_REST_ALPHA = 0.4;
@@ -210,7 +210,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             }),
             content: () => node.label ?? node.id,
             highlight: { fill: color },
-            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            restore: { fill: setColorAlpha(color, NODE_REST_ALPHA) },
             payload: {
                 id: node.id,
                 label: node.label ?? node.id,
@@ -531,7 +531,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             const entryNodeGroups = nodeEntries.map(node => {
                 const point = nodePoint(node.id);
                 const color = colorFor(node);
-                const restFill = setColorAlpha(color, REST_ALPHA);
+                const restFill = setColorAlpha(color, NODE_REST_ALPHA);
                 const radius = radiusFor(node);
                 const label = labelState(point);
                 const tip = tickEnd(point);
@@ -596,7 +596,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             nodeUpdates.forEach(([node, group]) => {
                 const point = nodePoint(node.id);
                 const color = colorFor(node);
-                const restFill = setColorAlpha(color, REST_ALPHA);
+                const restFill = setColorAlpha(color, NODE_REST_ALPHA);
                 const radius = radiusFor(node);
                 const label = labelState(point);
                 const tip = tickEnd(point);

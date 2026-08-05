@@ -46,6 +46,10 @@ import {
     isTimeAxis,
 } from '../core/scales';
 
+import {
+    REST_ALPHA,
+} from '../constants/opacity';
+
 import type {
     LegendItem,
 } from '../components/legend';
@@ -148,8 +152,6 @@ export interface ScatterChartEventMap extends EventMap {
     /** Emitted when the pointer leaves a bubble. */
     markerleave: ScatterChartMarkerEvent;
 }
-
-const REST_ALPHA = 0.7;
 
 // All bubble symbols expose cx/cy/radius, so circles and polygon symbols animate identically.
 function seriesBubbles(group: Group): SymbolElement[] {

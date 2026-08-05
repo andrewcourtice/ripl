@@ -46,6 +46,10 @@ import {
 } from '../core/data';
 
 import {
+    REST_ALPHA,
+} from '../constants/opacity';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -82,9 +86,6 @@ import {
     functionIdentity,
     numberExtent,
 } from '@ripl/utilities';
-
-/** Opacity applied to a marker's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.7;
 
 /** Configuration for an individual polar scatter series. */
 export interface PolarScatterSeriesOptions<TData> {

@@ -83,7 +83,7 @@ import {
 } from '@ripl/utilities';
 
 /** The opacity applied to a box's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.25;
+const BOX_REST_ALPHA = 0.25;
 
 /** Inset, in pixels, applied to each end of the category range so the outermost boxes clear the axes. */
 const CATEGORY_INSET = SPACING.xl;
@@ -245,7 +245,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
      */
     private _createBox(category: string, stats: BoxplotStats, center: number, boxWidth: number, valueScale: Scale<number>, color: string): Group {
         const target = this._boxTargets(stats, center, boxWidth, valueScale);
-        const restFill = setColorAlpha(color, REST_ALPHA);
+        const restFill = setColorAlpha(color, BOX_REST_ALPHA);
 
         const box = createRect({
             id: `${category}-box`,
@@ -506,7 +506,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         circles: Circle[];
     } {
         const target = this._boxTargets(item.stats, item.center, boxWidth, valueScale);
-        const restFill = setColorAlpha(color, REST_ALPHA);
+        const restFill = setColorAlpha(color, BOX_REST_ALPHA);
 
         const box = group.getElementById(`${item.id}-box`) as Rect | undefined;
 

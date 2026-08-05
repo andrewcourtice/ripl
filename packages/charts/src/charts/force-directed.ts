@@ -77,7 +77,7 @@ import {
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.85;
+const NODE_REST_ALPHA = 0.85;
 
 /** A node in a force-directed network. */
 export interface ForceNetworkNode<TData = unknown> {
@@ -239,7 +239,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             }),
             content: () => content,
             highlight: { fill: node.color },
-            restore: { fill: setColorAlpha(node.color, REST_ALPHA) },
+            restore: { fill: setColorAlpha(node.color, NODE_REST_ALPHA) },
             onEnter: point => this.emit('nodeenter', payload(point)),
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
@@ -559,7 +559,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const entryNodeGroups = nodeEntries.map(node => {
                 const placedNode = placed.get(node.id)!;
-                const restFill = setColorAlpha(placedNode.color, REST_ALPHA);
+                const restFill = setColorAlpha(placedNode.color, NODE_REST_ALPHA);
 
                 // Start each node at the root's position and spring it out to its settled spot.
                 const circle = createCircle({
@@ -606,7 +606,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             nodeUpdates.forEach(([node, group]) => {
                 const placedNode = placed.get(node.id)!;
-                const restFill = setColorAlpha(placedNode.color, REST_ALPHA);
+                const restFill = setColorAlpha(placedNode.color, NODE_REST_ALPHA);
                 const circle = group.getElementsByType('circle')[0] as Circle;
                 const text = group.getElementsByType('text')[0] as Text | undefined;
 

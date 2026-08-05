@@ -70,7 +70,7 @@ import {
 } from '@ripl/utilities';
 
 /** The opacity applied to a bar's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.78;
+const BAR_REST_ALPHA = 0.78;
 
 /** The geometry of a single bar: its element id, value, and rect state. */
 interface BarState {
@@ -327,7 +327,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
     private _createBar(series: BarSeriesLike<TData>, item: TData, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): Rect {
         const { id, value, state } = this._getBarState(series, item, ctx, prepared);
-        const restFill = setColorAlpha(state.fill as string, REST_ALPHA);
+        const restFill = setColorAlpha(state.fill as string, BAR_REST_ALPHA);
 
         const bar = createRect({
             id,
@@ -435,7 +435,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
         barUpdates.forEach(([item, bar]) => {
             const { value, state } = this._getBarState(series, item, ctx, prepared);
-            const restFill = setColorAlpha(state.fill as string, REST_ALPHA);
+            const restFill = setColorAlpha(state.fill as string, BAR_REST_ALPHA);
 
             bar.data = {
                 ...state,

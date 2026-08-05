@@ -77,7 +77,7 @@ import {
 const TOP_ANGLE = -Math.PI / 2;
 
 /** Opacity applied to a bar's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.85;
+const BAR_REST_ALPHA = 0.85;
 
 /** Options for configuring a {@link RadialBarChart}. */
 export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions {
@@ -187,7 +187,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             },
             content: () => content,
             highlight: { stroke: color },
-            restore: { stroke: setColorAlpha(color, REST_ALPHA) },
+            restore: { stroke: setColorAlpha(color, BAR_REST_ALPHA) },
             onEnter: point => this.emit('barenter', payload(point)),
             onLeave: point => this.emit('barleave', payload(point)),
             onClick: point => this.emit('barclick', payload(point)),
@@ -340,7 +340,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     radius: center,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE,
-                    stroke: setColorAlpha(itemColor, REST_ALPHA),
+                    stroke: setColorAlpha(itemColor, BAR_REST_ALPHA),
                     lineWidth: thickness,
                     lineCap,
                     pointerEvents: 'stroke',
@@ -401,7 +401,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
                 if (bar) {
                     bar.lineCap = lineCap;
-                    bar.stroke = setColorAlpha(itemColor, REST_ALPHA);
+                    bar.stroke = setColorAlpha(itemColor, BAR_REST_ALPHA);
                     bar.data = {
                         cx,
                         cy,

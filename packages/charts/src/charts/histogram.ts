@@ -60,7 +60,7 @@ import {
 } from '@ripl/utilities';
 
 /** The opacity applied to a bin's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.78;
+const BIN_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link HistogramChart}. */
 export interface HistogramChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
@@ -189,7 +189,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 thresholds,
             });
 
-            const color = setColorAlpha(this.getSeriesColor('histogram'), REST_ALPHA);
+            const color = setColorAlpha(this.getSeriesColor('histogram'), BIN_REST_ALPHA);
             const maxCount = Math.max(1, ...histogram.map(current => current.count));
             const valueExtent: [number, number] = histogram.length
                 ? [histogram[0].x0, histogram[histogram.length - 1].x1]

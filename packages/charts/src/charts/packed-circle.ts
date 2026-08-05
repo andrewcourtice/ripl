@@ -55,6 +55,10 @@ import {
 } from '../core/pack';
 
 import {
+    REST_ALPHA,
+} from '../constants/opacity';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -82,9 +86,6 @@ import {
     arrayJoin,
     numberClamp,
 } from '@ripl/utilities';
-
-/** Opacity applied to a circle's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link PackedCircleChart}. */
 export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOptions {

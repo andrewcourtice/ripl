@@ -40,6 +40,10 @@ import {
 } from '../core/data';
 
 import {
+    REST_ALPHA,
+} from '../constants/opacity';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -67,9 +71,6 @@ import {
 import {
     arrayJoin,
 } from '@ripl/utilities';
-
-/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
