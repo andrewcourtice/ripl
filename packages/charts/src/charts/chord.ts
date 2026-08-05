@@ -21,7 +21,8 @@ import {
 } from '../core/options';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
+    arcCentroidAnchor,
 } from '../core/interaction';
 
 import {
@@ -532,53 +533,28 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
     private _attachArcHover(segment: Arc, arc: ChordArc) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): ChordChartSegmentEvent => ({
-            x: point.x,
-            y: point.y,
-            id: arc.id,
-            label: arc.label,
-            value: arc.value,
-        });
-
-        applyHoverHighlight(segment, {
+        applySegmentInteraction<Arc, ChordChartSegmentEvent>(segment, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
-            anchor: () => {
-                const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
-                return {
-                    x,
-                    y,
-                };
-            },
+            anchor: arcCentroidAnchor(segment),
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
-            onEnter: point => {
-                this.highlightSeries(arc.id);
-                this.emit('segmententer', payload(point));
+            payload: {
+                id: arc.id,
+                label: arc.label,
+                value: arc.value,
             },
-            onLeave: point => {
-                this.highlightSeries(null);
-                this.emit('segmentleave', payload(point));
-            },
-            onClick: point => this.emit('segmentclick', payload(point)),
+            onHighlight: hovered => this.highlightSeries(hovered ? arc.id : null),
+            onEnter: event => this.emit('segmententer', event),
+            onLeave: event => this.emit('segmentleave', event),
+            onClick: event => this.emit('segmentclick', event),
         });
     }
 
     private _attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): ChordChartLinkEvent => ({
-            x: point.x,
-            y: point.y,
-            id: ribbon.id,
-            sourceLabel: ribbon.sourceLabel,
-            targetLabel: ribbon.targetLabel,
-            value: ribbon.value,
-        });
-
-        applyHoverHighlight(ribbonEl, {
+        applySegmentInteraction<Ribbon, ChordChartLinkEvent>(ribbonEl, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
@@ -589,9 +565,15 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             content: () => `${ribbon.sourceLabel} → ${ribbon.targetLabel}: ${formatValue(ribbon.value)}`,
             highlight: { fill: setColorAlpha(ribbon.color, RIBBON_HOVER_ALPHA) },
             restore: { fill: setColorAlpha(ribbon.color, RIBBON_REST_ALPHA) },
-            onEnter: point => this.emit('linkenter', payload(point)),
-            onLeave: point => this.emit('linkleave', payload(point)),
-            onClick: point => this.emit('linkclick', payload(point)),
+            payload: {
+                id: ribbon.id,
+                sourceLabel: ribbon.sourceLabel,
+                targetLabel: ribbon.targetLabel,
+                value: ribbon.value,
+            },
+            onEnter: event => this.emit('linkenter', event),
+            onLeave: event => this.emit('linkleave', event),
+            onClick: event => this.emit('linkclick', event),
         });
     }
 

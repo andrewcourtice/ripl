@@ -24,7 +24,7 @@ import {
 } from '../core/labels';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
 } from '../core/interaction';
 
 import {
@@ -356,16 +356,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
         width: number; }, color: string) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): FunnelChartSegmentEvent => ({
-            x: point.x,
-            y: point.y,
-            value: item.value,
-            label: item.label,
-            key: item.key,
-        });
-
-        applyHoverHighlight(rect, {
+        applySegmentInteraction<Rect, FunnelChartSegmentEvent>(rect, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
@@ -376,9 +367,14 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             content: () => `${item.label}: ${formatValue(item.value)}`,
             highlight: { fill: color },
             restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
-            onClick: point => this.emit('segmentclick', payload(point)),
+            payload: {
+                value: item.value,
+                label: item.label,
+                key: item.key,
+            },
+            onEnter: event => this.emit('segmententer', event),
+            onLeave: event => this.emit('segmentleave', event),
+            onClick: event => this.emit('segmentclick', event),
         });
     }
 

@@ -36,7 +36,8 @@ import {
 } from '../core/animation';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
+    arcCentroidAnchor,
 } from '../core/interaction';
 
 import {
@@ -473,37 +474,22 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
         const { value, label, key } = segment;
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): PieChartSegmentEvent => ({
-            x: point.x,
-            y: point.y,
-            value,
-            label,
-            key,
-        });
-
-        applyHoverHighlight(arc, {
+        applySegmentInteraction<Arc, PieChartSegmentEvent>(arc, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
-            anchor: () => {
-                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
-                return {
-                    x,
-                    y,
-                };
-            },
+            anchor: arcCentroidAnchor(arc),
             content: () => formatValue(value),
+            payload: {
+                value,
+                label,
+                key,
+            },
             // Segments are solid at rest, so the hover reads as the others dimming rather than this one lifting.
-            onEnter: point => {
-                this.highlightSeries(key);
-                this.emit('segmententer', payload(point));
-            },
-            onLeave: point => {
-                this.highlightSeries(null);
-                this.emit('segmentleave', payload(point));
-            },
-            onClick: point => this.emit('segmentclick', payload(point)),
+            onHighlight: hovered => this.highlightSeries(hovered ? key : null),
+            onEnter: event => this.emit('segmententer', event),
+            onLeave: event => this.emit('segmentleave', event),
+            onClick: event => this.emit('segmentclick', event),
         });
     }
 

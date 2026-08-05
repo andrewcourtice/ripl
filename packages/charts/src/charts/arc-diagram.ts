@@ -16,7 +16,7 @@ import {
 } from '../core/options';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
 } from '../core/interaction';
 
 import {
@@ -71,6 +71,9 @@ import {
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
 const REST_ALPHA = 0.9;
+
+/** Opacity applied to a link arc's stroke at rest; lighter than a node so the arcs stay a backdrop. */
+const LINK_REST_ALPHA = 0.4;
 
 /** Points sampled along each arc. */
 const ARC_SAMPLES = 24;
@@ -197,17 +200,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
     }
 
     private _attachNodeHover(circle: Circle, node: ArcDiagramNode<TData>, color: string) {
-
-        const payload = (point: { x: number;
-            y: number; }): ArcDiagramNodeEvent<TData> => ({
-            x: point.x,
-            y: point.y,
-            id: node.id,
-            label: node.label ?? node.id,
-            data: node.data,
-        });
-
-        applyHoverHighlight(circle, {
+        applySegmentInteraction<Circle, ArcDiagramNodeEvent<TData>>(circle, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
@@ -218,24 +211,19 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             content: () => node.label ?? node.id,
             highlight: { fill: color },
             restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('nodeenter', payload(point)),
-            onLeave: point => this.emit('nodeleave', payload(point)),
-            onClick: point => this.emit('nodeclick', payload(point)),
+            payload: {
+                id: node.id,
+                label: node.label ?? node.id,
+                data: node.data,
+            },
+            onEnter: event => this.emit('nodeenter', event),
+            onLeave: event => this.emit('nodeleave', event),
+            onClick: event => this.emit('nodeclick', event),
         });
     }
 
     private _attachLinkHover(arc: Polyline, link: ArcDiagramLink, content: string, color: string) {
-
-        const payload = (point: { x: number;
-            y: number; }): ArcDiagramLinkEvent => ({
-            x: point.x,
-            y: point.y,
-            source: link.source,
-            target: link.target,
-            value: link.value ?? 0,
-        });
-
-        applyHoverHighlight(arc, {
+        applySegmentInteraction<Polyline, ArcDiagramLinkEvent>(arc, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
@@ -249,10 +237,15 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             },
             content: () => content,
             highlight: { stroke: color },
-            restore: { stroke: setColorAlpha(color, 0.4) },
-            onEnter: point => this.emit('linkenter', payload(point)),
-            onLeave: point => this.emit('linkleave', payload(point)),
-            onClick: point => this.emit('linkclick', payload(point)),
+            restore: { stroke: setColorAlpha(color, LINK_REST_ALPHA) },
+            payload: {
+                source: link.source,
+                target: link.target,
+                value: link.value ?? 0,
+            },
+            onEnter: event => this.emit('linkenter', event),
+            onLeave: event => this.emit('linkleave', event),
+            onClick: event => this.emit('linkclick', event),
         });
     }
 
@@ -465,7 +458,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 const arc = createPolyline({
                     id: linkId(link),
                     points,
-                    stroke: setColorAlpha(color, 0.4),
+                    stroke: setColorAlpha(color, LINK_REST_ALPHA),
                     lineWidth: linkWidth(link),
                     opacity: 0,
                     // An open path's fill test closes it against its chord, so a large arc would swallow every smaller one beneath it.
@@ -486,7 +479,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
             linkUpdates.forEach(([link, arc]) => {
                 arc.lineWidth = linkWidth(link);
-                arc.stroke = setColorAlpha(arcColor(link), 0.4);
+                arc.stroke = setColorAlpha(arcColor(link), LINK_REST_ALPHA);
                 arc.data = {
                     points: linkPoints(link),
                     opacity: 1,
