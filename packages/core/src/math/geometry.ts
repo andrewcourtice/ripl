@@ -96,6 +96,31 @@ export function getPadAngleAtRadius(padWidth: number, radius: number): number {
     return Math.asin(Math.min(padWidth / (2 * radius), 1));
 }
 
+/**
+ * Returns the smallest radius at which a sector of `span` radians still faces its neighbors with
+ * edges a full `padWidth` apart — `(padWidth / 2) / sin(min(span, π) / 2)`.
+ *
+ * The straight edges a {@link getPadAngleAtRadius} inset produces are parallel lines offset
+ * `padWidth / 2` from the radial centrelines, and parallel lines never meet: below this radius the
+ * inset needed to reach them exceeds half the span, the sector collapses onto its mid-angle, and
+ * the gap tapers away instead of holding its width. Flooring a sector's inner radius here is what
+ * lets a gap run all the way to the center of a shape that has no hole.
+ *
+ * Returns `0` where no floor applies — a `padWidth` that is non-positive, `NaN` or infinite, a
+ * `span` that is non-positive or `NaN`, and a full turn or wider, which has no neighbor to clear.
+ *
+ * @param padWidth - The gap width, in logical pixels, held constant at every radius.
+ * @param span - The angular span of the sector, in radians.
+ * @returns The radius at which the sector's straight edges converge, or `0` where none does.
+ */
+export function getPadInnerRadius(padWidth: number, span: number): number {
+    if (!(padWidth > 0) || !Number.isFinite(padWidth) || !(span > 0) || span >= TAU) {
+        return 0;
+    }
+
+    return padWidth / 2 / Math.sin(Math.min(span, Math.PI) / 2);
+}
+
 /** Generates the vertex points of a regular polygon centered at `(cx, cy)` with the given radius and number of sides. */
 export function getPolygonPoints(
     sides: number,

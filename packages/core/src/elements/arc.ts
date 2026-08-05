@@ -15,6 +15,7 @@ import type {
 import {
     Box,
     getPadAngleAtRadius,
+    getPadInnerRadius,
     getThetaPoint,
     HALF_PI,
     TAU,
@@ -53,7 +54,7 @@ export interface ArcState extends BaseElementState {
     innerRadius?: number;
     /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link ArcState.padWidth} for a gap of constant width. Ignored whenever `padWidth` is provided, `0` included. A `padAngle` wider than the sector collapses it onto its `endAngle`, where an oversized `padWidth` collapses it onto its mid-angle. */
     padAngle?: number;
-    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link ArcState.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges, its inner radius floored at the radius where those edges would meet so that an `innerRadius` of `0` still carries the gap to the center rather than tapering it away; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link ArcState.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
     padWidth?: number;
     /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. A non-zero value on an open arc also closes the path through the center, turning a chord-closed segment into a wedge and so changing its filled area, hit region and stroke — do not animate it up from `0` on an open arc. */
     borderRadius?: number;
@@ -263,7 +264,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('padAngle', value);
     }
 
-    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link Arc.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges, its inner radius floored at the radius where those edges would meet so that an `innerRadius` of `0` still carries the gap to the center rather than tapering it away; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link Arc.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
     public get padWidth() {
         return this.getStateValue('padWidth');
     }
@@ -383,14 +384,15 @@ export class Arc extends Shape2D<ArcState> {
                 return traceRoundedWedge(path, cx, cy, radius, outerStart, outerEnd, cornerRadius);
             }
 
-            const [outerCornerRadius, innerCornerRadius] = getCornerRadii(radius, innerRadius, endAngle - startAngle, gap / 2, borderRadius);
+            const paddedInnerRadius = Math.max(innerRadius, Math.min(radius, getPadInnerRadius(gap, endAngle - startAngle)));
+            const [outerCornerRadius, innerCornerRadius] = getCornerRadii(radius, paddedInnerRadius, endAngle - startAngle, gap / 2, borderRadius);
 
             if (outerCornerRadius || innerCornerRadius) {
                 return traceRoundedAnnularSector(path, {
                     cx,
                     cy,
                     radius,
-                    innerRadius,
+                    innerRadius: paddedInnerRadius,
                     startAngle,
                     endAngle,
                     halfGap: gap / 2,
@@ -400,15 +402,15 @@ export class Arc extends Shape2D<ArcState> {
             }
 
             const [outerStart, outerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, radius));
-            const [innerStart, innerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, innerRadius));
+            const [innerStart, innerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, paddedInnerRadius));
 
             const [x1, y1] = getThetaPoint(outerStart, radius, cx, cy);
-            const [x2, y2] = getThetaPoint(innerEnd, innerRadius, cx, cy);
+            const [x2, y2] = getThetaPoint(innerEnd, paddedInnerRadius, cx, cy);
 
             path.moveTo(x1, y1);
             path.arc(cx, cy, radius, outerStart, outerEnd);
             path.lineTo(x2, y2);
-            path.arc(cx, cy, innerRadius, innerEnd, innerStart, true);
+            path.arc(cx, cy, paddedInnerRadius, innerEnd, innerStart, true);
             path.lineTo(x1, y1);
         });
     }
