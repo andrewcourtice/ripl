@@ -138,7 +138,7 @@ circle.on('mouseleave', () => {
 
 ### Scene-Level Events
 
-The scene emits a `resize` event when the context resizes. Context-level pointer events (`mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) are emitted on the context itself.
+The scene emits a `resize` event when the context resizes. Context-level pointer events (`click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) are emitted on the context itself.
 
 > [!NOTE]
 > Pointer events require elements to be rendered to the context so it can track them for hit testing. The scene handles this automatically when you call `scene.render()`.

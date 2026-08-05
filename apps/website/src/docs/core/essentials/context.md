@@ -113,7 +113,11 @@ context.markRenderEnd();
 
 ## Interaction
 
-The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior: when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
+The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior: when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
+
+The context emits the same pointer events itself, whether or not an element was hit — subscribe to `context.on('mousedown' | 'mouseup' | 'click' | 'mousemove' | 'mouseenter' | 'mouseleave' | 'dragstart' | 'drag' | 'dragend', …)` for surface-wide interaction. `mouseup` fires exactly once per button press, including when the release lands outside the surface and when a second button is pressed mid-gesture; the release that ends a drag suppresses the `click` that follows it, but still emits `mouseup`.
+
+All pointer payloads report **logical** coordinates — CSS pixels relative to the surface origin, the same space elements are authored in — regardless of the device pixel ratio. To hit-test a point yourself, map it with `context.toSurfacePoint(x, y)` first (see [Custom Contexts](/docs/core/advanced/custom-contexts#coordinate-spaces)).
 
 Interaction is enabled by default. You can disable it via the `interactive` option:
 

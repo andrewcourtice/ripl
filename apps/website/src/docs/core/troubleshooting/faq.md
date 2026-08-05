@@ -101,19 +101,24 @@ import {
 
 ## Why aren't my pointer events working?
 
-Pointer events (click, mouseenter, mouseleave, mousemove) only work when elements are inside a **Scene**. The Scene handles DOM event listening and hit testing.
+Pointer events (`click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work once the element has been **rendered to a context**. The [Context](/docs/core/essentials/context#interaction) — not the Scene — owns DOM event listening and hit testing; a Scene is the usual way to get elements rendered, but it is not required.
 
 ```ts
-// ❌ Won't work: no scene
+// ❌ Won't work: nothing was rendered, so the context tracks no elements
 const circle = createCircle({ /* ... */ });
-circle.render(context);
 circle.on('click', () => {}); // Never fires
 
-// ✅ Works: element is in a scene
+// ✅ Works: rendered straight to the context
+context.batch(() => circle.render(context));
+circle.on('click', () => {}); // Fires correctly
+
+// ✅ Works: the scene renders it for you
 const scene = createScene(context, { children: [circle] });
 scene.render();
 circle.on('click', () => {}); // Fires correctly
 ```
+
+For interactivity that isn't tied to an element — a marquee selection, a background click — subscribe on the context itself: `context.on('mousedown' | 'mouseup' | 'click' | 'mousemove', …)` fires whether or not an element was hit.
 
 ## Why is my element invisible?
 

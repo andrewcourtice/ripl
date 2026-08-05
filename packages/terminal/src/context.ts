@@ -63,52 +63,6 @@ import type {
     TerminalOutput,
 } from './output';
 
-/**
- * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
- * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
- */
-function terminalSnapshotToURL(imageData: ImageData, text: string): string {
-    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
-        const canvas = document.createElement('canvas');
-
-        canvas.width = imageData.width;
-        canvas.height = imageData.height;
-
-        const context = canvas.getContext('2d');
-
-        if (context) {
-            context.putImageData(imageData, 0, 0);
-
-            const dataURL = canvas.toDataURL('image/png');
-
-            if (dataURL?.startsWith('data:image')) {
-                return URL.createObjectURL(dataURLToBlob(dataURL));
-            }
-        }
-    }
-
-    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
-}
-
-/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
-const TEXT_ALIGN_FACTORS: Record<string, number> = {
-    left: 0,
-    start: 0,
-    center: 0.5,
-    right: 1,
-    end: 1,
-};
-
-/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
-const TEXT_BASELINE_FACTORS: Record<string, number> = {
-    top: 0,
-    hanging: 0,
-    middle: 0.5,
-    alphabetic: 1,
-    ideographic: 1,
-    bottom: 1,
-};
-
 /** Options for constructing a terminal rendering context. */
 export interface TerminalContextOptions extends ContextOptions {
     /** Grid width in terminal columns. Defaults to the output adapter's `columns`. */
@@ -153,6 +107,25 @@ interface TerminalCommandHandler {
     toContour(context: ContourContext, args: number[]): void;
     rasterize(context: RasterContext, args: number[]): void;
 }
+
+/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
+const TEXT_ALIGN_FACTORS: Record<string, number> = {
+    left: 0,
+    start: 0,
+    center: 0.5,
+    right: 1,
+    end: 1,
+};
+
+/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
+const TEXT_BASELINE_FACTORS: Record<string, number> = {
+    top: 0,
+    hanging: 0,
+    middle: 0.5,
+    alphabetic: 1,
+    ideographic: 1,
+    bottom: 1,
+};
 
 /**
  * Dispatch table keyed by path command type, replacing the parallel `switch` statements in
@@ -258,6 +231,33 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
         },
     },
 };
+
+/**
+ * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
+ * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
+ */
+function terminalSnapshotToURL(imageData: ImageData, text: string): string {
+    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+
+        const context = canvas.getContext('2d');
+
+        if (context) {
+            context.putImageData(imageData, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/png');
+
+            if (dataURL?.startsWith('data:image')) {
+                return URL.createObjectURL(dataURLToBlob(dataURL));
+            }
+        }
+    }
+
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+}
 
 /**
  * Terminal rendering context that rasterizes Ripl elements into character-based output via a
@@ -410,6 +410,33 @@ export class TerminalContext extends Context<Element> {
         this.scaleY = scaleContinuous([0, height], [this._offsetY, this._offsetY + height * this._rasterScale]);
 
         this.emit('resize', null);
+    }
+
+    /**
+     * Maps a point from the braille raster grid back into the logical space elements are authored
+     * in, undoing the letterbox mapping {@link TerminalContext.rescale} installs.
+     *
+     * The base implementation reads only the slope of `scaleX`/`scaleY` and so would drop the
+     * centring offset, placing a hit test on the non-limiting axis by the letterbox margin.
+     *
+     * @param x - X coordinate in raster space.
+     * @param y - Y coordinate in raster space.
+     * @returns The `[x, y]` pair in logical space.
+     */
+    public toLogicalPoint(x: number, y: number): [number, number] {
+        return [(x - this._offsetX) / this._rasterScale, (y - this._offsetY) / this._rasterScale];
+    }
+
+    /**
+     * Maps a point from logical space into the braille raster grid, matching what `scaleX`/`scaleY`
+     * do when drawing. The inverse of {@link TerminalContext.toLogicalPoint}.
+     *
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @returns The `[x, y]` pair in raster space.
+     */
+    public toSurfacePoint(x: number, y: number): [number, number] {
+        return [x * this._rasterScale + this._offsetX, y * this._rasterScale + this._offsetY];
     }
 
     /** Homes the cursor and clears the rasterizer grid. */

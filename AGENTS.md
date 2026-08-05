@@ -64,6 +64,17 @@ EventBus<TEventMap>
 
 `Context` is the rendering abstraction. `@ripl/web` is the main entry point for browser usage — it re-exports everything from `@ripl/core` (elements, scene, renderer, animation, scales, etc.) and `@ripl/canvas` (Canvas context), and sets up browser-specific platform bindings. For SVG rendering, import `createContext` from `@ripl/svg` instead. All elements render through `Context`, making them context-agnostic.
 
+### Coordinate Spaces
+
+Two spaces, and one seam between them:
+
+- **Logical space** — CSS pixels relative to the surface origin. Elements are authored here, and every public pointer event payload (`mousemove`, `mousedown`, `mouseup`, `click`, `dragstart`, `drag`, `dragend`, on both the context and elements) carries logical coordinates.
+- **Surface space** — the backend's own drawing coordinates. `Context.hitTest` and `RenderElement.intersectsWith` take surface space, as do `isPointInPath`/`isPointInStroke`.
+
+The two agree on SVG, differ by the device pixel ratio on canvas, and differ by a scale *and an origin offset* on the terminal, which letterboxes its content into character cells.
+
+**Convert only through `Context.toLogicalPoint`/`toSurfacePoint`.** Never multiply by `scaleX`/`scaleY` or a device pixel ratio at a call site: a backend whose mapping carries an origin offset overrides the helpers, and a raw scale read silently ignores that. The helpers are the single seam — a handler holding a pointer's logical coordinates maps them once, at the hit test.
+
 ### Scenegraph
 
 Elements are organized in `Group` trees. `Scene` maintains a **hoisted buffer** — a flattened list of all renderable elements — converting render traversal from O(n^c) to O(n). The `Renderer` drives the animation loop via `requestAnimationFrame`.
@@ -412,7 +423,7 @@ Files should follow this ordering:
    - Classes
 6. **Main exports** (barrel `export * from` statements in index files)
 
-When a file accumulates several constants, extract them into a dedicated `constants.ts` file.
+Put every `UPPER_SNAKE_CASE` constant after the file's type declarations and before its first function or class declaration — never trailing at the bottom or wedged between functions. When a file accumulates several constants, extract them into a dedicated `constants.ts` file. The only exception is a constant whose initializer calls a function or reads a binding declared in the same file: leave it below what it depends on.
 
 ### Control Flow
 
@@ -613,8 +624,9 @@ Reusable UI components live in `apps/website/src/.vitepress/components/` and are
 
 The playground (`apps/website/src/.vitepress/components/playground/`) provides a live code editor:
 - `sandbox.ts` — Builds iframe `srcdoc` with import maps, setup code, and user code
-- `defaults.ts` — Default 2D/3D code snippets
-- `examples.ts` — Example code snippets shown in the examples dropdown
+- `examples/` — One plain `.js` file per example, registered in `examples/index.ts` via a `?raw` import plus an `EXAMPLES` entry
+- Examples are authored against the ambient `context`, `scene` and `renderer` bindings the sandbox injects, plus `camera` in 3D mode
+- Defaults come from the **first** `EXAMPLES` entry per mode, so append rather than prepend or the playground's opening snippet changes
 - `PlaygroundSettings` — Controls renderer `autoStop` and camera `interactions` (3D mode only)
 - Canvas/SVG toggle is hidden when in 3D mode
 

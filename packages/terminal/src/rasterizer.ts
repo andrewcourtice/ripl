@@ -1,4 +1,14 @@
 import {
+    ANSI_ERASE_DISPLAY_END,
+    ANSI_ERASE_LINE_END,
+    ANSI_TRUECOLOR_REGEX,
+    BRAILLE_ALL_DOTS,
+    BRAILLE_BASE,
+    BRAILLE_DOT_MAP,
+    DEFAULT_RGB,
+} from './constants';
+
+import {
     ANSI_RESET,
 } from './color';
 
@@ -28,44 +38,11 @@ export interface Rasterizer {
     toImageData(): ImageData;
 }
 
-/**
- * Braille dot layout per cell (2 wide × 4 tall):
- *
- * ```
- * [0,0] [1,0]    bit 0  bit 3
- * [0,1] [1,1]    bit 1  bit 4
- * [0,2] [1,2]    bit 2  bit 5
- * [0,3] [1,3]    bit 6  bit 7
- * ```
- */
-const BRAILLE_BASE = 0x2800;
-
-const BRAILLE_DOT_MAP = [
-    [0x01, 0x08],
-    [0x02, 0x10],
-    [0x04, 0x20],
-    [0x40, 0x80],
-];
-
 /** Each braille cell is 2 pixels wide and 4 pixels tall. */
 export const BRAILLE_CELL_WIDTH = 2;
 
 /** Each braille cell is 2 pixels wide and 4 pixels tall. */
 export const BRAILLE_CELL_HEIGHT = 4;
-
-/** Fallback RGB used when a cell has no stored color (matches a light terminal foreground). */
-const DEFAULT_RGB: [number, number, number] = [230, 230, 230];
-
-/** Erases from the cursor to the end of the line, clearing columns a narrower grid no longer covers. */
-const ANSI_ERASE_LINE_END = '\x1b[K';
-
-/** Erases from the cursor to the end of the display, clearing rows a shorter grid no longer covers. */
-const ANSI_ERASE_DISPLAY_END = '\x1b[J';
-
-/** Every dot of a braille cell, used to stand in for a glyph when rasterizing to pixels. */
-const BRAILLE_ALL_DOTS = 0xff;
-
-const ANSI_TRUECOLOR_REGEX = /38;2;(\d+);(\d+);(\d+)/;
 
 /** Parses an ANSI truecolor foreground escape (`\x1b[38;2;r;g;bm`) back to an RGB tuple. */
 function parseAnsiColor(ansi: string): [number, number, number] {

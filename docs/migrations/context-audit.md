@@ -26,8 +26,8 @@ dead element kept consuming the topmost slot and swallowing the event meant for 
 beneath. No action required; hit testing simply stops returning elements with no listener.
 
 **`Element.intersectsWith`** and **`Shape2D.intersectsWith`** — **behaviour**. The incoming point is
-mapped back to logical space through `Context.scaleX`/`scaleY` instead of being divided by
-`Context.scaleDPR`. `Context.rescale` leaves the scales identity (SVG, terminal) while canvas maps
+mapped back to logical space through `Context.scaleX`/`scaleY` instead of being divided by the
+device pixel ratio. `Context.rescale` leaves the scales identity (SVG, terminal) while canvas maps
 to device pixels, so on a retina display every SVG box hit — `Text`, `Image`, `Group`, and any
 `Shape2D` with no traced path — landed at half coordinates. A custom `Context` that scales its
 surface without updating `scaleX`/`scaleY` must now override `toLogicalPoint`/`toSurfacePoint`.
@@ -37,6 +37,12 @@ mapping a point between the surface space pointer coordinates arrive in and the 
 elements are authored in. Override them in a backend whose surface mapping is not expressed by
 `scaleX`/`scaleY`.
 
+**`Context.scaleDPR`** — **API**, removed. The scale was assigned once in the constructor and never
+read or refreshed, so it reported the ratio the context was built at forever. Read
+`factory.devicePixelRatio` for the ratio itself, and map points with
+`Context.toSurfacePoint`/`toLogicalPoint` — a raw ratio is the wrong seam anyway, because SVG maps
+logical to surface at 1:1 and the terminal maps with a scale *and* a centring offset.
+
 **`Shape2D.intersectsWith`** — **behaviour**. The element's `lineWidth`, `lineCap`, `lineJoin`,
 `miterLimit`, `lineDash`, and `lineDashOffset` are applied (inside a `Context.layer`) around the
 stroke hit test. `isPointInStroke` strokes with the context's *current* line style, and a hit test
@@ -44,6 +50,21 @@ runs after the frame's trailing `restore`, so every element was tested at the ba
 of 1. **Stroke hit areas grow** for anything with `lineWidth > 1` (and shrink below 1) — a Sankey
 link with `pointerEvents: 'stroke'` becomes hoverable across its full ribbon rather than a 1px
 centreline. If a scene tuned its hit areas around the old behaviour, set `lineWidth` deliberately.
+
+### Pointer events
+
+**`ContextEventMap.mousedown`/`mouseup`** and **`ElementEventMap.mousedown`/`mouseup`** — **API**,
+additive. Press and release are now declared event types on both the context and elements, carrying
+the same `{ x, y }` logical payload as `mousemove`. Existing subscriptions keep compiling; a handler
+map typed exhaustively over either event map has two more keys to satisfy.
+
+**`TRACKED_EVENTS`** — **behaviour**. Extended with `mousedown` and `mouseup`. Hit testing only
+considers events in this list, so `element.on('mousedown', …)` was previously **inert** — accepted,
+never fired. Any element with a press or release listener starts receiving them.
+
+**`Element.$events`** and **`Context.$events`** — **behaviour**. Both gain `mousedown` and `mouseup`:
+`Element.$events` grows from 12 entries to 14, `Context.$events` from 10 to 12. Code asserting on the
+length (or diffing the list) has to be updated; code checking membership is unaffected.
 
 ### Group boundaries
 
@@ -409,7 +430,19 @@ making it the next gesture's delta baseline.
 
 **`click`** — **behaviour**. Suppressed once for the gesture that ended a drag. The DOM fires `click`
 after `mouseup`, so a drill-down or selection handler fired at the end of every drag. A click below
-the drag threshold is unaffected.
+the drag threshold is unaffected. The suppression is only armed for a release landing **inside** the
+surface, the only case the browser follows with a `click`; a drag released off-canvas used to leave it
+armed until the next press, silently swallowing an intervening programmatic or assistive click.
+
+**Context `click`** — **behaviour**. Actually emitted. It was declared in `ContextEventMap` and
+advertised in `Context.$events` but never fired, so `context.on('click', …)` was a dead subscription
+that now starts running. Check any such handler before upgrading.
+
+**Context `mousedown`/`mouseup`** — **behaviour**. Emitted on every press and release over the
+surface, whether or not an element was hit, for background and marquee handling. `mouseup` fires once
+per **button** press — a second button pressed mid-gesture gets its own release — and fires even when
+the release lands outside the surface. A release whose press began outside the surface still emits
+nothing.
 
 ### Reconciliation
 
@@ -636,6 +669,14 @@ reads `false` as "the transform was applied at draw time, so map the point into 
 backend applies no transform, so the point is already in the space it drew in. Latent today
 (`isPointInPath` always returns `false`), correct the moment hit testing exists.
 
+**`TerminalContext.toLogicalPoint`** / **`toSurfacePoint`** — **API**, additive overrides. They invert
+exactly what `rescale` installs — the uniform raster scale *and* the letterbox offset. The base
+implementations read only the slope of `scaleX`/`scaleY` and dropped the offset, so a point crossing
+spaces disagreed with where the same scales drew it: at an 80 × 10 grid over a 100 × 100 logical
+space, `scaleX(10)` is `64` while `toSurfacePoint(10, 10)` returned `[4, 4]`, and round-tripping
+`(10, 10)` through the scales came back as `(160, 10)`. Reachable through `Element.intersectsWith`,
+which maps every box hit test through `toLogicalPoint`.
+
 ### Transforms and compositing
 
 **`TerminalContext.rotate`** / **`scale`** / **`translate`** / **`transform`** / **`setTransform`** —
@@ -834,6 +875,18 @@ not a preference: `new WebGPUContext3D(…, { meta: { renderStrategy: 'cpu' } })
 shape into the CPU painter, which that class neither draws nor clears — a blank canvas plus a face
 buffer growing without bound. A `meta.renderStrategy` supplied by a caller is now ignored.
 
+### Performance
+
+**`Shape3D`'s hit path** — **behaviour**. Built on demand the first time `intersectsWith` needs it,
+instead of traced face by face on every render. `_renderCPU` and `_renderGPU` called
+`context.createPath` and then one `moveTo`, N-1 `lineTo` and one `closePath` per face, every frame,
+whether or not anything ever hit-tested the shape: on a 9 000-face mesh that is a fresh `Path2D`
+and ~45 000 native calls per frame, thrown away unread. The projection loop is unchanged — it is
+still what produces `_depth`, and so `zIndex` — and now writes the projected screen-space points
+into a `Float32Array` reused across frames. `intersectsWith` answers identically, `pointerEvents`
+semantics and the never-rendered bounding-box fallback included; the path is a pure function of the
+projected points, so no output changes.
+
 ### Known gaps (decided, not fixed)
 
 **No back-face culling on the CPU path.** Every face of a closed shape is transformed, shaded,
@@ -857,7 +910,7 @@ did not apply.
 ## @ripl/webgpu
 
 **`WebGPUContext3D.rescale`** — **behaviour**. Reads `factory.devicePixelRatio` rather than
-`window.devicePixelRatio`, like every other backend. `scaleX`/`scaleY`/`scaleDPR` were derived from
+`window.devicePixelRatio`, like every other backend. `scaleX`/`scaleY` were derived from
 the factory while the canvas backing store and the hit-canvas transform came from `window`, so any
 consumer overriding the factory value (tests, offscreen or server rendering, a DPR cap) had pointer
 coordinates scaled by one ratio and hit paths by the other and picking silently missed by that

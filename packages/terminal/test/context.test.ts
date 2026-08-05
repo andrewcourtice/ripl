@@ -360,6 +360,48 @@ describe('TerminalContext logical sizing', () => {
         expect(ctx.measureText('hi').width).toBe(2 * BRAILLE_CELL_WIDTH);
     });
 
+    // `Element.intersectsWith` maps hit points through these, so the letterbox offset must survive.
+    test('round-trips a point through the letterbox mapping', () => {
+        const output = createMockOutput(80, 10);
+        const ctx = createContext(output, {
+            logicalWidth: 100,
+            logicalHeight: 100,
+        });
+
+        ([[0, 0], [10, 10], [50, 25], [100, 100]] as [number, number][]).forEach(([x, y]) => {
+            const [surfaceX, surfaceY] = ctx.toSurfacePoint(x, y);
+            const [logicalX, logicalY] = ctx.toLogicalPoint(surfaceX, surfaceY);
+
+            expect(logicalX).toBeCloseTo(x, 6);
+            expect(logicalY).toBeCloseTo(y, 6);
+
+            const [drawnX, drawnY] = ctx.toLogicalPoint(ctx.scaleX(x), ctx.scaleY(y));
+
+            expect(drawnX).toBeCloseTo(x, 6);
+            expect(drawnY).toBeCloseTo(y, 6);
+        });
+    });
+
+    test('maps a point to the same place the scales draw it', () => {
+        const output = createMockOutput(80, 10);
+        const ctx = createContext(output, {
+            logicalWidth: 100,
+            logicalHeight: 100,
+        });
+
+        ([[0, 0], [10, 10], [50, 25], [100, 100]] as [number, number][]).forEach(([x, y]) => {
+            expect(ctx.toSurfacePoint(x, y)).toEqual([ctx.scaleX(x), ctx.scaleY(y)]);
+        });
+    });
+
+    test('round-trips a point when no logical size is given', () => {
+        const output = createMockOutput(40, 12);
+        const ctx = createContext(output);
+
+        expect(ctx.toSurfacePoint(37, 21)).toEqual([37, 21]);
+        expect(ctx.toLogicalPoint(37, 21)).toEqual([37, 21]);
+    });
+
 });
 
 describe('TerminalContext text alignment', () => {

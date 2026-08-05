@@ -30,6 +30,10 @@ import {
     createScene,
 } from '@ripl/core';
 
+import type {
+    ContextPath,
+} from '@ripl/core';
+
 import {
     createContext as createCanvasContext,
 } from '@ripl/canvas';
@@ -72,8 +76,6 @@ describe('Shape3D', () => {
 
     describe('Fill parsing', () => {
 
-        // 3D-1: `parseColor` returns undefined for anything but hex/rgb/hsl, and the unguarded
-        // `triangulateFacesFlat` then threw out of the whole render pass.
         test('Should render a shape whose fill is a named colour', () => {
             const context = createFixture();
             const scene = createScene(context, {
@@ -89,20 +91,20 @@ describe('Shape3D', () => {
             expect(faceFills()).toHaveLength(6);
         });
 
+        // 3D-1: the unguarded `triangulateFacesFlat` threw out of the whole render pass here.
         test('Should degrade an unparseable fill to the raw style string', () => {
             const context = createFixture();
             const scene = createScene(context, {
                 children: [
                     createCube({
                         size: 1,
-                        fill: 'red',
+                        fill: 'currentColor',
                     }),
                 ],
             });
 
-            scene.render();
-
-            expect(faceFills()[0].fillStyle).toBe('red');
+            expect(() => scene.render()).not.toThrow();
+            expect(faceFills()[0].fillStyle).toBe('currentColor');
         });
 
         test('Should render a shape whose fill is a gradient', () => {
@@ -259,6 +261,240 @@ describe('Shape3D', () => {
             }).render();
 
             expect(slab.zIndex).toBeGreaterThan(chip.zIndex);
+        });
+
+    });
+
+    describe('Hit testing', () => {
+
+        type Polygon = [number, number][];
+
+        function isPointInPolygon(polygon: Polygon, x: number, y: number): boolean {
+            let inside = false;
+            let previous = polygon.length - 1;
+
+            for (let idx = 0; idx < polygon.length; idx++) {
+                const [xi, yi] = polygon[idx];
+                const [xj, yj] = polygon[previous];
+
+                if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
+                    inside = !inside;
+                }
+
+                previous = idx;
+            }
+
+            return inside;
+        }
+
+        // jsdom's Path2D records nothing, so the traced faces are captured and tested here instead.
+        function mockPolygonHitTesting(context: CanvasContext3D) {
+            const traces = new WeakMap<ContextPath, Polygon[]>();
+            const createPath = context.createPath.bind(context);
+
+            const spy = vi.spyOn(context, 'createPath').mockImplementation(id => {
+                const path = createPath(id);
+                const polygons: Polygon[] = [];
+
+                traces.set(path, polygons);
+
+                path.moveTo = (px, py) => {
+                    polygons.push([[px, py]]);
+                };
+
+                path.lineTo = (px, py) => {
+                    polygons[polygons.length - 1].push([px, py]);
+                };
+
+                return path;
+            });
+
+            vi.spyOn(context, 'isPointInPath').mockImplementation((path, px, py) => {
+                return (traces.get(path) ?? []).some(polygon => isPointInPolygon(polygon, px, py));
+            });
+
+            vi.spyOn(context, 'isPointInStroke').mockImplementation(() => false);
+
+            return spy;
+        }
+
+        function firstFaceCentroid(): [number, number] {
+            const { points } = faceFills()[0];
+
+            return [
+                points.reduce((total, point) => total + point[0], 0) / points.length,
+                points.reduce((total, point) => total + point[1], 0) / points.length,
+            ];
+        }
+
+        function hitPathCalls(spy: ReturnType<typeof mockPolygonHitTesting>, id: string): number {
+            return spy.mock.calls.filter(([pathId]) => pathId === `${id}:hit`).length;
+        }
+
+        // The trace cost ~5 native calls per face per frame and was thrown away whenever, as here,
+        // nothing hit-tested the shape.
+        test('Should not build a hit path while rendering', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const createPath = vi.spyOn(context, 'createPath');
+
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            expect(createPath).not.toHaveBeenCalledWith(`${cube.id}:hit`);
+        });
+
+        test('Should hit a point inside a projected face', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            const [x, y] = firstFaceCentroid();
+
+            expect(cube.intersectsWith(x, y)).toBe(true);
+        });
+
+        test('Should miss a point outside every projected face', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            expect(cube.intersectsWith(-1000, -1000)).toBe(false);
+        });
+
+        test('Should hit a point inside a projected face under a pointer test', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            const [x, y] = firstFaceCentroid();
+
+            expect(cube.intersectsWith(x, y, { isPointer: true })).toBe(true);
+        });
+
+        test('Should miss a point outside every projected face under a pointer test', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            expect(cube.intersectsWith(-1000, -1000, { isPointer: true })).toBe(false);
+        });
+
+        test('Should build the hit path once however many times a frame is tested', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const createPath = mockPolygonHitTesting(context);
+
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            const [x, y] = firstFaceCentroid();
+
+            cube.intersectsWith(x, y);
+            cube.intersectsWith(x, y);
+            cube.intersectsWith(-1000, -1000, { isPointer: true });
+            cube.intersectsWith(x, y, { isPointer: true });
+
+            expect(hitPathCalls(createPath, cube.id)).toBe(1);
+        });
+
+        test('Should rebuild the hit path after the next render', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const createPath = mockPolygonHitTesting(context);
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const [x, y] = firstFaceCentroid();
+
+            expect(cube.intersectsWith(x, y)).toBe(true);
+
+            context.setCamera([50, 0, 5], [50, 0, 0], [0, 1, 0]);
+            scene.render();
+
+            expect(cube.intersectsWith(x, y)).toBe(false);
+            expect(hitPathCalls(createPath, cube.id)).toBe(2);
+        });
+
+        // `Element.intersectsWith` ignores `options`, so a fallback under `isPointer` would make a
+        // shape opted out of pointer events more hittable, not less.
+        test('Should refuse a pointer test on a shape with pointerEvents none', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+                pointerEvents: 'none',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            const [x, y] = firstFaceCentroid();
+
+            expect(cube.intersectsWith(x, y, { isPointer: true })).toBe(false);
+            expect(cube.intersectsWith(x, y)).toBe(true);
+        });
+
+        test('Should fall back to the bounding box before the shape has rendered', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            mockPolygonHitTesting(context);
+            createScene(context, {
+                children: [cube],
+            });
+
+            expect(cube.intersectsWith(200, 150)).toBe(false);
         });
 
     });

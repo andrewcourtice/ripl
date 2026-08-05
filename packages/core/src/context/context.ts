@@ -74,6 +74,13 @@ interface GroupScope {
     element?: RenderElement;
 }
 
+/**
+ * The slope of an axis scale — `scale(1) - scale(0)` — the surface-per-logical-unit factor with any
+ * origin offset excluded. A backend that letterboxes its surface (as the terminal does, centring its
+ * content) carries that offset in its scales, so its mapping disagrees with this factor and it must
+ * override {@link Context.toLogicalPoint}/{@link Context.toSurfacePoint}. Those helpers, never a raw
+ * scale, are how a point crosses between logical and surface space.
+ */
 function getAxisScale(scale: Scale<number, number>): number {
     const factor = scale(1) - scale(0);
 
@@ -119,8 +126,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public scaleX: Scale<number, number>;
     /** {@link Scale} mapping domain y coordinates to surface y coordinates. */
     public scaleY: Scale<number, number>;
-    /** {@link Scale} mapping logical pixels to device pixels using the device pixel ratio. */
-    public scaleDPR: Scale<number, number>;
     /** The element currently being rendered, if any. */
     public renderElement?: RenderElement;
     /** Elements rendered during the current pass, used for hit testing. */
@@ -134,9 +139,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             'drag',
             'dragend',
             'dragstart',
+            'mousedown',
             'mouseenter',
             'mouseleave',
             'mousemove',
+            'mouseup',
             'render',
             'resize',
         ];
@@ -422,7 +429,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
-        this.scaleDPR = scaleContinuous([0, 1], [0, factory.devicePixelRatio ?? 1]);
         this.scaleX = scaleContinuous([0, this.width], [0, this.width]);
         this.scaleY = scaleContinuous([0, this.height], [0, this.height]);
     }
@@ -766,6 +772,9 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /**
      * Tests which rendered elements intersect the given point for the given event types,
      * returning them topmost-first — the exact reverse of the order they were painted in.
+     *
+     * The point is in surface space, so a caller holding the logical coordinates a pointer event
+     * carries must map them through {@link Context.toSurfacePoint} first.
      *
      * Paint order is the sole key. {@link Context.renderedElements} already records the resolved
      * stacking order (groups paint as contiguous stacking contexts), whereas

@@ -292,10 +292,11 @@ describe('DOMContext pointer state machine', () => {
         return element.events.map(({ type }) => type);
     }
 
-    function mouse(context: ReturnType<typeof create>, type: string, clientX: number, clientY: number): void {
+    function mouse(context: ReturnType<typeof create>, type: string, clientX: number, clientY: number, button = 0): void {
         context.element.dispatchEvent(new MouseEvent(type, {
             clientX,
             clientY,
+            button,
             bubbles: true,
         }));
     }
@@ -481,6 +482,188 @@ describe('DOMContext pointer state machine', () => {
         mouse(context, 'click', 100, 100);
 
         expect(typesOf(element)).toEqual(['click']);
+    });
+
+    test('Should emit press, release and click on the context in logical coordinates', () => {
+        setOrigin(120, 80);
+
+        const context = create();
+        const events: {
+            type: string;
+            data: unknown;
+        }[] = [];
+
+        (['mousedown', 'mouseup', 'click'] as const).forEach(type => {
+            context.on(type, event => events.push({
+                type,
+                data: event.data,
+            }));
+        });
+
+        mouse(context, 'mousedown', 200, 150);
+        mouse(context, 'mouseup', 200, 150);
+        mouse(context, 'click', 200, 150);
+
+        expect(events).toEqual([
+            {
+                type: 'mousedown',
+                data: {
+                    x: 80,
+                    y: 70,
+                },
+            },
+            {
+                type: 'mouseup',
+                data: {
+                    x: 80,
+                    y: 70,
+                },
+            },
+            {
+                type: 'click',
+                data: {
+                    x: 80,
+                    y: 70,
+                },
+            },
+        ]);
+    });
+
+    // The handler is bound to the surface and to the window, and both see an in-surface release.
+    test('Should emit exactly one mouseup per in-surface release', () => {
+        const context = create();
+        const releases: unknown[] = [];
+
+        context.on('mouseup', event => releases.push(event.data));
+
+        mouse(context, 'mousedown', 50, 50);
+        mouse(context, 'mouseup', 50, 50);
+
+        expect(releases).toHaveLength(1);
+    });
+
+    // A boolean press flag lost the second release, leaving the gesture one mouseup short.
+    test('Should emit one mouseup per button across an overlapping press', () => {
+        const context = create();
+        const events: string[] = [];
+
+        context.on('mousedown', () => events.push('mousedown'));
+        context.on('mouseup', () => events.push('mouseup'));
+
+        mouse(context, 'mousedown', 50, 50);
+        mouse(context, 'mousedown', 50, 50, 2);
+        mouse(context, 'mouseup', 50, 50, 2);
+        mouse(context, 'mouseup', 50, 50);
+
+        expect(events).toEqual(['mousedown', 'mousedown', 'mouseup', 'mouseup']);
+    });
+
+    test('Should not emit mouseup for a release that began outside the surface', () => {
+        const context = create();
+        const releases: unknown[] = [];
+
+        context.on('mouseup', event => releases.push(event.data));
+
+        window.dispatchEvent(new MouseEvent('mouseup', {
+            clientX: 900,
+            clientY: 900,
+        }));
+
+        expect(releases).toHaveLength(0);
+    });
+
+    test('Should emit mouseup on the context for a release outside the surface that ended a drag', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+        const events: string[] = [];
+
+        register(context, [element]);
+
+        context.on('mouseup', () => events.push('mouseup'));
+        context.on('dragend', () => events.push('dragend'));
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+
+        window.dispatchEvent(new MouseEvent('mouseup', {
+            clientX: 900,
+            clientY: 900,
+        }));
+
+        expect(events).toEqual(['mouseup', 'dragend']);
+        expect(typesOf(element)).toEqual(['dragstart', 'dragend']);
+    });
+
+    test('Should suppress element and context click on the gesture that ended a drag, but still release', () => {
+        const context = create();
+        const element = createMockElement('a', [...DRAG_EVENTS, 'click', 'mouseup']);
+        const contextEvents: string[] = [];
+
+        register(context, [element]);
+
+        context.on('click', () => contextEvents.push('click'));
+        context.on('mouseup', () => contextEvents.push('mouseup'));
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mouseup', 100, 100);
+        mouse(context, 'click', 100, 100);
+
+        expect(contextEvents).toEqual(['mouseup']);
+        expect(typesOf(element)).toEqual(['dragstart', 'mouseup', 'dragend']);
+    });
+
+    // No `click` follows a release outside the surface, so the flag stranded and swallowed the next one.
+    test('Should not suppress a later click after a drag released outside the surface', () => {
+        const context = create();
+        const element = createMockElement('a', [...DRAG_EVENTS, 'click']);
+        const contextEvents: string[] = [];
+
+        register(context, [element]);
+
+        context.on('click', () => contextEvents.push('click'));
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+
+        window.dispatchEvent(new MouseEvent('mouseup', {
+            clientX: 900,
+            clientY: 900,
+        }));
+
+        mouse(context, 'click', 100, 100);
+
+        expect(contextEvents).toEqual(['click']);
+        expect(typesOf(element)).toContain('click');
+    });
+
+    test('Should emit mousedown and mouseup on the topmost hit element', () => {
+        const context = create();
+        const under = createMockElement('under', ['mousedown', 'mouseup']);
+        const over = createMockElement('over', ['mousedown', 'mouseup']);
+
+        register(context, [under, over]);
+
+        mouse(context, 'mousedown', 50, 50);
+        mouse(context, 'mouseup', 50, 50);
+
+        expect(typesOf(over)).toEqual(['mousedown', 'mouseup']);
+        expect(typesOf(under)).toEqual([]);
+    });
+
+    test('Should not let a press-only listener capture a drag from the element beneath it', () => {
+        const context = create();
+        const dragger = createMockElement('dragger', DRAG_EVENTS);
+        const presser = createMockElement('presser', ['mousedown']);
+
+        register(context, [dragger, presser]);
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mousemove', 140, 140);
+
+        expect(typesOf(presser)).toEqual(['mousedown']);
+        expect(typesOf(dragger)).toEqual(['dragstart', 'drag']);
     });
 
     // `InteractionPoint` is documented as chart pixels, but click/drag used to report device pixels.

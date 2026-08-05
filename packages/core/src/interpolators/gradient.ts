@@ -29,44 +29,6 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-function canInterpolateGradients(gradientA: Gradient, gradientB: Gradient): boolean {
-    if (gradientA.type !== gradientB.type) {
-        return false;
-    }
-
-    if (gradientA.repeating !== gradientB.repeating) {
-        return false;
-    }
-
-    if (gradientA.stops.length !== gradientB.stops.length) {
-        return false;
-    }
-
-    if (gradientA.type === 'radial' && gradientB.type === 'radial') {
-        if (gradientA.shape !== gradientB.shape) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop[]) {
-    const interpolators = stopsA.map((stopA, index) => {
-        const stopB = stopsB[index];
-
-        return {
-            color: interpolateColor(stopA.color, stopB.color),
-            offset: interpolateNumber(stopA.offset ?? 0, stopB.offset ?? 0),
-        };
-    });
-
-    return (position: number): GradientColorStop[] => interpolators.map(({ color, offset }) => ({
-        color: color(position),
-        offset: offset(position),
-    }));
-}
-
 type StopsInterpolator = (position: number) => GradientColorStop[];
 type GradientInterpolator = (position: number) => Gradient;
 
@@ -117,6 +79,44 @@ const GRADIENT_INTERPOLATORS: Record<GradientType, (gradientA: Gradient, gradien
         });
     },
 };
+
+function canInterpolateGradients(gradientA: Gradient, gradientB: Gradient): boolean {
+    if (gradientA.type !== gradientB.type) {
+        return false;
+    }
+
+    if (gradientA.repeating !== gradientB.repeating) {
+        return false;
+    }
+
+    if (gradientA.stops.length !== gradientB.stops.length) {
+        return false;
+    }
+
+    if (gradientA.type === 'radial' && gradientB.type === 'radial') {
+        if (gradientA.shape !== gradientB.shape) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop[]) {
+    const interpolators = stopsA.map((stopA, index) => {
+        const stopB = stopsB[index];
+
+        return {
+            color: interpolateColor(stopA.color, stopB.color),
+            offset: interpolateNumber(stopA.offset ?? 0, stopB.offset ?? 0),
+        };
+    });
+
+    return (position: number): GradientColorStop[] => interpolators.map(({ color, offset }) => ({
+        color: color(position),
+        offset: offset(position),
+    }));
+}
 
 function interpolateMatchingGradients(gradientA: Gradient, gradientB: Gradient): GradientInterpolator {
     const stopsInterpolator = interpolateStops(gradientA.stops, gradientB.stops);

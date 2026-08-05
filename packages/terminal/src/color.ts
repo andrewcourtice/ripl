@@ -1,6 +1,7 @@
 import {
     isGradientString,
     isPatternString,
+    isTransparentColor,
     parseColor,
     parseGradientCached,
     parsePatternCached,
@@ -9,10 +10,6 @@ import {
 import type {
     ColorRGBA,
 } from '@ripl/core';
-
-import {
-    CSS_COLOR_KEYWORDS,
-} from './constants';
 
 /** ANSI SGR reset sequence. */
 export const ANSI_RESET = '\x1b[0m';
@@ -28,27 +25,23 @@ const NO_PAINT_KEYWORDS = new Set([
     'transparent',
 ]);
 
-/**
- * A functional paint whose alpha argument is an explicit integer zero. The shared `rgba`/`hsla`/
- * `hsva` patterns only accept a fractional or percentage alpha, so `rgba(0, 0, 0, 0)` parses as
- * nothing at all and would otherwise be painted as an unresolvable color rather than skipped.
- */
+/** A zero alpha written loosely enough that the shared patterns reject it (`hsla(0, 100, 50, 0)`, stray whitespace), which would otherwise paint as an unresolvable color rather than being skipped. */
 const ZERO_ALPHA_REGEX = /^(?:rgba|hsla|hsva)\([^)]*,\s*0\s*\)$/i;
 
-/** Unpacks a `0xRRGGBB` integer into an opaque RGBA tuple. */
-function unpackKeyword(value: number): ColorRGBA {
-    return [
-        (value >> 16) & 255,
-        (value >> 8) & 255,
-        value & 255,
-        1,
-    ];
+/**
+ * Resolves the single color that stands in for a multi-color paint: the first that is not fully
+ * transparent, so a mostly opaque gradient or pattern still paints rather than vanishing.
+ */
+function resolveRepresentative(colors: string[]): ColorRGBA | undefined {
+    const representative = colors.find(color => !isTransparentColor(color)) ?? colors[0];
+
+    return representative ? resolvePaint(representative) : undefined;
 }
 
 /**
- * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the CSS
- * named colors and the first stop of a gradient or pattern (a character cell cannot interpolate,
- * so the first stop is the closest single color available).
+ * Resolves a CSS paint string to RGBA, covering everything the shared parsers cover plus the
+ * representative color of a gradient or pattern (a character cell cannot interpolate, so one of its
+ * colors is the closest available).
  */
 function resolvePaint(color: string): ColorRGBA | undefined {
     const parsed = parseColor(color);
@@ -57,22 +50,16 @@ function resolvePaint(color: string): ColorRGBA | undefined {
         return parsed;
     }
 
-    const keyword = CSS_COLOR_KEYWORDS[color.trim().toLowerCase()];
-
-    if (keyword !== undefined) {
-        return unpackKeyword(keyword);
-    }
-
     if (isGradientString(color)) {
-        const stop = parseGradientCached(color)?.stops[0];
+        const stops = parseGradientCached(color)?.stops ?? [];
 
-        return stop ? resolvePaint(stop.color) : undefined;
+        return resolveRepresentative(stops.map(stop => stop.color));
     }
 
     if (isPatternString(color)) {
         const pattern = parsePatternCached(color);
 
-        return pattern ? resolvePaint(pattern.foreground) : undefined;
+        return pattern ? resolveRepresentative([pattern.foreground, pattern.background]) : undefined;
     }
 }
 
@@ -114,7 +101,8 @@ function toAnsiSequence(parameter: number, color: string, opacity: number): stri
  *
  * @param color - The paint to resolve. Named colors, hex (including shorthand), `rgb()`/`rgba()`,
  * `hsl()`/`hsla()`, `hsv()`/`hsva()`, gradients and patterns are all supported; a gradient or
- * pattern resolves to its first stop, which is the closest single color a character cell can show.
+ * pattern resolves to its first non-transparent color, the closest single color a character cell
+ * can show.
  * @param opacity - Additional alpha to composite over the paint's own, typically
  * `Context.opacity`. Defaults to `1`.
  * @returns The escape sequence; `''` when the paint is a color the terminal cannot resolve (draw

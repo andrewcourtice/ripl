@@ -41,10 +41,6 @@ type QueryableContainer = Queryable & {
     graph(includeGroups?: boolean): Queryable[];
 };
 
-function isQueryableContainer(value: Queryable): value is QueryableContainer {
-    return typeIsFunction(value.graph);
-}
-
 const ELEMENT_PATTERNS = {
     id: /#/,
     class: /\./,
@@ -84,6 +80,10 @@ const COMBINATOR_PRODUCERS = [
     pattern: RegExp;
     produce: (element: Queryable) => Queryable[];
 }[];
+
+function isQueryableContainer(value: Queryable): value is QueryableContainer {
+    return typeIsFunction(value.graph);
+}
 
 function serializeAttribute(value: unknown) {
     if (typeIsString(value)) {
