@@ -435,6 +435,103 @@ describe('Arc padWidth', () => {
         expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1e-9);
     });
 
+    test('Should hold the gap constant to the center of a sector with no hole', () => {
+        const padWidth = 6;
+        const base = {
+            cx: 0,
+            cy: 0,
+            radius: 120,
+            innerRadius: 0,
+            padWidth,
+        };
+
+        const widths = facingEdgeWidths(
+            renderCommands({
+                ...base,
+                startAngle: 0.2,
+                endAngle: 1.2,
+            }),
+            renderCommands({
+                ...base,
+                startAngle: 1.2,
+                endAngle: 2.4,
+            })
+        );
+
+        widths.forEach(width => expect(width).toBeCloseTo(padWidth, 9));
+        expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1e-9);
+    });
+
+    test('Should floor a hole-less inner radius where the parallel edges converge', () => {
+        const cases = [
+            [TAU / 3, 6, 3.4641016151],
+            [TAU / 3, 2, 1.1547005384],
+            [Math.PI / 30, 2, 19.1073226093],
+            [Math.PI, 2, 1],
+        ] as const;
+
+        cases.forEach(([span, padWidth, expected]) => {
+            const [, inner] = arcCommands(renderCommands({
+                cx: 0,
+                cy: 0,
+                radius: 200,
+                innerRadius: 0,
+                startAngle: 0,
+                endAngle: span,
+                padWidth,
+            }));
+
+            expect(inner[3]).toBeCloseTo(expected, 9);
+        });
+    });
+
+    test('Should leave an inner radius clear of the convergence radius untouched', () => {
+        const [, inner] = arcCommands(renderCommands({
+            cx: 0,
+            cy: 0,
+            radius: 120,
+            innerRadius: 40,
+            startAngle: 0.2,
+            endAngle: 1.2,
+            padWidth: 6,
+        }));
+
+        expect(inner[3]).toBe(40);
+    });
+
+    test('Should collapse onto the outer radius where the convergence radius exceeds the arc', () => {
+        const commands = renderCommands({
+            cx: 0,
+            cy: 0,
+            radius: 10,
+            innerRadius: 0,
+            startAngle: 1,
+            endAngle: 1.2,
+            padWidth: 8,
+        });
+
+        const [outer, inner] = arcCommands(commands);
+
+        expect(outer[4]).toBe(outer[5]);
+        expect(inner[4]).toBe(inner[5]);
+        expect(inner[3]).toBe(10);
+        commands.flat().forEach(value => expect(Number.isNaN(value as number)).toBe(false));
+    });
+
+    test('Should apply no floor to a full turn, which has no neighbor to clear', () => {
+        const [, inner] = arcCommands(renderCommands({
+            cx: 0,
+            cy: 0,
+            radius: 100,
+            innerRadius: 0,
+            startAngle: 0,
+            endAngle: TAU,
+            padWidth: 6,
+        }));
+
+        expect(inner[3]).toBe(0);
+    });
+
     test('Should take precedence over padAngle', () => {
         const withBoth = renderCommands({
             cx: 0,

@@ -16,6 +16,7 @@ import type {
 } from '../core/options';
 
 import {
+    resolveSegmentPadWidth,
     resolveValueFormat,
 } from '../core/options';
 
@@ -68,14 +69,14 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
-/** Fill opacity for an outer arc at rest (full opacity on hover). */
-const ARC_REST_ALPHA = 0.8;
 /** Fill opacity for a ribbon at rest. */
 const RIBBON_REST_ALPHA = 0.2;
 /** Fill opacity for a ribbon while hovered. */
 const RIBBON_HOVER_ALPHA = 0.5;
 /** Stroke opacity for a ribbon. */
 const RIBBON_STROKE_ALPHA = 0.4;
+/** Fill opacity an outer arc carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
@@ -85,8 +86,16 @@ export interface ChordChartOptions extends BaseChartOptions {
     matrix: number[][];
     /** Explicit color per group; falls back to the generated palette when omitted. */
     palette?: string[];
-    /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
+    /**
+     * Angular gap (in radians) between adjacent outer arcs, taken out of the ring before the arcs are
+     * sized, so it also shifts where the ribbons attach.
+     *
+     * @deprecated Use {@link ChordChartOptions.padWidth} for a gap of constant width. Still honored
+     * when `padWidth` is not set, so existing charts keep their look.
+     */
     padAngle?: number;
+    /** Gap between adjacent outer arcs, in logical pixels. Arcs face each other with parallel edges a constant distance apart, and the ring is not resized, so the ribbons keep their attachment points. Defaults to 2; pass 0 for touching arcs. Takes precedence over the deprecated `padAngle`. */
+    padWidth?: number;
     /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
     /** Format applied to flow values shown as text (e.g. tooltips). */
@@ -300,8 +309,10 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 groups: labels,
                 matrix,
                 palette: colors,
-                padAngle = 0.04,
             } = this.options;
+
+            const padWidth = resolveSegmentPadWidth(this.options.padWidth, this.options.padAngle);
+            const padAngle = padWidth === undefined ? (this.options.padAngle ?? 0) : 0;
 
             const colorGenerator = this.colorGenerator;
 
@@ -357,10 +368,8 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                     endAngle: arc.startAngle,
                     radius: 0,
                     innerRadius: 0,
-                    padAngle: 0,
-                    fill: setColorAlpha(arc.color, ARC_REST_ALPHA),
-                    stroke: arc.color,
-                    lineWidth: 1,
+                    padWidth,
+                    fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     data: {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
@@ -380,13 +389,13 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 const segment = group.query('arc') as Arc;
 
                 if (segment) {
+                    segment.padWidth = padWidth;
                     segment.data = {
                         startAngle: arc.startAngle,
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: setColorAlpha(arc.color, ARC_REST_ALPHA),
-                        stroke: arc.color,
+                        fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     } as Partial<ArcState>;
 
                     this._attachArcHover(segment, arc);
@@ -401,9 +410,6 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 ...arcEntryGroups,
                 ...arcUpdateGroups,
             ];
-
-            // Outer arcs map 1:1 to legend items (by id), so register them for legend hover-highlight.
-            this.registerHighlightGroups(this._arcGroups);
 
             // Draw ribbons
             const {
@@ -472,6 +478,17 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 ...ribbonUpdateGroups,
             ];
 
+            // Outer arcs map 1:1 to legend items by id; a ribbon is incident to the two arcs it joins.
+            const ribbonOwners = new Map(layout.ribbons.map(ribbon => [
+                ribbon.id,
+                [`arc-${ribbon.sourceLabel}`, `arc-${ribbon.targetLabel}`],
+            ]));
+
+            this.registerHighlightGroups(
+                [...this._arcGroups, ...this._ribbonGroups],
+                group => ribbonOwners.get(group.id) ?? group.id
+            );
+
             // Sequential animation: arcs first, then ribbons
             const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
@@ -538,10 +555,14 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 };
             },
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
-            highlight: { fill: arc.color },
-            restore: { fill: setColorAlpha(arc.color, ARC_REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
+            onEnter: point => {
+                this.highlightSeries(arc.id);
+                this.emit('segmententer', payload(point));
+            },
+            onLeave: point => {
+                this.highlightSeries(null);
+                this.emit('segmentleave', payload(point));
+            },
             onClick: point => this.emit('segmentclick', payload(point)),
         });
     }

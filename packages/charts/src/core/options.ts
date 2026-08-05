@@ -1004,6 +1004,31 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
     };
 }
 
+// Segment padding (radial charts: pie, polar-area, sunburst, chord)
+
+/** The default gap, in logical pixels, between adjacent segments of a radial chart. */
+export const DEFAULT_SEGMENT_PAD_WIDTH = 2;
+
+/**
+ * Resolves the constant-width gap a radial chart separates its segments with, honoring a chart's
+ * deprecated angular `padAngle` option where one is still passed.
+ *
+ * An explicit `padWidth` always wins (including `0`, which means no gap). Otherwise a chart that was
+ * given only the deprecated `padAngle` resolves to `undefined`, leaving `Arc.padAngle` in charge, so
+ * migrating to `padWidth` is opt-in rather than a silent change of look for those charts.
+ *
+ * @param padWidth - The chart's `padWidth` option, in logical pixels.
+ * @param padAngle - The chart's deprecated `padAngle` option, in radians.
+ * @returns The gap to pass as `Arc.padWidth`, or `undefined` to fall back to `padAngle`.
+ */
+export function resolveSegmentPadWidth(padWidth?: number, padAngle?: number): number | undefined {
+    if (padWidth !== undefined) {
+        return padWidth;
+    }
+
+    return padAngle === undefined ? DEFAULT_SEGMENT_PAD_WIDTH : undefined;
+}
+
 // Format helper
 
 

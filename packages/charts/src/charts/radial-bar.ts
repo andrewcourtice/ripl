@@ -341,6 +341,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     stroke: setColorAlpha(itemColor, REST_ALPHA),
                     lineWidth: thickness,
                     lineCap,
+                    pointerEvents: 'stroke',
                     data: {
                         endAngle,
                     } as Partial<ArcState>,

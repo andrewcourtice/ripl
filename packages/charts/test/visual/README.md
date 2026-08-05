@@ -122,3 +122,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
 Baselines are written to `__snapshots__/` and are committed. They are rendered with the
 pre-installed Linux Chromium; regenerate them (`test:visual:update`) if you run on a platform
 whose font rendering differs.
+
+The `pie`, `polar-area`, `sunburst` and `chord` baselines need regenerating on CI's Chromium: those
+charts moved from a translucent fill plus a stroke outline to a solid fill with a constant-width
+`padWidth` gap, so their committed snapshots are stale by design rather than by a regression.
