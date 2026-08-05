@@ -22,6 +22,7 @@ import {
     ANIMATION_REFERENCE,
     exitElement,
     stagger,
+    transitionIfAny,
 } from '../core/animation';
 
 import {
@@ -311,22 +312,18 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
-        const entriesTransition = entryRects.length
-            ? this.renderer.transition(entryRects, (element, index, length) => ({
-                duration: enter.duration,
-                delay: stagger(index, length, enter.duration),
-                ease: easeOutCubic,
-                state: element.data as RectState,
-            }))
-            : Promise.resolve();
+        const entriesTransition = transitionIfAny(this.renderer, entryRects, (element, index, length) => ({
+            duration: enter.duration,
+            delay: stagger(index, length, enter.duration),
+            ease: easeOutCubic,
+            state: element.data as RectState,
+        }));
 
-        const updatesTransition = updates.length
-            ? this.renderer.transition(updates.map(([, rect]) => rect), element => ({
-                duration: update.duration,
-                ease: update.ease,
-                state: element.data as Partial<RectState>,
-            }))
-            : Promise.resolve();
+        const updatesTransition = transitionIfAny(this.renderer, updates.map(([, rect]) => rect), element => ({
+            duration: update.duration,
+            ease: update.ease,
+            state: element.data as Partial<RectState>,
+        }));
 
         return Promise.all([
             entriesTransition,

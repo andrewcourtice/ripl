@@ -13,6 +13,7 @@ import type {
     Element,
     ElementInterpolationState,
     Renderer,
+    RendererTransitionOptionsArg,
 } from '@ripl/core';
 
 import type {
@@ -22,6 +23,10 @@ import type {
 import {
     resolveEase,
 } from './options';
+
+import {
+    typeIsArray,
+} from '@ripl/utilities';
 
 /** Reference durations (in ms, at the default animation speed) for each transition kind. */
 export const ANIMATION_REFERENCE = {
@@ -72,6 +77,29 @@ export function stagger(index: number, length: number, totalDuration: number, fr
     }
 
     return (index / length) * totalDuration * fraction;
+}
+
+/**
+ * Runs a transition over the given elements, resolving immediately when there are none. An empty
+ * `renderer.transition` still starts the animation loop and only settles a frame later, so the
+ * guard keeps a render with nothing to animate free.
+ *
+ * @typeParam TElement - The element type being transitioned.
+ * @param renderer - The renderer running the transition.
+ * @param elements - The element(s) to transition; an empty array, `null` or `undefined` is a no-op.
+ * @param options - Transition options, or a factory resolving them per element.
+ * @returns A promise settling when the transition completes.
+ */
+export function transitionIfAny<TElement extends Element>(
+    renderer: Renderer,
+    elements: TElement | TElement[] | null | undefined,
+    options?: RendererTransitionOptionsArg<TElement>
+): Promise<unknown> {
+    if (!elements || (typeIsArray(elements) && elements.length === 0)) {
+        return Promise.resolve();
+    }
+
+    return renderer.transition(elements, options);
 }
 
 /**

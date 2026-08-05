@@ -29,6 +29,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    transitionIfAny,
 } from '../core/animation';
 
 import type {
@@ -651,18 +652,18 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             );
 
             return Promise.all([
-                newLinks.length ? this.renderer.transition(newLinks, element => ({
+                transitionIfAny(this.renderer, newLinks, element => ({
                     duration: enter.duration,
                     // Wait for the ripple to reach this link's root-ward endpoint before drawing it.
                     delay: linkEntryDelays.get((element as Line).id) ?? 0,
                     ease: easeOutCubic,
                     state: element.data as Partial<LineState>,
-                })) : Promise.resolve(),
-                linkUpdates.length ? this.renderer.transition(linkUpdates.map(([, line]) => line), element => ({
+                })),
+                transitionIfAny(this.renderer, linkUpdates.map(([, line]) => line), element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as Partial<LineState>,
-                })) : Promise.resolve(),
+                })),
                 this.renderer.transition(entryCircles, element => ({
                     duration: enter.duration,
                     delay: delayForChild(element.id, 'circle'),
@@ -670,22 +671,22 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     ease: easeOutBack,
                     state: element.data as CircleState,
                 })),
-                entryLabels.length ? this.renderer.transition(entryLabels, element => ({
+                transitionIfAny(this.renderer, entryLabels, element => ({
                     duration: enter.duration,
                     delay: delayForChild(element.id, 'label'),
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
                 this.renderer.transition(updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                updateTexts.length ? this.renderer.transition(updateTexts, element => ({
+                transitionIfAny(this.renderer, updateTexts, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
             ]);
         });
     }

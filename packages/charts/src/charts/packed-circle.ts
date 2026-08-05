@@ -34,6 +34,7 @@ import {
 import {
     ANIMATION_REFERENCE,
     stagger,
+    transitionIfAny,
 } from '../core/animation';
 
 import {
@@ -413,21 +414,21 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                entryLabels.length ? this.renderer.transition(entryLabels, {
+                transitionIfAny(this.renderer, entryLabels, {
                     duration: enter.duration,
                     ease: easeOutCubic,
                     state: { opacity: 1 },
-                }) : Promise.resolve(),
+                }),
                 this.renderer.transition(updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                updateTexts.length ? this.renderer.transition(updateTexts, element => ({
+                transitionIfAny(this.renderer, updateTexts, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
             ]);
         });
     }

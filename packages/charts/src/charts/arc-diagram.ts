@@ -26,6 +26,7 @@ import {
 import {
     ANIMATION_REFERENCE,
     stagger,
+    transitionIfAny,
 } from '../core/animation';
 
 import {
@@ -659,14 +660,14 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             return Promise.all([
-                this._axisLine ? this.renderer.transition(this._axisLine, {
+                transitionIfAny(this.renderer, this._axisLine, {
                     duration: update.duration,
                     ease: easeOutCubic,
-                    state: (this._axisLine.data ?? {}) as Partial<LineState>,
-                }) : Promise.resolve(),
+                    state: (this._axisLine?.data ?? {}) as Partial<LineState>,
+                }),
 
                 // Entry arcs draw out of their earlier node and fade in, cascading along the axis.
-                newLinks.length ? this.renderer.transition(newLinks, element => ({
+                transitionIfAny(this.renderer, newLinks, element => ({
                     duration: enter.duration,
                     delay: arcEntryDelays.get(element.id) ?? 0,
                     ease: easeOutCubic,
@@ -674,49 +675,49 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                         points: interpolatePath((element.data as PolylineState).points),
                         opacity: 1,
                     },
-                })) : Promise.resolve(),
+                })),
 
-                linkUpdates.length ? this.renderer.transition(linkUpdates.map(([, arc]) => arc), element => ({
+                transitionIfAny(this.renderer, linkUpdates.map(([, arc]) => arc), element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as Partial<PolylineState>,
-                })) : Promise.resolve(),
+                })),
 
                 // Entry nodes pop in on the same cascade so each fades in as its arcs reach it.
-                entryCircles.length ? this.renderer.transition(entryCircles, element => ({
+                transitionIfAny(this.renderer, entryCircles, element => ({
                     duration: enter.duration,
                     delay: nodeEntryDelays.get(element.id) ?? 0,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
-                })) : Promise.resolve(),
-                entryTicks.length ? this.renderer.transition(entryTicks, element => ({
+                })),
+                transitionIfAny(this.renderer, entryTicks, element => ({
                     duration: enter.duration,
                     delay: nodeEntryDelays.get(element.id) ?? 0,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Partial<LineState>,
-                })) : Promise.resolve(),
-                entryLabels.length ? this.renderer.transition(entryLabels, element => ({
+                })),
+                transitionIfAny(this.renderer, entryLabels, element => ({
                     duration: enter.duration,
                     delay: nodeEntryDelays.get(element.id) ?? 0,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
 
-                updateCircles.length ? this.renderer.transition(updateCircles, element => ({
+                transitionIfAny(this.renderer, updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
-                })) : Promise.resolve(),
-                updateTicks.length ? this.renderer.transition(updateTicks, element => ({
+                })),
+                transitionIfAny(this.renderer, updateTicks, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Partial<LineState>,
-                })) : Promise.resolve(),
-                updateTexts.length ? this.renderer.transition(updateTexts, element => ({
+                })),
+                transitionIfAny(this.renderer, updateTexts, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
             ]);
         });
     }
