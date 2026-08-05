@@ -16,7 +16,7 @@ npm install @ripl/core
 - **Animation**: High-performance async transitions with CSS-like keyframe support and custom interpolators
 - **Event system**: Event bubbling, delegation, and stop propagation (mimics the DOM)
 - **Scales**: 14 scale types for data mapping: continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, and time
-- **Color**: Color parsing, interpolation, and conversion (RGB, HSL, Hex)
+- **Color**: Color parsing, interpolation, and conversion (RGB, HSL, HSV, Hex, and the CSS named colors)
 - **Math**: Geometry utilities, vector operations, and easing functions
 - **Zero dependencies**: Fully self-contained
 - **Tree-shakable**: Only ship what you use

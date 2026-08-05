@@ -32,20 +32,19 @@ export function setColorAlpha(color: string, alpha: number) {
 
 /** Determines whether a color string resolves to a fully transparent color. */
 export function isTransparentColor(color: string): boolean {
+    // Overwhelmingly the value asked about, and answering it here skips the whole parser sweep.
+    if (color === 'transparent') {
+        return true;
+    }
+
     const rgba = parseColor(color);
 
     if (rgba) {
         return rgba[3] === 0;
     }
 
-    const trimmed = color.trim().toLowerCase();
-
-    if (trimmed === 'transparent') {
-        return true;
-    }
-
-    // The core rgba/hsla parser rejects a bare `0` alpha (e.g. `rgba(0, 0, 0, 0)`), so match it here.
-    return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(trimmed);
+    // The core rgba/hsla patterns require comma-separated channels, so match the space/slash form here.
+    return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(color.trim().toLowerCase());
 }
 
 /** Converts RGBA channel values to an HSLA tuple. */

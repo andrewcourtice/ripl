@@ -334,6 +334,38 @@ describe('Color', () => {
 
     });
 
+    describe('Named colors', () => {
+
+        test('Should parse a named color to RGBA', () => {
+            expect(parseColor('red')).toEqual([255, 0, 0, 1]);
+            expect(parseColor('steelblue')).toEqual([70, 130, 180, 1]);
+        });
+
+        test('Should parse a named color regardless of case or surrounding space', () => {
+            expect(parseColor('REBECCAPURPLE')).toEqual([102, 51, 153, 1]);
+            expect(parseColor('  ReD  ')).toEqual([255, 0, 0, 1]);
+        });
+
+        test('Should parse "transparent" to a zero alpha', () => {
+            expect(parseColor('transparent')).toEqual([0, 0, 0, 0]);
+        });
+
+        test('Should return undefined for an unknown keyword', () => {
+            expect(parseColor('currentColor')).toBeUndefined();
+            expect(parseColor('notacolor')).toBeUndefined();
+        });
+
+        // A plain-object lookup reached Object.prototype, and `Number(Object) >> 16` is 0, so every
+        // inherited member resolved to opaque black.
+        test('Should return undefined for an Object.prototype member name', () => {
+            expect(parseColor('constructor')).toBeUndefined();
+            expect(parseColor('__proto__')).toBeUndefined();
+            expect(parseColor('hasOwnProperty')).toBeUndefined();
+            expect(parseColor('toString')).toBeUndefined();
+        });
+
+    });
+
     describe('Zero alpha', () => {
 
         // The alpha alternation had no integer branch, so the idiomatic fully-transparent form

@@ -54,11 +54,13 @@ describe('colorToAnsiFg', () => {
         expect(colorToAnsiFg('rgba(255, 0, 0, 0.0)')).toBeUndefined();
     });
 
-    // The shared rgba/hsla/hsva patterns reject an integer alpha, so this parses as nothing at all
-    // and has to be recognised as transparent before it reaches the parsers.
-    test('Should return undefined for an integer zero alpha the shared parsers reject', () => {
+    test('Should return undefined for an integer zero alpha', () => {
         expect(colorToAnsiFg('rgba(255, 0, 0, 0)')).toBeUndefined();
         expect(colorToAnsiFg('hsla(0, 100%, 50%, 0)')).toBeUndefined();
+    });
+
+    test('Should return undefined for a zero alpha the shared patterns reject', () => {
+        expect(colorToAnsiFg('hsla(0, 100, 50, 0)')).toBeUndefined();
     });
 
     test('Should return undefined for zero opacity', () => {
@@ -90,6 +92,21 @@ describe('colorToAnsiFg', () => {
 
     test('Should resolve a pattern to its foreground', () => {
         expect(colorToAnsiFg('pattern(diagonal, #ff0000, #ffffff, 8)')).toBe('\x1b[38;2;255;0;0m');
+    });
+
+    // A transparent first stop does not make the paint invisible, and dropping it took a
+    // mostly-opaque fill out of the output altogether.
+    test('Should skip a transparent leading gradient stop', () => {
+        expect(colorToAnsiFg('linear-gradient(transparent, red)')).toBe('\x1b[38;2;255;0;0m');
+    });
+
+    test('Should fall back to a pattern\'s background when its foreground is transparent', () => {
+        expect(colorToAnsiFg('pattern(diagonal, transparent, #fff, 8)')).toBe('\x1b[38;2;255;255;255m');
+    });
+
+    test('Should return undefined for a wholly transparent gradient or pattern', () => {
+        expect(colorToAnsiFg('linear-gradient(transparent, transparent)')).toBeUndefined();
+        expect(colorToAnsiFg('pattern(diagonal, transparent, transparent, 8)')).toBeUndefined();
     });
 
     test('Should fall back to no color for a malformed gradient or pattern', () => {
