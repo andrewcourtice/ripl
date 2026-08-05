@@ -12,6 +12,7 @@ import type {
 
 import {
     numberClamp,
+    typeIsBoolean,
 } from '@ripl/utilities';
 
 /** A 2D affine view transform: uniform scale `k` plus translation `[x, y]` (screen pixels). */
@@ -51,6 +52,14 @@ export type NavigatorInteractionOption = boolean | {
     /** Multiplier applied to the interaction's input, scaling its responsiveness. */
     sensitivity?: number;
 };
+
+/** An interaction option resolved to concrete values. */
+export interface ResolvedInteraction {
+    /** Whether the interaction is enabled. */
+    enabled: boolean;
+    /** Multiplier applied to the interaction's input, scaling its responsiveness. */
+    sensitivity: number;
+}
 
 /** Configures which navigator interactions (zoom, pan, brush) are enabled. */
 export interface NavigatorInteractions {
@@ -93,6 +102,39 @@ export interface NavigatorEventMap extends EventMap {
 }
 
 const DEFAULT_SCALE_EXTENT: [number, number] = [0.001, 1000];
+
+/**
+ * Resolves a {@link NavigatorInteractionOption} to concrete values, defaulting a sensitivity that
+ * was not given to `1`.
+ *
+ * An omitted option takes `fallback`, which is how a container's blanket `interactions: false`
+ * reaches an interaction that says nothing for itself. An option given as an object is enabled
+ * unless it says `enabled: false`, so `{ sensitivity: 2 }` turns the interaction on.
+ *
+ * @param option - The option to resolve, or `undefined` where none was given.
+ * @param fallback - Whether the interaction is enabled when no option was given.
+ * @returns The resolved enabled flag and sensitivity multiplier.
+ */
+export function resolveInteraction(option: NavigatorInteractionOption | undefined, fallback: boolean): ResolvedInteraction {
+    if (option === undefined) {
+        return {
+            enabled: fallback,
+            sensitivity: 1,
+        };
+    }
+
+    if (typeIsBoolean(option)) {
+        return {
+            enabled: option,
+            sensitivity: 1,
+        };
+    }
+
+    return {
+        enabled: option.enabled !== false,
+        sensitivity: option.sensitivity ?? 1,
+    };
+}
 
 /**
  * Rescales a scale's domain to the window currently visible under a navigator transform. The scale

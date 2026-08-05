@@ -1,13 +1,14 @@
 import {
     Navigator,
+    resolveInteraction,
 } from '@ripl/core';
 
 import type {
     Context,
-    NavigatorInteractionOption,
     NavigatorInteractions,
     NavigatorOptions,
     Point,
+    ResolvedInteraction,
 } from '@ripl/core';
 
 import {
@@ -27,11 +28,6 @@ export interface DOMNavigatorOptions extends NavigatorOptions {
     interactions?: boolean | NavigatorInteractions;
 }
 
-interface ResolvedInteraction {
-    enabled: boolean;
-    sensitivity: number;
-}
-
 const INTERACTION_KEY = Symbol('navigator-interaction');
 const VIEWPORT_KEY = Symbol('navigator-viewport');
 const WHEEL_SENSITIVITY = 0.002;
@@ -45,27 +41,6 @@ function isInteractiveElement(element: unknown): element is HTMLElement {
     return !!element
         && typeIsFunction((element as HTMLElement).getBoundingClientRect)
         && typeIsFunction((element as HTMLElement).addEventListener);
-}
-
-function resolveInteraction(option: NavigatorInteractionOption | undefined, fallback: boolean): ResolvedInteraction {
-    if (option === undefined) {
-        return {
-            enabled: fallback,
-            sensitivity: 1,
-        };
-    }
-
-    if (typeIsBoolean(option)) {
-        return {
-            enabled: option,
-            sensitivity: 1,
-        };
-    }
-
-    return {
-        enabled: option.enabled !== false,
-        sensitivity: option.sensitivity ?? 1,
-    };
 }
 
 /**

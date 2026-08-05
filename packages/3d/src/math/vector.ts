@@ -51,6 +51,39 @@ export function vec3Normalize(v: Vector3): Vector3 {
     return [v[0] / len, v[1] / len, v[2] / len];
 }
 
+/**
+ * Returns the unit-length normal of the triangle `a → b → c`, wound counter-clockwise.
+ *
+ * A degenerate triangle — zero area, so no defined facing — yields the up vector rather than
+ * {@link vec3Normalize}'s zero vector, so a collapsed face still shades instead of going black.
+ *
+ * @param a - The triangle's first vertex.
+ * @param b - The triangle's second vertex.
+ * @param c - The triangle's third vertex.
+ * @returns The triangle's unit normal.
+ */
+export function vec3TriangleNormal(a: Vector3, b: Vector3, c: Vector3): Vector3 {
+    // Written out rather than composed from vec3Sub/vec3Cross/vec3Normalize: this runs per triangle.
+    const ux = b[0] - a[0];
+    const uy = b[1] - a[1];
+    const uz = b[2] - a[2];
+    const vx = c[0] - a[0];
+    const vy = c[1] - a[1];
+    const vz = c[2] - a[2];
+
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+
+    const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+    if (len === 0) {
+        return [0, 1, 0];
+    }
+
+    return [nx / len, ny / len, nz / len];
+}
+
 /** Linearly interpolates between two vectors by factor `t`. */
 export function vec3Lerp(a: Vector3, b: Vector3, t: number): Vector3 {
     return [
