@@ -48,6 +48,7 @@ import {
     createLine,
     createText,
     easeOutCubic,
+    getThetaPoint,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -323,14 +324,16 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 const t = i / tickCount;
                 const tickAngle = startAngle + t * (endAngle - startAngle);
                 const tickValue = min + t * range;
+                const [outerX, outerY] = getThetaPoint(tickAngle, tickOuterRadius, cx, cy);
+                const [innerX, innerY] = getThetaPoint(tickAngle, tickInnerRadius, cx, cy);
 
                 return {
                     tickAngle,
                     tickValue,
-                    outerX: cx + tickOuterRadius * Math.cos(tickAngle),
-                    outerY: cy + tickOuterRadius * Math.sin(tickAngle),
-                    innerX: cx + tickInnerRadius * Math.cos(tickAngle),
-                    innerY: cy + tickInnerRadius * Math.sin(tickAngle),
+                    outerX,
+                    outerY,
+                    innerX,
+                    innerY,
                 };
             };
 
@@ -391,9 +394,11 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     textAlign = 'right';
                 }
 
+                const [x, y] = getThetaPoint(tickAngle, labelRadius, cx, cy);
+
                 return {
-                    x: cx + labelRadius * Math.cos(tickAngle),
-                    y: cy + labelRadius * Math.sin(tickAngle),
+                    x,
+                    y,
                     textAlign,
                     content: formatTick(tickValue),
                 };

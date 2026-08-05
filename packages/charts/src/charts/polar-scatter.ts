@@ -76,6 +76,7 @@ import {
     createText,
     degreesToRadians,
     easeOutCubic,
+    getThetaPoint,
     scaleRadial,
     setColorAlpha,
 } from '@ripl/core';
@@ -183,7 +184,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
     /** Converts an angle in degrees (0° at top, clockwise) to a canvas point at the given radius. */
     private _point(cx: number, cy: number, angleDeg: number, radius: number): [number, number] {
         const theta = degreesToRadians(angleDeg - 90);
-        return [cx + radius * Math.cos(theta), cy + radius * Math.sin(theta)];
+        return getThetaPoint(theta, radius, cx, cy);
     }
 
     private _drawGrid(cx: number, cy: number, gridRadius: number, levels: number, sectors: number) {

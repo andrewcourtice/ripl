@@ -7,6 +7,10 @@
  * index), so the settled layout is reproducible run-to-run, which matters for stable visual snapshots.
  */
 
+import {
+    getThetaPoint,
+} from '@ripl/core';
+
 /** A node in the simulation; `x`/`y`/`vx`/`vy` are managed by {@link simulateForce}. */
 export interface ForceNode {
     /** Stable identifier used to resolve links to this node. */
@@ -77,8 +81,7 @@ export function simulateForce(nodes: ForceNode[], links: ForceLink[], options: F
         if (node.x === 0 && node.y === 0) {
             const angle = (index / count) * Math.PI * 2;
             const radius = linkDistance * Math.sqrt(count);
-            node.x = centerX + radius * Math.cos(angle);
-            node.y = centerY + radius * Math.sin(angle);
+            [node.x, node.y] = getThetaPoint(angle, radius, centerX, centerY);
         }
 
         node.vx = node.vx || 0;

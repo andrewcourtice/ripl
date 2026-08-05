@@ -82,6 +82,7 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
+    getThetaPoint,
     scaleRadial,
     setColorAlpha,
     TAU,
@@ -334,10 +335,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         const newLines = lineEntries.map(idx => {
             const angle = startOffset + idx * angleStep;
-            const x2 = cx + maxRadius * Math.cos(angle);
-            const y2 = cy + maxRadius * Math.sin(angle);
-            const x1 = cx + innerRadius * Math.cos(angle);
-            const y1 = cy + innerRadius * Math.sin(angle);
+            const [x2, y2] = getThetaPoint(angle, maxRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(angle, innerRadius, cx, cy);
 
             const line = createLine({
                 id: `polar-axis-${idx}`,
@@ -360,10 +359,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         lineUpdates.forEach(([idx, line]) => {
             const angle = startOffset + idx * angleStep;
-            const x2 = cx + maxRadius * Math.cos(angle);
-            const y2 = cy + maxRadius * Math.sin(angle);
-            const x1 = cx + innerRadius * Math.cos(angle);
-            const y1 = cy + innerRadius * Math.sin(angle);
+            const [x2, y2] = getThetaPoint(angle, maxRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(angle, innerRadius, cx, cy);
 
             line.data = {
                 x1,
