@@ -9,10 +9,16 @@
  *   leaf against each leaf's own box, restarting the ramp on every child.
  * - `group-opacity` — a group at `0.5` containing a leaf at `0.5` must paint the leaf at `0.25`
  *   on both backends (`canvas.md` 11, `svg.md` S-5).
+ * - `arc-sector` — a padded, rounded donut segment must fill solid on both backends. `SVGPath.arc`
+ *   used to emit an `M` at each arc's start point, which ends the current sub-path and opens a new
+ *   one; canvas's `arc()` joins to the current point with an implicit line and stays in the same
+ *   sub-path. Every arc call therefore split the segment into its own sub-path, and the outer
+ *   (winding +1) and inner (−1) fragments cancelled under `nonzero` into a white void.
  */
 export const PARITY_SCENE_IDS = [
     'group-gradient',
     'group-opacity',
+    'arc-sector',
 ] as const;
 
 /**

@@ -75,6 +75,7 @@ import {
     createPolyline,
     elementIsArc,
     scaleContinuous,
+    setColorAlpha,
     TAU,
 } from '@ripl/core';
 
@@ -85,6 +86,9 @@ import {
 
 /** Slices narrower than this angle (radians) omit their label to avoid clutter. */
 const MIN_LABEL_ANGLE = 0.15;
+
+/** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
@@ -271,7 +275,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     cy: segmentCy,
                     startAngle: segmentStart,
                     padWidth: segmentPad,
-                    fill: segmentColor,
+                    fill: setColorAlpha(segmentColor, SEGMENT_REST_ALPHA),
                     endAngle: segmentStart,
                     radius: 0,
                     innerRadius: 0,
@@ -340,7 +344,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 const labelText = group.query('text') as Text;
                 const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? (arc.fill as string);
+                const resolvedColor = item.color;
 
                 const arcData = {
                     cx: segmentCx,
@@ -349,7 +353,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     innerRadius,
                     startAngle: segmentStart,
                     endAngle: segmentEnd,
-                    fill: resolvedColor,
+                    fill: setColorAlpha(resolvedColor, SEGMENT_REST_ALPHA),
                 } as Partial<ArcState>;
 
                 arc.padWidth = segmentPad;
@@ -485,7 +489,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 label,
                 key,
             },
-            // Segments are solid at rest, so the hover reads as the others dimming rather than this one lifting.
+            // Every segment shares one rest tint, so the hover reads as the others dimming rather than this one lifting.
             onHighlight: hovered => this.highlightSeries(hovered ? key : null),
             onEnter: event => this.emit('segmententer', event),
             onLeave: event => this.emit('segmentleave', event),

@@ -76,6 +76,8 @@ const RIBBON_REST_ALPHA = 0.2;
 const RIBBON_HOVER_ALPHA = 0.5;
 /** Stroke opacity for a ribbon. */
 const RIBBON_STROKE_ALPHA = 0.4;
+/** Fill opacity an outer arc carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
@@ -368,7 +370,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                     radius: 0,
                     innerRadius: 0,
                     padWidth,
-                    fill: arc.color,
+                    fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     data: {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
@@ -394,7 +396,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: arc.color,
+                        fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     } as Partial<ArcState>;
 
                     this._attachArcHover(segment, arc);

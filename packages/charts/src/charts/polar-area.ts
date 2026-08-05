@@ -83,6 +83,7 @@ import {
     easeOutQuint,
     elementIsArc,
     scaleRadial,
+    setColorAlpha,
     TAU,
 } from '@ripl/core';
 
@@ -92,6 +93,9 @@ import {
     numberFormat,
     numberMaxOf,
 } from '@ripl/utilities';
+
+/** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link PolarAreaChart}. */
 export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
@@ -210,7 +214,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 zIndex: 0,
             });
 
-            // Segments are opaque, so the value labels are read off a band that paints above them.
+            // Value labels are read off a band of their own, so a translucent segment never shows through them.
             this._gridLabelGroup = createGroup({
                 id: 'polar-grid-labels',
                 class: 'polar-grid',
@@ -524,7 +528,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     endAngle: startAngle, // animate angle grow subtly
                     padAngle,
                     padWidth,
-                    fill: color,
+                    fill: setColorAlpha(color, SEGMENT_REST_ALPHA),
                     radius: innerRadius, // animate radial growth
                     innerRadius,
                     data: {
@@ -591,7 +595,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 const label = group.query('text') as Text;
                 const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? (arc.fill as string);
+                const resolvedColor = item.color;
 
                 const arcData = {
                     cx,
@@ -601,7 +605,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
-                    fill: resolvedColor,
+                    fill: setColorAlpha(resolvedColor, SEGMENT_REST_ALPHA),
                 } as Partial<ArcState>;
 
                 arc.padWidth = padWidth;
