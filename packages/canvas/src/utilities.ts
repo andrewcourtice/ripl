@@ -1,6 +1,5 @@
 import {
     ContextText,
-    degreesToRadians,
     factory,
     getPathLength,
     getPatternTileGeometry,
@@ -21,7 +20,6 @@ import type {
     GradientBounds,
     PathPoint,
     Scale,
-    TextAlignment,
 } from '@ripl/core';
 
 import {
@@ -30,11 +28,16 @@ import {
     typeIsNumber,
 } from '@ripl/utilities';
 
+import {
+    CANVAS_GRADIENT_FACTORIES,
+    PAINT_CACHE_LIMIT,
+    PATH_CACHE_LIMIT,
+    TEXT_PATH_ANCHORS,
+} from './constants';
+
 import type {
     CanvasPath,
 } from './path';
-
-type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
 
 /** Anything with an intrinsic pixel size `drawImage` can fall back to, across the `CanvasImageSource` union. */
 interface IntrinsicallySized {
@@ -47,38 +50,6 @@ interface IntrinsicallySized {
     width?: unknown;
     height?: unknown;
 }
-
-const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
-    linear: (context, gradient, { x, y, width, height }) => {
-        const angleRad = degreesToRadians((gradient as { angle: number }).angle - 90);
-        const cos = Math.cos(angleRad);
-        const sin = Math.sin(angleRad);
-        const halfW = width / 2;
-        const halfH = height / 2;
-        const length = Math.abs(halfW * cos) + Math.abs(halfH * sin);
-
-        return context.createLinearGradient(
-            x + halfW - cos * length,
-            y + halfH - sin * length,
-            x + halfW + cos * length,
-            y + halfH + sin * length
-        );
-    },
-    radial: (context, gradient, { x, y, width, height }) => {
-        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
-        const radius = Math.max(width, height) / 2;
-
-        return context.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    },
-    conic: (context, gradient, { x, y, width, height }) => {
-        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
-        const startAngle = degreesToRadians((gradient as { angle: number }).angle);
-
-        return context.createConicGradient(startAngle, cx, cy);
-    },
-};
 
 /** Converts a parsed gradient definition into a native `CanvasGradient` within the given bounds. */
 export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds): CanvasGradient {
@@ -95,9 +66,6 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
 
     return canvasGradient;
 }
-
-const PAINT_CACHE_LIMIT = 256;
-const PATH_CACHE_LIMIT = 1024;
 
 // Paint is cached per context: a `CanvasPattern`/`CanvasGradient` outlives the context that built it,
 // so a module-global cache handed a destroyed context's objects — and their tiles — to the next one.
@@ -315,15 +283,6 @@ export function rescaleCanvas(
         scaleY: scaleContinuous([0, height], [0, height * dpr]),
     };
 }
-
-// Where a glyph's anchor sits within its own advance, per the alignment `fillText` will draw it with.
-const TEXT_PATH_ANCHORS: Record<TextAlignment, (advance: number) => number> = {
-    start: () => 0,
-    left: () => 0,
-    center: advance => advance / 2,
-    right: advance => advance,
-    end: advance => advance,
-};
 
 /**
  * Renders text character-by-character along a path using fill or stroke.
