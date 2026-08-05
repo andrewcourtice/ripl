@@ -27,6 +27,13 @@ const DIRECTION_MAP: Record<string, number> = {
     'to top left': 315,
 };
 
+/** Parser dispatch keyed by gradient function name (`linear-gradient`, etc.). */
+const GRADIENT_PARSERS: Record<string, (args: string[], repeating: boolean) => Gradient> = {
+    linear: parseLinearGradient,
+    radial: parseRadialGradient,
+    conic: parseConicGradient,
+};
+
 function splitGradientArgs(input: string): string[] {
     const args: string[] = [];
     let depth = 0;
@@ -235,13 +242,6 @@ function parseConicGradient(args: string[], repeating: boolean): ConicGradient {
         stops: normalizeStopOffsets(parseColorStops(stopArgs)),
     };
 }
-
-/** Parser dispatch keyed by gradient function name (`linear-gradient`, etc.). */
-const GRADIENT_PARSERS: Record<string, (args: string[], repeating: boolean) => Gradient> = {
-    linear: parseLinearGradient,
-    radial: parseRadialGradient,
-    conic: parseConicGradient,
-};
 
 /** Parses a CSS gradient string (linear, radial, or conic) into a structured `Gradient` object, or returns `undefined` if the string is not a recognized gradient. */
 export function parseGradient(value: string): Gradient | undefined {

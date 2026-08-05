@@ -153,6 +153,13 @@ export interface RendererOptions {
     debug?: boolean | RendererDebugOptions;
 }
 
+/** Transition options can be a static object or a per-element factory function. */
+export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
+    element: TElement extends Group ? Element : TElement,
+    index: number,
+    length: number
+) => RendererTransitionOptions<TElement>);
+
 const DEBUG_DEFAULTS: Required<RendererDebugOptions> = {
     fps: false,
     elementCount: false,
@@ -177,13 +184,6 @@ function resolveDebugOptions(debug: boolean | RendererDebugOptions): Required<Re
         ...debug,
     };
 }
-
-/** Transition options can be a static object or a per-element factory function. */
-export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
-    element: TElement extends Group ? Element : TElement,
-    index: number,
-    length: number
-) => RendererTransitionOptions<TElement>);
 
 /** Drives the animation loop via `requestAnimationFrame`, managing per-element transitions and rendering the scene each frame. */
 export class Renderer extends EventBus<RendererEventMap> {

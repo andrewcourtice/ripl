@@ -62,6 +62,16 @@ export interface ShadowCacheEntry {
     shadowElement: SVGElement;
 }
 
+const GRADIENT_ELEMENT_FACTORIES: Record<string, GradientElementFactory> = {
+    linear: () => createSVGElement('linearGradient'),
+    radial: () => createSVGElement('radialGradient'),
+};
+
+const GRADIENT_ELEMENT_UPDATERS: Record<string, GradientElementUpdater> = {
+    linear: applyLinearGradientAttributes,
+    radial: applyRadialGradientAttributes,
+};
+
 function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
     gradientEl.replaceChildren();
 
@@ -101,16 +111,6 @@ function applyRadialGradientAttributes(element: SVGElement, gradient: Gradient, 
 
     element.setAttribute('gradientTransform', `translate(${cx.toFixed(4)},${cy.toFixed(4)}) scale(1,${scaleY.toFixed(4)}) translate(${(-cx).toFixed(4)},${(-cy).toFixed(4)})`);
 }
-
-const GRADIENT_ELEMENT_FACTORIES: Record<string, GradientElementFactory> = {
-    linear: () => createSVGElement('linearGradient'),
-    radial: () => createSVGElement('radialGradient'),
-};
-
-const GRADIENT_ELEMENT_UPDATERS: Record<string, GradientElementUpdater> = {
-    linear: applyLinearGradientAttributes,
-    radial: applyRadialGradientAttributes,
-};
 
 /** Determines whether a parsed gradient maps to a native SVG gradient primitive (linear or radial). */
 export function isSupportedSVGGradient(gradient: Gradient): boolean {

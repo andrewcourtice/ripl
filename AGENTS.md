@@ -423,7 +423,7 @@ Files should follow this ordering:
    - Classes
 6. **Main exports** (barrel `export * from` statements in index files)
 
-When a file accumulates several constants, extract them into a dedicated `constants.ts` file.
+Put every `UPPER_SNAKE_CASE` constant after the file's type declarations and before its first function or class declaration — never trailing at the bottom or wedged between functions. When a file accumulates several constants, extract them into a dedicated `constants.ts` file. The only exception is a constant whose initializer calls a function or reads a binding declared in the same file: leave it below what it depends on.
 
 ### Control Flow
 
