@@ -8,6 +8,13 @@ import type {
 } from './types';
 
 
+/** Serializer dispatch keyed by gradient type. */
+const GRADIENT_SERIALIZERS: Record<GradientType, (gradient: Gradient) => string> = {
+    linear: gradient => serializeLinearGradient(gradient as LinearGradient),
+    radial: gradient => serializeRadialGradient(gradient as RadialGradient),
+    conic: gradient => serializeConicGradient(gradient as ConicGradient),
+};
+
 function serializeStop(stop: GradientColorStop): string {
     if (stop.offset !== undefined) {
         return `${stop.color} ${(stop.offset * 100).toFixed(2)}%`;
@@ -80,13 +87,6 @@ function serializeConicGradient(gradient: ConicGradient): string {
 
     return `${prefix}conic-gradient(${parts.join(', ')})`;
 }
-
-/** Serializer dispatch keyed by gradient type. */
-const GRADIENT_SERIALIZERS: Record<GradientType, (gradient: Gradient) => string> = {
-    linear: gradient => serializeLinearGradient(gradient as LinearGradient),
-    radial: gradient => serializeRadialGradient(gradient as RadialGradient),
-    conic: gradient => serializeConicGradient(gradient as ConicGradient),
-};
 
 /** Serializes a structured `Gradient` object back into a CSS gradient string. */
 export function serializeGradient(gradient: Gradient): string {

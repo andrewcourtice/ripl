@@ -22,15 +22,6 @@ import {
     typeIsNil,
 } from '@ripl/utilities';
 
-/** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
-export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
-
-    constructor(type: string, options: ElementOptions<TState>) {
-        super(type, options);
-    }
-
-}
-
 /** Options for a 2D shape, adding automatic fill/stroke and clipping controls. */
 export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     /** Whether the shape automatically strokes its outline after rendering when a stroke is set. Defaults to `true`. */
@@ -62,6 +53,15 @@ const STROKE_HIT_PROPERTIES = [
     'lineWidth',
     'miterLimit',
 ] as const;
+
+/** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
+export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+
+    constructor(type: string, options: ElementOptions<TState>) {
+        super(type, options);
+    }
+
+}
 
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
