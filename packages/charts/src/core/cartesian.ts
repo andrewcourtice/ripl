@@ -147,6 +147,7 @@ import {
     functionIdentity,
     numberClamp,
     numberExtent,
+    numberSum,
     typeIsArray,
     typeIsDate,
     typeIsNumber,
@@ -1006,7 +1007,7 @@ export abstract class CartesianChart<
         const yBandFor = (alignment: ChartYAxisAlignment) => {
             const group = this.yAxes.filter(axis => axis.visible && axis.alignment === alignment);
 
-            return group.reduce((sum, axis) => sum + axis.measure(), 0)
+            return numberSum(group, axis => axis.measure())
                 + AXIS_STACK_GAP * Math.max(0, group.length - 1);
         };
 

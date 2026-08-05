@@ -68,14 +68,23 @@ export function numberExtent<TValue>(values: TValue[], accessor: (value: TValue)
     ];
 }
 
-/** Computes the sum of an array of numbers, or of values mapped through an optional iteratee. */
+/**
+ * Computes the sum of an array of numbers, or of values mapped through an optional iteratee.
+ *
+ * The iteratee wins wherever one is given, so a numeric array is summed through it rather than
+ * raw. Anything that does not resolve to a number — a value with no iteratee to map it, or an
+ * iteratee returning `undefined` — contributes `0`.
+ *
+ * @typeParam TValue - The element type of the array.
+ * @param values - The values to sum.
+ * @param iteratee - Maps each value to the number it contributes.
+ * @returns The sum, or `0` for an empty array.
+ */
 export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number) {
     return values.reduce((total, value) => {
-        const output = typeIsNumber(value)
-            ? value
-            : iteratee?.(value);
+        const output = iteratee ? iteratee(value) : value;
 
-        return total + (output ?? 0);
+        return total + (typeIsNumber(output) ? output : 0);
     }, 0);
 }
 

@@ -1,3 +1,7 @@
+import {
+    numberSum,
+} from '@ripl/utilities';
+
 import type {
     Disposable,
 } from '@ripl/utilities';
@@ -54,14 +58,14 @@ const VERTICAL_EDGES = [
 ];
 
 function getEdgeSize(style: CSSStyleDeclaration, edges: string[]): number {
-    return edges.reduce((total, edge) => {
+    return numberSum(edges, edge => {
         // A `none` border still resolves `medium` in some engines; CSS says it contributes nothing.
         const border = style.getPropertyValue(`border-${edge}-style`) === 'none'
             ? 0
             : parseFloat(style.getPropertyValue(`border-${edge}-width`)) || 0;
 
-        return total + border + (parseFloat(style.getPropertyValue(`padding-${edge}`)) || 0);
-    }, 0);
+        return border + (parseFloat(style.getPropertyValue(`padding-${edge}`)) || 0);
+    });
 }
 
 /** Measures an element's content box, which is what `ResizeObserver` reports and `getBoundingClientRect` does not. */

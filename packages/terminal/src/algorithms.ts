@@ -4,6 +4,7 @@ import {
 
 import {
     comparitorNumeric,
+    numberSum,
 } from '@ripl/utilities';
 
 /** Callback invoked for each pixel in a rasterization pass. */
@@ -429,7 +430,7 @@ export function rasterizeEllipse(
  */
 export function dashPixels(pattern: number[], offset: number, plot: PixelCallback): PixelCallback {
     const segments = pattern.length % 2 ? pattern.concat(pattern) : pattern;
-    const cycle = segments.reduce((total, length) => total + length, 0);
+    const cycle = numberSum(segments);
 
     if (!cycle || segments.some(length => !(length >= 0))) {
         return plot;

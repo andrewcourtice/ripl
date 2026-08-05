@@ -79,7 +79,7 @@ export function deviation(values: number[]): number {
     }
 
     const average = mean(values);
-    const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / values.length;
+    const variance = numberSum(values, value => (value - average) ** 2) / values.length;
 
     return Math.sqrt(variance);
 }
@@ -260,7 +260,7 @@ export function kde(values: number[], options?: KdeOptions): (x: number) => numb
     const bandwidth = options?.bandwidth ?? silvermanBandwidth(values) ?? 1;
 
     return x => {
-        const total = values.reduce((sum, value) => sum + gaussianKernel((x - value) / bandwidth), 0);
+        const total = numberSum(values, value => gaussianKernel((x - value) / bandwidth));
 
         return total / (values.length * bandwidth);
     };
