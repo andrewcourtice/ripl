@@ -22,6 +22,7 @@ import {
 } from '../math';
 
 import {
+    numberClamp,
     typeIsNil,
 } from '@ripl/utilities';
 
@@ -109,7 +110,7 @@ function clampCornerRadius(limit: number, numerator: number, denominator: number
         return numerator > 0 ? limit : 0;
     }
 
-    return Math.max(0, Math.min(limit, numerator / denominator));
+    return numberClamp(numerator / denominator, 0, limit);
 }
 
 /** Clamps a requested corner radius to the band thickness and to what the sector's span allows, per arc. */
