@@ -36,6 +36,14 @@ import {
 } from '../core/interaction';
 
 import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
+    resolveColorBy,
+} from '../core/color';
+
+import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
 
@@ -82,7 +90,6 @@ import {
     arrayMapRange,
     numberFormat,
     numberMaxOf,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link PolarAreaChart}. */
@@ -410,14 +417,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             const layout = this.createLayout();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getColor = typeIsFunction(colorBy) ? colorBy : (item: any) => item[colorBy] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
+            const getColor = resolveColorBy<TData>(colorBy);
 
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),

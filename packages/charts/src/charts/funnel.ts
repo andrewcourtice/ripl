@@ -36,6 +36,10 @@ import {
 } from '../core/color';
 
 import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -62,7 +66,6 @@ import {
 
 import {
     arrayJoin,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
@@ -152,12 +155,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 borderRadius = 4,
             } = this.options;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
 
             const getColor = resolveColorBy<TData>(colorBy);
 

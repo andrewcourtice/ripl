@@ -36,6 +36,10 @@ import {
 } from '../core/color';
 
 import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -63,7 +67,6 @@ import {
     arrayJoin,
     numberClamp,
     numberSum,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link TreemapChart}. */
@@ -229,12 +232,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 borderRadius = 4,
             } = this.options;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
 
             const getColor = resolveColorBy<TData>(colorBy);
 
