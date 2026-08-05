@@ -23,6 +23,7 @@ import type {
 } from './parity-ids';
 
 import {
+    createArc,
     createGroup,
     createRect,
     createScene,
@@ -100,6 +101,23 @@ const SCENES: Record<ParitySceneId, (context: Context) => Scene> = {
                         ...RIGHT,
                     }),
                 ],
+            }),
+        ],
+    }),
+    // Every arc call must extend the one sub-path, or the annulus's windings cancel to a white void.
+    'arc-sector': context => createScene(context, {
+        children: [
+            createArc({
+                id: 'donut-segment',
+                fill: OPAQUE_BLACK,
+                cx: 130,
+                cy: 138,
+                radius: 133.33,
+                innerRadius: 70.67,
+                startAngle: -2.84,
+                endAngle: -1.65,
+                padWidth: 6,
+                borderRadius: 1,
             }),
         ],
     }),
