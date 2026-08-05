@@ -240,7 +240,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 cx,
                 cy,
                 radius: isEntry ? innerRadius : levelRadius,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 data: {
                     radius: levelRadius,
@@ -341,7 +341,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 y1,
                 x2: isEntry ? x1 : x2,
                 y2: isEntry ? y1 : y2,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 data: {
                     x2,

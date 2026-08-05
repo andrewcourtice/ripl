@@ -38,6 +38,7 @@ import {
 } from '../constants/spacing';
 
 import {
+    COLORS,
     getColorGenerator,
 } from '../constants/colors';
 
@@ -317,7 +318,7 @@ function computeSankeyLayout<TData>(
             const nodeConfig = nodeById(nodeId);
             const value = nodeValueMap.get(nodeId) ?? 0;
             const nodeHeight = Math.max(value * scale, 2);
-            const color = nodeColors.get(nodeId) ?? '#a1afc4';
+            const color = nodeColors.get(nodeId) ?? COLORS.slate;
 
             layoutNodeMap.set(nodeId, {
                 id: nodeId,

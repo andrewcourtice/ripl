@@ -218,7 +218,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 cy,
                 radius: (gridRadius / levels) * level,
                 fill: 'transparent',
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
             });
 

@@ -220,7 +220,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             const polygon = createPolyline({
                 id: `radar-level-${level}`,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 points: isEntry ? points.map(() => [cx, cy] as Point) : points,
                 data: {
