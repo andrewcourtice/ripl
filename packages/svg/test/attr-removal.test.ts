@@ -71,7 +71,7 @@ describe('SVG attribute/style removal', () => {
         expect(domNode!.getAttribute('transform')).toBeNull();
     });
 
-    test('Should remove a stale clip-path attribute when the clip is dropped', () => {
+    test('Should remove the clip scope when the clip is dropped', () => {
         renderPass(() => {
             const clipPath = ctx.createPath('clip');
             clipPath.rect(0, 0, 5, 5);
@@ -83,12 +83,14 @@ describe('SVG attribute/style removal', () => {
         const domNode = ctx.element.querySelector('#content');
 
         expect(domNode).not.toBeNull();
-        expect(domNode!.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
+        expect(domNode!.parentElement!.getAttribute('clip-path')).toMatch(/^url\(#clip-/);
 
         renderPass(() => drawRect('content'));
 
+        // The node moves back out of the scope rather than being rebuilt, so the reconciler must keep it.
         expect(ctx.element.querySelector('#content')).toBe(domNode);
-        expect(domNode!.getAttribute('clip-path')).toBeNull();
+        expect(ctx.element.querySelector('#clip\\:clip')).toBeNull();
+        expect(domNode!.parentElement).toBe(ctx.element);
     });
 
     test('Should clear stale stroke styles when the element is no longer stroked', () => {

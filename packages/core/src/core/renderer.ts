@@ -146,6 +146,13 @@ export interface RendererOptions {
     debug?: boolean | RendererDebugOptions;
 }
 
+/** Transition options can be a static object or a per-element factory function. */
+export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
+    element: TElement extends Group ? Element : TElement,
+    index: number,
+    length: number
+) => RendererTransitionOptions<TElement>);
+
 const DEBUG_DEFAULTS: Required<RendererDebugOptions> = {
     fps: false,
     elementCount: false,
@@ -170,13 +177,6 @@ function resolveDebugOptions(debug: boolean | RendererDebugOptions): Required<Re
         ...debug,
     };
 }
-
-/** Transition options can be a static object or a per-element factory function. */
-export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
-    element: TElement extends Group ? Element : TElement,
-    index: number,
-    length: number
-) => RendererTransitionOptions<TElement>);
 
 /** Drives the animation loop via `requestAnimationFrame`, managing per-element transitions and rendering the scene each frame. */
 export class Renderer extends EventBus<RendererEventMap> {
@@ -264,27 +264,30 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         const deltaTime = this._currentTime - this._previousTime;
 
-        // Tick fires every frame, even skipped-paint ones, so time-based consumers stay live.
-        this.emit('tick', {
-            time: this._currentTime,
-            deltaTime,
-        });
+        try {
+            // Tick fires every frame, even skipped-paint ones, so time-based consumers stay live.
+            this.emit('tick', {
+                time: this._currentTime,
+                deltaTime,
+            });
 
-        this._previousTime = this._currentTime;
+            this._previousTime = this._currentTime;
 
-        // Skip the paint but keep the loop; the context is untouched so the previous frame persists.
-        if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
+            // Skip the paint but keep the loop; the context is untouched so the previous frame persists.
+            if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
+                return;
+            }
+
+            this._scene.context.batch(() => {
+                this._renderBuffer();
+                this._renderDebugOverlay(deltaTime);
+            });
+
+            this._scene.$consumeRender();
+        } finally {
+            // One throwing element must not freeze every surface for the rest of the session.
             this._handle = factory.requestAnimationFrame(() => this._tick());
-            return;
         }
-
-        this._scene.context.batch(() => {
-            this._renderBuffer();
-            this._renderDebugOverlay(deltaTime);
-        });
-
-        this._scene.$consumeRender();
-        this._handle = factory.requestAnimationFrame(() => this._tick());
     }
 
     /**

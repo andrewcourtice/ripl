@@ -68,6 +68,28 @@ export {
     resolveTransformOrigin,
 } from './transform';
 
+/** What an open group boundary has to put back when it closes. */
+interface GroupScope {
+    depth: number;
+    element?: RenderElement;
+}
+
+/**
+ * The slope of an axis scale — `scale(1) - scale(0)` — the surface-per-logical-unit factor with any
+ * origin offset excluded. A backend that letterboxes its surface (as the terminal does, centring its
+ * content) carries that offset in its scales, so its mapping disagrees with this factor and it must
+ * override {@link Context.toLogicalPoint}/{@link Context.toSurfacePoint}. Those helpers, never a raw
+ * scale, are how a point crosses between logical and surface space.
+ */
+function getAxisScale(scale: Scale<number, number>): number {
+    const factor = scale(1) - scale(0);
+
+    // An unsized context maps every input onto 0, which would collapse the point onto the origin.
+    return Number.isFinite(factor) && factor !== 0
+        ? factor
+        : 1;
+}
+
 /** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     return factory.measureText(value, options);
@@ -76,7 +98,7 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
-    private _groupDepthStack: number[] = [];
+    private _groupStack: GroupScope[] = [];
 
     protected states: BaseState[];
     protected currentState: BaseState;
@@ -104,8 +126,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public scaleX: Scale<number, number>;
     /** {@link Scale} mapping domain y coordinates to surface y coordinates. */
     public scaleY: Scale<number, number>;
-    /** {@link Scale} mapping logical pixels to device pixels using the device pixel ratio. */
-    public scaleDPR: Scale<number, number>;
     /** The element currently being rendered, if any. */
     public renderElement?: RenderElement;
     /** Elements rendered during the current pass, used for hit testing. */
@@ -119,9 +139,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             'drag',
             'dragend',
             'dragstart',
+            'mousedown',
             'mouseenter',
             'mouseleave',
             'mousemove',
+            'mouseup',
             'render',
             'resize',
         ];
@@ -185,7 +207,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.fontKerning = value;
     }
 
-    /** Global alpha applied to everything drawn, from 0 to 1. */
+    /** Global alpha applied to everything drawn, from 0 to 1. Assignment **replaces** the current alpha; element and group opacity instead composite multiplicatively through {@link CONTEXT_OPERATIONS}. */
     public get opacity(): number {
         return this.currentState.opacity;
     }
@@ -407,7 +429,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
-        this.scaleDPR = scaleContinuous([0, 1], [0, factory.devicePixelRatio ?? 1]);
         this.scaleX = scaleContinuous([0, this.width], [0, this.width]);
         this.scaleY = scaleContinuous([0, this.height], [0, this.height]);
     }
@@ -463,9 +484,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
-    /** Resets the context to its initial state. */
+    /** Resets the context to its initial state: drops the saved-state stack, restores the default drawing state, and closes any open group boundary. */
     public reset(): void {
-        // noop
+        this.states = [];
+        this.currentState = this.getDefaultState();
+        this.saveDepth = 0;
+        this._groupStack = [];
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
@@ -491,14 +515,30 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.renderDepth += 1;
     }
 
-    /** Signals the end of a render pass. */
+    /** Signals the end of a render pass. Clamped at zero, so an unbalanced call cannot drive the depth negative and make backends that gate their flush on depth 0 fire mid-frame. */
     public markRenderEnd(): void {
-        this.renderDepth -= 1;
+        this.renderDepth = Math.max(0, this.renderDepth - 1);
     }
 
-    /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */
+    /**
+     * Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd,
+     * returning the callback's result. On exit the state stack is unwound to the depth captured
+     * on entry, giving the scene root the same guarantee {@link Context.popGroup} gives a group:
+     * a root-level `clip: true` shape deliberately skips its own `restore()` so the clip persists
+     * to later siblings, and with no enclosing group to absorb it that save would otherwise leak
+     * one state per frame, unbounded.
+     *
+     * The surface is only cleared at render depth 0: a pass entered while an outer one is open
+     * continues it (matching {@link Context.markRenderStart}) rather than wiping what it drew.
+     */
     public batch<TResult = void>(body: () => TResult): TResult {
-        this.clear();
+        const depth = this.saveDepth;
+        const groupDepth = this._groupStack.length;
+
+        if (this.renderDepth === 0) {
+            this.clear();
+        }
+
         this.save();
         this.markRenderStart();
 
@@ -506,46 +546,62 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return body();
         } finally {
             this.markRenderEnd();
-            this.restore();
+
+            // Scene.render walks a flat instruction stream, so a throw skips the matching pops.
+            while (this._groupStack.length > groupDepth) {
+                this.popGroup();
+            }
+
+            while (this.saveDepth > depth) {
+                this.restore();
+            }
         }
     }
 
     /**
      * Opens a group boundary: saves the current drawing state and applies the group's own
-     * transform, inherited paint, and opacity, so that descendant elements render within the
-     * group's coordinate system, inherit its paint through the copied state (the render-tree
-     * cascade), and composite under its opacity. Any group-scoped clip is confined to the group.
-     * Every {@link Context.pushGroup} must be balanced by a matching {@link Context.popGroup}.
-     * Backends that render hierarchy structurally (such as SVG) override this to nest descendants
-     * under a group node.
+     * transform and inherited paint (see `applyGroupPaint` for the opacity and gradient-bounds
+     * semantics every backend must honour), so that descendant elements render
+     * within the group's coordinate system, inherit its paint through the copied state (the
+     * render-tree cascade), and composite under its opacity. Any group-scoped clip is confined to
+     * the group. Every {@link Context.pushGroup} must be balanced by a matching
+     * {@link Context.popGroup}. Backends that render hierarchy structurally (such as SVG)
+     * override this to nest descendants under a group node.
      *
      * @param group - The group element whose boundary is being entered.
      */
     public pushGroup(group: RiplElement): void {
-        this._groupDepthStack.push(this.saveDepth);
+        this._groupStack.push({
+            depth: this.saveDepth,
+            element: this.renderElement,
+        });
+
         this.save();
+
+        // A group is abstract, so the setter records it as the current element without listing it.
+        this.currentRenderElement = group;
+
         applyElementTransform(this, group);
         this.applyGroupPaint(group);
-
-        // Opacity composites the group as a unit (multiplicative); nested groups compound via `save()`.
-        const opacity = group.opacity;
-
-        if (!typeIsNil(opacity) && opacity !== 1) {
-            this.opacity *= opacity;
-        }
     }
 
     /**
-     * Applies a group's own inherited paint (fill, stroke, font, line, shadow, text) to the
-     * context so descendants pick it up from the copied state. Transforms are applied separately
-     * and opacity is composited at the boundary, so both are skipped here.
+     * Applies a group's own inherited paint (fill, stroke, opacity, font, line, shadow, text) to
+     * the context so descendants pick it up from the copied state. Transforms are applied
+     * separately, so they are skipped here.
+     *
+     * Two boundary semantics are fixed here and every backend must honour them:
+     *
+     * - **Opacity composites multiplicatively.** {@link CONTEXT_OPERATIONS} multiplies rather
+     *   than assigns, so nested groups compound and a leaf's own alpha stacks under its
+     *   ancestors' instead of replacing it.
+     * - **A group's gradient or pattern resolves against the group's own box.** The group is the
+     *   {@link Context.currentRenderElement} for the duration of the boundary, so a paint that
+     *   bakes geometry at set time (canvas) and one that resolves it per leaf (SVG) agree on the
+     *   same reference box: `group.getBoundingBox(true)`, never a sibling's and never the surface.
      */
     protected applyGroupPaint(group: RiplElement): void {
         objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
-            if (key === 'opacity') {
-                return;
-            }
-
             const value = (group as unknown as Record<string, unknown>)[key];
 
             if (!typeIsNil(value)) {
@@ -556,15 +612,21 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Closes the most recently opened group boundary, unwinding the state stack back to the
-     * depth captured at {@link Context.pushGroup}. This absorbs any dangling `save()` left by
-     * a group-scoped clip (which deliberately skips its own `restore` so the clip persists to
-     * later siblings), confining the clip to the group rather than leaking it to the scene.
+     * depth captured at {@link Context.pushGroup} and restoring the render element that was
+     * current before it. This absorbs any dangling `save()` left by a group-scoped clip (which
+     * deliberately skips its own `restore` so the clip persists to later siblings), confining
+     * the clip to the group rather than leaking it to the scene.
      */
     public popGroup(): void {
-        const depth = this._groupDepthStack.pop() ?? Math.max(0, this.saveDepth - 1);
+        const scope = this._groupStack.pop();
+        const depth = scope?.depth ?? Math.max(0, this.saveDepth - 1);
 
         while (this.saveDepth > depth) {
             this.restore();
+        }
+
+        if (scope) {
+            this.renderElement = scope.element;
         }
     }
 
@@ -611,9 +673,46 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
-    /** Measures text dimensions using the context's current font or an optional override. */
+    /**
+     * Maps a point from surface space — the space pointer coordinates arrive in, as produced by
+     * {@link Context.scaleX} and {@link Context.scaleY} — into the logical space elements are
+     * authored in.
+     *
+     * Backends disagree on what surface space is: canvas maps logical coordinates onto device
+     * pixels while SVG leaves them identity, so hit testing has to invert what *this* context
+     * actually does rather than assume the device pixel ratio.
+     *
+     * @param x - X coordinate in surface space.
+     * @param y - Y coordinate in surface space.
+     * @returns The `[x, y]` pair in logical space.
+     */
+    public toLogicalPoint(x: number, y: number): [number, number] {
+        return [x / getAxisScale(this.scaleX), y / getAxisScale(this.scaleY)];
+    }
+
+    /**
+     * Maps a point from the logical space elements are authored in back into surface space.
+     * The inverse of {@link Context.toLogicalPoint}.
+     *
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @returns The `[x, y]` pair in surface space.
+     */
+    public toSurfacePoint(x: number, y: number): [number, number] {
+        return [x * getAxisScale(this.scaleX), y * getAxisScale(this.scaleY)];
+    }
+
+    /**
+     * Measures text dimensions using the context's current font, text alignment, and baseline,
+     * or an optional font override. `actualBoundingBox*` is anchor-relative, so the alignment and
+     * baseline have to be forwarded or the reported box is anchored at the wrong corner.
+     */
     public measureText(text: string, font?: string): TextMetrics {
-        return measureText(text, { font });
+        return measureText(text, {
+            font: font ?? this.font,
+            textAlign: this.textAlign,
+            textBaseline: this.textBaseline,
+        });
     }
 
     /**
@@ -670,9 +769,23 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return this.renderedElements.filter(element => element.has(event));
     });
 
-    /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
+    /**
+     * Tests which rendered elements intersect the given point for the given event types,
+     * returning them topmost-first — the exact reverse of the order they were painted in.
+     *
+     * The point is in surface space, so a caller holding the logical coordinates a pointer event
+     * carries must map them through {@link Context.toSurfacePoint} first.
+     *
+     * Paint order is the sole key. {@link Context.renderedElements} already records the resolved
+     * stacking order (groups paint as contiguous stacking contexts), whereas
+     * {@link RenderElement.zIndex} is additive across the parent chain and so says nothing about
+     * two descendants of different groups; sorting by it discarded correct information.
+     */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        const hits = arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
+        // The memo is a snapshot; `off`, a spent `once` and `destroy` all leave it stale.
+        const tracked = events.flatMap(event => this._getTrackedElements(event).filter(element => element.has(event)));
+
+        const hits = arrayDedupe(tracked)
             .filter(element => element.intersectsWith(x, y, {
                 isPointer: true,
             }));
@@ -684,13 +797,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // One-pass index map; an `indexOf` in the comparator would rescan the list per comparison.
         const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
 
-        return hits.sort((ea, eb) => {
-            const zDiff = eb.zIndex - ea.zIndex;
-
-            return zDiff !== 0
-                ? zDiff
-                : (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1);
-        });
+        return hits.sort((ea, eb) => (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1));
     }
 
     /**
@@ -702,8 +809,14 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         throw new Error(`export() is not supported by the "${this.type}" context`);
     }
 
-    /** Destroys the context and disposes all resources. */
+    /** Destroys the context and disposes all resources, releasing the element graph it retains for hit testing. */
     public destroy(): void {
+        // Every rendered element is retained here, and each element retains the context back.
+        this.renderedElements = [];
+        this.renderElement = undefined;
+        this._groupStack = [];
+
+        this.invalidateTrackedElements();
         this.dispose();
         super.destroy();
     }

@@ -34,6 +34,8 @@ export default defineConfig({
             '**/_media/**',
             // Playwright visual-regression specs run via their own runner, not vitest.
             '**/test/visual/**',
+            // Agent worktrees are full repo checkouts inside the repo; globbing them double-counts every suite.
+            '**/.claude/worktrees/**',
         ],
         outputFile: './.reports/test-results.xml',
         reporters: [

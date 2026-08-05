@@ -3,7 +3,7 @@ dist/
 .output/
 
 # dependencies
-node_modules/
+node_modules
 
 .pnp.*
 .yarn/*
@@ -20,6 +20,9 @@ yarn-error.log*
 
 # reports
 .reports
+
+# agent worktrees — full repo checkouts placed inside the repo, so lint and test glob into them
+.claude/worktrees/
 
 # playwright
 test-results/

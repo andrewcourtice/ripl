@@ -496,6 +496,76 @@ describe('VDOM', () => {
             expect(childIds).toContain('defs');
             expect(parent.querySelector('.protected')).not.toBeNull();
             expect(parent.querySelector('#child-1')).not.toBeNull();
+
+            // Managed children used to be inserted at an index the excluded nodes still counted towards.
+            expect(Array.from(parent.children).indexOf(defsEl)).toBe(0);
+            expect(Array.from(parent.children).indexOf(protectedEl)).toBe(1);
+        });
+
+        test('Should render every sibling that shares an id, in order', () => {
+            const parent = createDOMElement('div');
+            const domCache = new Map<string, Element>();
+            const options = createTestOptions();
+
+            const vnode: VNode<TestElement> = {
+                id: 'root',
+                tag: 'div',
+                children: [
+                    {
+                        id: 'dup',
+                        tag: 'span',
+                        children: [],
+                    },
+                    {
+                        id: 'other',
+                        tag: 'span',
+                        children: [],
+                    },
+                    {
+                        id: 'dup',
+                        tag: 'span',
+                        children: [],
+                    },
+                ],
+            };
+
+            reconcileNode(parent, vnode, domCache, options);
+
+            expect(parent.children).toHaveLength(3);
+            expect(Array.from(parent.children).map(c => c.getAttribute('id'))).toEqual(['dup', 'other', 'dup']);
+        });
+
+        test('Should keep siblings that share an id stable across passes', () => {
+            const parent = createDOMElement('div');
+            const domCache = new Map<string, Element>();
+            const options = createTestOptions();
+
+            const vnode: VNode<TestElement> = {
+                id: 'root',
+                tag: 'div',
+                children: [
+                    {
+                        id: 'dup',
+                        tag: 'span',
+                        children: [],
+                    },
+                    {
+                        id: 'dup',
+                        tag: 'span',
+                        children: [],
+                    },
+                ],
+            };
+
+            reconcileNode(parent, vnode, domCache, options);
+
+            const nodes = Array.from(parent.children);
+
+            expect(nodes).toHaveLength(2);
+
+            reconcileNode(parent, vnode, domCache, options);
+
+            expect(Array.from(parent.children)).toEqual(nodes);
         });
 
         test('should handle mixed add, remove, and reorder in one pass', () => {

@@ -10,6 +10,7 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    createPolarAreaChart,
     createPolarScatterChart,
     createRadarChart,
     createRadialBarChart,
@@ -329,6 +330,44 @@ describe('Polar scatter value labels', () => {
         await chart.render();
 
         expect(labelContents(chart, 'readings')).toEqual(['18km']);
+    });
+
+});
+
+describe('Polar area grid value labels', () => {
+
+    it('paints above the segments, which are opaque', async () => {
+        mockContext();
+
+        const chart = createPolarAreaChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    label: 'a',
+                    value: 3,
+                },
+                {
+                    label: 'b',
+                    value: 1,
+                },
+            ],
+            key: 'label',
+            value: 'value',
+            label: 'label',
+            levels: 4,
+        });
+
+        await chart.render();
+
+        const scene = (chart as unknown as { scene: { getElementById(id: string): { zIndex: number;
+            getElementsByType(type: string): unknown[]; } | null; }; }).scene;
+
+        const labelGroup = scene.getElementById('polar-grid-labels');
+        const segment = scene.getElementById('a');
+
+        expect(labelGroup?.getElementsByType('text')).toHaveLength(4);
+        expect(labelGroup!.zIndex).toBeGreaterThan(segment!.zIndex);
     });
 
 });

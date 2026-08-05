@@ -91,3 +91,30 @@ jobs:
           vite-config-path: vitest.config.ts
           json-summary-path: .reports/coverage/coverage-summary.json
           json-final-path: .reports/coverage/coverage-final.json
+
+  # The canvas↔SVG suites need a real browser: jsdom rasterizes nothing and implements no
+  # `SVGGeometryElement`, which is why these findings outlived the audit's unit tests.
+  browser:
+    name: Browser Parity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Chromium
+        run: yarn playwright install --with-deps chromium
+
+      # Run from the root, where `@playwright/test` is declared: it is not a `@ripl/charts`
+      # dependency, so yarn builds no binary shim in that workspace and resolves nothing there.
+      - name: Run browser parity suites
+        run: yarn playwright test -c packages/charts/test/visual/playwright.config.ts parity.spec.ts hit.spec.ts

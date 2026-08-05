@@ -113,10 +113,43 @@ export function mat4RotateZ(m: Matrix4, angle: number): Matrix4 {
     return mat4Multiply(m, r);
 }
 
-/** Constructs a view matrix looking from `eye` toward `target` with the given `up` direction. */
+// Tried in order when `up` is parallel to the view direction and the cross product collapses.
+const FALLBACK_UP_AXES: Vector3[] = [
+    [0, 0, 1],
+    [1, 0, 0],
+];
+
+function vec3IsZero(v: Vector3): boolean {
+    return v[0] === 0 && v[1] === 0 && v[2] === 0;
+}
+
+function resolveBasisX(up: Vector3, zAxis: Vector3): Vector3 {
+    for (const candidate of [up, ...FALLBACK_UP_AXES]) {
+        const axis = vec3Normalize(vec3Cross(candidate, zAxis));
+
+        if (!vec3IsZero(axis)) {
+            return axis;
+        }
+    }
+
+    return [1, 0, 0];
+}
+
+/**
+ * Constructs a view matrix looking from `eye` toward `target` with the given `up` direction.
+ *
+ * Degenerate inputs are defended rather than silently collapsed: an `eye` equal to `target` yields
+ * the identity, and an `up` parallel to the view direction falls back to a perpendicular axis. Both
+ * previously produced a rank-deficient matrix that projected every point to the viewport centre.
+ */
 export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 {
     const zAxis = vec3Normalize(vec3Sub(eye, target));
-    const xAxis = vec3Normalize(vec3Cross(up, zAxis));
+
+    if (vec3IsZero(zAxis)) {
+        return mat4Identity();
+    }
+
+    const xAxis = resolveBasisX(up, zAxis);
     const yAxis = vec3Cross(zAxis, xAxis);
 
     const out = mat4Create();
@@ -144,7 +177,13 @@ export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 
     return out;
 }
 
-/** Constructs a perspective projection matrix. */
+/**
+ * Constructs a perspective projection matrix.
+ *
+ * Depth maps to the WebGPU convention: the near plane projects to `0` and the far plane to `1`,
+ * matching the `0 ≤ z ≤ w` clip volume the GPU backend rasterises against. The CPU painter reads
+ * the projected depth only as a sort key, and it stays monotonic with distance.
+ */
 export function mat4Perspective(fovRadians: number, aspect: number, near: number, far: number): Matrix4 {
     // eslint-disable-next-line id-length
     const f = 1.0 / Math.tan(fovRadians / 2);
@@ -154,14 +193,19 @@ export function mat4Perspective(fovRadians: number, aspect: number, near: number
 
     out[0] = f / aspect;
     out[5] = f;
-    out[10] = (near + far) * rangeInv;
+    out[10] = far * rangeInv;
     out[11] = -1;
-    out[14] = 2 * near * far * rangeInv;
+    out[14] = far * near * rangeInv;
 
     return out;
 }
 
-/** Constructs an orthographic projection matrix. */
+/**
+ * Constructs an orthographic projection matrix.
+ *
+ * Depth maps to the WebGPU convention: the near plane projects to `0` and the far plane to `1`.
+ * See {@link mat4Perspective}.
+ */
 export function mat4Orthographic(
     left: number,
     right: number,
@@ -178,10 +222,10 @@ export function mat4Orthographic(
 
     out[0] = -2 * lr;
     out[5] = -2 * bt;
-    out[10] = 2 * nf;
+    out[10] = nf;
     out[12] = (left + right) * lr;
     out[13] = (top + bottom) * bt;
-    out[14] = (near + far) * nf;
+    out[14] = near * nf;
     out[15] = 1;
 
     return out;
@@ -196,7 +240,29 @@ export function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3 {
     ];
 }
 
-/** Transforms a 3D point by a 4×4 matrix, performing the perspective divide. */
+/**
+ * Transforms a direction vector by the **transposed** upper-3×3 of a 4×4 matrix, ignoring
+ * translation. For a rigid transform (rotation plus translation, such as a view matrix) the
+ * transposed rotation is its inverse, so this undoes {@link mat4TransformDirection} — use it to
+ * carry a direction from view space back into world space.
+ */
+export function mat4TransformDirectionInverse(m: Matrix4, v: Vector3): Vector3 {
+    return [
+        m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+        m[4] * v[0] + m[5] * v[1] + m[6] * v[2],
+        m[8] * v[0] + m[9] * v[1] + m[10] * v[2],
+    ];
+}
+
+/**
+ * Transforms a 3D point by a 4×4 matrix, performing the perspective divide.
+ *
+ * There is deliberately **no near-plane clipping**: a point behind the eye has `w < 0` and comes
+ * back mirrored through the origin, and a point on the eye plane (`w === 0`) is returned
+ * undivided. Clipping is a rasteriser's job — the GPU backend does it in hardware — and doing it
+ * here would mean returning something other than a point. The CPU painter's renderer therefore
+ * draws geometry straddling the camera inside-out; keep the near plane in front of the scene.
+ */
 export function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3 {
     const x = v[0];
     const y = v[1];

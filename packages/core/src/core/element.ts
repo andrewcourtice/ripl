@@ -111,53 +111,67 @@ export interface ElementEventMap extends EventMap {
     mouseleave: null;
     /** Emitted as the pointer moves over the element, carrying its position. */
     mousemove: {
-        /** X coordinate of the pointer, in element-local space. */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate of the pointer, in element-local space. */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
-    /** Emitted when the element is clicked, carrying the pointer position. */
-    click: {
-        /** X coordinate of the pointer, in element-local space. */
+    /** Emitted when a pointer button is pressed over the element, carrying the pointer position. */
+    mousedown: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate of the pointer, in element-local space. */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        y: number;
+    };
+    /** Emitted when a pointer button is released over the element, carrying the release position. */
+    mouseup: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        x: number;
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        y: number;
+    };
+    /** Emitted when the element is clicked, carrying the pointer position; suppressed for the release that ended a drag. */
+    click: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        x: number;
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
     /** Emitted when a drag gesture begins on the element, carrying the start position. */
     dragstart: {
-        /** X coordinate at which the drag started, in element-local space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate at which the drag started, in element-local space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
     /** Emitted continuously while dragging the element, carrying the current position, drag start, and delta from the start. */
     drag: {
-        /** Current X coordinate of the pointer, in element-local space. */
+        /** Current X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Current Y coordinate of the pointer, in element-local space. */
+        /** Current Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
-        /** X coordinate at which the drag started, in element-local space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startX: number;
-        /** Y coordinate at which the drag started, in element-local space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startY: number;
-        /** Horizontal distance moved since the drag started, in pixels. */
+        /** Horizontal distance moved since the drag started, in logical pixels. */
         deltaX: number;
-        /** Vertical distance moved since the drag started, in pixels. */
+        /** Vertical distance moved since the drag started, in logical pixels. */
         deltaY: number;
     };
     /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and total delta. */
     dragend: {
-        /** Final X coordinate of the pointer, in element-local space. */
+        /** Final X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Final Y coordinate of the pointer, in element-local space. */
+        /** Final Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
-        /** X coordinate at which the drag started, in element-local space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startX: number;
-        /** Y coordinate at which the drag started, in element-local space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startY: number;
-        /** Total horizontal distance moved over the drag, in pixels. */
+        /** Total horizontal distance moved over the drag, in logical pixels. */
         deltaX: number;
-        /** Total vertical distance moved over the drag, in pixels. */
+        /** Total vertical distance moved over the drag, in logical pixels. */
         deltaY: number;
     };
     /** Emitted when the element is destroyed; carries no payload. */
@@ -284,9 +298,11 @@ export class Element<
             'dragend',
             'dragstart',
             'graph',
+            'mousedown',
             'mouseenter',
             'mouseleave',
             'mousemove',
+            'mouseup',
             'updated',
         ];
     }
@@ -813,10 +829,10 @@ export class Element<
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        // The point arrives in device pixels; the bounding box is logical, so map it back first.
-        const dpr = this.context?.scaleDPR(1) ?? 1;
+        // The point arrives in the context's surface space; the box is logical, so map it back.
+        const point: [number, number] = this.context?.toLogicalPoint(x, y) ?? [x, y];
 
-        return isPointInBox([x / dpr, y / dpr], this.getBoundingBox());
+        return isPointInBox(point, this.getBoundingBox());
     }
 
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */
@@ -856,9 +872,11 @@ export class Element<
     /** Renders this element by applying transforms and context state, then invoking the optional callback. */
     public render(context: Context, callback?: AnyFunction, skipRestore?: boolean) {
         this.context = context;
+
+        // Register after the start: at depth 0 markRenderStart wipes the list this element joins.
+        context.markRenderStart();
         context.currentRenderElement = this;
 
-        context.markRenderStart();
         context.save();
 
         try {

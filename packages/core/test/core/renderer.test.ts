@@ -122,6 +122,45 @@ describe('Renderer', () => {
         renderer.destroy();
     });
 
+    test('Should re-arm the frame loop when a frame throws', () => {
+        const { scene } = createMockScene();
+        const element = createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        });
+
+        vi.spyOn(element, 'render').mockImplementation(() => {
+            throw new Error('render failed');
+        });
+
+        (scene as unknown as { add(el: unknown): void }).add(element);
+
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        const scheduled: FrameRequestCallback[] = [];
+        const requestAnimationFrame = factory.requestAnimationFrame;
+
+        factory.set({
+            requestAnimationFrame: callback => scheduled.push(callback),
+        });
+
+        try {
+            renderer.start();
+
+            expect(scheduled).toHaveLength(1);
+            expect(() => scheduled[0](0)).toThrow('render failed');
+            expect(scheduled).toHaveLength(2);
+        } finally {
+            factory.set({ requestAnimationFrame });
+            renderer.destroy();
+        }
+    });
+
     test('Should list the events a renderer can emit', () => {
         const { scene } = createMockScene();
         const renderer = new Renderer(scene, {

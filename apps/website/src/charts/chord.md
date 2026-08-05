@@ -1,6 +1,6 @@
 # Chord Chart
 
-The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and pad angles.
+The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and arc gaps. Outer arcs are filled with a translucent tint of their group color and separated by a constant-width gap (`padWidth`); hovering one dims the other arcs and every ribbon it is not attached to.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -15,8 +15,8 @@ The **Chord Chart** visualizes relationships between groups using arcs and ribbo
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Groups" :extras-reset="reset">
-            <RiplField label="Pad angle" option="padAngle">
-                <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.2" :step="0.01" />
+            <RiplField label="Arc gap" option="padWidth">
+                <RiplInputRange v-model="extras.padWidth" :min="0" :max="12" :step="1" />
             </RiplField>
             <template #colors>
                 <RiplField
@@ -60,7 +60,7 @@ import {
 const LABELS = ['Engineering', 'Design', 'Marketing', 'Sales'];
 
 const { extras, reset } = useChartExtras({
-    padAngle: 0.04,
+    padWidth: 2,
     palette: LABELS.map((_, index) => paletteColor(index)),
 });
 
@@ -91,7 +91,7 @@ let matrix = generateMatrix();
 function buildOptions() {
     return {
         palette: extras.palette,
-        padAngle: extras.padAngle,
+        padWidth: extras.padWidth,
         ...buildCommonOptions(config),
     };
 }
@@ -165,7 +165,10 @@ createChordChart('#container', {
     matrix,
     // One color per group, positional.
     palette: ['#7cacf8', '#6dd5b1', '#b197fc', '#f7c97e'],
-    // Gap between adjacent group arcs, in radians.
+    // Gap between adjacent group arcs, in pixels — a constant width whatever the radius.
+    padWidth: 2,
+    // Deprecated: an angular gap, in radians, taken out of the ring before the arcs are sized.
+    // Ignored while `padWidth` is set.
     padAngle: 0.04,
     legend: { position: 'right' },
     format: 'number',

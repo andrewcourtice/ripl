@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 
 import {
+    Context,
     createGroup,
     createRect,
     createScene,
@@ -409,6 +410,79 @@ describe('Scene', () => {
 
         expect(rect.$dirty).toBe(false);
         expect(rect.$touched).toBe(false);
+
+        scene.destroy();
+    });
+
+    test('Should cancel a pending graph rebuild on destroy', async () => {
+        const scene = createScene(el);
+        const invalidate = vi.spyOn(scene.context, 'invalidateTrackedElements');
+
+        scene.add(createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        }));
+
+        scene.destroy();
+        invalidate.mockClear();
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        expect(invalidate).not.toHaveBeenCalled();
+    });
+
+});
+
+describe('Scene font inheritance', () => {
+
+    const font = 'italic bold 22px Georgia';
+
+    let getComputedStyle: typeof factory.getComputedStyle;
+
+    /** Concrete base context whose surface element is settable, standing in for each backend's host. */
+    class HostContext extends Context {
+
+        constructor(element: Element) {
+            super('test', element);
+        }
+
+    }
+
+    beforeEach(() => {
+        mockCanvasContext();
+        getComputedStyle = factory.getComputedStyle;
+        factory.set({ getComputedStyle: () => ({ font }) });
+    });
+
+    afterEach(() => {
+        factory.set({ getComputedStyle });
+        vi.restoreAllMocks();
+    });
+
+    // An SVGSVGElement extends SVGElement, not HTMLElement, so SVG scenes inherited nothing.
+    test('Should inherit the host font from an SVG surface', () => {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const scene = createScene(new HostContext(svg));
+
+        expect(scene.font).toBe(font);
+
+        scene.destroy();
+    });
+
+    test('Should inherit the host font from an HTML surface', () => {
+        const scene = createScene(new HostContext(document.createElement('canvas')));
+
+        expect(scene.font).toBe(font);
+
+        scene.destroy();
+    });
+
+    test('Should leave the font unset for a surface that is not a DOM element', () => {
+        const scene = createScene(new HostContext({} as Element));
+
+        expect(scene.font).toBeUndefined();
 
         scene.destroy();
     });

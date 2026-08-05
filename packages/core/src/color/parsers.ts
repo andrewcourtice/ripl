@@ -57,7 +57,28 @@ function parsePercentageChannel(value: string): number {
     return numberClamp(parseInt(value.replace('%', ''), 10), 0, 100);
 }
 
-/** Parses a hexadecimal color string (e.g. `#ff0000` or `#ff000080`) into an RGBA tuple. */
+function getHEXChannels(components: RegExpExecArray): string[] {
+    if (components[1]) {
+        return [
+            components[1],
+            components[2],
+            components[3],
+            components[4] || 'ff',
+        ];
+    }
+
+    // CSS expands a shorthand digit by doubling it, so `#f0a8` is `#ff00aa88`.
+    const alpha = components[8] || 'f';
+
+    return [
+        components[5] + components[5],
+        components[6] + components[6],
+        components[7] + components[7],
+        alpha + alpha,
+    ];
+}
+
+/** Parses a hexadecimal color string in any CSS length (e.g. `#f00`, `#f00c`, `#ff0000`, `#ff0000cc`) into an RGBA tuple. */
 export function parseHEX(value: string): ColorRGBA {
     const components = PATTERNS.hex.exec(value);
 
@@ -65,13 +86,18 @@ export function parseHEX(value: string): ColorRGBA {
         throw new ColorParseError(value, 'hex');
     }
 
-    const alpha = scaleRGB.inverse(parseInt(components[4] ?? 'ff', 16));
+    const [
+        red,
+        green,
+        blue,
+        alpha,
+    ] = getHEXChannels(components);
 
     return [
-        parseInt(components[1], 16),
-        parseInt(components[2], 16),
-        parseInt(components[3], 16),
-        alpha,
+        parseInt(red, 16),
+        parseInt(green, 16),
+        parseInt(blue, 16),
+        scaleRGB.inverse(parseInt(alpha, 16)),
     ];
 }
 

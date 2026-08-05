@@ -8,8 +8,13 @@ import {
 } from 'vitest';
 
 import {
+    Context,
     ContextPath,
     ContextText,
+    createElement,
+    createGroup,
+    factory,
+    scaleContinuous,
 } from '../../src';
 
 import {
@@ -79,7 +84,6 @@ describe('Context', () => {
 
             expect(ctx.scaleX).toBeDefined();
             expect(ctx.scaleY).toBeDefined();
-            expect(ctx.scaleDPR).toBeDefined();
 
             ctx.destroy();
         });
@@ -491,6 +495,55 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        // Scene.render walks a flat instruction stream, so a throw skips the pops that match its
+        // pushes; Group.render's own finally never sees them.
+        test('Should close open group boundaries when the callback throws', () => {
+            const ctx = create();
+            const group = createGroup({ children: [] });
+            const stack = () => (ctx as unknown as { _groupStack: unknown[] })._groupStack;
+
+            for (let frame = 0; frame < 4; frame++) {
+                expect(() => {
+                    ctx.batch(() => {
+                        ctx.pushGroup(group);
+                        ctx.pushGroup(group);
+                        throw new Error('test');
+                    });
+                }).toThrow('test');
+
+                expect(stack()).toHaveLength(0);
+            }
+
+            expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+
+            ctx.destroy();
+        });
+
+        // A nested pass previously wiped everything the outer pass had already painted.
+        test('Should not clear the surface for a nested batch', () => {
+            const ctx = create();
+
+            canvasStub.clearRect.mockClear();
+
+            ctx.batch(() => {
+                ctx.batch(() => {});
+            });
+
+            expect(canvasStub.clearRect).toHaveBeenCalledTimes(1);
+
+            ctx.destroy();
+        });
+
+        test('Should unwind a save the callback left outstanding', () => {
+            const ctx = create();
+
+            ctx.batch(() => ctx.save());
+
+            expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+
+            ctx.destroy();
+        });
+
         test('Should reset renderedElements at start', () => {
             const ctx = create();
 
@@ -569,6 +622,22 @@ describe('Context', () => {
             ctx.markRenderEnd();
             ctx.markRenderEnd();
 
+            ctx.destroy();
+        });
+
+        test('Should clamp the render depth at zero for an unbalanced markRenderEnd', () => {
+            const ctx = create();
+
+            ctx.markRenderEnd();
+            ctx.markRenderEnd();
+
+            expect((ctx as unknown as { renderDepth: number }).renderDepth).toBe(0);
+
+            ctx.markRenderStart();
+
+            expect((ctx as unknown as { renderDepth: number }).renderDepth).toBe(1);
+
+            ctx.markRenderEnd();
             ctx.destroy();
         });
 
@@ -1026,6 +1095,23 @@ describe('Context', () => {
             expect(destroySpy).toHaveBeenCalledTimes(1);
         });
 
+        // renderedElements retains the whole element graph, and each element retains the context.
+        test('Should release the rendered element graph', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+
+            ctx.markRenderStart();
+            ctx.currentRenderElement = element;
+            ctx.markRenderEnd();
+
+            expect(ctx.renderedElements).toHaveLength(1);
+
+            ctx.destroy();
+
+            expect(ctx.renderedElements).toEqual([]);
+            expect(ctx.currentRenderElement).toBeUndefined();
+        });
+
     });
 
     // ── enableInteraction / disableInteraction ────────────────────
@@ -1158,17 +1244,17 @@ describe('Context', () => {
             return (ctx as any).hitTest(events, x, y);
         }
 
-        test('hitTest should return elements sorted by zIndex (highest first)', () => {
+        // Additive zIndex cannot compare descendants of different groups; paint order can.
+        test('hitTest should return elements in reverse paint order, ignoring zIndex', () => {
             const ctx = create();
-            const low = createMockElement('low', 1, ['click']);
-            const mid = createMockElement('mid', 5, ['click']);
-            const high = createMockElement('high', 10, ['click']);
+            const under = createMockElement('under', 10, ['click']);
+            const over = createMockElement('over', 1, ['click']);
 
-            registerElements(ctx, [low, mid, high]);
+            registerElements(ctx, [under, over]);
 
             const result = callHitTest(ctx, ['click'], 0, 0);
 
-            expect(result.map((el: { id: string }) => el.id)).toEqual(['high', 'mid', 'low']);
+            expect(result.map((el: { id: string }) => el.id)).toEqual(['over', 'under']);
 
             ctx.destroy();
         });
@@ -1184,6 +1270,69 @@ describe('Context', () => {
             const result = callHitTest(ctx, ['click'], 0, 0);
 
             expect(result.map((el: { id: string }) => el.id)).toEqual(['third', 'second', 'first']);
+
+            ctx.destroy();
+        });
+
+        // off(), a spent once() and destroy() all bypass the memo's only invalidation path.
+        test('hitTest should drop an element whose listener went away after the memo was primed', () => {
+            const ctx = create();
+            const events = new Set(['click']);
+
+            const element = {
+                id: 'stale',
+                abstract: false,
+                pointerEvents: 'all' as const,
+                zIndex: 0,
+                has: vi.fn((event: string) => events.has(event)),
+                intersectsWith: vi.fn(() => true),
+                emit: vi.fn(),
+            };
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            events.delete('click');
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should drop an element after off removes its last listener', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+            const handler = vi.fn();
+
+            element.on('click', handler);
+            vi.spyOn(element, 'intersectsWith').mockReturnValue(true);
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            element.off('click', handler);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should drop a destroyed element in the same tick', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+
+            element.on('click', vi.fn());
+            vi.spyOn(element, 'intersectsWith').mockReturnValue(true);
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            element.destroy();
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
 
             ctx.destroy();
         });
@@ -1230,6 +1379,140 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+    });
+
+});
+
+/** Concrete base context, so the base implementations are exercised without a backend override. */
+class TestContext extends Context {
+
+    constructor(surfaceScale = 1, size = 400) {
+        super('test', document.createElement('div'));
+
+        this.rescale(size, size);
+        this.scaleX = scaleContinuous([0, size], [0, size * surfaceScale]);
+        this.scaleY = scaleContinuous([0, size], [0, size * surfaceScale]);
+    }
+
+}
+
+describe('Context surface mapping', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should round-trip a point through the surface scale', () => {
+        const ctx = new TestContext(2);
+
+        expect(ctx.toLogicalPoint(250, 94)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([250, 94]);
+    });
+
+    test('Should leave a point unchanged on an identity surface', () => {
+        const ctx = new TestContext();
+
+        expect(ctx.toLogicalPoint(125, 47)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([125, 47]);
+    });
+
+    // An unsized context maps every input onto 0, which would collapse the point onto the origin.
+    test('Should leave a point unchanged on an unsized surface', () => {
+        const ctx = new TestContext(1, 0);
+
+        expect(ctx.toLogicalPoint(125, 47)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([125, 47]);
+    });
+
+});
+
+describe('Context.reset', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should drop the saved-state stack and restore the default state', () => {
+        const ctx = new TestContext();
+        const font = ctx.font;
+
+        ctx.save();
+        ctx.font = '30px monospace';
+        ctx.save();
+
+        ctx.reset();
+
+        expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+        expect((ctx as unknown as { states: unknown[] }).states).toEqual([]);
+        expect(ctx.font).toBe(font);
+    });
+
+    test('Should close an open group boundary', () => {
+        const ctx = new TestContext();
+
+        ctx.pushGroup(createGroup());
+        ctx.reset();
+        ctx.popGroup();
+
+        expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+    });
+
+});
+
+describe('Context.measureText', () => {
+
+    let measureText: typeof factory.measureText;
+
+    beforeEach(() => {
+        mockCanvasContext();
+        measureText = factory.measureText;
+    });
+
+    afterEach(() => {
+        factory.set({ measureText });
+        vi.restoreAllMocks();
+    });
+
+    // actualBoundingBox* is anchor-relative, so dropping the alignment anchors the box wrongly.
+    test('Should forward the context font, alignment and baseline', () => {
+        const measure = vi.fn(() => ({}) as TextMetrics);
+
+        factory.set({ measureText: measure });
+
+        const ctx = new TestContext();
+
+        ctx.font = '20px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.measureText('hello');
+
+        expect(measure).toHaveBeenCalledWith('hello', {
+            font: '20px serif',
+            textAlign: 'center',
+            textBaseline: 'middle',
+        });
+    });
+
+    test('Should prefer an explicit font override', () => {
+        const measure = vi.fn(() => ({}) as TextMetrics);
+
+        factory.set({ measureText: measure });
+
+        const ctx = new TestContext();
+
+        ctx.font = '20px serif';
+        ctx.measureText('hello', '30px monospace');
+
+        expect(measure.mock.calls[0][1]).toMatchObject({ font: '30px monospace' });
     });
 
 });

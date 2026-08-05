@@ -12,11 +12,15 @@ import {
     arePointsEqual,
     Box,
     getContainingBox,
+    getPadAngleAtRadius,
+    getPadInnerRadius,
+    getThetaPoint,
     isPointInBox,
     matrixIdentity,
     matrixRotate,
     matrixScale,
     matrixTranslate,
+    TAU,
     transformBox,
 } from '../../src';
 
@@ -99,6 +103,91 @@ describe('Math', () => {
 
             test('Should return an empty box for an empty collection', () => {
                 expect(edgesOf(getContainingBox([], box => box as Box))).toEqual([0, 0, 0, 0]);
+            });
+
+        });
+
+        describe('getPadAngleAtRadius', () => {
+
+            test('Should return the arcsine of the half gap over the radius', () => {
+                expect(getPadAngleAtRadius(10, 100)).toBeCloseTo(Math.asin(0.05), 12);
+                expect(getPadAngleAtRadius(10, 25)).toBeCloseTo(Math.asin(0.2), 12);
+                expect(getPadAngleAtRadius(3, 6)).toBeCloseTo(Math.asin(0.25), 12);
+            });
+
+            test('Should leave the trimmed endpoint a half gap from the centreline at every radius', () => {
+                const padWidth = 7;
+
+                [4, 20, 90, 400].forEach(radius => {
+                    const [, y] = getThetaPoint(getPadAngleAtRadius(padWidth, radius), radius);
+
+                    expect(y).toBeCloseTo(padWidth / 2, 9);
+                });
+            });
+
+            test('Should saturate at a quarter turn once the radius sits inside the gap', () => {
+                expect(getPadAngleAtRadius(10, 5)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(10, 1)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(10, 0)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(Infinity, 50)).toBe(Math.PI / 2);
+            });
+
+            test('Should return zero for an infinite radius', () => {
+                expect(getPadAngleAtRadius(10, Infinity)).toBe(0);
+            });
+
+            test('Should return zero for a gap or radius that cannot produce an inset', () => {
+                expect(getPadAngleAtRadius(0, 100)).toBe(0);
+                expect(getPadAngleAtRadius(-5, 100)).toBe(0);
+                expect(getPadAngleAtRadius(NaN, 100)).toBe(0);
+                expect(getPadAngleAtRadius(10, -1)).toBe(0);
+                expect(getPadAngleAtRadius(10, NaN)).toBe(0);
+            });
+
+        });
+
+        describe('getPadInnerRadius', () => {
+
+            test('Should return the radius at which the parallel edges converge', () => {
+                expect(getPadInnerRadius(6, TAU / 3)).toBeCloseTo(3.4641016151, 9);
+                expect(getPadInnerRadius(2, TAU / 3)).toBeCloseTo(1.1547005384, 9);
+                expect(getPadInnerRadius(2, Math.PI / 30)).toBeCloseTo(19.1073226093, 9);
+                expect(getPadInnerRadius(2, Math.PI)).toBeCloseTo(1, 12);
+            });
+
+            test('Should leave the converging endpoint a half gap from the centreline', () => {
+                [0.4, 1, 2, Math.PI].forEach(span => {
+                    const radius = getPadInnerRadius(5, span);
+                    const [, y] = getThetaPoint(getPadAngleAtRadius(5, radius), radius);
+
+                    expect(y).toBeCloseTo(5 / 2, 9);
+                    expect(getPadAngleAtRadius(5, radius)).toBeCloseTo(span / 2, 9);
+                });
+            });
+
+            test('Should stop at the half gap once the span exceeds a half turn', () => {
+                expect(getPadInnerRadius(2, Math.PI * 1.5)).toBeCloseTo(1, 12);
+                expect(getPadInnerRadius(2, Math.PI * 1.99)).toBeCloseTo(1, 12);
+            });
+
+            test('Should push a thin sliver further out than a wide sector', () => {
+                expect(getPadInnerRadius(2, Math.PI / 30)).toBeGreaterThan(getPadInnerRadius(2, TAU / 3));
+            });
+
+            test('Should return zero for a full turn, which has no neighbor to clear', () => {
+                expect(getPadInnerRadius(6, TAU)).toBe(0);
+                expect(getPadInnerRadius(6, TAU + 1)).toBe(0);
+                expect(getPadInnerRadius(6, Infinity)).toBe(0);
+            });
+
+            test('Should return zero for a gap or span that cannot produce a floor', () => {
+                expect(getPadInnerRadius(0, 1)).toBe(0);
+                expect(getPadInnerRadius(-5, 1)).toBe(0);
+                expect(getPadInnerRadius(NaN, 1)).toBe(0);
+                expect(getPadInnerRadius(Infinity, 1)).toBe(0);
+                expect(getPadInnerRadius(6, 0)).toBe(0);
+                expect(getPadInnerRadius(6, -1)).toBe(0);
+                expect(getPadInnerRadius(6, NaN)).toBe(0);
             });
 
         });

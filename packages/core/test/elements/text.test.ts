@@ -4,9 +4,11 @@ import {
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
+    Context,
     createGroup,
     createText,
     elementIsText,
@@ -16,6 +18,10 @@ import {
 import type {
     MeasureTextOptions,
 } from '../../src';
+
+import {
+    mockCanvasContext,
+} from '@ripl/test-utils';
 
 /** Emulates a real canvas's anchor-relative `actualBoundingBox*` metrics for a fixed 10px/char font. */
 function fakeMeasureText(text: string, options?: MeasureTextOptions): TextMetrics {
@@ -266,6 +272,94 @@ describe('elementIsText', () => {
     test('Should return false for non-Text values', () => {
         expect(elementIsText({})).toBe(false);
         expect(elementIsText(null)).toBe(false);
+    });
+
+});
+
+describe('Text metrics source', () => {
+
+    /** A backend that sizes glyphs to fixed cells, as the terminal context does. */
+    class CellContext extends Context {
+
+        constructor() {
+            super('cell', document.createElement('div'));
+        }
+
+        public measureText(text: string): TextMetrics {
+            const width = text.length * 2;
+
+            return {
+                width,
+                actualBoundingBoxLeft: 0,
+                actualBoundingBoxRight: width,
+                actualBoundingBoxAscent: 4,
+                actualBoundingBoxDescent: 0,
+            } as TextMetrics;
+        }
+
+    }
+
+    let originalMeasureText: typeof factory.measureText;
+
+    beforeEach(() => {
+        mockCanvasContext();
+        originalMeasureText = factory.measureText;
+        factory.set({ measureText: fakeMeasureText });
+    });
+
+    afterEach(() => {
+        factory.set({ measureText: originalMeasureText });
+        vi.restoreAllMocks();
+    });
+
+    // The factory reports 10 units per char here against the context's 2, as node does against terminal.
+    test('Should measure through the bound context rather than the platform factory', () => {
+        const text = createText({
+            x: 0,
+            y: 10,
+            content: 'abcde',
+        });
+
+        (text as unknown as { context: Context }).context = new CellContext();
+
+        const box = text.getBoundingBox();
+
+        expect(box.right - box.left).toBe(10);
+        expect(box.bottom - box.top).toBe(4);
+    });
+
+    test('Should fall back to the platform factory when unbound', () => {
+        const text = createText({
+            x: 0,
+            y: 10,
+            content: 'abcde',
+        });
+
+        const box = text.getBoundingBox();
+
+        expect(box.right - box.left).toBe(50);
+        expect(box.bottom - box.top).toBe(12);
+    });
+
+    test('Should apply the element alignment when measuring through the context', () => {
+        const context = new CellContext();
+        const measure = vi.spyOn(context, 'measureText');
+
+        const text = createText({
+            x: 0,
+            y: 10,
+            content: 'abcde',
+            textAlign: 'center',
+            textBaseline: 'middle',
+        });
+
+        (text as unknown as { context: Context }).context = context;
+
+        text.getBoundingBox();
+
+        expect(measure).toHaveBeenCalledTimes(1);
+        expect(context.textAlign).toBe('start');
+        expect(context.textBaseline).toBe('alphabetic');
     });
 
 });

@@ -8,6 +8,7 @@ import {
 import type {
     Context,
     ContextExport,
+    Element,
     EventMap,
     Group,
     Renderer,
@@ -90,6 +91,10 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
+import type {
+    Disposable,
+} from '@ripl/utilities';
+
 import {
     typeIsArray,
     typeIsFunction,
@@ -134,6 +139,21 @@ const HIGHLIGHT_REST = Symbol('highlight-rest');
 
 interface HighlightHost {
     [HIGHLIGHT_REST]?: number;
+}
+
+/**
+ * The opacity an element is settling to, read from the target state a render stashed on `element.data`,
+ * or `undefined` when the element does not animate its opacity. Reading the target (rather than the
+ * instantaneous value) keeps a hover placed mid-fade-in from recording `0` as an element's rest.
+ */
+function targetOpacityOf(element: Element): number | undefined {
+    const target = (element.data as { opacity?: unknown } | null | undefined)?.opacity;
+
+    return typeIsNumber(target) ? target : undefined;
+}
+
+function highlightOwnersInclude(owners: string | string[], id: string): boolean {
+    return typeIsArray(owners) ? owners.includes(id) : owners === id;
 }
 
 /**
@@ -189,6 +209,8 @@ export class Chart<
     private _hiddenItems: Set<string> = new Set();
     private _highlightGroups: Array<{ group: Group;
         owners: string | string[]; }> = [];
+    private _highlightDisposers: Disposable[] = [];
+    private _activeHighlight: string | null = null;
 
     /** The rendering context the chart's scene draws into. */
     public get context(): Context {
@@ -536,10 +558,33 @@ export class Chart<
      * @param resolveId - Maps a group to the legend item id(s) it belongs to. Defaults to `group.id`.
      */
     protected registerHighlightGroups(groups: Group[], resolveId: (group: Group) => string | string[] = group => group.id) {
+        this._highlightDisposers.forEach(disposer => disposer.dispose());
+
         this._highlightGroups = groups.map(group => ({
             group,
             owners: resolveId(group),
         }));
+
+        this._highlightDisposers = this._highlightGroups.map(({ group }) => group.once('destroyed', () => {
+            this._highlightGroups = this._highlightGroups.filter(entry => entry.group !== group);
+            this._dropOrphanedHighlight();
+        }, { self: true }));
+
+        this._dropOrphanedHighlight();
+    }
+
+    /**
+     * Restores the chart when the highlighted group is gone. A destroyed element never fires
+     * `mouseleave`, so an exiting hovered segment would otherwise strand every other group dimmed.
+     */
+    private _dropOrphanedHighlight() {
+        const active = this._activeHighlight;
+
+        if (active === null || this._highlightGroups.some(({ owners }) => highlightOwnersInclude(owners, active))) {
+            return;
+        }
+
+        this.highlightSeries(null);
     }
 
     /**
@@ -549,11 +594,14 @@ export class Chart<
      *
      * Dims the leaf elements of each group rather than the group itself: a group's opacity does not
      * cascade multiplicatively, and the leaves carry no explicit `opacity` (so a group-level tween is
-     * a no-op; `element.interpolate` skips nil current values). Each leaf's rest opacity is captured
-     * once on the element (via a Symbol slot, like `applyHoverHighlight`), so hidden elements stay
-     * hidden and restoring returns to the true value.
+     * a no-op; `element.interpolate` skips nil current values). Each leaf's rest opacity is remembered
+     * on the element (via a Symbol slot, like `applyHoverHighlight`), tracking the target a render
+     * stashed on `.data` where there is one, so hidden elements stay hidden, an element caught
+     * mid-fade-in still restores to full, and restoring returns to the true value.
      */
     protected highlightSeries(id: string | null) {
+        this._activeHighlight = id;
+
         if (this._highlightGroups.length === 0) {
             return;
         }
@@ -561,19 +609,22 @@ export class Chart<
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         this._highlightGroups.forEach(({ group, owners }) => {
-            const active = id === null || (typeIsArray(owners) ? owners.includes(id) : owners === id);
+            const active = id === null || highlightOwnersInclude(owners, id);
 
             group.graph(false).forEach(element => {
                 const host = element as unknown as HighlightHost;
+                const target = targetOpacityOf(element);
 
-                if (host[HIGHLIGHT_REST] === undefined) {
-                    const rest = element.opacity ?? 1;
-                    host[HIGHLIGHT_REST] = rest;
-                    // Seed a concrete opacity so the transition below has a non-nil value to animate.
-                    element.opacity = rest;
+                if (target !== undefined) {
+                    host[HIGHLIGHT_REST] = target;
+                } else if (host[HIGHLIGHT_REST] === undefined) {
+                    host[HIGHLIGHT_REST] = element.opacity ?? 1;
                 }
 
                 const rest = host[HIGHLIGHT_REST]!;
+
+                // Seed a concrete opacity only where there is none, or a fade-in would snap to full.
+                element.opacity ??= rest;
 
                 this.renderer.transition(element, {
                     duration,
@@ -593,6 +644,8 @@ export class Chart<
 
     /** Destroys the chart, its scene, context, and cleans up all event subscriptions. */
     public destroy() {
+        this._highlightDisposers.forEach(disposer => disposer.dispose());
+        this._highlightDisposers = [];
         this.scene.destroy(true);
         super.destroy();
     }

@@ -142,6 +142,7 @@ export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     includeIgnoreFile(gitignorePath),
+
     {
         name: 'ripl/main',
         plugins: {
@@ -497,17 +498,23 @@ export default tseslint.config(
         },
     },
 
-    // Playground examples run inside the docs editor with `context`, `scene` and
-    // `renderer` injected into scope, so treat them as read-only globals.
+    // Playground examples run inside the docs editor with `context`, `scene`,
+    // `renderer` and (in 3D mode) `camera` injected into scope, so treat them as
+    // read-only globals.
     {
         name: 'ripl/playground-examples',
         files: ['apps/website/src/.vitepress/components/playground/examples/**/*.js'],
         languageOptions: {
             globals: {
+                camera: 'readonly',
                 context: 'readonly',
                 scene: 'readonly',
                 renderer: 'readonly',
             },
+        },
+        rules: {
+            // An example subclassing Shape3D is plain JavaScript, which has no accessibility modifiers to declare.
+            '@typescript-eslint/explicit-member-accessibility': 'off',
         },
     },
 

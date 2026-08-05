@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+    parseColor,
     parseHEX,
     parseHSL,
     parseHSLA,
@@ -48,6 +49,43 @@ describe('Color', () => {
             expect(green).toBe(0);
             expect(blue).toBe(255);
             expect(alpha).toBe(2 / 3);
+        });
+
+        test('Should parse a 3 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(1);
+        });
+
+        test('Should parse a 4 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c8');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(136 / 255);
+        });
+
+        test('Should resolve a shorthand HEX color through parseColor', () => {
+            expect(parseColor('#f00')).toEqual([255, 0, 0, 1]);
+        });
+
+        test('Should reject a HEX color of an unsupported length', () => {
+            expect(parseColor('#ff000')).toBeUndefined();
+            expect(parseColor('#ff')).toBeUndefined();
         });
 
         test('Should parse an RGB color to RGBA', () => {
@@ -292,6 +330,54 @@ describe('Color', () => {
             const hsl = serializeHSL(0, 0, 0, 1);
 
             expect(hsl).toBe('hsl(0, 0%, 0%)');
+        });
+
+    });
+
+    describe('Named colors', () => {
+
+        test('Should parse a named color to RGBA', () => {
+            expect(parseColor('red')).toEqual([255, 0, 0, 1]);
+            expect(parseColor('steelblue')).toEqual([70, 130, 180, 1]);
+        });
+
+        test('Should parse a named color regardless of case or surrounding space', () => {
+            expect(parseColor('REBECCAPURPLE')).toEqual([102, 51, 153, 1]);
+            expect(parseColor('  ReD  ')).toEqual([255, 0, 0, 1]);
+        });
+
+        test('Should parse "transparent" to a zero alpha', () => {
+            expect(parseColor('transparent')).toEqual([0, 0, 0, 0]);
+        });
+
+        test('Should return undefined for an unknown keyword', () => {
+            expect(parseColor('currentColor')).toBeUndefined();
+            expect(parseColor('notacolor')).toBeUndefined();
+        });
+
+        // A plain-object lookup reached Object.prototype, and `Number(Object) >> 16` is 0, so every
+        // inherited member resolved to opaque black.
+        test('Should return undefined for an Object.prototype member name', () => {
+            expect(parseColor('constructor')).toBeUndefined();
+            expect(parseColor('__proto__')).toBeUndefined();
+            expect(parseColor('hasOwnProperty')).toBeUndefined();
+            expect(parseColor('toString')).toBeUndefined();
+        });
+
+    });
+
+    describe('Zero alpha', () => {
+
+        // The alpha alternation had no integer branch, so the idiomatic fully-transparent form
+        // parsed as nothing at all and every backend painted it opaque.
+        test('Should parse an integer zero alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0)')).toEqual([255, 0, 0, 0]);
+            expect(parseColor('hsla(0, 100%, 50%, 0)')).toEqual([255, 0, 0, 0]);
+        });
+
+        test('Should still parse a fractional and a percentage alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0.5)')).toEqual([255, 0, 0, 0.5]);
+            expect(parseColor('rgba(255, 0, 0, 50%)')).toEqual([255, 0, 0, 0.5]);
         });
 
     });

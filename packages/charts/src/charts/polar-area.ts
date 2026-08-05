@@ -22,6 +22,7 @@ import type {
 
 import {
     normalizeSegmentLabels,
+    resolveSegmentPadWidth,
     resolveValueFormat,
 } from '../core/options';
 
@@ -85,8 +86,8 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
-/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.55;
+/** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link PolarAreaChart}. */
 export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
@@ -104,8 +105,15 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     innerRadius?: number;
     /** Maximum radius ratio (0 - 0.5). Defaults to 0.45 (similar to pie chart). */
     maxRadiusRatio?: number;
-    /** Padding angle between segments in radians. Defaults to 0.02 */
+    /**
+     * Padding angle between segments in radians, producing a wedge-shaped gap that widens with radius.
+     *
+     * @deprecated Use {@link PolarAreaChartOptions.padWidth} for a gap of constant width. Still honored
+     * when `padWidth` is not set, so existing charts keep their look.
+     */
     padAngle?: number;
+    /** Gap between adjacent segments, in logical pixels. Segments face each other with parallel edges a constant distance apart, rather than a wedge that widens with radius. Defaults to 2; pass 0 for touching segments. Takes precedence over the deprecated `padAngle`. */
+    padWidth?: number;
     /** Number of concentric grid rings. Defaults to 4 */
     levels?: number;
     /** Legend showing each segment. Shown by default (more than one segment); pass `false` to hide. */
@@ -158,6 +166,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
     private _groups: Group[] = [];
     private _gridGroup?: Group;
+    private _gridLabelGroup?: Group;
     private _gridRings: Circle[] = [];
     private _gridLabels: Text[] = [];
     private _gridLines: Line[] = [];
@@ -197,7 +206,15 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 zIndex: 0,
             });
 
+            // Value labels are read off a band of their own, so a translucent segment never shows through them.
+            this._gridLabelGroup = createGroup({
+                id: 'polar-grid-labels',
+                class: 'polar-grid',
+                zIndex: 1,
+            });
+
             this.scene.add(this._gridGroup);
+            this.scene.add(this._gridLabelGroup);
         }
 
         // --- Concentric rings ---
@@ -275,7 +292,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 },
             });
 
-            this._gridGroup!.add(label);
+            this._gridLabelGroup!.add(label);
 
             return label;
         });
@@ -354,7 +371,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         ];
 
         // Animate: staggered entry for new elements, smooth transition for updates
-        const allElements = this._gridGroup!.children;
+        const allElements = [
+            ...this._gridGroup!.children,
+            ...this._gridLabelGroup!.children,
+        ];
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({
@@ -385,6 +405,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 padAngle = 0.02,
                 levels = 4,
             } = this.options;
+
+            const padWidth = resolveSegmentPadWidth(this.options.padWidth, this.options.padAngle);
 
             if (!data.length) {
                 return Promise.resolve();
@@ -466,6 +488,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
+                    padWidth,
                     radius,
                     innerRadius: size * innerRadius,
                     item,
@@ -488,6 +511,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
+                    padWidth,
                     radius,
                     innerRadius,
                 } = item;
@@ -499,9 +523,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle: startAngle, // animate angle grow subtly
                     padAngle,
-                    stroke: color,
-                    fill: setColorAlpha(color, REST_ALPHA),
-                    lineWidth: 2,
+                    padWidth,
+                    fill: setColorAlpha(color, SEGMENT_REST_ALPHA),
                     radius: innerRadius, // animate radial growth
                     innerRadius,
                     data: {
@@ -511,7 +534,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 });
 
                 this._attachSegmentHover(segmentArc, {
-                    color,
                     value: item.value,
                     label,
                     key,
@@ -562,13 +584,14 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
+                    padWidth,
                 } = item;
 
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
                 const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? (arc.stroke as string);
+                const resolvedColor = item.color;
 
                 const arcData = {
                     cx,
@@ -578,14 +601,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
-                    stroke: resolvedColor,
-                    fill: setColorAlpha(resolvedColor, REST_ALPHA),
+                    fill: setColorAlpha(resolvedColor, SEGMENT_REST_ALPHA),
                 } as Partial<ArcState>;
 
+                arc.padWidth = padWidth;
                 arc.data = arcData;
 
                 this._attachSegmentHover(arc, {
-                    color: resolvedColor,
                     value: item.value,
                     label: item.label,
                     key: item.key,
@@ -696,11 +718,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         });
     }
 
-    private _attachSegmentHover(arc: Arc, segment: { color: string;
-        value: number;
+    private _attachSegmentHover(arc: Arc, segment: { value: number;
         label: string;
         key: string; }) {
-        const { color, value, label, key } = segment;
+        const { value, label, key } = segment;
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -724,10 +745,14 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 };
             },
             content: () => `${label}: ${formatValue(value)}`,
-            highlight: { fill: color },
-            restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
+            onEnter: point => {
+                this.highlightSeries(key);
+                this.emit('segmententer', payload(point));
+            },
+            onLeave: point => {
+                this.highlightSeries(null);
+                this.emit('segmentleave', payload(point));
+            },
             onClick: point => this.emit('segmentclick', payload(point)),
         });
     }

@@ -89,12 +89,23 @@ import {
 
 type EditorTab = 'code' | 'importmap';
 
-const GLOBALS_DTS = `
-declare const context: import('@ripl/web').Context;
-declare const scene: import('@ripl/web').Scene;
+// Mirrors the globals `getSetupCode` actually declares: only the 3D preamble builds a camera.
+function getGlobalsDts(mode: PlaygroundMode): string {
+    if (mode === '3d') {
+        return `
+declare const context: import('@ripl/3d').Context3D;
+declare const scene: import('@ripl/web').Scene<import('@ripl/3d').Context3D>;
 declare const renderer: import('@ripl/web').Renderer;
 declare const camera: import('@ripl/3d').Camera;
 `;
+    }
+
+    return `
+declare const context: import('@ripl/web').Context;
+declare const scene: import('@ripl/web').Scene;
+declare const renderer: import('@ripl/web').Renderer;
+`;
+}
 
 const props = defineProps<{
     modelValue: string;
@@ -127,6 +138,19 @@ const { isDark } = useData();
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- the whole lazily-imported module type has no top-level `import type` equivalent
 let monacoModule: typeof import('monaco-editor') | null = null;
+let globalsDisposable: { dispose: () => void } | null = null;
+
+function registerGlobals(mode: PlaygroundMode) {
+    if (!monacoModule) {
+        return;
+    }
+
+    globalsDisposable?.dispose();
+    globalsDisposable = monacoModule.typescript.javascriptDefaults.addExtraLib(
+        getGlobalsDts(mode),
+        'file:///globals.d.ts'
+    );
+}
 
 function loadExample(example: PlaygroundExample) {
     emit('load-example', {
@@ -227,10 +251,7 @@ async function initMonaco() {
         checkJs: false,
     });
 
-    monaco.typescript.javascriptDefaults.addExtraLib(
-        GLOBALS_DTS,
-        'file:///globals.d.ts'
-    );
+    registerGlobals(props.mode);
 
     try {
         const base = import.meta.env.BASE_URL || '/';
@@ -342,6 +363,8 @@ watch(() => props.modelValue, (value) => {
     }
 });
 
+watch(() => props.mode, registerGlobals);
+
 async function fetchAndRegisterTypes(pkg: string) {
     if (!monacoModule || typeLibDisposables.has(pkg)) {
         return;
@@ -432,6 +455,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     editorInstance.value?.dispose();
     importMapEditorInstance.value?.dispose();
+    globalsDisposable?.dispose();
 });
 </script>
 

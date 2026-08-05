@@ -1,4 +1,5 @@
 import {
+    afterEach,
     describe,
     expect,
     test,
@@ -12,7 +13,20 @@ import type {
 import {
     createElement,
     createGroup,
+    createRect,
 } from '../../src';
+
+import {
+    createContext,
+} from '@ripl/canvas';
+
+import {
+    mockCanvasContext,
+    mockCanvasState,
+    polyfillPath2D,
+} from '@ripl/test-utils';
+
+polyfillPath2D();
 
 /** Minimal context that records the group/render bracketing without a real backend. */
 function fakeContext() {
@@ -24,6 +38,20 @@ function fakeContext() {
         markRenderStart: vi.fn(),
         markRenderEnd: vi.fn(),
     } as unknown as Context;
+}
+
+/** A real canvas context over a stateful stub, so save/restore actually push and pop the paint. */
+function statefulCanvasContext() {
+    const stub = mockCanvasState(mockCanvasContext());
+    const host = document.createElement('div');
+
+    document.body.appendChild(host);
+
+    return {
+        stub,
+        host,
+        context: createContext(host),
+    };
 }
 
 describe('Group.render (scene-less)', () => {
@@ -90,6 +118,181 @@ describe('Group.render (scene-less)', () => {
         expect(context.pushGroup).toHaveBeenCalledWith(group);
         expect(context.popGroup).toHaveBeenCalledTimes(1);
         expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should close the group boundary when a child render throws', () => {
+        const context = fakeContext();
+        const child = createElement('rect', {});
+
+        vi.spyOn(child, 'render').mockImplementation(() => {
+            throw new Error('render failed');
+        });
+
+        const group = createGroup({ children: [child] });
+
+        expect(() => group.render(context)).toThrow('render failed');
+        expect(context.popGroup).toHaveBeenCalledTimes(1);
+        expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
+    });
+
+});
+
+describe('Group paint boundary', () => {
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+        vi.restoreAllMocks();
+    });
+
+    test('Should composite a leaf opacity under every ancestor group opacity', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const alphas: number[] = [];
+
+        stub.fill.mockImplementation(() => {
+            alphas.push(stub.globalAlpha);
+        });
+
+        const leaf = createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            fill: '#ff0000',
+            opacity: 0.5,
+        });
+
+        const outer = createGroup({
+            opacity: 0.5,
+            children: [
+                createGroup({
+                    opacity: 0.5,
+                    children: [leaf],
+                }),
+            ],
+        });
+
+        outer.render(context);
+
+        expect(alphas).toEqual([0.125]);
+
+        context.destroy();
+    });
+
+    test('Should resolve a group gradient against the group box, not the previously painted leaf', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const root = createGroup({
+            children: [
+                createRect({
+                    id: 'leaf',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#000000',
+                    zIndex: 0,
+                }),
+                createGroup({
+                    zIndex: 1,
+                    fill: 'linear-gradient(90deg, #ff0000 0%, #0000ff 100%)',
+                    children: [
+                        createRect({
+                            x: 200,
+                            y: 100,
+                            width: 100,
+                            height: 50,
+                        }),
+                    ],
+                }),
+            ],
+        });
+
+        stub.createLinearGradient.mockClear();
+
+        root.render(context);
+
+        expect(stub.createLinearGradient).toHaveBeenCalledTimes(1);
+        expect(stub.createLinearGradient.mock.calls[0]).toEqual([200, 125, 300, 125]);
+
+        context.destroy();
+    });
+
+    test('Should restore the previous render element when a group boundary closes', () => {
+        const {
+            context,
+        } = statefulCanvasContext();
+
+        const leaf = createRect({
+            id: 'leaf',
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            fill: '#000000',
+        });
+
+        const group = createGroup({ children: [leaf] });
+
+        context.pushGroup(group);
+
+        expect(context.currentRenderElement).toBe(group);
+
+        context.popGroup();
+
+        expect(context.currentRenderElement).toBeUndefined();
+
+        context.destroy();
+    });
+
+    test('Should restore the accumulated alpha for a sibling that sets no opacity', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const alphas: number[] = [];
+
+        stub.fill.mockImplementation(() => {
+            alphas.push(stub.globalAlpha);
+        });
+
+        const group = createGroup({
+            opacity: 0.5,
+            children: [
+                createRect({
+                    id: 'own',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#ff0000',
+                    opacity: 0.5,
+                    zIndex: 0,
+                }),
+                createRect({
+                    id: 'none',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#00ff00',
+                    zIndex: 1,
+                }),
+            ],
+        });
+
+        group.render(context);
+
+        expect(alphas).toEqual([0.25, 0.5]);
+
+        context.destroy();
     });
 
 });

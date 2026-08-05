@@ -4,19 +4,35 @@
         class="ripl-input-text"
         :value="modelValue"
         :placeholder="placeholder"
-        @change="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @change="onChange"
+        @input="onInput"
     >
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+const props = defineProps<{
     modelValue: string;
     placeholder?: string;
+    /** Emit on every keystroke instead of on blur or Enter, for an input driving a live preview. */
+    live?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     'update:modelValue': [value: string];
 }>();
+
+function onInput(event: Event) {
+    if (props.live) {
+        emit('update:modelValue', (event.target as HTMLInputElement).value);
+    }
+}
+
+// A live input has already emitted this value, and re-emitting on blur would clobber an external edit.
+function onChange(event: Event) {
+    if (!props.live) {
+        emit('update:modelValue', (event.target as HTMLInputElement).value);
+    }
+}
 </script>
 
 <style scoped>

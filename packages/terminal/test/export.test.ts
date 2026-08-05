@@ -3,6 +3,7 @@ import {
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
@@ -92,6 +93,46 @@ describe('Terminal export', () => {
             expect(image.data[3]).toBe(0);
         });
 
+        // The loop read only the dot grid, so every glyph placed by setChar — axis labels, legend
+        // labels, titles — was missing from the exported image while toString() showed them.
+        test('Should render a character cell so glyphs survive the export', () => {
+            const rasterizer = new BrailleRasterizer(4, 1);
+
+            rasterizer.setChar(0, 0, 'X', '\x1b[38;2;10;20;30m');
+
+            const image = rasterizer.toImageData();
+
+            expect(image.data[0]).toBe(10);
+            expect(image.data[1]).toBe(20);
+            expect(image.data[2]).toBe(30);
+            expect(image.data[3]).toBe(255);
+        });
+
+        test('Should fill the whole cell for a glyph', () => {
+            const rasterizer = new BrailleRasterizer(4, 1);
+
+            rasterizer.setChar(0, 0, 'X', '\x1b[38;2;10;20;30m');
+
+            const image = rasterizer.toImageData();
+            const alphas = [];
+
+            for (let y = 0; y < 4; y++) {
+                for (let x = 0; x < 2; x++) {
+                    alphas.push(image.data[(y * image.width + x) * 4 + 3]);
+                }
+            }
+
+            expect(alphas.every(alpha => alpha === 255)).toBe(true);
+        });
+
+        test('Should leave a whitespace glyph transparent', () => {
+            const rasterizer = new BrailleRasterizer(4, 1);
+
+            rasterizer.setChar(0, 0, ' ', '\x1b[38;2;10;20;30m');
+
+            expect(rasterizer.toImageData().data[3]).toBe(0);
+        });
+
     });
 
     describe('TerminalContext.export', () => {
@@ -111,6 +152,65 @@ describe('Terminal export', () => {
 
             expect(image.width).toBeGreaterThan(0);
             expect(image.height).toBeGreaterThan(0);
+        });
+
+        test('Should mint the URL once so release has a single handle to revoke', () => {
+            const context = createContext(createMockOutput());
+            const exported = context.export();
+
+            expect(exported.toURL()).toBe(exported.toURL());
+        });
+
+        test('Should expose a release hook', () => {
+            const context = createContext(createMockOutput());
+            const exported = context.export();
+
+            exported.toURL();
+
+            expect(exported.release).toBeTypeOf('function');
+            expect(() => exported.release?.()).not.toThrow();
+        });
+
+        test('Should revoke the object URL it handed out', () => {
+            const dataURL = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,AA==');
+            const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:terminal-export');
+            const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+            const context = createContext(createMockOutput());
+            const exported = context.export();
+
+            expect(exported.toURL()).toBe('blob:terminal-export');
+
+            exported.release?.();
+
+            expect(revoke).toHaveBeenCalledWith('blob:terminal-export');
+
+            dataURL.mockRestore();
+            create.mockRestore();
+            revoke.mockRestore();
+        });
+
+        test('Should not revoke a data URL fallback', () => {
+            const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+            const context = createContext(createMockOutput());
+            const exported = context.export();
+
+            expect(exported.toURL()).toMatch(/^data:/);
+
+            exported.release?.();
+
+            expect(revoke).not.toHaveBeenCalled();
+
+            revoke.mockRestore();
+        });
+
+        test('Should tolerate repeated release calls', () => {
+            const context = createContext(createMockOutput());
+            const exported = context.export();
+
+            exported.toURL();
+            exported.release?.();
+
+            expect(() => exported.release?.()).not.toThrow();
         });
 
     });

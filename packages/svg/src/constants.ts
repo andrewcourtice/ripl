@@ -17,15 +17,30 @@ export const SVG_STYLE_MAP = {
         right: 'end',
         center: 'middle',
     } as Record<TextAlignment, string>,
-    alignmentBaseline: {
-        top: 'text-before-edge',
-        middle: 'middle',
-        bottom: 'text-after-edge',
-    } as Record<TextBaseline, string>,
-    // Browsers only honor `dominant-baseline` on `<text>`; `alignment-baseline` applies to `<tspan>`/`<textPath>`.
+    // Browsers only honor `dominant-baseline` on `<text>`; `alignment-baseline` never reaches a node this backend writes.
     dominantBaseline: {
         top: 'text-before-edge',
         middle: 'central',
         bottom: 'text-after-edge',
     } as Record<TextBaseline, string>,
 } as Record<keyof Styles, Record<string, string>>;
+
+/** Maps the canvas composite operations that have a CSS `mix-blend-mode` equivalent to that blend mode. Operations with no equivalent (`source-over`, `destination-out`, `xor`, `copy`) are absent. */
+export const SVG_BLEND_MODES: Record<string, string> = {
+    multiply: 'multiply',
+    screen: 'screen',
+    overlay: 'overlay',
+    darken: 'darken',
+    lighten: 'lighten',
+    'color-dodge': 'color-dodge',
+    'color-burn': 'color-burn',
+    'hard-light': 'hard-light',
+    'soft-light': 'soft-light',
+    difference: 'difference',
+    exclusion: 'exclusion',
+    hue: 'hue',
+    saturation: 'saturation',
+    color: 'color',
+    luminosity: 'luminosity',
+    lighter: 'plus-lighter',
+};

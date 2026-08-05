@@ -44,6 +44,34 @@ describe('createFrameBuffer', () => {
         expect(second).toHaveBeenCalledTimes(1);
     });
 
+    test('Should cancel a pending frame', () => {
+        const buffer = createFrameBuffer();
+        const callback = vi.fn();
+
+        buffer(callback);
+        buffer.cancel();
+        vi.advanceTimersToNextTimer();
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    test('Should schedule again after a cancel', () => {
+        const buffer = createFrameBuffer();
+        const callback = vi.fn();
+
+        buffer.cancel();
+        buffer(callback);
+        vi.advanceTimersToNextTimer();
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should tolerate a cancel with nothing pending', () => {
+        const buffer = createFrameBuffer();
+
+        expect(() => buffer.cancel()).not.toThrow();
+    });
+
     test('Should allow multiple sequential calls after frames complete', () => {
         const buffer = createFrameBuffer();
         const first = vi.fn();

@@ -23,19 +23,31 @@ export class SVGText extends ContextText implements SVGContextElement {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
+        const attributes: Record<string, string> = {
+            get x() {
+                return _this.x.toString();
+            },
+            get y() {
+                return _this.y.toString();
+            },
+        };
+
+        // `textLength` is SVG's only fit-to-width control, and the key must stay absent when unset so the diff can drop a stale one.
+        if (options.maxWidth !== undefined) {
+            attributes.lengthAdjust = 'spacingAndGlyphs';
+
+            Object.defineProperty(attributes, 'textLength', {
+                enumerable: true,
+                get: () => (_this.maxWidth ?? options.maxWidth)!.toString(),
+            });
+        }
+
         this.definition = {
             tag: 'text',
             styles: {
                 fill: 'none',
             },
-            attributes: {
-                get x() {
-                    return _this.x.toString();
-                },
-                get y() {
-                    return _this.y.toString();
-                },
-            },
+            attributes,
             get textContent() {
                 return _this.pathData ? undefined : _this.content;
             },

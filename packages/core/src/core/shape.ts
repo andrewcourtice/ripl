@@ -18,14 +18,9 @@ import {
     matrixInvert,
 } from '../math';
 
-/** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
-export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
-
-    constructor(type: string, options: ElementOptions<TState>) {
-        super(type, options);
-    }
-
-}
+import {
+    typeIsNil,
+} from '@ripl/utilities';
 
 /** Options for a 2D shape, adding automatic fill/stroke and clipping controls. */
 export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
@@ -48,6 +43,25 @@ const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPa
     stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
     fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
 };
+
+/** Line style a backend's `isPointInStroke` reads off the context to decide the stroke's extent. */
+const STROKE_HIT_PROPERTIES = [
+    'lineCap',
+    'lineDash',
+    'lineDashOffset',
+    'lineJoin',
+    'lineWidth',
+    'miterLimit',
+] as const;
+
+/** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
+export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+
+    constructor(type: string, options: ElementOptions<TState>) {
+        super(type, options);
+    }
+
+}
 
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
@@ -82,6 +96,20 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         this.cachePath = cachePath;
     }
 
+    private _withStrokeStyle<TResult>(context: Context, body: () => TResult): TResult {
+        return context.layer(() => {
+            STROKE_HIT_PROPERTIES.forEach(key => {
+                const value = this.getComputedValue(key as unknown as keyof TState);
+
+                if (!typeIsNil(value)) {
+                    (context as unknown as Record<string, unknown>)[key] = value;
+                }
+            });
+
+            return body();
+        });
+    }
+
     protected get hitPaths(): ContextPath[] {
         return this.path
             ? [this.path]
@@ -107,12 +135,10 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
-                // The point is in device pixels but the world transform is logical, so scale by DPR.
-                const dpr = context.scaleDPR(1);
-                const [localX, localY] = matrixApplyToPoint(inverse, [x / dpr, y / dpr]);
+                // The point is in surface space but the world transform is logical, so round-trip it.
+                const local = matrixApplyToPoint(inverse, context.toLogicalPoint(x, y));
 
-                x = localX * dpr;
-                y = localY * dpr;
+                [x, y] = context.toSurfacePoint(local[0], local[1]);
             }
         }
 
@@ -125,15 +151,14 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             context.isPointInPath(path, x, y)
         ));
 
-        if (!isPointer) {
-            return isAnyIntersecting();
-        }
+        const hitTest = isPointer
+            ? POINTER_EVENT_HIT_TESTS[this.pointerEvents]
+            : undefined;
 
-        const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
-
-        return hitTest
+        // `isPointInStroke` strokes with the current line style, which the frame's trailing restore rolled back.
+        return this._withStrokeStyle(context, () => (hitTest
             ? paths.some(path => hitTest(context, path, x, y))
-            : isAnyIntersecting();
+            : isAnyIntersecting()));
     }
 
     /** Renders this shape, reusing its cached path while unchanged (else creating and tracing a new one), then automatically applying fill/stroke or clipping. */

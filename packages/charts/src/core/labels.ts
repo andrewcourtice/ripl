@@ -47,6 +47,18 @@ export interface DataLabelSpec {
     offset?: number;
 }
 
+/** Resolved placement for a data label: the offset position and the text alignment that anchors it. */
+export interface DataLabelLayout {
+    /** The x coordinate of the label, offset from the mark along the anchor direction. */
+    x: number;
+    /** The y coordinate of the label, offset from the mark along the anchor direction. */
+    y: number;
+    /** Horizontal text alignment that keeps the label text anchored toward the mark. */
+    textAlign: TextAlignment;
+    /** Vertical text baseline that keeps the label text anchored toward the mark. */
+    textBaseline: TextBaseline;
+}
+
 /** Per-anchor offset direction (multiplied by `offset`) and text alignment for data labels. */
 const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     dx: number;
@@ -80,17 +92,17 @@ const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     },
 };
 
-/** Resolved placement for a data label: the offset position and the text alignment that anchors it. */
-export interface DataLabelLayout {
-    /** The x coordinate of the label, offset from the mark along the anchor direction. */
-    x: number;
-    /** The y coordinate of the label, offset from the mark along the anchor direction. */
-    y: number;
-    /** Horizontal text alignment that keeps the label text anchored toward the mark. */
-    textAlign: TextAlignment;
-    /** Vertical text baseline that keeps the label text anchored toward the mark. */
-    textBaseline: TextBaseline;
-}
+/**
+ * Shared segment-label style constants. Every chart routes its segment labels through these so the
+ * appearance is identical across chart types **and** across the Canvas and SVG contexts. The
+ * cross-context inconsistency this fixes came from labels that omitted `font`, leaving each backend
+ * to fall back to its own default, so always set an explicit font.
+ */
+export const SEGMENT_LABEL_FONT = '600 11px sans-serif';
+/** Fill for labels drawn inside a segment (on top of the filled shape). */
+export const SEGMENT_LABEL_INSIDE_FILL = '#ffffff';
+/** Fill for labels drawn outside a segment (on the chart background). */
+export const SEGMENT_LABEL_OUTSIDE_FILL = '#333333';
 
 /** Resolves the anchored position and text alignment for a data label. */
 export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>): DataLabelLayout {
@@ -106,18 +118,6 @@ export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'an
 }
 
 // Segment labels (pie, polar-area, treemap, funnel, sunburst)
-
-/**
- * Shared segment-label style constants. Every chart routes its segment labels through these so the
- * appearance is identical across chart types **and** across the Canvas and SVG contexts. The
- * cross-context inconsistency this fixes came from labels that omitted `font`, leaving each backend
- * to fall back to its own default, so always set an explicit font.
- */
-export const SEGMENT_LABEL_FONT = '600 11px sans-serif';
-/** Fill for labels drawn inside a segment (on top of the filled shape). */
-export const SEGMENT_LABEL_INSIDE_FILL = '#ffffff';
-/** Fill for labels drawn outside a segment (on the chart background). */
-export const SEGMENT_LABEL_OUTSIDE_FILL = '#333333';
 
 /** Describes a single segment label to render. */
 export interface SegmentLabelSpec {

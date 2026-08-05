@@ -1,4 +1,14 @@
 import {
+    ANSI_ERASE_DISPLAY_END,
+    ANSI_ERASE_LINE_END,
+    ANSI_TRUECOLOR_REGEX,
+    BRAILLE_ALL_DOTS,
+    BRAILLE_BASE,
+    BRAILLE_DOT_MAP,
+    DEFAULT_RGB,
+} from './constants';
+
+import {
     ANSI_RESET,
 } from './color';
 
@@ -28,35 +38,11 @@ export interface Rasterizer {
     toImageData(): ImageData;
 }
 
-/**
- * Braille dot layout per cell (2 wide × 4 tall):
- *
- * ```
- * [0,0] [1,0]    bit 0  bit 3
- * [0,1] [1,1]    bit 1  bit 4
- * [0,2] [1,2]    bit 2  bit 5
- * [0,3] [1,3]    bit 6  bit 7
- * ```
- */
-const BRAILLE_BASE = 0x2800;
-
-const BRAILLE_DOT_MAP = [
-    [0x01, 0x08],
-    [0x02, 0x10],
-    [0x04, 0x20],
-    [0x40, 0x80],
-];
-
 /** Each braille cell is 2 pixels wide and 4 pixels tall. */
 export const BRAILLE_CELL_WIDTH = 2;
 
 /** Each braille cell is 2 pixels wide and 4 pixels tall. */
 export const BRAILLE_CELL_HEIGHT = 4;
-
-/** Fallback RGB used when a cell has no stored color (matches a light terminal foreground). */
-const DEFAULT_RGB: [number, number, number] = [230, 230, 230];
-
-const ANSI_TRUECOLOR_REGEX = /38;2;(\d+);(\d+);(\d+)/;
 
 /** Parses an ANSI truecolor foreground escape (`\x1b[38;2;r;g;bm`) back to an RGB tuple. */
 function parseAnsiColor(ansi: string): [number, number, number] {
@@ -149,10 +135,15 @@ export class BrailleRasterizer implements Rasterizer {
         this._chars = new Map();
     }
 
-    /** Sets the braille dot covering pixel (x, y) and stores its color; out-of-bounds pixels are ignored. */
+    /** Sets the braille dot covering pixel (x, y) and stores its color; out-of-bounds and non-finite pixels are ignored. */
     public setPixel(x: number, y: number, color: string): void {
         const px = Math.round(x);
         const py = Math.round(y);
+
+        // NaN passes every comparison below, and then indexes the dot map out of range.
+        if (!Number.isFinite(px) || !Number.isFinite(py)) {
+            return;
+        }
 
         if (px < 0 || py < 0 || px >= this.pixelWidth || py >= this.pixelHeight) {
             return;
@@ -194,16 +185,22 @@ export class BrailleRasterizer implements Rasterizer {
         let output = '';
         let lastColor = '';
 
+        // An uncolored cell must actively reset, or it inherits the previous cell's SGR forever.
+        const setColor = (color: string) => {
+            if (color === lastColor) {
+                return;
+            }
+
+            output += color || ANSI_RESET;
+            lastColor = color;
+        };
+
         for (let col = 0; col < this._cols; col++) {
             const cellIndex = row * this._cols + col;
             const charEntry = this._chars.get(cellIndex);
 
             if (charEntry) {
-                if (charEntry.color !== lastColor) {
-                    output += charEntry.color;
-                    lastColor = charEntry.color;
-                }
-
+                setColor(charEntry.color);
                 output += charEntry.char;
                 continue;
             }
@@ -211,22 +208,12 @@ export class BrailleRasterizer implements Rasterizer {
             const dotBits = this._dots[cellIndex];
 
             if (dotBits === 0) {
-                if (lastColor) {
-                    output += ANSI_RESET;
-                    lastColor = '';
-                }
-
+                setColor('');
                 output += ' ';
                 continue;
             }
 
-            const color = this._colors[cellIndex];
-
-            if (color !== lastColor) {
-                output += color;
-                lastColor = color;
-            }
-
+            setColor(this._colors[cellIndex]);
             output += String.fromCharCode(BRAILLE_BASE + dotBits);
         }
 
@@ -253,7 +240,11 @@ export class BrailleRasterizer implements Rasterizer {
         return output;
     }
 
-    /** Serializes the grid to a string, including ANSI color and cursor codes unless `ansi` is disabled. */
+    /**
+     * Serializes the grid to a string, including ANSI color and cursor codes unless `ansi` is
+     * disabled. The ANSI form erases past the end of every row and past the last row, so a grid that
+     * has shrunk since the previous frame does not leave the old output stranded on screen.
+     */
     public serialize(options?: SerializeOptions): string {
         const ansi = options?.ansi ?? true;
 
@@ -270,14 +261,19 @@ export class BrailleRasterizer implements Rasterizer {
         let output = '';
 
         for (let row = 0; row < this._rows; row++) {
-            // Position cursor at the start of each row (1-indexed)
-            output += `\x1b[${row + 1};1H${this._serializeRow(row)}`;
+            // Position cursor at the start of each row (1-indexed), then erase the columns beyond it.
+            output += `\x1b[${row + 1};1H${this._serializeRow(row)}${ANSI_ERASE_LINE_END}`;
         }
 
-        return output;
+        // Nothing else overwrites rows the grid no longer covers, so a shrink would strand them.
+        return `${output}\x1b[${this._rows + 1};1H${ANSI_ERASE_DISPLAY_END}`;
     }
 
-    /** Rasterizes the grid to environment-agnostic RGBA pixel data. */
+    /**
+     * Rasterizes the grid to environment-agnostic RGBA pixel data. A glyph occupies a whole cell,
+     * which is 2×4 pixels here — far too small for a legible letterform — so each one rasterizes as
+     * a filled block. Text reads as a solid bar rather than disappearing from the image entirely.
+     */
     public toImageData(): ImageData {
         const width = this.pixelWidth;
         const height = this.pixelHeight;
@@ -286,6 +282,16 @@ export class BrailleRasterizer implements Rasterizer {
         for (let row = 0; row < this._rows; row++) {
             for (let col = 0; col < this._cols; col++) {
                 const cellIndex = row * this._cols + col;
+                const charEntry = this._chars.get(cellIndex);
+
+                if (charEntry) {
+                    if (charEntry.char.trim()) {
+                        plotBrailleCell(data, width, col, row, BRAILLE_ALL_DOTS, parseAnsiColor(charEntry.color));
+                    }
+
+                    continue;
+                }
+
                 const dotBits = this._dots[cellIndex];
 
                 if (dotBits === 0) {

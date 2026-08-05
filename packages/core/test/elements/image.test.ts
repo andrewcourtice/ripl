@@ -1,12 +1,15 @@
 import {
+    afterEach,
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
     createImage,
     elementIsImage,
+    interpolateImage,
 } from '../../src';
 
 function createMockImage(width: number = 100, height: number = 50): HTMLImageElement {
@@ -124,6 +127,27 @@ describe('elementIsImage', () => {
     test('Should return false for non-ImageElement values', () => {
         expect(elementIsImage({})).toBe(false);
         expect(elementIsImage(null)).toBe(false);
+    });
+
+});
+
+describe('interpolateImage', () => {
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    // A runtime without the DOM image constructors reached `instanceof` before any guard could run.
+    test('Should size a source on a runtime that declares no image constructors', () => {
+        const source = {} as CanvasImageSource;
+
+        vi.stubGlobal('HTMLImageElement', undefined);
+        vi.stubGlobal('HTMLCanvasElement', undefined);
+        vi.stubGlobal('SVGImageElement', undefined);
+        vi.stubGlobal('HTMLVideoElement', undefined);
+        vi.stubGlobal('ImageBitmap', undefined);
+
+        expect(() => interpolateImage(source, source)).not.toThrow();
     });
 
 });

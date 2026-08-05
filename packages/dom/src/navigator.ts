@@ -16,6 +16,7 @@ import {
 } from '@ripl/utilities';
 
 import {
+    hasWindow,
     onDOMElementResize,
     onDOMEvent,
 } from './dom';
@@ -94,6 +95,9 @@ export class DOMNavigator extends Navigator {
     private _brushing = false;
     private _panning = false;
     private _pinchDistance = 0;
+    private _originDirty = true;
+    private _originLeft = 0;
+    private _originTop = 0;
 
     constructor(context: Context, options?: DOMNavigatorOptions) {
         super(options);
@@ -108,7 +112,20 @@ export class DOMNavigator extends Navigator {
 
         this._syncViewport();
 
-        this.retain(onDOMElementResize(this._element, () => this._syncViewport()), VIEWPORT_KEY);
+        this.retain(onDOMElementResize(this._element, () => {
+            this._originDirty = true;
+            this._syncViewport();
+        }), VIEWPORT_KEY);
+
+        if (hasWindow) {
+            // Capture phase: a scroll event doesn't bubble, so an ancestor scroll container is only visible here.
+            this.retain(onDOMEvent(window, 'scroll', () => this._originDirty = true, {
+                capture: true,
+                passive: true,
+            }), VIEWPORT_KEY);
+
+            this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), VIEWPORT_KEY);
+        }
 
         if (options?.interactions) {
             this._attachInteractions(options.interactions);
@@ -124,15 +141,30 @@ export class DOMNavigator extends Navigator {
         };
     }
 
+    /** Re-reads where the element sits in the viewport, at most once per invalidation. */
+    private _refreshOrigin(): void {
+        if (!this._originDirty) {
+            return;
+        }
+
+        ({
+            left: this._originLeft,
+            top: this._originTop,
+        } = this._element.getBoundingClientRect());
+
+        this._originDirty = false;
+    }
+
     private _localPoint(event: {
         clientX: number;
         clientY: number;
     }): Point {
-        const rect = this._element.getBoundingClientRect();
+        // A rect read per `pointermove` flushes layout mid-gesture, which is the frame budget gone.
+        this._refreshOrigin();
 
         return [
-            event.clientX - rect.left,
-            event.clientY - rect.top,
+            event.clientX - this._originLeft,
+            event.clientY - this._originTop,
         ];
     }
 
@@ -150,6 +182,11 @@ export class DOMNavigator extends Navigator {
         const zoom = resolveInteraction(config.zoom, fallback);
         const pan = resolveInteraction(config.pan, fallback);
         const brush = resolveInteraction(config.brush, fallback);
+
+        // `{}` and `{ zoom: false }` are both truthy; suppressing native scroll for no gesture is not a trade.
+        if (!zoom.enabled && !pan.enabled && !brush.enabled) {
+            return;
+        }
 
         this._previousTouchAction = this._element.style.touchAction;
         this._element.style.touchAction = 'none';
@@ -189,6 +226,9 @@ export class DOMNavigator extends Navigator {
         this.retain(onDOMEvent(this._element, 'pointerdown', event => {
             this._pointers.set(event.pointerId, this._localPoint(event));
 
+            // Every tracked pointer, not just the gesturing ones: an uncaptured release off the element leaks its entry.
+            this._element.setPointerCapture?.(event.pointerId);
+
             if (this._pointers.size === 2) {
                 this._pinchDistance = this._pointerDistance();
                 this._panning = false;
@@ -211,8 +251,6 @@ export class DOMNavigator extends Navigator {
             if (this._panning) {
                 this._setCursor('grabbing');
             }
-
-            this._element.setPointerCapture?.(event.pointerId);
         }), INTERACTION_KEY);
 
         this.retain(onDOMEvent(this._element, 'pointermove', event => {
@@ -254,6 +292,17 @@ export class DOMNavigator extends Navigator {
             this._brushing = false;
             this._panning = false;
             this._dragStart = null;
+            this._pinchDistance = 0;
+
+            // A pinch that loses a finger has to hand the survivor back to panning, not strand it mid-gesture.
+            if (this._pointers.size === 1 && pan.enabled) {
+                this._panning = true;
+                this._dragStart = [...this._pointers.values()][0];
+                this._setCursor('grabbing');
+
+                return;
+            }
+
             this._setCursor('grab');
         };
 

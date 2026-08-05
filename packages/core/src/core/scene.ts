@@ -55,6 +55,12 @@ export interface RenderInstruction {
     element: Element;
 }
 
+/** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
+export interface SceneOptions extends GroupOptions {
+    /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
+    renderOnResize?: boolean;
+}
+
 /** Render-instruction dispatch keyed by instruction type: open a group boundary, draw a leaf, or close a group boundary. */
 const RENDER_OPERATIONS: Record<RenderInstructionType, (context: Context, element: Element) => void> = {
     push: (context, element) => context.pushGroup(element),
@@ -64,12 +70,6 @@ const RENDER_OPERATIONS: Record<RenderInstructionType, (context: Context, elemen
     },
     draw: (context, element) => element.render(context),
 };
-
-/** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
-export interface SceneOptions extends GroupOptions {
-    /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
-    renderOnResize?: boolean;
-}
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat instruction stream for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
@@ -135,7 +135,8 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             throw new Error('Scene requires a Context instance or factory.createContext to be set. Use @ripl/web or call factory.set() with a createContext implementation.');
         }
 
-        const font = !typeIsNil(globalThis.HTMLElement) && context.element instanceof globalThis.HTMLElement
+        // `Element`, not `HTMLElement`: an SVGSVGElement is not one, so SVG scenes inherited nothing.
+        const font = !typeIsNil(globalThis.Element) && context.element instanceof globalThis.Element
             ? factory.getComputedStyle(context.element).font
             : undefined;
 
@@ -148,6 +149,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this._rebuild();
 
         const requestFrame = createFrameBuffer();
+
+        // A rebuild scheduled by the last mutation must not run against a destroyed scene.
+        this.retain({ dispose: requestFrame.cancel });
 
         const rebuild = () => {
             this._rebuild();

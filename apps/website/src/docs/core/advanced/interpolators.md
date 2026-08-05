@@ -56,7 +56,7 @@ interpolate(0.5); // 'rgba(157, 67, 162, 1)' (midpoint)
 interpolate(1); // 'rgba(255, 0, 110, 1)'
 ```
 
-Color interpolation works across different color formats, so you can interpolate from a hex color to an RGB color seamlessly.
+Color interpolation works across different color formats, so you can interpolate from a hex color to an RGB color — or from a CSS named color such as `red` to either — seamlessly. Anything `parseColor` cannot resolve (`currentColor`, say) falls back to a hard step at the halfway point.
 
 ### Any Interpolation
 
@@ -192,7 +192,7 @@ circle.radius = interp(t);
 
 ### Color
 
-Interpolates between CSS color strings by parsing to RGBA, interpolating each channel independently, and serializing back.
+Interpolates between CSS color strings by parsing to RGBA, interpolating each channel independently, and serializing back. Named colors are parsed like any other format, so `interpolateColor('red', 'blue')` tweens rather than stepping.
 
 :::tabs
 == Code

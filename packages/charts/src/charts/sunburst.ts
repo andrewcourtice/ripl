@@ -16,6 +16,7 @@ import type {
 } from '../core/options';
 
 import {
+    DEFAULT_SEGMENT_PAD_WIDTH,
     resolveValueFormat,
 } from '../core/options';
 
@@ -61,8 +62,8 @@ import {
     numberSum,
 } from '@ripl/utilities';
 
-/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.65;
+/** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** A node in a sunburst hierarchy with optional nested children and an optional typed datum. */
 export interface SunburstNode<TData = unknown> {
@@ -84,6 +85,8 @@ export interface SunburstNode<TData = unknown> {
 export interface SunburstChartOptions<TData = unknown> extends BaseChartOptions {
     /** The root nodes of the hierarchy to render as concentric rings. */
     data: SunburstNode<TData>[];
+    /** Gap between adjacent segments, in logical pixels. Segments face each other with parallel edges a constant distance apart, rather than a wedge that widens with radius. Defaults to 2; pass 0 for touching segments. */
+    padWidth?: number;
     /** Legend configuration, listing the top-level nodes. */
     legend?: ChartLegendInput;
     /** Format applied to node values shown as text (e.g. tooltips). */
@@ -206,7 +209,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
     public async render() {
         return super.render(async (scene, renderer) => {
-            const { data } = this.options;
+            const { data, padWidth = DEFAULT_SEGMENT_PAD_WIDTH } = this.options;
 
             const colorGenerator = this.colorGenerator;
 
@@ -262,7 +265,6 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             const entryGroups = entries.map(arc => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
                 const outerRadius = innerRadius + ringWidth - 2;
-                const padAngle = 0.02;
 
                 const segment = createArc({
                     id: `${arc.id}-arc`,
@@ -272,10 +274,8 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                     endAngle: arc.startAngle,
                     radius: 0,
                     innerRadius: 0,
-                    padAngle,
-                    fill: setColorAlpha(arc.color, REST_ALPHA),
-                    stroke: arc.color,
-                    lineWidth: 1,
+                    padWidth,
+                    fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     data: {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
@@ -297,6 +297,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 const segment = group.query('arc') as Arc;
 
                 if (segment) {
+                    segment.padWidth = padWidth;
                     segment.data = {
                         cx,
                         cy,
@@ -304,8 +305,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: setColorAlpha(arc.color, REST_ALPHA),
-                        stroke: arc.color,
+                        fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     } as Partial<ArcState>;
 
                     this._attachSegmentHover(segment, arc);
@@ -328,7 +328,11 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 node.children?.forEach(child => assignRoot(child, rootId));
             };
             data.forEach(node => assignRoot(node, node.id));
-            this.registerHighlightGroups(this._groups, group => rootOf.get(group.id) ?? group.id);
+            // Namespaced so a root segment's own owner cannot collide with the series owner of its subtree.
+            this.registerHighlightGroups(this._groups, group => [
+                `series:${rootOf.get(group.id) ?? group.id}`,
+                `node:${group.id}`,
+            ]);
 
             // Animate entries
             const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
@@ -351,6 +355,11 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
             return Promise.all([entriesTransition, updatesTransition]);
         });
+    }
+
+    /** Legend items are top-level nodes, so a legend hover addresses the whole branch by its series owner. */
+    protected override highlightSeries(id: string | null) {
+        super.highlightSeries(id === null ? null : `series:${id}`);
     }
 
     private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
@@ -378,10 +387,14 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 };
             },
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
-            highlight: { fill: arc.color },
-            restore: { fill: setColorAlpha(arc.color, REST_ALPHA) },
-            onEnter: point => this.emit('nodeenter', payload(point)),
-            onLeave: point => this.emit('nodeleave', payload(point)),
+            onEnter: point => {
+                super.highlightSeries(`node:${arc.id}`);
+                this.emit('nodeenter', payload(point));
+            },
+            onLeave: point => {
+                super.highlightSeries(null);
+                this.emit('nodeleave', payload(point));
+            },
             onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
