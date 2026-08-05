@@ -9,18 +9,35 @@ import type {
 
 import type {
     Context,
+    ContextPath,
 } from '../context';
 
 import {
     Box,
+    getPadAngleAtRadius,
     getThetaPoint,
+    HALF_PI,
+    TAU,
 } from '../math';
 
 import {
     typeIsNil,
 } from '@ripl/utilities';
 
-/** State interface for an arc element, defining center, angles, radii, pad angle, and border radius. */
+/** Pad-trimmed sector geometry a rounded annular sector is traced from. */
+interface ArcSector {
+    cx: number;
+    cy: number;
+    radius: number;
+    innerRadius: number;
+    startAngle: number;
+    endAngle: number;
+    halfGap: number;
+    outerCornerRadius: number;
+    innerCornerRadius: number;
+}
+
+/** State interface for an arc element, defining center, angles, radii, padding, and border radius. */
 export interface ArcState extends BaseElementState {
     /** The x-coordinate of the arc's center. */
     cx: number;
@@ -34,13 +51,153 @@ export interface ArcState extends BaseElementState {
     radius: number;
     /** The inner radius of the arc, producing an annular sector when set. */
     innerRadius?: number;
-    /** The angular padding between the arc and its neighbors, in radians. */
+    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link ArcState.padWidth} for a gap of constant width. Ignored whenever `padWidth` is provided, `0` included. A `padAngle` wider than the sector collapses it onto its `endAngle`, where an oversized `padWidth` collapses it onto its mid-angle. */
     padAngle?: number;
-    /** The corner radius applied to the arc's corners. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link ArcState.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
+    padWidth?: number;
+    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. A non-zero value on an open arc also closes the path through the center, turning a chord-closed segment into a wedge and so changing its filled area, hit region and stroke — do not animate it up from `0` on an open arc. */
     borderRadius?: number;
 }
 
-/** An arc or annular sector shape supporting inner radius and pad angle. */
+/** Insets a sector by `inset` at both ends, collapsing it to its mid-angle rather than inverting it. */
+function insetSector(startAngle: number, endAngle: number, inset: number): [number, number] {
+    if (inset <= 0) {
+        return [
+            startAngle,
+            endAngle,
+        ];
+    }
+
+    const start = startAngle + inset;
+    const end = endAngle - inset;
+
+    if (start <= end) {
+        return [
+            start,
+            end,
+        ];
+    }
+
+    const midAngle = (startAngle + endAngle) / 2;
+
+    return [
+        midAngle,
+        midAngle,
+    ];
+}
+
+/** Traces a forward arc, pinning a sub-epsilon inverted sweep to zero rather than letting it wrap a full turn. */
+function traceForwardArc(path: ContextPath, cx: number, cy: number, radius: number, fromAngle: number, toAngle: number): void {
+    path.arc(cx, cy, radius, fromAngle, Math.max(fromAngle, toAngle));
+}
+
+/** Angular offset from a sector edge to the center of a corner circle of `cornerRadius` seated at `centerRadius`. */
+function getCornerCenterOffset(centerRadius: number, halfGap: number, cornerRadius: number): number {
+    const offset = halfGap + cornerRadius;
+
+    if (!(centerRadius > 0)) {
+        return offset > 0 ? HALF_PI : 0;
+    }
+
+    return Math.asin(Math.min(offset / centerRadius, 1));
+}
+
+/** Clamps a corner radius to `limit`, resolving the `0 / 0` a half-span sine of exactly 1 produces to the value either side of it. */
+function clampCornerRadius(limit: number, numerator: number, denominator: number): number {
+    if (!(denominator > 0)) {
+        return numerator > 0 ? limit : 0;
+    }
+
+    return Math.max(0, Math.min(limit, numerator / denominator));
+}
+
+/** Clamps a requested corner radius to the band thickness and to what the sector's span allows, per arc. */
+function getCornerRadii(radius: number, innerRadius: number, span: number, halfGap: number, cornerRadius: number): [number, number] {
+    const limit = Math.min(cornerRadius, (radius - innerRadius) / 2);
+
+    if (!(limit > 0) || span <= 0 || span >= TAU) {
+        return [0, 0];
+    }
+
+    if (span >= Math.PI) {
+        return [limit, limit];
+    }
+
+    const halfSpanSine = Math.sin(span / 2);
+
+    return [
+        clampCornerRadius(limit, halfSpanSine * radius - halfGap, 1 + halfSpanSine),
+        clampCornerRadius(limit, halfSpanSine * innerRadius - halfGap, 1 - halfSpanSine),
+    ];
+}
+
+/** Traces an annular sector whose four corners are rounded by circles tangent to both an edge and an arc. */
+function traceRoundedAnnularSector(path: ContextPath, sector: ArcSector): void {
+    const {
+        cx,
+        cy,
+        radius,
+        innerRadius,
+        startAngle,
+        endAngle,
+        halfGap,
+        outerCornerRadius,
+        innerCornerRadius,
+    } = sector;
+
+    const outerCenterRadius = radius - outerCornerRadius;
+    const innerCenterRadius = innerRadius + innerCornerRadius;
+
+    const [outerStart, outerEnd] = insetSector(startAngle, endAngle, getCornerCenterOffset(outerCenterRadius, halfGap, outerCornerRadius));
+    const [innerStart, innerEnd] = insetSector(startAngle, endAngle, getCornerCenterOffset(innerCenterRadius, halfGap, innerCornerRadius));
+
+    const startEdgeAngle = startAngle - HALF_PI;
+    const endEdgeAngle = endAngle + HALF_PI;
+
+    const [outerStartX, outerStartY] = getThetaPoint(outerStart, outerCenterRadius, cx, cy);
+    const [outerEndX, outerEndY] = getThetaPoint(outerEnd, outerCenterRadius, cx, cy);
+    const [innerStartX, innerStartY] = getThetaPoint(innerStart, innerCenterRadius, cx, cy);
+    const [innerEndX, innerEndY] = getThetaPoint(innerEnd, innerCenterRadius, cx, cy);
+
+    const [x1, y1] = getThetaPoint(startEdgeAngle, innerCornerRadius, innerStartX, innerStartY);
+    const [x2, y2] = getThetaPoint(startEdgeAngle, outerCornerRadius, outerStartX, outerStartY);
+    const [x3, y3] = getThetaPoint(endEdgeAngle, innerCornerRadius, innerEndX, innerEndY);
+
+    path.moveTo(x1, y1);
+    path.lineTo(x2, y2);
+    traceForwardArc(path, outerStartX, outerStartY, outerCornerRadius, startEdgeAngle, outerStart);
+    traceForwardArc(path, cx, cy, radius, outerStart, outerEnd);
+    traceForwardArc(path, outerEndX, outerEndY, outerCornerRadius, outerEnd, endEdgeAngle);
+    path.lineTo(x3, y3);
+    traceForwardArc(path, innerEndX, innerEndY, innerCornerRadius, endEdgeAngle, innerEnd + Math.PI);
+    path.arc(cx, cy, innerRadius, innerEnd, innerStart, true);
+    traceForwardArc(path, innerStartX, innerStartY, innerCornerRadius, innerStart + Math.PI, startEdgeAngle + TAU);
+    path.closePath();
+}
+
+/** Traces a wedge whose two outer corners are rounded and whose center point stays sharp. */
+function traceRoundedWedge(path: ContextPath, cx: number, cy: number, radius: number, startAngle: number, endAngle: number, cornerRadius: number): void {
+    const centerRadius = radius - cornerRadius;
+
+    const [outerStart, outerEnd] = insetSector(startAngle, endAngle, getCornerCenterOffset(centerRadius, 0, cornerRadius));
+
+    const startEdgeAngle = startAngle - HALF_PI;
+    const endEdgeAngle = endAngle + HALF_PI;
+
+    const [outerStartX, outerStartY] = getThetaPoint(outerStart, centerRadius, cx, cy);
+    const [outerEndX, outerEndY] = getThetaPoint(outerEnd, centerRadius, cx, cy);
+    const [x1, y1] = getThetaPoint(startEdgeAngle, cornerRadius, outerStartX, outerStartY);
+
+    path.moveTo(cx, cy);
+    path.lineTo(x1, y1);
+    traceForwardArc(path, outerStartX, outerStartY, cornerRadius, startEdgeAngle, outerStart);
+    traceForwardArc(path, cx, cy, radius, outerStart, outerEnd);
+    traceForwardArc(path, outerEndX, outerEndY, cornerRadius, outerEnd, endEdgeAngle);
+    path.lineTo(cx, cy);
+    path.closePath();
+}
+
+/** An arc or annular sector shape supporting inner radius, angular or constant-width padding, and rounded corners. */
 export class Arc extends Shape2D<ArcState> {
 
     /** The x-coordinate of the arc's center. */
@@ -97,7 +254,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('innerRadius', value);
     }
 
-    /** The angular padding between the arc and its neighbors, in radians. */
+    /** The angular padding between the arc and its neighbors, in radians. Produces a wedge-shaped gap that widens with radius; use {@link Arc.padWidth} for a gap of constant width. Ignored whenever `padWidth` is provided, `0` included. A `padAngle` wider than the sector collapses it onto its `endAngle`, where an oversized `padWidth` collapses it onto its mid-angle. */
     public get padAngle() {
         return this.getStateValue('padAngle');
     }
@@ -106,7 +263,16 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('padAngle', value);
     }
 
-    /** The corner radius applied to the arc's corners. */
+    /** The padding between the arc and its neighbors, in logical pixels. Each radius is inset by `asin(padWidth / 2r)`, so an annular sector holds the gap constant and faces its neighbors with parallel edges; an open arc has no inner edge to inset, so the gap becomes a single trim at the outer radius and adjacent edges converge to nothing at the center. Takes precedence over {@link Arc.padAngle} whenever it is provided — `padWidth: 0` means no padding rather than a fall back to `padAngle`, so animating it up from `0` is continuous. Negative values are treated as `0`. */
+    public get padWidth() {
+        return this.getStateValue('padWidth');
+    }
+
+    public set padWidth(value) {
+        this.setStateValue('padWidth', value);
+    }
+
+    /** The corner radius applied to the arc's corners, clamped to half the band thickness and to what the sector's span allows. An annular sector rounds all four corners; an open arc rounds the two outer corners and keeps a sharp center point. A non-zero value on an open arc also closes the path through the center, turning a chord-closed segment into a wedge and so changing its filled area, hit region and stroke — do not animate it up from `0` on an open arc. */
     public get borderRadius() {
         return this.getStateValue('borderRadius');
     }
@@ -180,21 +346,26 @@ export class Arc extends Shape2D<ArcState> {
 
     /** Renders the arc to the provided {@link Context}. */
     public render(context: Context) {
-        let {
+        const {
             cx,
             cy,
-            radius,
-            innerRadius,
-            startAngle,
-            endAngle,
             padAngle,
+            padWidth,
+            borderRadius = 0,
         } = this;
 
-        radius = Math.max(0, radius);
-        innerRadius = typeIsNil(innerRadius) ? innerRadius : Math.max(0, innerRadius);
+        const radius = Math.max(0, this.radius);
+        const innerRadius = typeIsNil(this.innerRadius) ? this.innerRadius : Math.max(0, this.innerRadius);
+        const hasPadWidth = !typeIsNil(padWidth);
+        const gap = typeIsNil(padWidth) ? 0 : Math.max(0, padWidth);
+
+        let {
+            startAngle,
+            endAngle,
+        } = this;
 
         return super.render(context, path => {
-            if (padAngle) {
+            if (padAngle && !hasPadWidth) {
                 const offset = padAngle / 2;
 
                 startAngle = Math.min(startAngle + offset, endAngle);
@@ -202,16 +373,42 @@ export class Arc extends Shape2D<ArcState> {
             }
 
             if (typeIsNil(innerRadius)) {
-                return path.arc(cx, cy, radius, startAngle, endAngle);
+                const [outerStart, outerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, radius));
+                const [cornerRadius] = getCornerRadii(radius, 0, outerEnd - outerStart, 0, borderRadius);
+
+                if (!cornerRadius) {
+                    return path.arc(cx, cy, radius, outerStart, outerEnd);
+                }
+
+                return traceRoundedWedge(path, cx, cy, radius, outerStart, outerEnd, cornerRadius);
             }
 
-            const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
-            const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
+            const [outerCornerRadius, innerCornerRadius] = getCornerRadii(radius, innerRadius, endAngle - startAngle, gap / 2, borderRadius);
+
+            if (outerCornerRadius || innerCornerRadius) {
+                return traceRoundedAnnularSector(path, {
+                    cx,
+                    cy,
+                    radius,
+                    innerRadius,
+                    startAngle,
+                    endAngle,
+                    halfGap: gap / 2,
+                    outerCornerRadius,
+                    innerCornerRadius,
+                });
+            }
+
+            const [outerStart, outerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, radius));
+            const [innerStart, innerEnd] = insetSector(startAngle, endAngle, getPadAngleAtRadius(gap, innerRadius));
+
+            const [x1, y1] = getThetaPoint(outerStart, radius, cx, cy);
+            const [x2, y2] = getThetaPoint(innerEnd, innerRadius, cx, cy);
 
             path.moveTo(x1, y1);
-            path.arc(cx, cy, radius, startAngle, endAngle);
+            path.arc(cx, cy, radius, outerStart, outerEnd);
             path.lineTo(x2, y2);
-            path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+            path.arc(cx, cy, innerRadius, innerEnd, innerStart, true);
             path.lineTo(x1, y1);
         });
     }

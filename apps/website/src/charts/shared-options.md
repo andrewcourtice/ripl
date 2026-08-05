@@ -257,6 +257,12 @@ createBarChart('#container', {
 | `maxWidth` | `number` | `200` | Maximum width |
 | `wrap` | `boolean` | `false` | Wrap long text |
 
+> [!NOTE]
+> The `number | [tl, tr, br, bl] | 'full'` shape is the **Rect family's**
+> `borderRadius`. The [Arc](/docs/core/elements/arc) element takes a plain
+> `number` instead — an annular sector has no meaningful corner order — and
+> clamps it to half the band thickness and to what the sector's span allows.
+
 ## Legend
 
 Series legend with interactive highlighting.

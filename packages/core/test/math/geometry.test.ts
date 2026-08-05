@@ -12,6 +12,8 @@ import {
     arePointsEqual,
     Box,
     getContainingBox,
+    getPadAngleAtRadius,
+    getThetaPoint,
     isPointInBox,
     matrixIdentity,
     matrixRotate,
@@ -99,6 +101,45 @@ describe('Math', () => {
 
             test('Should return an empty box for an empty collection', () => {
                 expect(edgesOf(getContainingBox([], box => box as Box))).toEqual([0, 0, 0, 0]);
+            });
+
+        });
+
+        describe('getPadAngleAtRadius', () => {
+
+            test('Should return the arcsine of the half gap over the radius', () => {
+                expect(getPadAngleAtRadius(10, 100)).toBeCloseTo(Math.asin(0.05), 12);
+                expect(getPadAngleAtRadius(10, 25)).toBeCloseTo(Math.asin(0.2), 12);
+                expect(getPadAngleAtRadius(3, 6)).toBeCloseTo(Math.asin(0.25), 12);
+            });
+
+            test('Should leave the trimmed endpoint a half gap from the centreline at every radius', () => {
+                const padWidth = 7;
+
+                [4, 20, 90, 400].forEach(radius => {
+                    const [, y] = getThetaPoint(getPadAngleAtRadius(padWidth, radius), radius);
+
+                    expect(y).toBeCloseTo(padWidth / 2, 9);
+                });
+            });
+
+            test('Should saturate at a quarter turn once the radius sits inside the gap', () => {
+                expect(getPadAngleAtRadius(10, 5)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(10, 1)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(10, 0)).toBe(Math.PI / 2);
+                expect(getPadAngleAtRadius(Infinity, 50)).toBe(Math.PI / 2);
+            });
+
+            test('Should return zero for an infinite radius', () => {
+                expect(getPadAngleAtRadius(10, Infinity)).toBe(0);
+            });
+
+            test('Should return zero for a gap or radius that cannot produce an inset', () => {
+                expect(getPadAngleAtRadius(0, 100)).toBe(0);
+                expect(getPadAngleAtRadius(-5, 100)).toBe(0);
+                expect(getPadAngleAtRadius(NaN, 100)).toBe(0);
+                expect(getPadAngleAtRadius(10, -1)).toBe(0);
+                expect(getPadAngleAtRadius(10, NaN)).toBe(0);
             });
 
         });
