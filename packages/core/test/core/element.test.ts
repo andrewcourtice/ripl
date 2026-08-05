@@ -87,7 +87,7 @@ describe('Element', () => {
         expect(el.$events).toContain('updated');
         expect(el.$events).toContain('destroyed');
         expect(el.$events).toContain('drag');
-        expect(el.$events.length).toBe(12);
+        expect(el.$events.length).toBe(14);
     });
 
     test('Should return a shallow copy of set state', () => {

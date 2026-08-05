@@ -28,6 +28,7 @@ import type {
 interface InteractionState {
     left: number;
     top: number;
+    pointerButtons: Set<number>;
     dragElement: RenderElement | undefined;
     dragStartX: number;
     dragStartY: number;
@@ -39,6 +40,8 @@ interface InteractionState {
 }
 
 const INTERACTION_KEY = Symbol('interaction');
+const DRAG_EVENTS = ['dragstart', 'drag', 'dragend'];
+const PRESS_EVENTS = ['mousedown', ...DRAG_EVENTS];
 
 /** DOM-aware rendering context that extends the base `Context` with element mounting, resize observation, and interaction handling. */
 export abstract class DOMContext<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends Context<TElement, TMeta> {
@@ -150,31 +153,47 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this.emit('mouseleave', null);
     }
 
+    private _getLogicalPoint(event: MouseEvent): [number, number] {
+        const state = this._interactionState!;
+
+        return [event.clientX - state.left, event.clientY - state.top];
+    }
+
+    private _hitTestLogical(events: string[], x: number, y: number): RenderElement[] {
+        return this.hitTest(events, ...this.toSurfacePoint(x, y));
+    }
+
     private _handleMouseDown(event: MouseEvent): void {
         this._refreshOrigin();
 
         const state = this._interactionState!;
-        const rx = event.clientX - state.left;
-        const ry = event.clientY - state.top;
-        const x = this.scaleX(rx);
-        const y = this.scaleY(ry);
+        const [x, y] = this._getLogicalPoint(event);
 
-        const hitElements = this.hitTest(['dragstart', 'drag', 'dragend'], x, y);
+        const payload = {
+            x,
+            y,
+        };
+
+        this.emit('mousedown', payload);
+
+        const hitElements = this._hitTestLogical(PRESS_EVENTS, x, y);
 
         // Assigned unconditionally: a press that hits nothing must not inherit the last gesture's origin.
-        state.dragElement = hitElements[0];
-        state.dragStartX = rx;
-        state.dragStartY = ry;
+        state.dragElement = hitElements.find(element => DRAG_EVENTS.some(dragEvent => element.has(dragEvent)));
+        state.pointerButtons.add(event.button);
+        state.dragStartX = x;
+        state.dragStartY = y;
         state.dragStarted = false;
         state.suppressClick = false;
+
+        hitElements.find(element => element.has('mousedown'))?.emit('mousedown', payload);
     }
 
     private _handleMouseMove(event: MouseEvent): void {
         this._refreshOrigin();
 
         const state = this._interactionState!;
-        const x = event.clientX - state.left;
-        const y = event.clientY - state.top;
+        const [x, y] = this._getLogicalPoint(event);
 
         this.emit('mousemove', {
             x,
@@ -188,10 +207,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.scheduleHitTest(() => this._handleHoverHitTest(x, y));
     }
 
-    private _handleDrag(rx: number, ry: number): void {
+    private _handleDrag(x: number, y: number): void {
         const state = this._interactionState!;
-        const dx = rx - state.dragStartX;
-        const dy = ry - state.dragStartY;
+        const dx = x - state.dragStartX;
+        const dy = y - state.dragStartY;
 
         if (!state.dragStarted) {
             if (getEuclideanDistance(dx, dy) >= this._dragThreshold) {
@@ -211,15 +230,15 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             return;
         }
 
-        const deltaX = rx - state.dragPrevX;
-        const deltaY = ry - state.dragPrevY;
+        const deltaX = x - state.dragPrevX;
+        const deltaY = y - state.dragPrevY;
 
-        state.dragPrevX = rx;
-        state.dragPrevY = ry;
+        state.dragPrevX = x;
+        state.dragPrevY = y;
 
         const payload = {
-            x: rx,
-            y: ry,
+            x,
+            y,
             startX: state.dragStartX,
             startY: state.dragStartY,
             deltaX,
@@ -230,11 +249,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.dragElement!.emit('drag', payload);
     }
 
-    private _handleHoverHitTest(rx: number, ry: number): void {
-        const x = this.scaleX(rx);
-        const y = this.scaleY(ry);
-
-        const hitElements = this.hitTest(['mousemove', 'mouseenter', 'mouseleave'], x, y);
+    private _handleHoverHitTest(x: number, y: number): void {
+        const hitElements = this._hitTestLogical(['mousemove', 'mouseenter', 'mouseleave'], x, y);
         const topmost = hitElements.length > 0 ? [hitElements[0]] : [];
 
         const {
@@ -256,9 +272,14 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         });
 
         updates.forEach(([element]) => element.emit('mousemove', {
-            x: rx,
-            y: ry,
+            x,
+            y,
         }));
+    }
+
+    /** Whether a logical-space point lies inside the surface, and so will be followed by a `click`. */
+    private _isWithinSurface(x: number, y: number): boolean {
+        return x >= 0 && x <= this.width && y >= 0 && y <= this.height;
     }
 
     /**
@@ -268,32 +289,42 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
      * {@link DOMContext.disableInteraction} has already dropped — hence the null check rather than
      * the non-null assertion the surface-bound handlers use.
      */
-    private _endDrag(event: MouseEvent): void {
+    private _handleMouseUp(event: MouseEvent): void {
         const state = this._interactionState;
 
-        if (!state?.dragElement) {
+        // Per button, so a second button gets its own `mouseup` and the double-bound handler dedupes.
+        if (!state?.pointerButtons.delete(event.button)) {
             return;
         }
 
+        this._refreshOrigin();
+
+        const [x, y] = this._getLogicalPoint(event);
+
+        const payload = {
+            x,
+            y,
+        };
+
+        this.emit('mouseup', payload);
+
+        this._hitTestLogical(['mouseup'], x, y).at(0)?.emit('mouseup', payload);
+
         if (state.dragStarted) {
-            this._refreshOrigin();
-
-            const rx = event.clientX - state.left;
-            const ry = event.clientY - state.top;
-
-            const payload = {
-                x: rx,
-                y: ry,
+            const dragPayload = {
+                x,
+                y,
                 startX: state.dragStartX,
                 startY: state.dragStartY,
-                deltaX: rx - state.dragPrevX,
-                deltaY: ry - state.dragPrevY,
+                deltaX: x - state.dragPrevX,
+                deltaY: y - state.dragPrevY,
             };
 
-            this.emit('dragend', payload);
-            state.dragElement.emit('dragend', payload);
+            this.emit('dragend', dragPayload);
+            state.dragElement?.emit('dragend', dragPayload);
 
-            state.suppressClick = true;
+            // Only an in-surface release is followed by a `click`; arming otherwise strands the flag onto a later one.
+            state.suppressClick = this._isWithinSurface(x, y);
         }
 
         state.dragElement = undefined;
@@ -311,20 +342,19 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this._refreshOrigin();
 
-        const rx = event.clientX - state.left;
-        const ry = event.clientY - state.top;
+        const [x, y] = this._getLogicalPoint(event);
 
-        const hitElements = this.hitTest(['click'], this.scaleX(rx), this.scaleY(ry));
+        const payload = {
+            x,
+            y,
+        };
 
-        if (hitElements.length > 0) {
-            hitElements[0].emit('click', {
-                x: rx,
-                y: ry,
-            });
-        }
+        this.emit('click', payload);
+
+        this._hitTestLogical(['click'], x, y).at(0)?.emit('click', payload);
     }
 
-    /** Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing. */
+    /** Enables DOM interaction events (mouse enter, leave, move, down, up, click, drag) with element hit testing. */
     public enableInteraction(): void {
         if (this._interactionEnabled) {
             return;
@@ -335,6 +365,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._interactionState = {
             left: 0,
             top: 0,
+            pointerButtons: new Set(),
             dragElement: undefined,
             dragStartX: 0,
             dragStartY: 0,
@@ -349,7 +380,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._attachInteractionEvent('mouseleave', () => this._handleMouseLeave());
         this._attachInteractionEvent('mousedown', event => this._handleMouseDown(event));
         this._attachInteractionEvent('mousemove', event => this._handleMouseMove(event));
-        this._attachInteractionEvent('mouseup', event => this._endDrag(event));
+        this._attachInteractionEvent('mouseup', event => this._handleMouseUp(event));
         this._attachInteractionEvent('click', event => this._handleClick(event));
 
         if (hasWindow) {
@@ -362,7 +393,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), INTERACTION_KEY);
 
             // A release outside the surface never reaches the element, stranding the drag with no `dragend`.
-            this.retain(onDOMEvent(window, 'mouseup', event => this._endDrag(event)), INTERACTION_KEY);
+            this.retain(onDOMEvent(window, 'mouseup', event => this._handleMouseUp(event)), INTERACTION_KEY);
         }
 
         // Seeded now rather than on the first `mouseenter`, which never fires for a surface mounted under the pointer.

@@ -122,8 +122,7 @@ describe('WebGPUContext3D', () => {
 
     describe('Surface sizing', () => {
 
-        // WGPU-2: `scaleX`/`scaleY`/`scaleDPR` derive from the factory while the backing store and
-        // the hit canvas derived from `window`, so overriding one scaled picking by the other.
+        // WGPU-2: `scaleX`/`scaleY` derive from the factory while the backing store and the hit canvas derived from `window`, so overriding one scaled picking by the other.
         test('Should size the backing store from the factory device pixel ratio', () => {
             sizeHost(400, 300);
             factory.set({ devicePixelRatio: 2 });

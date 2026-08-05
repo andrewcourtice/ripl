@@ -124,7 +124,7 @@ Elements with `pointerEvents` set to `'none'` are transparent to hit testing, al
 
 ### Tracked Events
 
-The context tracks `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
+The context tracks `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
 
 ```ts
 const scene = createScene('.container', {
@@ -168,6 +168,8 @@ circle.on('dragend', (event) => {
 ```
 
 The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (movement since the last event). Use `deltaX`/`deltaY` for repositioning elements to preserve the offset between the cursor and the element's origin.
+
+Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in **logical** space: CSS pixels relative to the surface origin, the space elements themselves are authored in. They are not device pixels, and they are not element-local, so a `drag` delta can be added straight onto an element's coordinates as above.
 
 The drag threshold can be configured via context options:
 

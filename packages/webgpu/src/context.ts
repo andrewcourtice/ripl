@@ -131,8 +131,7 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        // Through the factory, like every other backend: `window` desynchronises the hit canvas
-        // from `scaleDPR` and is absent outside the DOM.
+        // Through the factory, like every other backend: `window` desynchronises the hit canvas from the surface scales and is absent outside the DOM.
         const dpr = factory.devicePixelRatio;
         const scaledWidth = Math.floor(width * dpr);
         const scaledHeight = Math.floor(height * dpr);
