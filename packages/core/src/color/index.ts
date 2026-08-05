@@ -32,15 +32,6 @@ import type {
 } from './types';
 
 
-export * from './parsers';
-export * from './serializers';
-export * from './utilities';
-export * from './scales';
-export * from './schemes';
-export * from './types';
-
-export { parseKeyword } from './keywords';
-
 const PARSER_MAP = [
     {
         pattern: PATTERNS.hex,
@@ -106,3 +97,12 @@ export function parseColor(value: string): ColorRGBA | undefined {
 
     return parseKeyword(value);
 }
+
+export * from './parsers';
+export * from './serializers';
+export * from './utilities';
+export * from './scales';
+export * from './schemes';
+export * from './types';
+
+export { parseKeyword } from './keywords';
