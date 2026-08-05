@@ -8,6 +8,7 @@ import {
     getThetaPoint,
     normalizeBorderRadius,
     radiansToDegrees,
+    TAU,
 } from '@ripl/core';
 
 import type {
@@ -35,30 +36,63 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         };
     }
 
+    private _hasSubpath = false;
+
     private _appendElementData(data: string) {
         this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
+    }
+
+    /**
+     * Reaches `(x, y)` without breaking the current sub-path — an `L` while one is open, an `M`
+     * otherwise. Canvas joins an arc to the current point with an implicit line, where an `M` would
+     * open a second sub-path whose winding cancels the first under the `nonzero` fill rule.
+     */
+    private _continueSubpath(x: number, y: number): void {
+        if (this._hasSubpath) {
+            this.lineTo(x, y);
+            return;
+        }
+
+        this.moveTo(x, y);
     }
 
     /** Adds an arc centered at `(x, y)` with the given radius to the path. */
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
-        const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
-        const largeArcFlag = +(Math.abs(endAngle - startAngle) > Math.PI);
         const clockwiseFlag = +!counterclockwise;
 
-        this.moveTo(x1, y1);
-        this._appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
+        this._continueSubpath(x1, y1);
+
+        // A single `A` back to its own start point is dropped by the renderer, so a full turn is halved.
+        if (Math.abs(endAngle - startAngle) >= TAU) {
+            const [ox, oy] = getThetaPoint(startAngle + Math.PI, radius, x, y);
+
+            this._appendElementData(`A ${radius} ${radius} 0 1 ${clockwiseFlag} ${ox},${oy}`);
+            this._appendElementData(`A ${radius} ${radius} 0 1 ${clockwiseFlag} ${x1},${y1}`);
+
+            return;
+        }
+
+        const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
+
+        let sweep = counterclockwise
+            ? startAngle - endAngle
+            : endAngle - startAngle;
+
+        if (sweep < 0) sweep += TAU;
+
+        this._appendElementData(`A ${radius} ${radius} 0 ${+(sweep > Math.PI)} ${clockwiseFlag} ${x2},${y2}`);
     }
 
     /** Adds an arc connecting two tangents defined by the given points to the path. */
     public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
-        this.moveTo(x1, y1);
+        this._continueSubpath(x1, y1);
         this._appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
     }
 
     /** Adds a full circle centered at `(x, y)` to the path. */
     public circle(x: number, y: number, radius: number): void {
-        this.moveTo(x + radius, y);
+        this._continueSubpath(x + radius, y);
         this._appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
         this._appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * 2},0`);
     }
@@ -71,6 +105,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
     /** Closes the current sub-path with a straight line back to its start. */
     public closePath(): void {
         this._appendElementData('Z');
+        this._hasSubpath = false;
     }
 
     /** Adds an elliptical arc centered at `(x, y)` to the path. */
@@ -88,12 +123,12 @@ export class SVGPath extends ContextPath implements SVGContextElement {
             ];
         };
 
-        const isFull = Math.abs(endAngle - startAngle) >= Math.PI * 2;
+        const isFull = Math.abs(endAngle - startAngle) >= TAU;
 
         if (isFull) {
             const [mx, my] = pointOnEllipse(startAngle);
             const [ox, oy] = pointOnEllipse(startAngle + Math.PI);
-            this.moveTo(mx, my);
+            this._continueSubpath(mx, my);
             this._appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${ox},${oy}`);
             this._appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${mx},${my}`);
         } else {
@@ -103,10 +138,10 @@ export class SVGPath extends ContextPath implements SVGContextElement {
                 ? startAngle - endAngle
                 : endAngle - startAngle;
 
-            if (sweep < 0) sweep += Math.PI * 2;
+            if (sweep < 0) sweep += TAU;
             const largeArc = +(sweep > Math.PI);
 
-            this.moveTo(x1, y1);
+            this._continueSubpath(x1, y1);
             this._appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} ${largeArc} ${+!counterclockwise} ${x2},${y2}`);
         }
     }
@@ -119,6 +154,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
     /** Moves the current point to `(x, y)` without adding a line. */
     public moveTo(x: number, y: number): void {
         this._appendElementData(`M ${x},${y}`);
+        this._hasSubpath = true;
     }
 
     /** Adds a quadratic Bézier curve to the path. */

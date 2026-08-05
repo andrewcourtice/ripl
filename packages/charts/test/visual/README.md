@@ -40,6 +40,10 @@ resolving against the group's composed box (`canvas.md` 3 / `svg.md` S-4), and g
 compositing multiplicatively (`canvas.md` 11 / `svg.md` S-5). Both currently measure a mismatch of
 **0** with a maximum channel delta of 1; reverting either fix moves a quarter of the frame or more.
 
+`arc-sector` joins them: a padded, rounded donut segment, which `SVGPath.arc` used to shatter into
+one sub-path per arc call by emitting an `M` where canvas draws an implicit line. Reverting the fix
+moves **16.1%** of the frame — the annulus fills with a white void.
+
 A second describe block covers `KNOWN_DIVERGENCE_SCENES` — gaps that were **decided rather than
 fixed**, each asserted to stay inside a band around its measured mismatch. The assertion runs from
 both sides, so a regression that widens the gap fails and so does a fix that closes it without
