@@ -1,6 +1,6 @@
 # Chord Chart
 
-The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and arc gaps. Outer arcs are filled with their solid group color and separated by a constant-width gap (`padWidth`); hovering one dims the other arcs and every ribbon it is not attached to.
+The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and arc gaps. Outer arcs are filled with a translucent tint of their group color and separated by a constant-width gap (`padWidth`); hovering one dims the other arcs and every ribbon it is not attached to.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

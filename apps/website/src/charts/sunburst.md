@@ -1,6 +1,6 @@
 # Sunburst Chart
 
-The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update. Segments are filled with their solid series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
+The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update. Segments are filled with a translucent tint of their series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

@@ -53,6 +53,7 @@ import {
     createGroup,
     easeOutQuint,
     scaleContinuous,
+    setColorAlpha,
     TAU,
 } from '@ripl/core';
 
@@ -60,6 +61,9 @@ import {
     arrayJoin,
     numberSum,
 } from '@ripl/utilities';
+
+/** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
+const SEGMENT_REST_ALPHA = 0.78;
 
 /** A node in a sunburst hierarchy with optional nested children and an optional typed datum. */
 export interface SunburstNode<TData = unknown> {
@@ -271,7 +275,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                     radius: 0,
                     innerRadius: 0,
                     padWidth,
-                    fill: arc.color,
+                    fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     data: {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
@@ -301,7 +305,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: arc.color,
+                        fill: setColorAlpha(arc.color, SEGMENT_REST_ALPHA),
                     } as Partial<ArcState>;
 
                     this._attachSegmentHover(segment, arc);
