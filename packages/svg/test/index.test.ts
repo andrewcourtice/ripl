@@ -25,6 +25,8 @@ import {
 
 import {
     createGroup,
+    getThetaPoint,
+    TAU,
 } from '@ripl/core';
 
 describe('SVG', () => {
@@ -86,12 +88,53 @@ describe('SVG', () => {
             expect(path.definition.attributes.d).toContain('Q 10,20 30,40');
         });
 
-        test('arc should append M and A commands', () => {
+        test('arc should open a sub-path when none is open', () => {
             const path = new SVGPath();
             path.arc(50, 50, 25, 0, Math.PI);
             const d = path.definition.attributes.d;
-            expect(d).toContain('M');
-            expect(d).toContain('A');
+            expect(d).toMatch(/^M 75,50 A 25 25 0 0 1 25,/);
+        });
+
+        // An `M` mid-shape splits the annulus into two sub-paths whose windings cancel to a white void.
+        test('arc should continue an open sub-path instead of starting a new one', () => {
+            const path = new SVGPath();
+            path.moveTo(75, 50);
+            path.arc(50, 50, 25, 0, Math.PI);
+            path.lineTo(40, 50);
+            path.arc(50, 50, 10, Math.PI, 0, true);
+            path.closePath();
+            const d = path.definition.attributes.d;
+            expect((d.match(/M /g) || []).length).toBe(1);
+            expect(d.indexOf('M ')).toBe(0);
+        });
+
+        test('annular sector should trace as a single sub-path', () => {
+            const path = new SVGPath();
+            const [x1, y1] = getThetaPoint(0.2, 100, 130, 70);
+            const [x2, y2] = getThetaPoint(1.39, 50, 130, 70);
+
+            path.moveTo(x1, y1);
+            path.arc(130, 70, 100, 0.2, 1.39);
+            path.lineTo(x2, y2);
+            path.arc(130, 70, 50, 1.39, 0.2, true);
+            path.lineTo(x1, y1);
+
+            expect((path.definition.attributes.d.match(/M /g) || []).length).toBe(1);
+        });
+
+        test('arc spanning a full turn should produce two A commands', () => {
+            const path = new SVGPath();
+            path.arc(130, 70, 50, 0, TAU);
+            const d = path.definition.attributes.d;
+            expect((d.match(/A /g) || []).length).toBe(2);
+            expect(d).toBe('M 180,70 A 50 50 0 1 1 80,70 A 50 50 0 1 1 180,70');
+        });
+
+        // The flag must follow the directed sweep; an absolute angle difference reads this one as short.
+        test('counterclockwise arc sweeping past a half turn should set the large-arc flag', () => {
+            const path = new SVGPath();
+            path.arc(0, 0, 10, 0.1, 2, true);
+            expect(path.definition.attributes.d).toContain('A 10 10 0 1 0');
         });
 
         test('arcTo should append M and A commands', () => {
