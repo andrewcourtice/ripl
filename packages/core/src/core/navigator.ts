@@ -15,33 +15,33 @@ import {
     typeIsBoolean,
 } from '@ripl/utilities';
 
-/** A 2D affine view transform: uniform scale `k` plus translation `[x, y]` (screen pixels). */
+/** A 2D affine view transform: uniform scale `k` plus translation `[x, y]`, in logical pixels. */
 export interface NavigatorTransform {
     /** Uniform scale (zoom) factor. */
     k: number;
-    /** Horizontal translation, in screen pixels. */
+    /** Horizontal translation, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     x: number;
-    /** Vertical translation, in screen pixels. */
+    /** Vertical translation, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     y: number;
 }
 
 /** A rectangular brush selection in the navigator's pixel space. */
 export interface NavigatorBrush {
-    /** X coordinate of the selection's first corner, in pixels. */
+    /** X coordinate of the selection's first corner, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     x0: number;
-    /** Y coordinate of the selection's first corner, in pixels. */
+    /** Y coordinate of the selection's first corner, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     y0: number;
-    /** X coordinate of the selection's opposite corner, in pixels. */
+    /** X coordinate of the selection's opposite corner, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     x1: number;
-    /** Y coordinate of the selection's opposite corner, in pixels. */
+    /** Y coordinate of the selection's opposite corner, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     y1: number;
 }
 
 /** The pixel dimensions of the surface the navigator drives (used to center/fit content). */
 export interface NavigatorViewport {
-    /** Width of the surface, in pixels. */
+    /** Width of the surface, in logical pixels. */
     width: number;
-    /** Height of the surface, in pixels. */
+    /** Height of the surface, in logical pixels. */
     height: number;
 }
 
@@ -83,7 +83,7 @@ export interface NavigatorOptions {
 export interface NavigatorFitOptions {
     /** Viewport to fit into (defaults to the navigator's current viewport). */
     viewport?: NavigatorViewport;
-    /** Padding in pixels kept between the fitted content and the viewport edges. */
+    /** Padding, in logical pixels, kept between the fitted content and the viewport edges. */
     padding?: number;
 }
 
@@ -246,7 +246,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         this.emit('change', transform);
     }
 
-    /** Applies the transform to a point in content space, returning its on-screen position. */
+    /** Applies the transform to a point in content space, returning its on-screen position in logical pixels. */
     public applyPoint(point: Point): Point {
         return [
             this._transform.k * point[0] + this._transform.x,
@@ -254,7 +254,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         ];
     }
 
-    /** Inverts a screen-space point back to content space. */
+    /** Inverts an on-screen point, in logical pixels, back to content space. */
     public invertPoint(point: Point): Point {
         return [
             (point[0] - this._transform.x) / this._transform.k,
@@ -295,7 +295,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         this._commit('pan');
     }
 
-    /** Multiplies the zoom by `factor`, keeping `center` (screen pixels, defaults to the origin) fixed. */
+    /** Multiplies the zoom by `factor`, keeping `center` (logical pixels, defaults to the origin) fixed. */
     public zoomBy(factor: number, center: Point = [0, 0]): void {
         const nextK = numberClamp(this._transform.k * factor, this._scaleExtent[0], this._scaleExtent[1]);
         const ratio = nextK / this._transform.k;

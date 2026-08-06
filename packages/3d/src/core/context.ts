@@ -248,7 +248,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         return this.lightDirection;
     }
 
-    /** Projects a 3D world-space point to 2D screen coordinates. */
+    /** Projects a 3D world-space point to 2D logical coordinates — CSS pixels relative to the context's top-left — plus a depth for z-ordering. */
     public project(point: Vector3): ProjectedPoint {
         const clip = mat4TransformPoint(this.viewProjectionMatrix, point);
 

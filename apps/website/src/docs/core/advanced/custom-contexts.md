@@ -240,14 +240,14 @@ Key state properties to handle include `fill`, `stroke`, `lineWidth`, `lineCap`,
 
 ## Coordinate Spaces
 
-Ripl works in two coordinate spaces, and your context defines the mapping between them:
+Ripl works in two coordinate spaces, and **your context owns the mapping between them**. This section is the only place in the documentation that concerns both — everywhere else, and everything Ripl's public API takes or returns, is logical space.
 
-- **Logical space** — CSS pixels relative to the surface origin. Elements are authored here, and every pointer event payload (`mousemove`, `mousedown`, `mouseup`, `click`, `dragstart`, `drag`, `dragend`, on both the context and elements) reports logical coordinates.
-- **Surface space** — your backend's own drawing coordinates. `hitTest`, `intersectsWith`, `isPointInPath`, and `isPointInStroke` all take surface space.
+- **Logical space** — CSS pixels, unaffected by the device pixel ratio, with `0,0` at the top-left of the context's element. Elements are authored here, and it is what every public method and event payload speaks: pointer events, bounding boxes, `hitTest`, `intersectsWith`, `isPointInPath`, `isPointInStroke`.
+- **Surface space** — your backend's own drawing coordinates, and nobody's business but yours.
 
 The two spaces are identical for SVG, differ by the device pixel ratio for canvas, and differ by a scale *and* a centering offset for the terminal, which [letterboxes](/docs/core/contexts/terminal#logical-sizing) a logical space into its character grid.
 
-Conversion happens in exactly two methods:
+Declare the mapping in two methods:
 
 ```ts
 class MyContext extends Context {
@@ -265,7 +265,25 @@ class MyContext extends Context {
 }
 ```
 
-The base implementation derives the mapping from the slope of `scaleX`/`scaleY`, which is correct for any context whose `rescale` sets those scales and which introduces no origin offset — canvas and SVG both qualify. **Override both methods if your surface is offset, letterboxed, or otherwise not expressible as a pure scale factor**, and never convert a point by multiplying by `scaleX`/`scaleY` (or a device pixel ratio) at a call site: those helpers are the only seam elements and interaction handlers go through.
+The base implementation derives the mapping from the slope of `scaleX`/`scaleY`, which is correct for any context whose `rescale` sets those scales and which introduces no origin offset — canvas and SVG both qualify. **Override both methods if your surface is offset, letterboxed, or otherwise not expressible as a pure scale factor**, and never convert a point by multiplying by `scaleX`/`scaleY` (or a device pixel ratio) at a call site: a raw scale read silently drops an origin offset.
+
+### When to call them
+
+Almost never. The point arrives in logical space and your element geometry is in logical space, so most backends convert nowhere at all.
+
+The exception is a native API that reads coordinates in its own space. Canvas's `isPointInPath` is the canonical case: it transforms the *path* by the current matrix but reads the *point* untransformed, so the conversion has to happen on the way in.
+
+```ts
+class MyContext extends Context {
+
+    isPointInPath(path: ContextPath, x: number, y: number): boolean {
+        return this.nativeContext.isPointInPath(path.ref, ...this.toSurfacePoint(x, y));
+    }
+
+}
+```
+
+If you are converting anywhere outside a call like that, the seam is in the wrong place.
 
 ## Persistent Path Keys
 

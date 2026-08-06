@@ -109,12 +109,12 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         return this._needsRender;
     }
 
-    /** The pixel width of the scene's rendering context. */
+    /** The width of the scene's rendering context, in logical pixels. */
     public get width() {
         return this.context.width;
     }
 
-    /** The pixel height of the scene's rendering context. */
+    /** The height of the scene's rendering context, in logical pixels. */
     public get height() {
         return this.context.height;
     }

@@ -28,9 +28,9 @@ type StateOf<TElement extends Element> = ElementInterpolationState<TElement exte
 
 /** The pointer position passed to interaction callbacks. */
 export interface InteractionPoint {
-    /** Pointer x coordinate, in chart pixels. */
+    /** Pointer x coordinate, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     x: number;
-    /** Pointer y coordinate, in chart pixels. */
+    /** Pointer y coordinate, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
     y: number;
 }
 
@@ -53,9 +53,9 @@ export interface HoverHighlightOptions {
     tooltip?: HoverTooltip;
     /** Resolves the tooltip anchor point (called on enter). */
     anchor?: () => {
-        /** X coordinate of the tooltip anchor, in chart space. */
+        /** X coordinate of the tooltip anchor, in logical pixels. */
         x: number;
-        /** Y coordinate of the tooltip anchor, in chart space. */
+        /** Y coordinate of the tooltip anchor, in logical pixels. */
         y: number;
     };
     /** Resolves the tooltip content (called on enter). */

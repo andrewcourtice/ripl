@@ -138,7 +138,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!NOTE]
-> Pointer events (`click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing; see [Context: Interaction](/docs/core/essentials/context#interaction). Their payloads report logical coordinates — CSS pixels relative to the surface origin, not element-local.
+> Pointer events (`click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing; see [Context: Interaction](/docs/core/essentials/context#interaction). Their payloads report [logical coordinates](/docs/core/essentials/context#coordinates) — CSS pixels relative to the context's top-left, not element-local.
 
 ## Style Inheritance
 

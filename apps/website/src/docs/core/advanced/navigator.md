@@ -9,6 +9,8 @@ A **navigator** is an interactive pan / zoom / brush controller, the flat-scene 
 The controller is split in two, mirroring the `Context` / `DOMContext` split:
 
 - **`Navigator`** (in `@ripl/core`) is context-agnostic. It owns the view model and the imperative commands that mutate it (`panBy`, `zoomBy`, `fitBounds`, …) but attaches no input listeners. Non-DOM environments can drive it programmatically.
+
+Its screen-side coordinates — the transform's `x`/`y`, a `zoomBy` centre, a brush, the viewport — are all in [logical space](/docs/core/essentials/context#coordinates), the same CSS pixels the context reports pointer events in.
 - **`DOMNavigator`** (in `@ripl/dom`, via `createNavigator`) extends it to translate real wheel / pointer / touch gestures into those commands.
 
 > [!NOTE]

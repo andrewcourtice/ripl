@@ -66,14 +66,29 @@ EventBus<TEventMap>
 
 ### Coordinate Spaces
 
-Two spaces, and one seam between them:
+**Every coordinate crossing Ripl's public API — in or out — is in logical space.** There are no
+exceptions to look up, and a consumer never converts anything.
 
-- **Logical space** — CSS pixels relative to the surface origin. Elements are authored here, and every public pointer event payload (`mousemove`, `mousedown`, `mouseup`, `click`, `dragstart`, `drag`, `dragend`, on both the context and elements) carries logical coordinates.
-- **Surface space** — the backend's own drawing coordinates. `Context.hitTest` and `RenderElement.intersectsWith` take surface space, as do `isPointInPath`/`isPointInStroke`.
+- **Logical space** — CSS pixels, unaffected by the device pixel ratio, with `0,0` at the top-left
+  of the context's own element. Never the page, never the viewport, never the backing store. A
+  300×150 context at a device pixel ratio of 2 still reports `width` 300, still takes element
+  coordinates in that space, and still reports pointer events in it. Elements are authored here;
+  every pointer event payload, bounding box, hit-test argument, navigator transform and chart
+  interaction point is here.
+- **Surface space** — the backend's own drawing coordinates, and **backend-internal**. It agrees
+  with logical space on SVG, differs by the device pixel ratio on canvas and WebGPU, and differs by
+  a scale *and an origin offset* on the terminal, which letterboxes its content into character
+  cells.
 
-The two agree on SVG, differ by the device pixel ratio on canvas, and differ by a scale *and an origin offset* on the terminal, which letterboxes its content into character cells.
+`Context.toLogicalPoint`/`toSurfacePoint` are the seam, and exist **for backend implementors**. The
+only place they are called is inside a backend that must hand a point to a native API in its own
+coordinates — `CanvasContext.isPointInPath` is the canonical example, because native
+`isPointInPath` reads its point untransformed while the path goes through the current matrix. A
+backend whose mapping is not a pure scale overrides both; never multiply by `scaleX`/`scaleY` or a
+device pixel ratio at a call site, because a raw scale read silently drops an origin offset.
 
-**Convert only through `Context.toLogicalPoint`/`toSurfacePoint`.** Never multiply by `scaleX`/`scaleY` or a device pixel ratio at a call site: a backend whose mapping carries an origin offset overrides the helpers, and a raw scale read silently ignores that. The helpers are the single seam — a handler holding a pointer's logical coordinates maps them once, at the hit test.
+If you are writing a public method that takes or returns a coordinate, it is logical. If you find
+yourself converting outside a backend, the seam is in the wrong place.
 
 ### Scenegraph
 

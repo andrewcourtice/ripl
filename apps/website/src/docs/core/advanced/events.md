@@ -169,7 +169,7 @@ circle.on('dragend', (event) => {
 
 The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (movement since the last event). Use `deltaX`/`deltaY` for repositioning elements to preserve the offset between the cursor and the element's origin.
 
-Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in **logical** space: CSS pixels relative to the surface origin, the space elements themselves are authored in. They are not device pixels, and they are not element-local, so a `drag` delta can be added straight onto an element's coordinates as above.
+Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in [logical space](/docs/core/essentials/context#coordinates): CSS pixels relative to the context's top-left, the space elements themselves are authored in. They are not device pixels, they are not element-local, and they do not move with the page scroll — so a `drag` delta can be added straight onto an element's coordinates as above.
 
 The drag threshold can be configured via context options:
 
