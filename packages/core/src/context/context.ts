@@ -57,7 +57,6 @@ import type {
 } from '../scales';
 
 import {
-    arrayDedupe,
     functionMemoize,
     objectForEach,
     typeIsNil,
@@ -99,6 +98,7 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
     private _groupStack: GroupScope[] = [];
+    private _paintOrder?: Map<RenderElement, number>;
 
     protected states: BaseState[];
     protected currentState: BaseState;
@@ -159,6 +159,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
         if (element && !element.abstract) {
             this.renderedElements.push(element);
+            this._paintOrder = undefined;
         }
     }
 
@@ -510,6 +511,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this.renderedElements = [];
+            this._paintOrder = undefined;
         }
 
         this.renderDepth += 1;
@@ -518,6 +520,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /** Signals the end of a render pass. Clamped at zero, so an unbalanced call cannot drive the depth negative and make backends that gate their flush on depth 0 fire mid-frame. */
     public markRenderEnd(): void {
         this.renderDepth = Math.max(0, this.renderDepth - 1);
+
+        if (this.renderDepth === 0) {
+            // The tracked-element memo filters this frame's rendered list, so it dies with the frame that built it.
+            this.invalidateTrackedElements();
+        }
     }
 
     /**
@@ -769,6 +776,45 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return this.renderedElements.filter(element => element.has(event));
     });
 
+    /** Paint index per rendered element, memoized until the list it indexes changes. */
+    private _getPaintOrder(): Map<RenderElement, number> {
+        if (this._paintOrder) {
+            return this._paintOrder;
+        }
+
+        const paintOrder = new Map<RenderElement, number>();
+
+        this.renderedElements.forEach((element, index) => paintOrder.set(element, index));
+        this._paintOrder = paintOrder;
+
+        return paintOrder;
+    }
+
+    /** Elements tracking `event`, memoized per frame; mid-frame the list is still growing, so caching it would serve a truncated hit test for the rest of the frame. */
+    private _resolveTrackedElements(event: string): RenderElement[] {
+        return this.renderDepth > 0
+            ? this.renderedElements.filter(element => element.has(event))
+            : this._getTrackedElements(event);
+    }
+
+    /** Appends every element tracking `event` that the point intersects, skipping ones already collected. */
+    private _collectHits(event: string, x: number, y: number, seen: Set<RenderElement>, hits: RenderElement[]): void {
+        // The memo is a snapshot; `off`, a spent `once` and `destroy` all leave it stale within a frame.
+        this._resolveTrackedElements(event).forEach(element => {
+            if (seen.has(element) || !element.has(event)) {
+                return;
+            }
+
+            seen.add(element);
+
+            if (element.intersectsWith(x, y, {
+                isPointer: true,
+            })) {
+                hits.push(element);
+            }
+        });
+    }
+
     /**
      * Tests which rendered elements intersect the given point for the given event types,
      * returning them topmost-first — the exact reverse of the order they were painted in.
@@ -782,20 +828,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * two descendants of different groups; sorting by it discarded correct information.
      */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        // The memo is a snapshot; `off`, a spent `once` and `destroy` all leave it stale.
-        const tracked = events.flatMap(event => this._getTrackedElements(event).filter(element => element.has(event)));
+        const hits: RenderElement[] = [];
+        const seen = new Set<RenderElement>();
 
-        const hits = arrayDedupe(tracked)
-            .filter(element => element.intersectsWith(x, y, {
-                isPointer: true,
-            }));
+        events.forEach(event => this._collectHits(event, x, y, seen, hits));
 
         if (hits.length < 2) {
             return hits;
         }
 
         // One-pass index map; an `indexOf` in the comparator would rescan the list per comparison.
-        const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
+        const paintOrder = this._getPaintOrder();
 
         return hits.sort((ea, eb) => (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1));
     }
@@ -815,6 +858,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.renderedElements = [];
         this.renderElement = undefined;
         this._groupStack = [];
+        this._paintOrder = undefined;
 
         this.invalidateTrackedElements();
         this.dispose();

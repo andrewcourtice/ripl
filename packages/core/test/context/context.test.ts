@@ -1239,10 +1239,68 @@ describe('Context', () => {
         }
 
 
+        function paintFrame(ctx: ReturnType<typeof create>, elements: ReturnType<typeof createMockElement>[]) {
+            ctx.markRenderStart();
+
+            for (const element of elements) {
+                ctx.currentRenderElement = element;
+            }
+
+            ctx.markRenderEnd();
+        }
+
         function callHitTest(ctx: ReturnType<typeof create>, events: string[], x: number, y: number): any[] {
 
             return (ctx as any).hitTest(events, x, y);
         }
+
+        // The memo filters one frame's rendered elements, so it must not survive into the next frame.
+        test('hitTest should see an element that gained a listener after the memo was primed', () => {
+            const ctx = create();
+            const events = new Set<string>();
+
+            const element = {
+                id: 'late',
+                abstract: false,
+                pointerEvents: 'all' as const,
+                zIndex: 0,
+                has: vi.fn((event: string) => events.has(event)),
+                intersectsWith: vi.fn(() => true),
+                emit: vi.fn(),
+            };
+
+            paintFrame(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
+
+            events.add('click');
+            paintFrame(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            ctx.destroy();
+        });
+
+        // A hit test from an onComplete handler or a custom element's render runs mid-frame.
+        test('hitTest should not memoize the partial list a mid-frame hit test walks', () => {
+            const ctx = create();
+            const first = createMockElement('first', 0, ['click']);
+            const second = createMockElement('second', 0, ['click']);
+
+            paintFrame(ctx, [first, second]);
+
+            ctx.markRenderStart();
+            ctx.currentRenderElement = first;
+
+            expect(callHitTest(ctx, ['click'], 0, 0).map((el: { id: string }) => el.id)).toEqual(['first']);
+
+            ctx.currentRenderElement = second;
+            ctx.markRenderEnd();
+
+            expect(callHitTest(ctx, ['click'], 0, 0).map((el: { id: string }) => el.id)).toEqual(['second', 'first']);
+
+            ctx.destroy();
+        });
 
         // Additive zIndex cannot compare descendants of different groups; paint order can.
         test('hitTest should return elements in reverse paint order, ignoring zIndex', () => {

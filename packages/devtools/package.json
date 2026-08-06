@@ -37,6 +37,7 @@
     },
     "dependencies": {
         "@ripl/core": "workspace:^",
+        "@ripl/dom": "workspace:^",
         "@ripl/utilities": "workspace:^"
     }
 }

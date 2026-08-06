@@ -25,6 +25,15 @@ function fakeContext(): Context {
     } as unknown as Context;
 }
 
+/** A context whose logical size differs from the element's on-screen size, as a CSS transform makes it. */
+function scaledContext(width: number, height: number): Context {
+    return {
+        element,
+        width,
+        height,
+    } as unknown as Context;
+}
+
 /** A non-DOM context, mirroring how the terminal context carries a dummy `{}` element. */
 function fakeNonDOMContext(): Context {
     return {
@@ -402,6 +411,48 @@ describe('DOMNavigator interactions', () => {
         });
 
         expect(getBoundingClientRect).toHaveBeenCalledOnce();
+
+        navigator.destroy();
+    });
+
+    // A CSS-scaled surface draws N logical pixels across more (or fewer) client pixels.
+    test('Should map gestures through the surface scale, not raw client pixels', () => {
+        vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            top: 0,
+            width: 400,
+            height: 200,
+            right: 400,
+            bottom: 200,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+
+        const navigator = createNavigator(scaledContext(200, 100), {
+            interactions: {
+                pan: true,
+            },
+        });
+
+        expect(navigator.viewport).toEqual({
+            width: 200,
+            height: 100,
+        });
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 100,
+            clientY: 100,
+        });
+        fire('pointermove', {
+            pointerId: 1,
+            clientX: 160,
+            clientY: 80,
+        });
+
+        expect(navigator.transform.x).toBe(30);
+        expect(navigator.transform.y).toBe(-10);
 
         navigator.destroy();
     });

@@ -168,6 +168,20 @@ describe('DOMContext interaction origin', () => {
         });
     });
 
+    // A CSS-scaled surface draws its logical pixels across more client pixels; the navigators already divide by that scale.
+    test('Should map pointer coordinates through the surface scale', () => {
+        setOrigin(0, 0);
+
+        const context = create();
+
+        context['rescale'](SURFACE_WIDTH / 2, SURFACE_HEIGHT / 2);
+
+        expect(mouseMove(context, 300, 150)).toEqual({
+            x: 150,
+            y: 75,
+        });
+    });
+
     // One rect read per invalidation, not per event: this is the hover hot path.
     test('Should not re-measure the surface on every pointer move', () => {
         setOrigin(120, 80);

@@ -3,6 +3,10 @@ import type {
     Element as RiplElement,
 } from '@ripl/core';
 
+import {
+    getSurfaceRect,
+} from '@ripl/dom';
+
 let overlay: HTMLDivElement | undefined;
 
 function getOverlay(): HTMLDivElement | undefined {
@@ -46,13 +50,17 @@ export function showHighlight(context: Context, element: RiplElement): void {
         return;
     }
 
-    const rect = context.element.getBoundingClientRect();
-    const scaleX = context.width > 0 ? rect.width / context.width : 1;
-    const scaleY = context.height > 0 ? rect.height / context.height : 1;
+    const {
+        left,
+        top,
+        scaleX,
+        scaleY,
+    } = getSurfaceRect(context);
+
     const box = element.getBoundingBox();
 
-    target.style.left = `${rect.left + box.left * scaleX}px`;
-    target.style.top = `${rect.top + box.top * scaleY}px`;
+    target.style.left = `${left + box.left * scaleX}px`;
+    target.style.top = `${top + box.top * scaleY}px`;
     target.style.width = `${box.width * scaleX}px`;
     target.style.height = `${box.height * scaleY}px`;
 }

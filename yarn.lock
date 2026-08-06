@@ -2017,6 +2017,7 @@ __metadata:
   resolution: "@ripl/devtools@workspace:packages/devtools"
   dependencies:
     "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
   languageName: unknown
   linkType: soft

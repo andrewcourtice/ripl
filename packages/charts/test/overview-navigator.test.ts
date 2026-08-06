@@ -18,6 +18,15 @@ import {
     createTrendChart,
 } from '../src';
 
+import {
+    ChartNavigator,
+} from '../src/components/navigator';
+
+import {
+    createRenderer,
+    createScene,
+} from '@ripl/core';
+
 import type {
     Group,
 } from '@ripl/core';
@@ -96,6 +105,113 @@ const DATA: Row[] = MONTHS.map((month, index) => ({
     a: (index + 1) * 100,
     b: (index + 1) * 40,
 }));
+
+describe('Overview navigator strip dragging', () => {
+
+    const AREA = {
+        x: 0,
+        y: 340,
+        width: 640,
+        height: 60,
+    };
+
+    /** Dispatches a pointer event with arbitrary properties, sidestepping jsdom constructor gaps. */
+    function fire(target: EventTarget, type: string, props: Record<string, unknown> = {}): void {
+        const event = new Event(type, {
+            bubbles: true,
+            cancelable: true,
+        });
+
+        Object.assign(event, props);
+        target.dispatchEvent(event);
+    }
+
+    // Dismissing a banner above the chart translates the surface with no scroll and no resize.
+    test('Should follow the surface after a layout translation', () => {
+        mockCanvasContext();
+
+        const rect = {
+            left: 0,
+            top: 0,
+        };
+
+        vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+            ...rect,
+            width: 640,
+            height: 400,
+            right: rect.left + 640,
+            bottom: rect.top + 400,
+            x: rect.left,
+            y: rect.top,
+            toJSON: () => ({}),
+        } as DOMRect));
+
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+
+        const scene = createScene(host);
+        const renderer = createRenderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        const onWindow = vi.fn();
+        const navigator = new ChartNavigator({
+            scene,
+            renderer,
+        });
+
+        navigator.attach();
+        navigator.render({
+            orientation: 'horizontal',
+            area: AREA,
+            series: [],
+            valueExtent: [0, 1],
+            window: {
+                start: 0.25,
+                end: 0.75,
+            },
+            onWindow,
+        });
+
+        const surface = scene.context.element as unknown as HTMLCanvasElement;
+
+        fire(surface, 'pointerdown', {
+            pointerId: 1,
+            clientX: 320,
+            clientY: 370,
+        });
+        fire(surface, 'pointerup', {
+            pointerId: 1,
+        });
+
+        rect.top = 200;
+        fire(surface, 'pointerenter', {
+            pointerId: 1,
+        });
+
+        fire(surface, 'pointerdown', {
+            pointerId: 1,
+            clientX: 320,
+            clientY: 570,
+        });
+        fire(surface, 'pointermove', {
+            pointerId: 1,
+            clientX: 384,
+            clientY: 570,
+        });
+
+        expect(onWindow).toHaveBeenCalledWith({
+            start: 0.35,
+            end: 0.85,
+        });
+
+        navigator.destroy();
+        scene.destroy();
+        host.remove();
+    });
+
+});
 
 describe('Overview navigator strip', () => {
 

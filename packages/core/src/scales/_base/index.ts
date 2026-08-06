@@ -94,6 +94,26 @@ export function niceDomain(domain: number[], count: number = 10): number[] {
     ];
 }
 
+/**
+ * Builds a value → first-index lookup over a categorical domain, so a scale converts in O(1)
+ * instead of rescanning the domain per datum. First index wins, matching `Array.prototype.indexOf`.
+ *
+ * @param domain - The categorical domain to index.
+ * @returns A function returning a value's index in the domain, or `-1` when it is absent.
+ */
+export function createDomainIndex<TDomain>(domain: TDomain[]): (value: TDomain) => number {
+    const index = new Map<TDomain, number>();
+
+    domain.forEach((value, position) => {
+        if (!index.has(value)) {
+            index.set(value, position);
+        }
+    });
+
+    // `indexOf` compares with `===`, which never matches `NaN`; the map would, so exclude it.
+    return value => (typeof value === 'number' && Number.isNaN(value) ? -1 : index.get(value) ?? -1);
+}
+
 /** Assembles a `Scale` object from explicit conversion, inversion, and tick functions. */
 export function createScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange> {
     const {
