@@ -51,11 +51,13 @@ import {
 
 import {
     EVENT_WILDCARD,
+    TRACKED_EVENTS,
 } from '@ripl/core';
 
 import type {
     Context,
     Element,
+    ElementEventMap,
     Event,
     Renderer,
     Scene,
@@ -321,6 +323,11 @@ export class Devtools {
 
     private _recordEvent(source: SerializedEventSource, bus: object, event: Event<unknown>): void {
         if (this._excludedEvents.has(event.type)) {
+            return;
+        }
+
+        // The context re-emits the DOM's pointer stream; the elements it hits record it anyway.
+        if (source === 'context' && TRACKED_EVENTS.includes(event.type as keyof ElementEventMap)) {
             return;
         }
 
