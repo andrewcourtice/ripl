@@ -97,6 +97,12 @@
     display: block;
 }
 
+// Wide enough for two columns of preset cards, and above the mobile equations drawer's z-index 20.
+.graphing-calculator__catalogue {
+    --ripl-drawer-width: min(30rem, 94%);
+    --ripl-drawer-z: 30;
+}
+
 .graphing-calculator__scrim {
     display: none;
 }

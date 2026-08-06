@@ -8,9 +8,11 @@
             @click="$emit('update:modelValue', false)"
         ></div>
         <aside
+            ref="panel"
             class="ripl-config-drawer__panel"
             role="dialog"
-            aria-label="Chart options"
+            tabindex="-1"
+            :aria-label="title"
         >
             <header class="ripl-config-drawer__header">
                 <span class="ripl-config-drawer__title">{{ title }}</span>
@@ -33,23 +35,60 @@
 </template>
 
 <script lang="ts" setup>
-withDefaults(defineProps<{
+import {
+    nextTick,
+    onBeforeUnmount,
+    ref,
+    watch,
+} from 'vue';
+
+const props = withDefaults(defineProps<{
+    /** Whether the drawer is open. */
     modelValue: boolean;
+    /** Heading shown in the drawer, and the dialog's accessible name. */
     title?: string;
 }>(), {
     title: 'Customize',
 });
 
-defineEmits<{
+const emit = defineEmits<{
+    /** The drawer was opened or dismissed. */
     'update:modelValue': [value: boolean];
 }>();
+
+const panel = ref<HTMLElement | null>(null);
+
+let previouslyFocused: HTMLElement | null = null;
+
+function onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+        emit('update:modelValue', false);
+    }
+}
+
+watch(() => props.modelValue, async open => {
+    if (open) {
+        previouslyFocused = document.activeElement as HTMLElement | null;
+        window.addEventListener('keydown', onKeydown);
+        await nextTick();
+        panel.value?.focus();
+
+        return;
+    }
+
+    window.removeEventListener('keydown', onKeydown);
+    previouslyFocused?.focus();
+    previouslyFocused = null;
+});
+
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 </script>
 
 <style scoped>
 .ripl-config-drawer {
     position: absolute;
     inset: 0;
-    z-index: 10;
+    z-index: var(--ripl-drawer-z, 10);
     pointer-events: none;
 }
 
@@ -68,7 +107,7 @@ defineEmits<{
     bottom: 0;
     display: flex;
     flex-direction: column;
-    width: min(340px, 92%);
+    width: var(--ripl-drawer-width, min(340px, 92%));
     background-color: var(--vp-c-bg);
     border-left: 1px solid var(--vp-c-divider);
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);

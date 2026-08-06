@@ -65,8 +65,8 @@ const groups = computed(() => {
 .preset-gallery {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 0.625rem;
+    gap: 1.25rem;
+    padding: 1rem;
 }
 
 .preset-gallery__heading {
@@ -92,7 +92,7 @@ const groups = computed(() => {
 .preset-gallery__items {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 0.375rem;
+    gap: 0.5rem;
     margin: 0;
     padding: 0;
     list-style: none;
