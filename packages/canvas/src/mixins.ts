@@ -401,9 +401,14 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
             return this.context.translate(x, y);
         }
 
+        // Composed onto the DPR base rather than replacing it: the matrix a caller passes is in
+        // logical space, and assigning it outright reinterprets those units as device pixels.
         // eslint-disable-next-line id-length
         public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-            return this.context.setTransform(a, b, c, d, e, f);
+            const dpr = factory.devicePixelRatio ?? 1;
+
+            this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.context.transform(a, b, c, d, e, f);
         }
 
         // eslint-disable-next-line id-length

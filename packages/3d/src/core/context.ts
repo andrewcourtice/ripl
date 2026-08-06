@@ -364,14 +364,18 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
         const result = rescaleCanvas(this.element, this.context, width, height);
 
-        super.rescale(width, height);
-
+        this.width = width;
+        this.height = height;
         this.scaleX = result.scaleX;
         this.scaleY = result.scaleY;
 
         if (this.viewMatrix) {
             this.updateProjectionMatrix();
         }
+
+        // Emitted last, not through `super.rescale`: a bound scene repaints synchronously here, and
+        // would otherwise draw under identity scales and the previous projection.
+        this.emit('resize', null);
     }
 
     /** Begins a render pass, resetting the frame's face buffer and clip tracking at the outermost depth. */

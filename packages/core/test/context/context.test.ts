@@ -917,13 +917,17 @@ describe('Context', () => {
             ctx.destroy();
         });
 
-        test('setTransform should delegate to native', () => {
+        // Not plain delegation: the caller's matrix is logical, so it composes onto the surface's
+        // own base (the device pixel ratio) rather than replacing it.
+        test('setTransform should compose the caller matrix onto the surface base', () => {
             const ctx = create();
 
             canvasStub.setTransform.mockClear();
+            canvasStub.transform.mockClear();
             ctx.setTransform(1, 0, 0, 1, 5, 10);
 
-            expect(canvasStub.setTransform).toHaveBeenCalledWith(1, 0, 0, 1, 5, 10);
+            expect(canvasStub.setTransform).toHaveBeenCalledWith(1, 0, 0, 1, 0, 0);
+            expect(canvasStub.transform).toHaveBeenCalledWith(1, 0, 0, 1, 5, 10);
 
             ctx.destroy();
         });
