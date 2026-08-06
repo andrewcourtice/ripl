@@ -71,7 +71,10 @@ watch(() => props.modelValue, async open => {
         previouslyFocused = document.activeElement as HTMLElement | null;
         window.addEventListener('keydown', onKeydown);
         await nextTick();
-        panel.value?.focus();
+
+        // The panel is still translated off-screen mid-transition, so a scrolling focus drags the
+        // page across to meet it and the slide-in plays on the content instead of the drawer.
+        panel.value?.focus({ preventScroll: true });
 
         return;
     }
@@ -113,6 +116,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
     transform: translateX(100%);
     transition: transform 220ms ease-out;
+}
+
+/* Focused only to move the keyboard into the dialog; it is not tabbable, so it shows no ring. */
+.ripl-config-drawer__panel:focus {
+    outline: none;
 }
 
 .ripl-config-drawer--open {

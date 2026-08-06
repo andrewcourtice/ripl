@@ -4,6 +4,7 @@
     height: calc(100vh - var(--vp-nav-height));
     overflow: hidden;
     border-top: 1px solid var(--vp-c-divider);
+    border-right: 1px solid var(--vp-c-divider);
 }
 
 .graphing-calculator__header {
