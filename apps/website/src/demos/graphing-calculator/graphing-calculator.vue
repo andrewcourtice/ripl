@@ -16,12 +16,23 @@
                     <RiplButton
                         :active="panelOpen"
                         aria-label="Toggle the equation panel"
-                        @click="panelOpen = !panelOpen"
+                        @click="onPanelToggle"
                     >
                         <PanelLeft :size="14" />
                         Equations
                     </RiplButton>
                 </div>
+
+                <RiplButton
+                    :active="catalogueOpen"
+                    aria-haspopup="dialog"
+                    :aria-expanded="catalogueOpen"
+                    title="Browse preset plots"
+                    @click="onCatalogueToggle"
+                >
+                    <LayoutGrid :size="14" />
+                    Presets
+                </RiplButton>
 
                 <RiplButtonGroup
                     :model-value="mode"
@@ -60,15 +71,6 @@
                     />
                 </section>
 
-                <section class="graphing-calculator__section">
-                    <h2 class="graphing-calculator__section-title">Presets</h2>
-                    <PresetGallery
-                        :presets="PRESETS"
-                        :mode="mode"
-                        @select="onPresetSelect"
-                    />
-                </section>
-
                 <p class="graphing-calculator__note">
                     Forms: <code>y =</code>, <code>x =</code>, <code>r =</code>, <code>z =</code>,
                     <code>(f(t), g(t))</code>, or an equation in x and y. Inequalities, regression fits and
@@ -95,6 +97,18 @@
                     label="Loading the expression engine"
                 />
             </div>
+
+            <RiplConfigDrawer
+                v-model="catalogueOpen"
+                class="graphing-calculator__catalogue"
+                title="Presets"
+            >
+                <PresetGallery
+                    :presets="PRESETS"
+                    :mode="mode"
+                    @select="onPresetSelect"
+                />
+            </RiplConfigDrawer>
         </div>
     </div>
 </template>
@@ -105,6 +119,7 @@ import ParameterSliders from './components/parameter-sliders.vue';
 import PresetGallery from './components/preset-gallery.vue';
 import RiplButton from '../../.vitepress/components/ripl-button.vue';
 import RiplButtonGroup from '../../.vitepress/components/ripl-button-group.vue';
+import RiplConfigDrawer from '../../.vitepress/components/ripl-config-drawer.vue';
 import RiplControlGroup from '../../.vitepress/components/ripl-control-group.vue';
 import RiplSpinner from '../../.vitepress/components/ripl-spinner.vue';
 
@@ -122,6 +137,7 @@ import {
 } from 'vitepress';
 
 import {
+    LayoutGrid,
     PanelLeft,
     RotateCcw,
 } from 'lucide-vue-next';
@@ -267,6 +283,7 @@ const expressions = ref<GraphExpression[]>([]);
 const params = ref<ParameterState[]>([]);
 const viewport = ref<SurfaceDomain>({ ...DEFAULT_VIEWPORT });
 const panelOpen = ref(false);
+const catalogueOpen = ref(false);
 const loading = ref(true);
 
 const compiled = new Map<string, CompiledExpression>();
@@ -731,7 +748,19 @@ function onPresetSelect(preset: GraphPreset): void {
     }
 
     panelOpen.value = false;
+    catalogueOpen.value = false;
     scheduleSave();
+}
+
+// Both are overlays on small screens, so opening one has to dismiss the other.
+function onCatalogueToggle(): void {
+    catalogueOpen.value = !catalogueOpen.value;
+    panelOpen.value = false;
+}
+
+function onPanelToggle(): void {
+    panelOpen.value = !panelOpen.value;
+    catalogueOpen.value = false;
 }
 
 function onResetView(): void {
