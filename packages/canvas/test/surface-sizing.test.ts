@@ -13,8 +13,13 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    CanvasPath,
     createContext,
 } from '../src';
+
+import {
+    factory,
+} from '@ripl/core';
 
 polyfillPath2D();
 
@@ -111,6 +116,38 @@ describe('Canvas surface sizing', () => {
         context['rescale'](400, 300);
 
         expect(resized).not.toHaveBeenCalled();
+    });
+
+    describe('Hit-test coordinate space', () => {
+
+        const nativeDevicePixelRatio = factory.devicePixelRatio;
+
+        afterEach(() => factory.set({ devicePixelRatio: nativeDevicePixelRatio }));
+
+        // Native `isPointInPath` ignores the CTM, so a logical point handed straight to it missed
+        // the DPR-scaled path by exactly the ratio.
+        test('Should map a logical hit point onto device pixels before the native test', () => {
+            factory.set({ devicePixelRatio: 2 });
+            sizeHost(400, 300);
+
+            const context = createContext(el);
+
+            context.isPointInPath(new CanvasPath(), 125, 47);
+
+            expect(canvasStub.isPointInPath).toHaveBeenLastCalledWith(expect.anything(), 250, 94, undefined);
+        });
+
+        test('Should hand a logical hit point through unchanged on an unscaled surface', () => {
+            factory.set({ devicePixelRatio: 1 });
+            sizeHost(400, 300);
+
+            const context = createContext(el);
+
+            context.isPointInStroke(new CanvasPath(), 125, 47);
+
+            expect(canvasStub.isPointInStroke).toHaveBeenLastCalledWith(expect.anything(), 125, 47);
+        });
+
     });
 
 });

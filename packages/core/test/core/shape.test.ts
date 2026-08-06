@@ -86,7 +86,7 @@ describe('Shape2D', () => {
         expect(rect.intersectsWith(200, 200)).toBe(false);
     });
 
-    test('Should map a surface-space hit point into local space using the context scale', () => {
+    test('Should map a logical hit point into local space without touching the surface scale', () => {
         const rect = createRect({
             x: 0,
             y: 0,
@@ -98,15 +98,14 @@ describe('Shape2D', () => {
 
         const recorded: [number, number][] = [];
 
-        // A 2x surface: scaleX/scaleY map logical onto device pixels, as rescaleCanvas does.
+        // A 2x surface: scaleX/scaleY map logical onto device pixels, as rescaleCanvas does. The
+        // conversion helpers are omitted so a stray call to either throws rather than passing.
         const scale = (value: number) => value * 2;
 
         (rect as unknown as { context: unknown }).context = {
             hitTestHonorsTransform: false,
             scaleX: scale,
             scaleY: scale,
-            toLogicalPoint: (x: number, y: number) => [x / 2, y / 2],
-            toSurfacePoint: (x: number, y: number) => [x * 2, y * 2],
             layer: (body: () => unknown) => body(),
             isPointInStroke: () => false,
             isPointInPath: (_path: unknown, x: number, y: number) => {
@@ -116,11 +115,10 @@ describe('Shape2D', () => {
         };
         (rect as unknown as { path: unknown }).path = {};
 
-        // Surface point for logical (60, 20) at 2x → (120, 40).
-        rect.intersectsWith(120, 40);
+        rect.intersectsWith(60, 20);
 
-        // surface (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → surface (20,40).
-        expect(recorded.at(-1)).toEqual([20, 40]);
+        // logical (60,20) → inverse translate(-50) → local (10,20), handed on unscaled.
+        expect(recorded.at(-1)).toEqual([10, 20]);
     });
 
     // A hit test runs after the frame's trailing restore, so the backend stroked at the default width of 1.

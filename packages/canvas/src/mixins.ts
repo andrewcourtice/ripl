@@ -435,9 +435,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
             return applyCanvasStroke(this.context, element);
         }
 
+        // Native `isPointInPath` reads its point in untransformed canvas space, so the DPR matrix
+        // the path is drawn through has to be applied to the point by hand.
         public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
             if (path instanceof CanvasPath) {
-                return canvasIsPointInPath(this.context, path, x, y, fillRule);
+                return canvasIsPointInPath(this.context, path, ...this.toSurfacePoint(x, y), fillRule);
             }
 
             return false;
@@ -445,7 +447,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
 
         public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
             if (path instanceof CanvasPath) {
-                return canvasIsPointInStroke(this.context, path, x, y);
+                return canvasIsPointInStroke(this.context, path, ...this.toSurfacePoint(x, y));
             }
 
             return false;

@@ -289,7 +289,6 @@ describe('Element.intersectsWith', () => {
         vi.restoreAllMocks();
     });
 
-    // An identity-scale surface (SVG) never scales the point up, so dividing by the DPR halved every hit.
     test('Should hit an unscaled surface at the point it was given', () => {
         const context = new TestContext(400, 300, 1);
         const el = boxedElement(context);
@@ -298,12 +297,14 @@ describe('Element.intersectsWith', () => {
         expect(el.intersectsWith(250, 94)).toBe(false);
     });
 
-    test('Should map the point back through the surface scale on a device-scaled surface', () => {
+    // The point used to arrive in surface space, so the CSS-pixel coordinate a pointer event
+    // reports hit or missed depending on the device pixel ratio.
+    test('Should hit a device-scaled surface at the same logical point as an unscaled one', () => {
         const context = new TestContext(400, 300, dpr);
         const el = boxedElement(context);
 
-        expect(el.intersectsWith(250, 94)).toBe(true);
-        expect(el.intersectsWith(125, 47)).toBe(false);
+        expect(el.intersectsWith(125, 47)).toBe(true);
+        expect(el.intersectsWith(250, 94)).toBe(false);
     });
 
 });

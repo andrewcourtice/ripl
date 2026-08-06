@@ -285,7 +285,7 @@ export class WebGPUContext3D extends Context3D {
         return super.createText(options);
     }
 
-    /** Tests whether (x, y) lies inside the given path's fill, using an offscreen 2D canvas. */
+    /** Tests whether the logical-space point (x, y) lies inside the given path's fill, using an offscreen 2D canvas. */
     public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         const canvasPath = this._rebuildPath2D(path);
 
@@ -293,10 +293,11 @@ export class WebGPUContext3D extends Context3D {
             return false;
         }
 
-        return this._hitContext.isPointInPath(canvasPath, x, y, fillRule);
+        // The hit canvas carries the same DPR matrix as the surface, which the native test ignores.
+        return this._hitContext.isPointInPath(canvasPath, ...this.toSurfacePoint(x, y), fillRule);
     }
 
-    /** Tests whether (x, y) lies on the given path's stroke, using an offscreen 2D canvas. */
+    /** Tests whether the logical-space point (x, y) lies on the given path's stroke, using an offscreen 2D canvas. */
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         const canvasPath = this._rebuildPath2D(path);
 
@@ -304,7 +305,7 @@ export class WebGPUContext3D extends Context3D {
             return false;
         }
 
-        return this._hitContext.isPointInStroke(canvasPath, x, y);
+        return this._hitContext.isPointInStroke(canvasPath, ...this.toSurfacePoint(x, y));
     }
 
     private _rebuildPath2D(path: ContextPath): Path2D | null {

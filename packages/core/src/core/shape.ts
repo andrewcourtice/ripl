@@ -120,7 +120,14 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         context.applyStroke(path);
     }
 
-    /** Tests whether a point intersects this shape using path-based fill and stroke hit testing. */
+    /**
+     * Tests whether a point intersects this shape using path-based fill and stroke hit testing.
+     *
+     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin), the same space pointer event payloads report.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param options - Hit-testing options, such as whether the test originates from a pointer event.
+     * @returns Whether the point lies within the shape's fill or stroke, honoring its pointer-event region.
+     */
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
         const context = this.context;
         const paths = this.hitPaths;
@@ -135,10 +142,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
-                // The point is in surface space but the world transform is logical, so round-trip it.
-                const local = matrixApplyToPoint(inverse, context.toLogicalPoint(x, y));
-
-                [x, y] = context.toSurfacePoint(local[0], local[1]);
+                [x, y] = matrixApplyToPoint(inverse, [x, y]);
             }
         }
 
