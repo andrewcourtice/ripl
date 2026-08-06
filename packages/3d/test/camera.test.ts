@@ -24,6 +24,31 @@ function createMockContext(): Context3D {
     return createContext(document.createElement('div'));
 }
 
+/** Dispatches a DOM event with arbitrary properties, sidestepping jsdom constructor gaps. */
+function fire(context: Context3D, type: string, props: Record<string, unknown>): void {
+    const event = new Event(type, {
+        bubbles: true,
+        cancelable: true,
+    });
+
+    Object.assign(event, props);
+    (context.element as unknown as HTMLElement).dispatchEvent(event);
+}
+
+/** A horizontal two-finger touch list, `spread` pixels apart and centred on the origin. */
+function touchPair(spread: number) {
+    return [
+        {
+            clientX: -spread / 2,
+            clientY: 0,
+        },
+        {
+            clientX: spread / 2,
+            clientY: 0,
+        },
+    ];
+}
+
 describe('Camera', () => {
 
     beforeEach(() => {
@@ -198,6 +223,117 @@ describe('Camera', () => {
             });
 
             expect(element.style.touchAction).toBe('none');
+        });
+
+    });
+
+    describe('Zoom interactions', () => {
+
+        // The wheel handler fed `deltaY` into `zoom` unnegated, and a positive delta dollies
+        // toward the target — so scrolling down zoomed in, the reverse of the 2D navigator.
+        test('Should zoom out when the wheel is scrolled down', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    zoom: true,
+                },
+            });
+
+            fire(context, 'wheel', {
+                deltaY: 100,
+            });
+
+            expect(camera.position[2]).toBeGreaterThan(5);
+        });
+
+        test('Should zoom in when the wheel is scrolled up', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    zoom: true,
+                },
+            });
+
+            fire(context, 'wheel', {
+                deltaY: -100,
+            });
+
+            expect(camera.position[2]).toBeLessThan(5);
+        });
+
+        // The old linear step took a proportion of the current distance, so a scroll back up
+        // undershot the distance the scroll down had left.
+        test('Should return to the starting distance after equal and opposite scrolls', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    zoom: true,
+                },
+            });
+
+            fire(context, 'wheel', {
+                deltaY: 120,
+            });
+
+            fire(context, 'wheel', {
+                deltaY: -120,
+            });
+
+            expect(camera.position[2]).toBeCloseTo(5);
+        });
+
+        test('Should zoom in when two fingers spread apart', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    zoom: true,
+                },
+            });
+
+            fire(context, 'touchstart', {
+                touches: touchPair(100),
+            });
+
+            fire(context, 'touchmove', {
+                touches: touchPair(200),
+            });
+
+            expect(camera.position[2]).toBeLessThan(5);
+        });
+
+        test('Should zoom out when two fingers pinch together', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    zoom: true,
+                },
+            });
+
+            fire(context, 'touchstart', {
+                touches: touchPair(200),
+            });
+
+            fire(context, 'touchmove', {
+                touches: touchPair(100),
+            });
+
+            expect(camera.position[2]).toBeGreaterThan(5);
+        });
+
+        test('Should not zoom on the wheel when zooming is disabled', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                interactions: {
+                    pivot: true,
+                    zoom: false,
+                },
+            });
+
+            fire(context, 'wheel', {
+                deltaY: 100,
+            });
+
+            expect(camera.position[2]).toBe(5);
         });
 
     });

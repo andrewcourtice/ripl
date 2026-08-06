@@ -94,7 +94,7 @@ camera.pan(1, 0);
 
 ### zoom(delta)
 
-Moves the camera along the eye-to-target vector.
+Moves the camera along the eye-to-target vector. A positive `delta` moves toward the target (zooms in), a negative one retreats (zooms out). The move is clamped so the target never crosses the near plane.
 
 ```ts
 camera.zoom(2);
@@ -158,9 +158,11 @@ Pass `interactions: true` to enable all interactions with default sensitivity, o
 
 ### Controls
 
-- **Orbit / Pivot**: left-click + drag
-- **Pan**: middle-click + drag, or Shift + left-click + drag
-- **Zoom**: scroll wheel
+- **Orbit / Pivot**: left-click + drag, or one-finger drag
+- **Pan**: middle-click + drag, Shift + left-click + drag, or two-finger drag
+- **Zoom**: scroll up to zoom in and down to zoom out, or spread two fingers to zoom in
+
+Zoom matches the 2D [Navigator](/docs/core/advanced/navigator): the same gesture moves both the same way, at the same rate, and a scroll back up returns you exactly where you started.
 
 ### dispose()
 
