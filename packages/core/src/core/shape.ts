@@ -123,8 +123,8 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
     /**
      * Tests whether a point intersects this shape using path-based fill and stroke hit testing.
      *
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin), the same space pointer event payloads report.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left), the same space pointer event payloads report.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param options - Hit-testing options, such as whether the test originates from a pointer event.
      * @returns Whether the point lies within the shape's fill or stroke, honoring its pointer-event region.
      */

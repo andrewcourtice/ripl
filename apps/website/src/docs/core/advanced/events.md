@@ -182,7 +182,7 @@ circle.on('dragend', (event) => {
 
 The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (**the total movement since the drag started**, not the step since the previous event). Record the element's position on `dragstart` and add the delta to it, as above: that preserves the offset between the cursor and the element's origin, and — because each payload is a total rather than a running sum — the element stays put under the cursor even if a move event is coalesced or dropped.
 
-Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in **logical** space: CSS pixels relative to the surface origin, the space elements themselves are authored in. They are not device pixels, and they are not element-local.
+Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in [logical space](/docs/core/essentials/context#coordinates): CSS pixels relative to the context's top-left, the space elements themselves are authored in. They are not device pixels, they are not element-local, and they do not move with the page scroll.
 
 The drag threshold can be configured via context options:
 

@@ -118,13 +118,13 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * point into the element's local space before testing. See {@link Element.getWorldTransform}.
      */
     public hitTestHonorsTransform = false;
-    /** Current width, in pixels, of the rendering surface. */
+    /** Current width of the rendering surface, in logical pixels — CSS pixels, unaffected by the device pixel ratio. */
     public width: number;
-    /** Current height, in pixels, of the rendering surface. */
+    /** Current height of the rendering surface, in logical pixels — CSS pixels, unaffected by the device pixel ratio. */
     public height: number;
-    /** {@link Scale} mapping domain x coordinates to surface x coordinates. */
+    /** {@link Scale} mapping logical x coordinates onto this backend's surface x coordinates. Drives drawing, not a conversion seam for callers — use {@link Context.toSurfacePoint}. */
     public scaleX: Scale<number, number>;
-    /** {@link Scale} mapping domain y coordinates to surface y coordinates. */
+    /** {@link Scale} mapping logical y coordinates onto this backend's surface y coordinates. Drives drawing, not a conversion seam for callers — use {@link Context.toSurfacePoint}. */
     public scaleY: Scale<number, number>;
     /** The element currently being rendered, if any. */
     public renderElement?: RenderElement;
@@ -768,8 +768,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * Tests whether a point is inside the filled region of a path.
      *
      * @param path - The path to test against.
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param fillRule - The fill rule determining what counts as inside. Defaults to the backend's own default.
      * @returns Whether the point lies inside the path's fill.
      */
@@ -781,8 +781,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * Tests whether a point is on the stroked outline of a path.
      *
      * @param path - The path to test against.
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @returns Whether the point lies on the path's stroke.
      */
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {

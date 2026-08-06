@@ -117,7 +117,7 @@ The context owns all pointer interactivity. It listens for DOM mouse events on i
 
 The context emits the same pointer events itself, whether or not an element was hit — subscribe to `context.on('mousedown' | 'mouseup' | 'click' | 'mousemove' | 'mouseenter' | 'mouseleave' | 'dragstart' | 'drag' | 'dragend', …)` for surface-wide interaction. `mouseup` fires exactly once per button press, including when the release lands outside the surface and when a second button is pressed mid-gesture; the release that ends a drag suppresses the `click` that follows it, but still emits `mouseup`.
 
-All pointer payloads report **logical** coordinates — CSS pixels relative to the surface origin, the same space elements are authored in — regardless of the device pixel ratio. To hit-test a point yourself, map it with `context.toSurfacePoint(x, y)` first (see [Custom Contexts](/docs/core/advanced/custom-contexts#coordinate-spaces)).
+All pointer payloads report coordinates in the same space elements are authored in, so a point you receive can be fed straight back into anything that takes one — `element.intersectsWith(x, y)` included. See [Coordinates](#coordinates) below.
 
 Interaction is enabled by default. You can disable it via the `interactive` option:
 
@@ -134,6 +134,32 @@ const context = createContext('.container', {
     dragThreshold: 5, // default is 3
 });
 ```
+
+## Coordinates
+
+Every coordinate Ripl takes or returns is in **logical space**: CSS pixels, unaffected by the device pixel ratio, with `0,0` at the top-left of the context's own element.
+
+That last part is worth being precise about. It is not relative to the page, the viewport, or the document — where the context sits on screen and how far the page is scrolled make no difference. A pointer over the top-left corner of your canvas reports `0,0` whether the canvas is at the top of the page or halfway down a scrolled container.
+
+The device pixel ratio makes no difference either. A context sized 300×150 reports `width` 300 and `height` 150 on every display; on a retina screen the underlying canvas is backed by 600×300 device pixels, but that number never reaches you:
+
+```ts
+const context = createContext('.container'); // host is 300 x 150 CSS pixels
+
+context.width;  // 300, on any display
+context.height; // 150, on any display
+
+context.on('mousemove', (event) => {
+    event.data.x; // 0 - 300, never 0 - 600
+});
+```
+
+This holds in both directions and everywhere:
+
+- **Going in** — element coordinates (`cx`, `x`, `points`, path data), transforms, `Navigator` transforms and brushes, and the hit-testing methods (`element.intersectsWith`, `context.isPointInPath`, `context.isPointInStroke`).
+- **Coming out** — every pointer event payload, `element.getBoundingBox()`, `context.width`/`height`, `scene.width`/`height`, chart interaction points and tooltip anchors.
+
+Backends do have a second, internal space — device pixels on canvas, a character grid on the terminal — and `context.toLogicalPoint`/`toSurfacePoint` map between the two. Those exist for people writing a custom backend; see [Custom Contexts](/docs/core/advanced/custom-contexts#coordinate-spaces). **If you are using Ripl rather than extending it, you never need to call either.**
 
 > [!IMPORTANT]
 > Elements must be rendered to the context (between `markRenderStart()` and `markRenderEnd()`, or via `batch()` / `scene.render()`) for the context to track them for hit testing.
