@@ -768,8 +768,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * Tests whether a point is inside the filled region of a path.
      *
      * @param path - The path to test against.
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param fillRule - The fill rule determining what counts as inside. Defaults to the backend's own default.
      * @returns Whether the point lies inside the path's fill.
      */
@@ -781,8 +781,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * Tests whether a point is on the stroked outline of a path.
      *
      * @param path - The path to test against.
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @returns Whether the point lies on the path's stroke.
      */
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {

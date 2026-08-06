@@ -55,9 +55,17 @@ circle.on('mouseleave', () => {
 });
 
 // Drag elements to reposition them
+let originX = 0;
+let originY = 0;
+
+circle.on('dragstart', () => {
+    originX = circle.cx;
+    originY = circle.cy;
+});
+
 circle.on('drag', (event) => {
-    circle.cx += event.data.deltaX;
-    circle.cy += event.data.deltaY;
+    circle.cx = originX + event.data.deltaX;
+    circle.cy = originY + event.data.deltaY;
     scene.render();
 });
 ```
@@ -203,14 +211,18 @@ const {
 
     scene.render();
 
+    const origin = { cx: 0, cy: 0, x: 0, y: 0 };
+
     circle.on('mouseenter', () => { circle.fill = '#8338ec'; scene.render(); });
     circle.on('mouseleave', () => { circle.fill = '#3a86ff'; scene.render(); });
     circle.on('click', () => { circle.fill = '#fb5607'; scene.render(); });
-    circle.on('drag', (event) => { circle.cx += event.data.deltaX; circle.cy += event.data.deltaY; scene.render(); });
+    circle.on('dragstart', () => { origin.cx = circle.cx; origin.cy = circle.cy; });
+    circle.on('drag', (event) => { circle.cx = origin.cx + event.data.deltaX; circle.cy = origin.cy + event.data.deltaY; scene.render(); });
 
     rect.on('mouseenter', () => { rect.fill = '#8338ec'; scene.render(); });
     rect.on('mouseleave', () => { rect.fill = '#ff006e'; scene.render(); });
     rect.on('click', () => { rect.fill = '#fb5607'; scene.render(); });
-    rect.on('drag', (event) => { rect.x += event.data.deltaX; rect.y += event.data.deltaY; scene.render(); });
+    rect.on('dragstart', () => { origin.x = rect.x; origin.y = rect.y; });
+    rect.on('drag', (event) => { rect.x = origin.x + event.data.deltaX; rect.y = origin.y + event.data.deltaY; scene.render(); });
 });
 </script>

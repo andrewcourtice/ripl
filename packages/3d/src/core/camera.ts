@@ -74,8 +74,8 @@ export interface CameraOptions {
 const INTERACTION_KEY = Symbol('interaction');
 const ORBIT_SENSITIVITY = 0.005;
 const PAN_SENSITIVITY = 0.005;
-const ZOOM_SENSITIVITY = 0.005;
-const PINCH_ZOOM_SENSITIVITY = 0.01;
+// Matches `WHEEL_SENSITIVITY` in @ripl/dom's navigator, so one wheel tick zooms 2D and 3D alike.
+const ZOOM_SENSITIVITY = 0.002;
 
 /** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
 export class Camera extends Disposer {
@@ -274,7 +274,7 @@ export class Camera extends Disposer {
 
     /**
      * Dollies the camera toward or away from its target along the view direction.
-     * @param delta - The distance to move toward the target, in world units. Clamped so the target never crosses the near plane, which would empty the frustum.
+     * @param delta - The distance to move toward the target, in world units. Positive zooms in, negative zooms out. Clamped so the target never crosses the near plane, which would empty the frustum.
      */
     public zoom(delta: number): void {
         const direction = vec3Normalize(vec3Sub(this._target, this._position));
@@ -296,6 +296,13 @@ export class Camera extends Disposer {
     public lookAt(target: Vector3): void {
         this._target = target;
         this._markDirty();
+    }
+
+    // Mirrors `Navigator.zoomBy`: the 2D navigator scales its transform, a dollying camera divides its distance.
+    private _zoomByFactor(factor: number): void {
+        const dist = vec3Distance(this._position, this._target);
+
+        this.zoom(dist - dist / factor);
     }
 
     private _attachInteractions(interactions: boolean | CameraInteractions): void {
@@ -326,9 +333,7 @@ export class Camera extends Disposer {
         if (zoomConfig.enabled) {
             const wheelListener = onDOMEvent(element, 'wheel', (event) => {
                 event.preventDefault();
-                const dist = vec3Distance(this._position, this._target);
-                const delta = event.deltaY * ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist;
-                this.zoom(delta);
+                this._zoomByFactor(Math.exp(-event.deltaY * ZOOM_SENSITIVITY * zoomConfig.sensitivity));
             });
 
             this.retain(wheelListener, INTERACTION_KEY);
@@ -455,12 +460,12 @@ export class Camera extends Disposer {
                 // Pinch-to-zoom
                 if (zoomConfig.enabled) {
                     const pinchDist = getPinchDistance(event.touches);
-                    const pinchDelta = lastPinchDist - pinchDist;
-                    const dist = vec3Distance(this._position, this._target);
+
+                    if (lastPinchDist > 0 && pinchDist > 0) {
+                        this._zoomByFactor((pinchDist / lastPinchDist) ** zoomConfig.sensitivity);
+                    }
 
                     lastPinchDist = pinchDist;
-
-                    this.zoom(pinchDelta * PINCH_ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist);
                 }
             } else if (event.touches.length === 1 && pivotConfig.enabled) {
                 // Single-finger orbit

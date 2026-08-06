@@ -111,67 +111,67 @@ export interface ElementEventMap extends EventMap {
     mouseleave: null;
     /** Emitted as the pointer moves over the element, carrying its position. */
     mousemove: {
-        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
     };
     /** Emitted when a pointer button is pressed over the element, carrying the pointer position. */
     mousedown: {
-        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
     };
     /** Emitted when a pointer button is released over the element, carrying the release position. */
     mouseup: {
-        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
     };
     /** Emitted when the element is clicked, carrying the pointer position; suppressed for the release that ended a drag. */
     click: {
-        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
     };
     /** Emitted when a drag gesture begins on the element, carrying the start position. */
     dragstart: {
-        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
     };
-    /** Emitted continuously while dragging the element, carrying the current position, drag start, and delta from the start. */
+    /** Emitted continuously while dragging the element, carrying the current position, drag start, and total movement since the drag started. */
     drag: {
-        /** Current X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Current X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Current Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Current Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
-        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         startX: number;
-        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         startY: number;
-        /** Horizontal distance moved since the drag started, in logical pixels. */
+        /** Total horizontal distance moved since the drag started, in logical pixels. */
         deltaX: number;
-        /** Vertical distance moved since the drag started, in logical pixels. */
+        /** Total vertical distance moved since the drag started, in logical pixels. */
         deltaY: number;
     };
-    /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and total delta. */
+    /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and total movement since the drag started. */
     dragend: {
-        /** Final X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Final X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;
-        /** Final Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        /** Final Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         y: number;
-        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         startX: number;
-        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the context's top-left). */
         startY: number;
-        /** Total horizontal distance moved over the drag, in logical pixels. */
+        /** Total horizontal distance moved since the drag started, in logical pixels. */
         deltaX: number;
-        /** Total vertical distance moved over the drag, in logical pixels. */
+        /** Total vertical distance moved since the drag started, in logical pixels. */
         deltaY: number;
     };
     /** Emitted when the element is destroyed; carries no payload. */
@@ -829,8 +829,8 @@ export class Element<
     /**
      * Tests whether a point intersects this element's bounding box. Override for custom hit testing.
      *
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin), the same space pointer event payloads report.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left), the same space pointer event payloads report.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param options - Hit-testing options, such as whether the test originates from a pointer event.
      * @returns Whether the point lies within the element.
      */

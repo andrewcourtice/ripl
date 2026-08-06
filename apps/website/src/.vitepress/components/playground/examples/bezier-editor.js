@@ -71,6 +71,8 @@ function syncHull() {
 
 handles.forEach(handle => {
     let dragging = false;
+    let originX = 0;
+    let originY = 0;
 
     handle.on('mouseenter', () => {
         handle.fill = dragging ? FILL_DRAG : FILL_HOVER;
@@ -82,14 +84,16 @@ handles.forEach(handle => {
 
     handle.on('dragstart', () => {
         dragging = true;
+        originX = handle.cx;
+        originY = handle.cy;
         handle.fill = FILL_DRAG;
         handle.radius = 12;
     });
 
-    // `deltaX`/`deltaY` are the movement since the previous event, which keeps the grab offset intact.
+    // `deltaX`/`deltaY` are the total since dragstart, so anchoring on the origin keeps the grab offset.
     handle.on('drag', event => {
-        handle.cx += event.data.deltaX;
-        handle.cy += event.data.deltaY;
+        handle.cx = originX + event.data.deltaX;
+        handle.cy = originY + event.data.deltaY;
         syncHull();
     });
 

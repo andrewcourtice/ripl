@@ -508,8 +508,8 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
      * The hit path is traced from {@link Context3D.project}, which already emits logical
      * coordinates, so the point needs no mapping — unlike {@link Shape2D}, whose path is local.
      *
-     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin), the same space pointer event payloads report.
-     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left), the same space pointer event payloads report.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param options - Hit-testing options, such as whether the test originates from a pointer event.
      * @returns Whether the point lies within the shape's projected faces, honoring its pointer-event region.
      */
