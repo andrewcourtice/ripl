@@ -77,6 +77,11 @@ export interface ContextInfo {
      * supporting only the base protocol.
      */
     capabilities?: string[];
+    /**
+     * The version of Ripl the page is running. See {@link RIPL_VERSION}. Absent when the page runs
+     * a bridge predating version reporting.
+     */
+    riplVersion?: string;
 }
 
 /** The kind of event bus a recorded event was observed on. */

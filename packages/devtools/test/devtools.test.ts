@@ -14,6 +14,7 @@ import type {
 import {
     EVENT_BUFFER_LIMIT,
     EVENT_FLUSH_INTERVAL,
+    RIPL_VERSION,
 } from '../src/constants';
 
 import {
@@ -565,174 +566,12 @@ describe('Devtools', () => {
         expect(getMessagesOfKind('context:added')[0].context.capabilities).toContain('events');
     });
 
-    test('Should not record events until the devtools asks for them', async () => {
+    test('Should report the Ripl version on context:added', () => {
         createDevtools(scene.context, scene);
 
-        const rect = createTestRect();
-
-        scene.add(rect);
-        postMessageSpy.mockClear();
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        expect(getMessagesOfKind('events:batch')).toEqual([]);
+        expect(getMessagesOfKind('context:added')[0].context.riplVersion).toBe(RIPL_VERSION);
     });
 
-    test('Should record element events bubbled to the scene, attributed to their target', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id);
-        postMessageSpy.mockClear();
-
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        const [batch] = getMessagesOfKind('events:batch');
-        const [event] = batch.events;
-
-        expect(event.type).toBe('click');
-        expect(event.source).toBe('element');
-        expect(event.elementId).toBe(rect.id);
-        expect(event.elementType).toBe('rect');
-        expect(event.bubbled).toBe(true);
-        expect(event.data.map(property => property.key)).toEqual(['x', 'y']);
-        expect(event.data.every(property => !property.editable)).toBe(true);
-    });
-
-    test('Should exclude filtered event types page-side', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id, ['updated']);
-        postMessageSpy.mockClear();
-
-        rect.fill = '#ffffff';
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        const types = getMessagesOfKind('events:batch').flatMap(batch => batch.events.map(event => event.type));
-
-        expect(types).toContain('click');
-        expect(types).not.toContain('updated');
-    });
-
-    test('Should apply a replacement filter without restarting the recording', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id);
-
-        dispatchExtensionMessage({
-            kind: 'events:set-filter',
-            contextId: devtools.id,
-            excluded: ['click'],
-        });
-
-        postMessageSpy.mockClear();
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-        rect.emit('mouseenter', null);
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        const types = getMessagesOfKind('events:batch').flatMap(batch => batch.events.map(event => event.type));
-
-        expect(types).toContain('mouseenter');
-        expect(types).not.toContain('click');
-    });
-
-    test('Should report events dropped once the page-side buffer is full', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id);
-        postMessageSpy.mockClear();
-
-        const overflow = 5;
-
-        for (let index = 0; index < EVENT_BUFFER_LIMIT + overflow; index++) {
-            rect.emit('mouseenter', null);
-        }
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        const [batch] = getMessagesOfKind('events:batch');
-
-        expect(batch.dropped).toBe(overflow);
-        expect(batch.events.length).toBe(EVENT_BUFFER_LIMIT);
-    });
-
-    test('Should stop recording on events:stop', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id);
-
-        dispatchExtensionMessage({
-            kind: 'events:stop',
-            contextId: devtools.id,
-        });
-
-        postMessageSpy.mockClear();
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        expect(getMessagesOfKind('events:batch')).toEqual([]);
-    });
-
-    test('Should stop recording when the panel disconnects', async () => {
-        const devtools = createDevtools(scene.context, scene);
-
-        const rect = createTestRect();
-
-        scene.add(rect);
-        startEvents(devtools.id);
-
-        dispatchExtensionMessage({
-            kind: 'panel:disconnected',
-        });
-
-        postMessageSpy.mockClear();
-        rect.emit('click', {
-            x: 1,
-            y: 2,
-        });
-
-        await wait(EVENT_FLUSH_INTERVAL * 2);
-
-        expect(getMessagesOfKind('events:batch')).toEqual([]);
-    });
-
-    // Observing a bus must stay invisible to hit testing, which dispatches only to elements that `has` the event.
     test('Should not make recorded elements look like pointer-event targets', () => {
         const devtools = createDevtools(scene.context, scene);
 

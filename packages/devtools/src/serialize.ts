@@ -1,5 +1,6 @@
 import {
     DEVTOOLS_CAPABILITIES,
+    RIPL_VERSION,
     TREE_CHUNK_SIZE,
 } from './constants';
 
@@ -230,6 +231,7 @@ export function serializeContextInfo(binding: DevtoolsBinding): ContextInfo {
         hasScene: !!binding.scene,
         hasRenderer: !!binding.renderer,
         capabilities: DEVTOOLS_CAPABILITIES,
+        riplVersion: RIPL_VERSION,
         ...binding.renderer ? {
             rendererDebug: binding.renderer.debug,
         } : {},

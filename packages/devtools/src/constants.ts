@@ -1,3 +1,15 @@
+import {
+    version,
+} from '../package.json';
+
+/**
+ * The version of Ripl the page is running, baked in when this package is built. Every Ripl package
+ * shares one version, so this identifies the whole library, not just the bridge. Annotated as
+ * `string` deliberately: it keeps the rest of `package.json` out of the bundle and out of the
+ * emitted declarations.
+ */
+export const RIPL_VERSION: string = version;
+
 /** Current version of the devtools message protocol. Messages with a different version are ignored by both sides. */
 export const PROTOCOL_VERSION = 1;
 
