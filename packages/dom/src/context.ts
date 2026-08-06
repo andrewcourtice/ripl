@@ -159,10 +159,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         return [event.clientX - state.left, event.clientY - state.top];
     }
 
-    private _hitTestLogical(events: string[], x: number, y: number): RenderElement[] {
-        return this.hitTest(events, ...this.toSurfacePoint(x, y));
-    }
-
     private _handleMouseDown(event: MouseEvent): void {
         this._refreshOrigin();
 
@@ -176,7 +172,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.emit('mousedown', payload);
 
-        const hitElements = this._hitTestLogical(PRESS_EVENTS, x, y);
+        const hitElements = this.hitTest(PRESS_EVENTS, x, y);
 
         // Assigned unconditionally: a press that hits nothing must not inherit the last gesture's origin.
         state.dragElement = hitElements.find(element => DRAG_EVENTS.some(dragEvent => element.has(dragEvent)));
@@ -250,7 +246,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleHoverHitTest(x: number, y: number): void {
-        const hitElements = this._hitTestLogical(['mousemove', 'mouseenter', 'mouseleave'], x, y);
+        const hitElements = this.hitTest(['mousemove', 'mouseenter', 'mouseleave'], x, y);
         const topmost = hitElements.length > 0 ? [hitElements[0]] : [];
 
         const {
@@ -308,7 +304,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.emit('mouseup', payload);
 
-        this._hitTestLogical(['mouseup'], x, y).at(0)?.emit('mouseup', payload);
+        this.hitTest(['mouseup'], x, y).at(0)?.emit('mouseup', payload);
 
         if (state.dragStarted) {
             const dragPayload = {
@@ -351,7 +347,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.emit('click', payload);
 
-        this._hitTestLogical(['click'], x, y).at(0)?.emit('click', payload);
+        this.hitTest(['click'], x, y).at(0)?.emit('click', payload);
     }
 
     /** Enables DOM interaction events (mouse enter, leave, move, down, up, click, drag) with element hit testing. */

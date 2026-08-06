@@ -28,6 +28,7 @@ import type {
 
 import {
     createScene,
+    factory,
 } from '@ripl/core';
 
 import type {
@@ -49,6 +50,8 @@ describe('Shape3D', () => {
     let host: HTMLDivElement;
     let paint: PaintLogStub;
 
+    const nativeDevicePixelRatio = factory.devicePixelRatio;
+
     beforeEach(() => {
         paint = mockPaintLog();
         host = document.createElement('div');
@@ -58,6 +61,10 @@ describe('Shape3D', () => {
     });
 
     afterEach(() => {
+        factory.set({
+            devicePixelRatio: nativeDevicePixelRatio,
+        });
+
         host.remove();
         vi.restoreAllMocks();
     });
@@ -434,6 +441,38 @@ describe('Shape3D', () => {
             cube.intersectsWith(x, y, { isPointer: true });
 
             expect(hitPathCalls(createPath, cube.id)).toBe(1);
+        });
+
+        // The pointer pipeline mapped logical onto surface before hit testing, but a 3D hit path is
+        // traced from `project`, which is already logical — so on retina every hit missed by the ratio.
+        test('Should hit a projected face at the logical pointer position on a device-scaled surface', () => {
+            factory.set({
+                devicePixelRatio: 2,
+            });
+
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const clicked = vi.fn();
+
+            cube.on('click', clicked);
+            mockPolygonHitTesting(context);
+
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            const [x, y] = firstFaceCentroid();
+
+            context.element.dispatchEvent(new MouseEvent('click', {
+                clientX: x,
+                clientY: y,
+            }));
+
+            expect(clicked).toHaveBeenCalled();
         });
 
         test('Should rebuild the hit path after the next render', () => {

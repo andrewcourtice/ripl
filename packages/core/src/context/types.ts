@@ -62,7 +62,7 @@ export interface RenderElement {
     getBoundingBox?(local?: boolean): Box;
     /** Returns whether the element has any listeners registered for the given event. */
     has(event: string): boolean;
-    /** Tests whether the point `(x, y)`, in surface space (see {@link Context.toSurfacePoint}), lies within the element, honoring its pointer-event region. */
+    /** Tests whether the point `(x, y)`, in logical space (CSS pixels relative to the surface origin, as pointer event payloads report), lies within the element, honoring its pointer-event region. */
     intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
     /** Emits an event of the given type carrying the given data on this element. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

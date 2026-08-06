@@ -674,13 +674,16 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     }
 
     /**
-     * Maps a point from surface space — the space pointer coordinates arrive in, as produced by
+     * Maps a point from surface space — this backend's own drawing coordinates, as produced by
      * {@link Context.scaleX} and {@link Context.scaleY} — into the logical space elements are
-     * authored in.
+     * authored in and every public coordinate is expressed in.
      *
      * Backends disagree on what surface space is: canvas maps logical coordinates onto device
-     * pixels while SVG leaves them identity, so hit testing has to invert what *this* context
+     * pixels while SVG leaves them identity, so a backend has to invert what *this* context
      * actually does rather than assume the device pixel ratio.
+     *
+     * This is a seam for backend implementors, not for consumers — nothing crossing the public API
+     * is in surface space, so a caller holding a pointer coordinate already has a logical one.
      *
      * @param x - X coordinate in surface space.
      * @param y - Y coordinate in surface space.
@@ -691,8 +694,9 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     }
 
     /**
-     * Maps a point from the logical space elements are authored in back into surface space.
-     * The inverse of {@link Context.toLogicalPoint}.
+     * Maps a point from the logical space elements are authored in into this backend's own drawing
+     * coordinates. The inverse of {@link Context.toLogicalPoint}, and likewise a seam for backend
+     * implementors rather than consumers.
      *
      * @param x - X coordinate in logical space.
      * @param y - Y coordinate in logical space.
@@ -755,12 +759,27 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
-    /** Tests whether a point is inside the filled region of a path. */
+    /**
+     * Tests whether a point is inside the filled region of a path.
+     *
+     * @param path - The path to test against.
+     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @param fillRule - The fill rule determining what counts as inside. Defaults to the backend's own default.
+     * @returns Whether the point lies inside the path's fill.
+     */
     public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         return false;
     }
 
-    /** Tests whether a point is on the stroked outline of a path. */
+    /**
+     * Tests whether a point is on the stroked outline of a path.
+     *
+     * @param path - The path to test against.
+     * @param x - X coordinate in logical space (CSS pixels relative to the surface origin); a backend whose native test wants its own drawing coordinates converts internally.
+     * @param y - Y coordinate in logical space (CSS pixels relative to the surface origin).
+     * @returns Whether the point lies on the path's stroke.
+     */
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         return false;
     }
@@ -773,8 +792,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * Tests which rendered elements intersect the given point for the given event types,
      * returning them topmost-first — the exact reverse of the order they were painted in.
      *
-     * The point is in surface space, so a caller holding the logical coordinates a pointer event
-     * carries must map them through {@link Context.toSurfacePoint} first.
+     * The point is in logical space — the space pointer event payloads report — so a handler passes
+     * the coordinates it was given straight through.
      *
      * Paint order is the sole key. {@link Context.renderedElements} already records the resolved
      * stacking order (groups paint as contiguous stacking contexts), whereas
