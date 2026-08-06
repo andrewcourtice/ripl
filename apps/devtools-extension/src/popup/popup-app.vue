@@ -11,6 +11,7 @@
                 <span class="popup-app__badge" :data-type="context.contextType">{{ context.contextType }}</span>
                 <span class="popup-app__label" :title="context.label">{{ context.label }}</span>
                 <span class="popup-app__size">{{ Math.round(context.width) }}×{{ Math.round(context.height) }}</span>
+                <span v-if="context.riplVersion" class="popup-app__version">v{{ context.riplVersion }}</span>
                 <span class="popup-app__chips">
                     <span v-if="context.hasScene" class="popup-app__chip">scene</span>
                     <span v-if="context.hasRenderer" class="popup-app__chip">renderer</span>
@@ -188,6 +189,13 @@ body {
     color: var(--popup-text-dim);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
+}
+
+.popup-app__version {
+    flex: none;
+    color: var(--popup-text-dim);
+    font-size: 10px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
 .popup-app__chips {

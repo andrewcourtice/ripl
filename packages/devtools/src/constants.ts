@@ -1,3 +1,15 @@
+import {
+    version,
+} from '../package.json';
+
+/**
+ * The version of Ripl the page is running, baked in when this package is built. Every Ripl package
+ * shares one version, so this identifies the whole library, not just the bridge. Annotated as
+ * `string` deliberately: it keeps the rest of `package.json` out of the bundle and out of the
+ * emitted declarations.
+ */
+export const RIPL_VERSION: string = version;
+
 /** Current version of the devtools message protocol. Messages with a different version are ignored by both sides. */
 export const PROTOCOL_VERSION = 1;
 
@@ -12,3 +24,28 @@ export const TREE_CHUNK_SIZE = 400;
 
 /** Interval, in milliseconds, at which coalesced element property updates are flushed to the extension. */
 export const PROPS_FLUSH_INTERVAL = 100;
+
+/** Interval, in milliseconds, at which recorded events are flushed to the extension as a batch. */
+export const EVENT_FLUSH_INTERVAL = 100;
+
+/** Maximum number of recorded events held page-side between flushes; the oldest are dropped first. */
+export const EVENT_BUFFER_LIMIT = 2000;
+
+/**
+ * Event types excluded from recording unless the devtools asks for them. Each fires per frame or
+ * per state write, so recording them by default would swamp the log and the transport.
+ */
+export const DEFAULT_EVENT_FILTER = [
+    'render',
+    'tick',
+    'updated',
+];
+
+/**
+ * Optional protocol features this bridge implements, advertised on {@link ContextInfo.capabilities}
+ * so a newer devtools can detect an older bridge and degrade with an explanation rather than
+ * silently showing nothing.
+ */
+export const DEVTOOLS_CAPABILITIES = [
+    'events',
+];

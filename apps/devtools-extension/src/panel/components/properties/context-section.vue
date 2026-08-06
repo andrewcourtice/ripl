@@ -10,6 +10,10 @@
                 <span class="context-section__label">Size</span>
                 <span>{{ Math.round(context.width) }} × {{ Math.round(context.height) }}</span>
             </div>
+            <div v-if="context.riplVersion" class="context-section__row">
+                <span class="context-section__label">Ripl</span>
+                <span class="context-section__version">v{{ context.riplVersion }}</span>
+            </div>
             <div class="context-section__row">
                 <span class="context-section__label">Bound</span>
                 <span class="context-section__chips">
@@ -122,6 +126,10 @@ function onToggle(key: keyof RendererDebugInfo, event: Event): void {
 
 .context-section__label {
     color: var(--ripl-text-dim);
+}
+
+.context-section__version {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
 .context-section__badge {

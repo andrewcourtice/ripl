@@ -31,14 +31,15 @@ export default defineManifest({
         default_icon: GRAY_ICONS,
     },
     devtools_page: 'src/devtools/index.html',
+    // Entry basenames must stay unique, or crxjs resolves the worker loader to the content script.
     background: {
-        service_worker: 'src/background/index.ts',
+        service_worker: 'src/background/service-worker.ts',
         type: 'module',
     },
     content_scripts: [
         {
             matches: ['<all_urls>'],
-            js: ['src/content/index.ts'],
+            js: ['src/content/content-script.ts'],
             run_at: 'document_start',
         },
     ],

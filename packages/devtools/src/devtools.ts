@@ -12,6 +12,8 @@ import type {
     ExtensionMessage,
     MessageHandlers,
     RendererDebugInfo,
+    SerializedEvent,
+    SerializedEventSource,
 } from './protocol';
 
 import {
@@ -23,11 +25,13 @@ import {
 } from './registry';
 
 import {
+    createEventBuffer,
     createPropsCoalescer,
     createSnapshotScheduler,
 } from './scheduler';
 
 import type {
+    EventBuffer,
     PropsCoalescer,
     SnapshotScheduler,
 } from './scheduler';
@@ -36,6 +40,7 @@ import {
     chunkNodes,
     serializeContextInfo,
     serializeElementProperties,
+    serializeEventData,
     serializeTree,
 } from './serialize';
 
@@ -44,9 +49,16 @@ import {
     sendBridgeMessage,
 } from './transport';
 
+import {
+    EVENT_WILDCARD,
+    TRACKED_EVENTS,
+} from '@ripl/core';
+
 import type {
     Context,
     Element,
+    ElementEventMap,
+    Event,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -160,9 +172,13 @@ export class Devtools {
     private _disposed = false;
     private _disposables: Disposable[] = [];
     private _panelDisposables: Disposable[] = [];
+    private _eventDisposables: Disposable[] = [];
     private _snapshotId = 0;
+    private _eventSequence = 0;
+    private _excludedEvents = new Set<string>();
     private _scheduler?: SnapshotScheduler;
     private _coalescer?: PropsCoalescer;
+    private _eventBuffer?: EventBuffer;
 
     constructor(context: Context, scene?: Scene, renderer?: Renderer, options?: DevtoolsOptions) {
         this.id = stringUniqueId();
@@ -293,6 +309,75 @@ export class Devtools {
         this._panelDisposables = [];
         this._scheduler?.cancel();
         this._coalescer?.clear();
+        this._stopEvents();
+    }
+
+    private _flushEvents(events: SerializedEvent[], dropped: number): void {
+        sendBridgeMessage({
+            events,
+            dropped,
+            kind: 'events:batch',
+            contextId: this.id,
+        });
+    }
+
+    private _recordEvent(source: SerializedEventSource, bus: object, event: Event<unknown>): void {
+        if (this._excludedEvents.has(event.type)) {
+            return;
+        }
+
+        // The context re-emits the DOM's pointer stream; the elements it hits record it anyway.
+        if (source === 'context' && TRACKED_EVENTS.includes(event.type as keyof ElementEventMap)) {
+            return;
+        }
+
+        const target = source === 'element'
+            ? event.target as unknown as Element
+            : undefined;
+
+        this._eventBuffer?.push({
+            source,
+            type: event.type,
+            sequence: ++this._eventSequence,
+            timestamp: event.timestamp,
+            bubbled: event.target !== bus,
+            data: serializeEventData(event.data),
+            ...target ? {
+                elementId: target.id,
+                elementType: target.type,
+                elementClasses: Array.from(target.classList),
+            } : {},
+        });
+    }
+
+    private _startEvents(excluded: string[]): void {
+        const {
+            scene,
+            context,
+            renderer,
+        } = this;
+
+        this._stopEvents();
+        this._excludedEvents = new Set(excluded);
+        this._eventBuffer = createEventBuffer((events, dropped) => this._flushEvents(events, dropped));
+
+        // Element events bubble to the scene, so one wildcard subscription observes the whole tree.
+        if (scene) {
+            this._eventDisposables.push(scene.on(EVENT_WILDCARD, event => this._recordEvent('element', scene, event)));
+        }
+
+        this._eventDisposables.push(context.on(EVENT_WILDCARD, event => this._recordEvent('context', context, event)));
+
+        if (renderer) {
+            this._eventDisposables.push(renderer.on(EVENT_WILDCARD, event => this._recordEvent('renderer', renderer, event)));
+        }
+    }
+
+    private _stopEvents(): void {
+        this._eventDisposables.forEach(disposable => disposable.dispose());
+        this._eventDisposables = [];
+        this._eventBuffer?.dispose();
+        this._eventBuffer = undefined;
     }
 
     private _inspectElement(elementId: string): void {
@@ -389,6 +474,11 @@ export class Devtools {
             highlightOwnerId = undefined;
         },
         'renderer:set-debug': this._forThisContext(message => this._setRendererDebug(message.debug)),
+        'events:start': this._forThisContext(message => this._startEvents(message.excluded)),
+        'events:stop': this._forThisContext(() => this._stopEvents()),
+        'events:set-filter': this._forThisContext(message => {
+            this._excludedEvents = new Set(message.excluded);
+        }),
     };
 
     private _handleMessage(message: ExtensionMessage): void {

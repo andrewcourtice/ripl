@@ -21,6 +21,19 @@ export type EventMap = {
     destroyed: null;
 };
 
+/**
+ * The wildcard event type. Subscribing to it with {@link EventBus.on} receives every event
+ * emitted on the bus, whatever its type — including custom types a subclass never declares in
+ * {@link EventBus.$events}. Because events bubble, a wildcard subscription on a {@link Group}
+ * or {@link Scene} observes its whole subtree, with each event's `target` still identifying the
+ * bus it was originally emitted on.
+ *
+ * A wildcard subscription is deliberately invisible to {@link EventBus.has}, which reports only
+ * listeners registered for a concrete type. Interaction events are dispatched to elements that
+ * `has` the event, so observing a bus never turns it into a pointer-event target.
+ */
+export const EVENT_WILDCARD = '*';
+
 /** Options for emitting an event, controlling bubbling and attached data. */
 export type EventOptions<TData = undefined> = {
     /** Whether the event propagates up the parent chain. Defaults to `true`. */
@@ -102,12 +115,19 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
         return [];
     }
 
-    /** Returns whether there are any listeners registered for the given event type. */
+    /**
+     * Returns whether there are any listeners registered for the given event type. Wildcard
+     * subscriptions ({@link EVENT_WILDCARD}) are not listeners for any concrete type, so a bus
+     * observed only through the wildcard still reports `false` here.
+     */
     public has(type: keyof TEventMap) {
         return !!this._listeners.get(type)?.size;
     }
 
-    /** Subscribes a handler to the given event type and returns a disposable for cleanup. */
+    /**
+     * Subscribes a handler to the given event type and returns a disposable for cleanup. Pass
+     * {@link EVENT_WILDCARD} to receive every event emitted on the bus regardless of type.
+     */
     public on<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
         const handlers = this._listeners.get(type) || new Set();
 
@@ -145,7 +165,23 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
         return this.on(type, callback, options);
     }
 
-    /** Emits an event, invoking all matching handlers and bubbling to the parent if applicable. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _notify(handlers: Set<EventHandler> | undefined, event: Event<any>): void {
+        if (!handlers) {
+            return;
+        }
+
+        setForEach(handlers, handler => {
+            if (!handler.self || event.target === this) {
+                handler(event);
+            }
+        });
+    }
+
+    /**
+     * Emits an event, invoking all matching handlers and bubbling to the parent if applicable.
+     * Handlers for the event's own type run first, then {@link EVENT_WILDCARD} subscriptions.
+     */
     public emit<TEvent extends Event = Event>(event: TEvent): TEvent;
     public emit<TEvent extends keyof TEventMap>(type: TEvent, data: TEventMap[TEvent]): Event<TEventMap[TEvent]>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,14 +192,11 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
                 data: args[1],
             });
 
-        const handlers = this._listeners.get(event.type);
+        this._notify(this._listeners.get(event.type), event);
 
-        if (handlers) {
-            setForEach(handlers, handler => {
-                if (!handler.self || event.target === this) {
-                    handler(event);
-                }
-            });
+        // Guard the literal type so an event emitted as '*' reaches its subscribers exactly once.
+        if (event.type !== EVENT_WILDCARD) {
+            this._notify(this._listeners.get(EVENT_WILDCARD), event);
         }
 
         if (this.parent && event.bubbles) {

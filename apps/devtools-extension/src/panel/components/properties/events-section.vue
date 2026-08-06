@@ -25,6 +25,7 @@ import {
 const store = useDevtoolsStore();
 
 // The bridge reports these from the element's own `$events`, so `EventBus` subclasses surface theirs too.
+// `attached`/`detached` are declared there but core never emits them, so their dots stay unlit.
 const events = computed(() => store.selectedDetail.value?.events ?? []);
 </script>
 

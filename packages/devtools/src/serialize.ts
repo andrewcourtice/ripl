@@ -1,4 +1,6 @@
 import {
+    DEVTOOLS_CAPABILITIES,
+    RIPL_VERSION,
     TREE_CHUNK_SIZE,
 } from './constants';
 
@@ -137,6 +139,29 @@ export function serializeElementProperties(element: Element): SerializedProperty
 }
 
 /**
+ * Serializes an event payload into wire properties, one per key. Values are always marked
+ * non-editable: an event has already been dispatched, so there is nothing to write back to.
+ * A payload that is not a keyed object is serialized under a single `data` key.
+ *
+ * @param data - The payload carried by the event.
+ * @returns The serialized properties; empty for a `null` or `undefined` payload.
+ */
+export function serializeEventData(data: unknown): SerializedProperty[] {
+    if (data === null || data === undefined) {
+        return [];
+    }
+
+    const properties = typeIsObject(data) && !typeIsArray(data)
+        ? Object.entries(data).map(([key, value]) => serializeProperty(key, value))
+        : [serializeProperty('data', data)];
+
+    return properties.map(property => ({
+        ...property,
+        editable: false,
+    }));
+}
+
+/**
  * Serializes an element into a flat tree node linked to its parent by id.
  *
  * @param element - The element to serialize.
@@ -205,6 +230,8 @@ export function serializeContextInfo(binding: DevtoolsBinding): ContextInfo {
         height: binding.context.height,
         hasScene: !!binding.scene,
         hasRenderer: !!binding.renderer,
+        capabilities: DEVTOOLS_CAPABILITIES,
+        riplVersion: RIPL_VERSION,
         ...binding.renderer ? {
             rendererDebug: binding.renderer.debug,
         } : {},

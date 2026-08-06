@@ -6,9 +6,24 @@
             </svg>
             <span class="panel-header__title">Ripl</span>
         </div>
+        <TabBar class="panel-header__tabs" />
         <div class="panel-header__actions">
+            <a
+                class="panel-header__action"
+                :href="DOCS_DEVTOOLS_URL"
+                target="_blank"
+                rel="noreferrer"
+                title="Documentation"
+                aria-label="Documentation"
+            >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                </svg>
+            </a>
             <button
-                class="panel-header__settings"
+                class="panel-header__action"
                 type="button"
                 title="Settings"
                 aria-label="Settings"
@@ -26,6 +41,11 @@
 
 <script setup lang="ts">
 import SettingsPopover from './settings-popover.vue';
+import TabBar from './tab-bar.vue';
+
+import {
+    DOCS_DEVTOOLS_URL,
+} from '../../shared/docs';
 
 import {
     RIPL_LOGO_PATH,
@@ -42,8 +62,7 @@ const settingsOpen = ref(false);
 <style scoped>
 .panel-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: stretch;
     height: 32px;
     padding: 0 var(--ripl-section-pad-x);
     border-bottom: 1px solid var(--ripl-border);
@@ -55,6 +74,11 @@ const settingsOpen = ref(false);
     display: flex;
     align-items: center;
     gap: var(--ripl-space-2);
+}
+
+.panel-header__tabs {
+    flex: 1;
+    margin-left: var(--ripl-space-3);
 }
 
 .panel-header__logo {
@@ -75,7 +99,7 @@ const settingsOpen = ref(false);
     align-items: center;
 }
 
-.panel-header__settings {
+.panel-header__action {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,12 +113,12 @@ const settingsOpen = ref(false);
     cursor: pointer;
 }
 
-.panel-header__settings:hover {
+.panel-header__action:hover {
     background: var(--ripl-hover);
     color: var(--ripl-text);
 }
 
-.panel-header__settings svg {
+.panel-header__action svg {
     width: 14px;
     height: 14px;
 }

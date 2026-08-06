@@ -16,6 +16,7 @@ import {
     createRect,
     createScene,
     factory,
+    scaleContinuous,
 } from '@ripl/core';
 
 import type {
@@ -100,6 +101,44 @@ describe('Highlight', () => {
         expect(overlay?.style.top).toBe('70px');
         expect(overlay?.style.width).toBe('40px');
         expect(overlay?.style.height).toBe('40px');
+    });
+
+    // The overlay is a fixed-position DOM node, so it maps logical space to CSS pixels, never to
+    // the backend's surface space; routing it through the device pixel ratio would double it.
+    test('Should place the overlay independently of the device pixel ratio', () => {
+        const rect = createRect({
+            x: 10,
+            y: 10,
+            width: 20,
+            height: 20,
+        });
+
+        scene.add(rect);
+        scene.context.width = 100;
+        scene.context.height = 50;
+        scene.context.scaleX = scaleContinuous([0, 100], [0, 200]);
+        scene.context.scaleY = scaleContinuous([0, 50], [0, 100]);
+
+        vi.spyOn(scene.context.element, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            top: 0,
+            width: 100,
+            height: 50,
+            right: 100,
+            bottom: 50,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+
+        showHighlight(scene.context, rect);
+
+        const overlay = getOverlay();
+
+        expect(overlay?.style.left).toBe('10px');
+        expect(overlay?.style.top).toBe('10px');
+        expect(overlay?.style.width).toBe('20px');
+        expect(overlay?.style.height).toBe('20px');
     });
 
     test('Should reuse a single overlay across repeated shows', () => {

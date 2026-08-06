@@ -103,6 +103,10 @@
             "link": "/docs/api/@ripl/3d/interfaces/ProjectedFace3D.md"
           },
           {
+            "text": "ProjectedFaceState3D",
+            "link": "/docs/api/@ripl/3d/interfaces/ProjectedFaceState3D.md"
+          },
+          {
             "text": "Shape3DState",
             "link": "/docs/api/@ripl/3d/interfaces/Shape3DState.md"
           },
@@ -179,6 +183,10 @@
           {
             "text": "computeFaceNormal",
             "link": "/docs/api/@ripl/3d/functions/computeFaceNormal.md"
+          },
+          {
+            "text": "contextIsContext3D",
+            "link": "/docs/api/@ripl/3d/functions/contextIsContext3D.md"
           },
           {
             "text": "createCamera",
@@ -293,6 +301,10 @@
             "link": "/docs/api/@ripl/3d/functions/mat4TransformDirection.md"
           },
           {
+            "text": "mat4TransformDirectionInverse",
+            "link": "/docs/api/@ripl/3d/functions/mat4TransformDirectionInverse.md"
+          },
+          {
             "text": "mat4TransformPoint",
             "link": "/docs/api/@ripl/3d/functions/mat4TransformPoint.md"
           },
@@ -351,6 +363,10 @@
           {
             "text": "vec3Sub",
             "link": "/docs/api/@ripl/3d/functions/vec3Sub.md"
+          },
+          {
+            "text": "vec3TriangleNormal",
+            "link": "/docs/api/@ripl/3d/functions/vec3TriangleNormal.md"
           }
         ]
       }
@@ -396,10 +412,6 @@
           {
             "text": "AbstractConstructor",
             "link": "/docs/api/@ripl/canvas/type-aliases/AbstractConstructor.md"
-          },
-          {
-            "text": "GradientBounds",
-            "link": "/docs/api/@ripl/canvas/type-aliases/GradientBounds.md"
           }
         ]
       },
@@ -440,8 +452,8 @@
             "link": "/docs/api/@ripl/canvas/functions/createContext.md"
           },
           {
-            "text": "getCanvasGradientBounds",
-            "link": "/docs/api/@ripl/canvas/functions/getCanvasGradientBounds.md"
+            "text": "releaseCanvasPaintCache",
+            "link": "/docs/api/@ripl/canvas/functions/releaseCanvasPaintCache.md"
           },
           {
             "text": "renderTextAlongPath",
@@ -947,6 +959,14 @@
             "link": "/docs/api/@ripl/charts/interfaces/LineChartSeriesOptions.md"
           },
           {
+            "text": "LineStyleSegment",
+            "link": "/docs/api/@ripl/charts/interfaces/LineStyleSegment.md"
+          },
+          {
+            "text": "LineStyleSegments",
+            "link": "/docs/api/@ripl/charts/interfaces/LineStyleSegments.md"
+          },
+          {
             "text": "PackedCircleChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartEventMap.md"
           },
@@ -1051,6 +1071,10 @@
             "link": "/docs/api/@ripl/charts/interfaces/ResolvedAnimation.md"
           },
           {
+            "text": "ResolvedLineStyle",
+            "link": "/docs/api/@ripl/charts/interfaces/ResolvedLineStyle.md"
+          },
+          {
             "text": "RibbonState",
             "link": "/docs/api/@ripl/charts/interfaces/RibbonState.md"
           },
@@ -1097,6 +1121,10 @@
           {
             "text": "ScatterChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ScatterChartSeriesOptions.md"
+          },
+          {
+            "text": "SegmentInteractionOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/SegmentInteractionOptions.md"
           },
           {
             "text": "SegmentLabelLayout",
@@ -1289,6 +1317,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/EaseName.md"
           },
           {
+            "text": "HoverHighlightStates",
+            "link": "/docs/api/@ripl/charts/type-aliases/HoverHighlightStates.md"
+          },
+          {
             "text": "LabelAnchor",
             "link": "/docs/api/@ripl/charts/type-aliases/LabelAnchor.md"
           },
@@ -1299,6 +1331,14 @@
           {
             "text": "LineStyle",
             "link": "/docs/api/@ripl/charts/type-aliases/LineStyle.md"
+          },
+          {
+            "text": "LineStyleBound",
+            "link": "/docs/api/@ripl/charts/type-aliases/LineStyleBound.md"
+          },
+          {
+            "text": "LineStyleInput",
+            "link": "/docs/api/@ripl/charts/type-aliases/LineStyleInput.md"
           },
           {
             "text": "NumericAccessor",
@@ -1367,6 +1407,10 @@
             "link": "/docs/api/@ripl/charts/variables/DEFAULT_CHART_PADDING.md"
           },
           {
+            "text": "DEFAULT_SEGMENT_PAD_WIDTH",
+            "link": "/docs/api/@ripl/charts/variables/DEFAULT_SEGMENT_PAD_WIDTH.md"
+          },
+          {
             "text": "ELEMENT_GAP",
             "link": "/docs/api/@ripl/charts/variables/ELEMENT_GAP.md"
           },
@@ -1399,6 +1443,14 @@
           {
             "text": "applyHoverHighlight",
             "link": "/docs/api/@ripl/charts/functions/applyHoverHighlight.md"
+          },
+          {
+            "text": "applySegmentInteraction",
+            "link": "/docs/api/@ripl/charts/functions/applySegmentInteraction.md"
+          },
+          {
+            "text": "arcCentroidAnchor",
+            "link": "/docs/api/@ripl/charts/functions/arcCentroidAnchor.md"
           },
           {
             "text": "areaCenter",
@@ -1475,6 +1527,14 @@
           {
             "text": "createHistogramChart",
             "link": "/docs/api/@ripl/charts/functions/createHistogramChart.md"
+          },
+          {
+            "text": "createIndexLookup",
+            "link": "/docs/api/@ripl/charts/functions/createIndexLookup.md"
+          },
+          {
+            "text": "createKeyedLookup",
+            "link": "/docs/api/@ripl/charts/functions/createKeyedLookup.md"
           },
           {
             "text": "createLineChart",
@@ -1697,12 +1757,20 @@
             "link": "/docs/api/@ripl/charts/functions/resolveLineDash.md"
           },
           {
+            "text": "resolveLineStyle",
+            "link": "/docs/api/@ripl/charts/functions/resolveLineStyle.md"
+          },
+          {
             "text": "resolveRadialLabel",
             "link": "/docs/api/@ripl/charts/functions/resolveRadialLabel.md"
           },
           {
             "text": "resolveSegmentLabelLayout",
             "link": "/docs/api/@ripl/charts/functions/resolveSegmentLabelLayout.md"
+          },
+          {
+            "text": "resolveSegmentPadWidth",
+            "link": "/docs/api/@ripl/charts/functions/resolveSegmentPadWidth.md"
           },
           {
             "text": "resolveTheme",
@@ -1727,6 +1795,10 @@
           {
             "text": "symbolRadius",
             "link": "/docs/api/@ripl/charts/functions/symbolRadius.md"
+          },
+          {
+            "text": "transitionIfAny",
+            "link": "/docs/api/@ripl/charts/functions/transitionIfAny.md"
           }
         ]
       }
@@ -2100,6 +2172,10 @@
             "link": "/docs/api/@ripl/core/interfaces/FactoryOptions.md"
           },
           {
+            "text": "FrameBuffer",
+            "link": "/docs/api/@ripl/core/interfaces/FrameBuffer.md"
+          },
+          {
             "text": "GradientColorStop",
             "link": "/docs/api/@ripl/core/interfaces/GradientColorStop.md"
           },
@@ -2200,6 +2276,10 @@
             "link": "/docs/api/@ripl/core/interfaces/PolygonState.md"
           },
           {
+            "text": "PolylineSegment",
+            "link": "/docs/api/@ripl/core/interfaces/PolylineSegment.md"
+          },
+          {
             "text": "PolylineState",
             "link": "/docs/api/@ripl/core/interfaces/PolylineState.md"
           },
@@ -2254,6 +2334,10 @@
           {
             "text": "RenderInstruction",
             "link": "/docs/api/@ripl/core/interfaces/RenderInstruction.md"
+          },
+          {
+            "text": "ResolvedInteraction",
+            "link": "/docs/api/@ripl/core/interfaces/ResolvedInteraction.md"
           },
           {
             "text": "Scale",
@@ -2408,6 +2492,10 @@
           {
             "text": "Gradient",
             "link": "/docs/api/@ripl/core/type-aliases/Gradient.md"
+          },
+          {
+            "text": "GradientBounds",
+            "link": "/docs/api/@ripl/core/type-aliases/GradientBounds.md"
           },
           {
             "text": "GradientType",
@@ -2736,8 +2824,16 @@
             "link": "/docs/api/@ripl/core/variables/easeOutSine.md"
           },
           {
+            "text": "EVENT_WILDCARD",
+            "link": "/docs/api/@ripl/core/variables/EVENT_WILDCARD.md"
+          },
+          {
             "text": "factory",
             "link": "/docs/api/@ripl/core/variables/factory.md"
+          },
+          {
+            "text": "HALF_PI",
+            "link": "/docs/api/@ripl/core/variables/HALF_PI.md"
           },
           {
             "text": "interpolateAny",
@@ -2902,6 +2998,10 @@
             "link": "/docs/api/@ripl/core/functions/createText.md"
           },
           {
+            "text": "dataURLToBlob",
+            "link": "/docs/api/@ripl/core/functions/dataURLToBlob.md"
+          },
+          {
             "text": "degreesToRadians",
             "link": "/docs/api/@ripl/core/functions/degreesToRadians.md"
           },
@@ -2962,6 +3062,10 @@
             "link": "/docs/api/@ripl/core/functions/getEuclideanDistance.md"
           },
           {
+            "text": "getGradientBounds",
+            "link": "/docs/api/@ripl/core/functions/getGradientBounds.md"
+          },
+          {
             "text": "getLinearScaleMethod",
             "link": "/docs/api/@ripl/core/functions/getLinearScaleMethod.md"
           },
@@ -2972,6 +3076,14 @@
           {
             "text": "getMidpoint",
             "link": "/docs/api/@ripl/core/functions/getMidpoint.md"
+          },
+          {
+            "text": "getPadAngleAtRadius",
+            "link": "/docs/api/@ripl/core/functions/getPadAngleAtRadius.md"
+          },
+          {
+            "text": "getPadInnerRadius",
+            "link": "/docs/api/@ripl/core/functions/getPadInnerRadius.md"
           },
           {
             "text": "getPathLength",
@@ -3098,6 +3210,10 @@
             "link": "/docs/api/@ripl/core/functions/normalizeBorderRadius.md"
           },
           {
+            "text": "normalizePolylineRuns",
+            "link": "/docs/api/@ripl/core/functions/normalizePolylineRuns.md"
+          },
+          {
             "text": "padDomain",
             "link": "/docs/api/@ripl/core/functions/padDomain.md"
           },
@@ -3108,6 +3224,10 @@
           {
             "text": "parseGradient",
             "link": "/docs/api/@ripl/core/functions/parseGradient.md"
+          },
+          {
+            "text": "parseGradientCached",
+            "link": "/docs/api/@ripl/core/functions/parseGradientCached.md"
           },
           {
             "text": "parseHEX",
@@ -3130,8 +3250,16 @@
             "link": "/docs/api/@ripl/core/functions/parseHSVA.md"
           },
           {
+            "text": "parseKeyword",
+            "link": "/docs/api/@ripl/core/functions/parseKeyword.md"
+          },
+          {
             "text": "parsePattern",
             "link": "/docs/api/@ripl/core/functions/parsePattern.md"
+          },
+          {
+            "text": "parsePatternCached",
+            "link": "/docs/api/@ripl/core/functions/parsePatternCached.md"
           },
           {
             "text": "parseRGB",
@@ -3208,6 +3336,10 @@
           {
             "text": "rescaleDomain",
             "link": "/docs/api/@ripl/core/functions/rescaleDomain.md"
+          },
+          {
+            "text": "resolveInteraction",
+            "link": "/docs/api/@ripl/core/functions/resolveInteraction.md"
           },
           {
             "text": "resolveNiceCount",
@@ -3649,6 +3781,10 @@
             "link": "/docs/api/@ripl/terminal/functions/createContext.md"
           },
           {
+            "text": "dashPixels",
+            "link": "/docs/api/@ripl/terminal/functions/dashPixels.md"
+          },
+          {
             "text": "fillPolygon",
             "link": "/docs/api/@ripl/terminal/functions/fillPolygon.md"
           },
@@ -3695,6 +3831,10 @@
           {
             "text": "rasterizeRect",
             "link": "/docs/api/@ripl/terminal/functions/rasterizeRect.md"
+          },
+          {
+            "text": "thickenPixels",
+            "link": "/docs/api/@ripl/terminal/functions/thickenPixels.md"
           }
         ]
       }
@@ -3705,6 +3845,16 @@
     "link": "/docs/api/@ripl/utilities/",
     "collapsed": true,
     "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "LRUCache",
+            "link": "/docs/api/@ripl/utilities/classes/LRUCache.md"
+          }
+        ]
+      },
       {
         "text": "Interfaces",
         "collapsed": true,
@@ -3852,6 +4002,10 @@
           {
             "text": "comparitorString",
             "link": "/docs/api/@ripl/utilities/functions/comparitorString.md"
+          },
+          {
+            "text": "createLRUCache",
+            "link": "/docs/api/@ripl/utilities/functions/createLRUCache.md"
           },
           {
             "text": "functionCache",

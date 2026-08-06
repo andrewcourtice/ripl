@@ -1,14 +1,17 @@
 <template>
     <div class="panel-app">
         <PanelHeader />
-        <SplitPane v-if="store.hasContexts.value" class="panel-app__body">
-            <template #left>
-                <TreeView />
-            </template>
-            <template #right>
-                <PropertiesPanel />
-            </template>
-        </SplitPane>
+        <template v-if="store.hasContexts.value">
+            <SplitPane v-if="activeTab === 'elements'" class="panel-app__body">
+                <template #left>
+                    <ElementsPane />
+                </template>
+                <template #right>
+                    <PropertiesPanel />
+                </template>
+            </SplitPane>
+            <EventsPane v-else class="panel-app__body" />
+        </template>
         <div v-else class="panel-app__empty">
             <svg class="panel-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
                 <path :d="RIPL_LOGO_PATH" fill="currentColor" />
@@ -22,10 +25,11 @@
 </template>
 
 <script setup lang="ts">
+import EventsPane from './components/events/events-pane.vue';
 import PanelHeader from './components/panel-header.vue';
 import PropertiesPanel from './components/properties/properties-panel.vue';
 import SplitPane from './components/split-pane.vue';
-import TreeView from './components/tree/tree-view.vue';
+import ElementsPane from './components/tree/elements-pane.vue';
 
 import {
     useDevtoolsStore,
@@ -34,6 +38,10 @@ import {
 import {
     useSettings,
 } from './composables/use-settings';
+
+import {
+    useTabs,
+} from './composables/use-tabs';
 
 import {
     useTheme,
@@ -51,6 +59,10 @@ import {
 const store = useDevtoolsStore();
 const settings = useSettings();
 
+const {
+    activeTab,
+} = useTabs();
+
 useTheme();
 
 // Poll so animation-driven property changes show without extra page-side work; paused while hidden.
@@ -58,7 +70,7 @@ watchEffect(onCleanup => {
     const selection = store.selection.value;
     const rate = settings.pollRate.value;
 
-    if (!selection) {
+    if (!selection || activeTab.value !== 'elements') {
         return;
     }
 
@@ -83,6 +95,7 @@ watchEffect(onCleanup => {
     flex: 1;
     min-height: 0;
 }
+
 
 .panel-app__empty {
     flex: 1;
