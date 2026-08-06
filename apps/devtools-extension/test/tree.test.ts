@@ -26,6 +26,10 @@ import {
 } from '../src/panel/composables/use-tree';
 
 import type {
+    UseTree,
+} from '../src/panel/composables/use-tree';
+
+import type {
     ContextInfo,
     SerializedNode,
     SerializedProperty,
@@ -59,8 +63,55 @@ function createSampleNodes(): SerializedNode[] {
         createNode('rect-2', 'group-1'),
         createNode('circle-1', 'scene-1', {
             elementType: 'circle',
+            classes: ['marker'],
+            properties: [
+                {
+                    key: 'fill',
+                    valueType: 'color',
+                    editable: true,
+                    value: '#ff0000',
+                },
+            ],
         }),
     ];
+}
+
+function createPopulatedStore(): DevtoolsStore {
+    const store = createDevtoolsStore(() => {});
+    const nodes = createSampleNodes();
+
+    store.handleMessage({
+        kind: 'context:added',
+        context: {
+            contextId: CONTEXT_ID,
+            label: 'Canvas',
+            contextType: 'canvas',
+            width: 800,
+            height: 600,
+            hasScene: true,
+            hasRenderer: false,
+        },
+    });
+    store.handleMessage({
+        kind: 'tree:snapshot-begin',
+        contextId: CONTEXT_ID,
+        snapshotId: 1,
+        nodeCount: nodes.length,
+    });
+    store.handleMessage({
+        kind: 'tree:chunk',
+        contextId: CONTEXT_ID,
+        snapshotId: 1,
+        seq: 0,
+        nodes,
+    });
+    store.handleMessage({
+        kind: 'tree:snapshot-end',
+        contextId: CONTEXT_ID,
+        snapshotId: 1,
+    });
+
+    return store;
 }
 
 describe('Devtools tree', () => {
@@ -323,44 +374,6 @@ describe('Devtools tree', () => {
 
     describe('Bulk expansion', () => {
 
-        function createPopulatedStore(): DevtoolsStore {
-            const store = createDevtoolsStore(() => {});
-            const nodes = createSampleNodes();
-
-            store.handleMessage({
-                kind: 'context:added',
-                context: {
-                    contextId: CONTEXT_ID,
-                    label: 'Canvas',
-                    contextType: 'canvas',
-                    width: 800,
-                    height: 600,
-                    hasScene: true,
-                    hasRenderer: false,
-                },
-            });
-            store.handleMessage({
-                kind: 'tree:snapshot-begin',
-                contextId: CONTEXT_ID,
-                snapshotId: 1,
-                nodeCount: nodes.length,
-            });
-            store.handleMessage({
-                kind: 'tree:chunk',
-                contextId: CONTEXT_ID,
-                snapshotId: 1,
-                seq: 0,
-                nodes,
-            });
-            store.handleMessage({
-                kind: 'tree:snapshot-end',
-                contextId: CONTEXT_ID,
-                snapshotId: 1,
-            });
-
-            return store;
-        }
-
         test('Should expand every node that has children', () => {
             const tree = createTree(createPopulatedStore());
 
@@ -394,6 +407,73 @@ describe('Devtools tree', () => {
             const store = createPopulatedStore();
 
             expect(useTree(store)).toBe(useTree(store));
+        });
+
+    });
+
+    describe('Filtering', () => {
+
+        function createFilteredTree(): UseTree {
+            return createTree(createPopulatedStore());
+        }
+
+        function getRenderedIds(tree: UseTree): string[] {
+            return Array.from(new Set(tree.rows.value.map(row => row.node.id)));
+        }
+
+        test('Should list every element type present', () => {
+            expect(createFilteredTree().availableTypes.value).toEqual(['circle', 'group', 'rect', 'scene']);
+        });
+
+        // A match buried in a collapsed group is useless without the groups that contain it.
+        test('Should keep the ancestors of a deep match visible', () => {
+            const tree = createFilteredTree();
+
+            tree.filter.value.query = 'rect-1';
+
+            expect(getRenderedIds(tree)).toEqual(['scene-1', 'group-1', 'rect-1']);
+        });
+
+        test('Should narrow to a single element type', () => {
+            const tree = createFilteredTree();
+
+            tree.filter.value.type = 'circle';
+
+            expect(getRenderedIds(tree)).toEqual(['scene-1', 'circle-1']);
+        });
+
+        test('Should match a class and a serialized attribute value', () => {
+            const byClass = createFilteredTree();
+            const byAttribute = createFilteredTree();
+
+            byClass.filter.value.query = 'marker';
+            byAttribute.filter.value.query = '#ff0000';
+
+            expect(getRenderedIds(byClass)).toContain('circle-1');
+            expect(getRenderedIds(byAttribute)).toContain('circle-1');
+        });
+
+        test('Should render nothing when a filter matches nothing', () => {
+            const tree = createFilteredTree();
+
+            tree.filter.value.query = 'nothing-matches-this';
+
+            expect(tree.rows.value).toEqual([]);
+        });
+
+        // Filtering reveals matches without touching the user's expansion, so clearing restores it.
+        test('Should restore the previous expansion when the filter clears', () => {
+            const tree = createFilteredTree();
+
+            const collapsed = tree.rows.value.map(row => row.node.id);
+
+            tree.filter.value.query = 'rect-1';
+            expect(tree.rows.value.length).toBeGreaterThan(collapsed.length);
+
+            tree.filter.value.query = '';
+
+            expect(tree.rows.value.map(row => row.node.id)).toEqual(collapsed);
+            expect(tree.expandedIds.value.size).toBe(0);
         });
 
     });

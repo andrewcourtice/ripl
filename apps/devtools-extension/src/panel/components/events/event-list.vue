@@ -54,8 +54,9 @@ const ROW_HEIGHT = 22;
 const store = useDevtoolsStore();
 
 const viewport = ref<HTMLElement | null>(null);
-const events = computed(() => store.events.value);
-const origin = computed(() => getTimeOrigin(events.value));
+const events = computed(() => store.visibleEvents.value);
+// Offsets stay measured against the whole recording, so scrubbing never renumbers the rows.
+const origin = computed(() => getTimeOrigin(store.events.value));
 const rowCount = computed(() => events.value.length);
 const virtualList = useVirtualList(viewport, rowCount, ROW_HEIGHT);
 

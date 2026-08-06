@@ -22,6 +22,8 @@
     --ripl-bracket: #5f6368;
     --ripl-input-bg: #ffffff;
     --ripl-shadow: rgba(0, 0, 0, 0.16);
+    --ripl-window-mask: rgba(148, 163, 184, 0.32);
+    --ripl-window-border: rgba(100, 116, 139, 0.9);
 }
 
 :root[data-theme='dark'] {
@@ -40,4 +42,6 @@
     --ripl-bracket: #9aa0a6;
     --ripl-input-bg: #303134;
     --ripl-shadow: rgba(0, 0, 0, 0.5);
+    --ripl-window-mask: rgba(16, 18, 20, 0.55);
+    --ripl-window-border: rgba(154, 160, 166, 0.9);
 }

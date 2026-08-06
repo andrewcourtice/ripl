@@ -10,6 +10,15 @@ import type {
 } from 'vue';
 
 import {
+    filterEventsByWindow,
+    FULL_EVENT_WINDOW,
+} from './use-event-log';
+
+import type {
+    EventWindow,
+} from './use-event-log';
+
+import {
     DEFAULT_EVENT_FILTER,
     dispatchMessage,
 } from '@ripl/devtools';
@@ -78,6 +87,18 @@ export interface DevtoolsStore {
     treeRevision: Ref<number>;
     /** Events recorded since recording started, oldest first. */
     events: Ref<RecordedEvent[]>;
+    /** The events the timeline draws: the full recording, at full time extent. */
+    timelineEvents: ComputedRef<RecordedEvent[]>;
+    /** The events the list shows: {@link DevtoolsStore.timelineEvents} narrowed to the scrub window. */
+    visibleEvents: ComputedRef<RecordedEvent[]>;
+    /** The timeline's scrub window, as fractions of the recording. */
+    eventWindow: Ref<EventWindow>;
+    /** Free-text narrowing the displayed events; does not affect what the page records. */
+    eventQuery: Ref<string>;
+    /** An event type to display exclusively, or an empty string for all types. */
+    eventType: Ref<string>;
+    /** Every event type present in the recording, sorted for display. */
+    availableEventTypes: ComputedRef<string[]>;
     /** How many events the page discarded to stay within its buffer since recording started. */
     eventsDropped: Ref<number>;
     /** The event currently selected in the events list, if any. */
@@ -124,6 +145,8 @@ export interface DevtoolsStore {
     selectEvent(event: RecordedEvent | null): void;
     /** Discards every recorded event without stopping the recording. */
     clearEvents(): void;
+    /** Sets the timeline's scrub window. */
+    setEventWindow(window: EventWindow): void;
 }
 
 /** A recorded event, tagged with the context it came from so the list can attribute it. */
@@ -184,6 +207,32 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
     const selectedEvent = ref<RecordedEvent | null>(null);
     const excludedEvents = ref<string[]>([...DEFAULT_EVENT_FILTER]);
     const recording = ref(false);
+    const eventWindow = ref<EventWindow>({
+        ...FULL_EVENT_WINDOW,
+    });
+
+    const eventQuery = ref('');
+    const eventType = ref('');
+
+    const availableEventTypes = computed(() => Array.from(new Set(events.value.map(event => event.type))).sort());
+
+    const matchesFilter = (event: RecordedEvent) => {
+        if (eventType.value && event.type !== eventType.value) {
+            return false;
+        }
+
+        const query = eventQuery.value.trim().toLowerCase();
+
+        return !query
+            || event.type.toLowerCase().includes(query)
+            || !!event.elementType?.toLowerCase().includes(query)
+            || !!event.elementId?.toLowerCase().includes(query)
+            || !!event.elementClasses?.some(value => value.toLowerCase().includes(query));
+    };
+
+    // The timeline keeps the full time extent so the window still spans the whole recording.
+    const timelineEvents = computed(() => events.value.filter(matchesFilter));
+    const visibleEvents = computed(() => filterEventsByWindow(events.value, eventWindow.value).filter(matchesFilter));
 
     const hasContexts = computed(() => contexts.size > 0);
 
@@ -329,6 +378,9 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         events.value = [];
         eventsDropped.value = 0;
         selectedEvent.value = null;
+        eventWindow.value = {
+            ...FULL_EVENT_WINDOW,
+        };
     }
 
     function appendEvents(contextId: string, batch: SerializedEvent[], dropped: number): void {
@@ -454,6 +506,12 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         selection,
         selectedDetail,
         events,
+        timelineEvents,
+        visibleEvents,
+        eventWindow,
+        eventQuery,
+        eventType,
+        availableEventTypes,
         eventsDropped,
         selectedEvent,
         excludedEvents,
@@ -488,6 +546,9 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         clearEvents,
         selectEvent: event => {
             selectedEvent.value = event;
+        },
+        setEventWindow: window => {
+            eventWindow.value = window;
         },
     };
 }

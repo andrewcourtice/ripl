@@ -15,10 +15,14 @@ import type {
 } from '../src/panel/composables/use-devtools-store';
 
 import {
+    dragEventWindow,
+    filterEventsByWindow,
     findNearestEvent,
     formatOffset,
+    FULL_EVENT_WINDOW,
     getTimeOrigin,
     getTimeSpan,
+    MIN_EVENT_WINDOW,
 } from '../src/panel/composables/use-event-log';
 
 import type {
@@ -222,6 +226,149 @@ describe('Devtools events', () => {
             store.clearEvents();
             expect(store.selectedEvent.value).toBe(null);
             expect(store.events.value).toEqual([]);
+        });
+
+    });
+
+    describe('Scrub window', () => {
+
+        test('Should preserve the window width when moving it', () => {
+            const moved = dragEventWindow({
+                start: 0.2,
+                end: 0.5,
+            }, 'move', 0.1);
+
+            expect(moved.start).toBeCloseTo(0.3);
+            expect(moved.end).toBeCloseTo(0.6);
+        });
+
+        // Dragging past an edge should park the window there, not squash it.
+        test('Should park a moved window against an edge rather than shrink it', () => {
+            const moved = dragEventWindow({
+                start: 0.6,
+                end: 0.9,
+            }, 'move', 0.5);
+
+            expect(moved.end).toBeCloseTo(1);
+            expect(moved.end - moved.start).toBeCloseTo(0.3);
+        });
+
+        test('Should hold the opposite edge when resizing', () => {
+            const resized = dragEventWindow({
+                start: 0.2,
+                end: 0.8,
+            }, 'resize-start', 0.1);
+
+            expect(resized.start).toBeCloseTo(0.3);
+            expect(resized.end).toBe(0.8);
+        });
+
+        test('Should not let a resize collapse the window past the minimum', () => {
+            const start = dragEventWindow({
+                start: 0.2,
+                end: 0.8,
+            }, 'resize-start', 1);
+
+            const end = dragEventWindow({
+                start: 0.2,
+                end: 0.8,
+            }, 'resize-end', -1);
+
+            expect(start.start).toBeCloseTo(0.8 - MIN_EVENT_WINDOW);
+            expect(end.end).toBeCloseTo(0.2 + MIN_EVENT_WINDOW);
+        });
+
+        test('Should keep the window inside the timeline', () => {
+            expect(dragEventWindow(FULL_EVENT_WINDOW, 'resize-start', -1).start).toBe(0);
+            expect(dragEventWindow(FULL_EVENT_WINDOW, 'resize-end', 1).end).toBe(1);
+        });
+
+        test('Should filter events to the window', () => {
+            const events = [
+                createRecorded(1, 1000),
+                createRecorded(2, 1500),
+                createRecorded(3, 2000),
+            ];
+
+            const windowed = filterEventsByWindow(events, {
+                start: 0,
+                end: 0.5,
+            });
+
+            expect(windowed.map(event => event.sequence)).toEqual([1, 2]);
+        });
+
+        test('Should pass every event through a full window', () => {
+            const events = [
+                createRecorded(1, 1000),
+                createRecorded(2, 2000),
+            ];
+
+            expect(filterEventsByWindow(events, FULL_EVENT_WINDOW)).toBe(events);
+        });
+
+    });
+
+    describe('View filters', () => {
+
+        function createFilterStore(): DevtoolsStore {
+            const { store } = createStore();
+
+            store.handleMessage({
+                kind: 'events:batch',
+                contextId: CONTEXT_ID,
+                dropped: 0,
+                events: [
+                    createEvent(1, {
+                        type: 'click',
+                        elementType: 'rect',
+                    }),
+                    createEvent(2, {
+                        type: 'graph',
+                        source: 'element',
+                    }),
+                    createEvent(3, {
+                        type: 'resize',
+                        source: 'context',
+                    }),
+                ],
+            });
+
+            return store;
+        }
+
+        test('Should list every event type present', () => {
+            expect(createFilterStore().availableEventTypes.value).toEqual(['click', 'graph', 'resize']);
+        });
+
+        test('Should narrow to a single event type', () => {
+            const store = createFilterStore();
+
+            store.eventType.value = 'click';
+
+            expect(store.visibleEvents.value.map(event => event.sequence)).toEqual([1]);
+        });
+
+        test('Should search the event type and its element', () => {
+            const store = createFilterStore();
+
+            store.eventQuery.value = 'rect';
+
+            expect(store.visibleEvents.value.map(event => event.sequence)).toEqual([1]);
+        });
+
+        // The timeline keeps the full extent so the window still spans the whole recording.
+        test('Should apply the filter to the timeline but not the window', () => {
+            const store = createFilterStore();
+
+            store.eventType.value = 'click';
+            store.setEventWindow({
+                start: 0.9,
+                end: 1,
+            });
+
+            expect(store.timelineEvents.value.map(event => event.sequence)).toEqual([1]);
+            expect(store.visibleEvents.value).toEqual([]);
         });
 
     });

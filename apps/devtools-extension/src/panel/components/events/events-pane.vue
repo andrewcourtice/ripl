@@ -16,9 +16,15 @@
                 >{{ store.recording.value ? 'Recording' : 'Paused' }}</button>
                 <button class="events-pane__button" type="button" @click="store.clearEvents">Clear</button>
                 <span class="events-pane__count">
-                    {{ store.events.value.length }} events
+                    {{ store.visibleEvents.value.length }} / {{ store.events.value.length }}
                     <template v-if="store.eventsDropped.value">· {{ store.eventsDropped.value }} dropped</template>
                 </span>
+                <FilterBar
+                    v-model:query="store.eventQuery.value"
+                    v-model:type="store.eventType.value"
+                    :types="store.availableEventTypes.value"
+                    placeholder="Filter events"
+                />
                 <span class="events-pane__filters">
                     <label v-for="type of FILTERABLE_TYPES" :key="type" class="events-pane__filter">
                         <input
@@ -59,6 +65,7 @@ import EventDetails from './event-details.vue';
 import EventList from './event-list.vue';
 import EventTimeline from './event-timeline.vue';
 
+import FilterBar from '../filter-bar.vue';
 import SplitPane from '../split-pane.vue';
 
 import {

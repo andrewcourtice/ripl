@@ -29,6 +29,12 @@
                     <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
                 </svg>
             </button>
+            <FilterBar
+                v-model:query="tree.filter.value.query"
+                v-model:type="tree.filter.value.type"
+                :types="tree.availableTypes.value"
+                placeholder="Filter elements"
+            />
         </div>
         <TreeView />
     </div>
@@ -36,6 +42,8 @@
 
 <script setup lang="ts">
 import TreeView from './tree-view.vue';
+
+import FilterBar from '../filter-bar.vue';
 
 import {
     useDevtoolsStore,
