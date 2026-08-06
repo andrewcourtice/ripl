@@ -105,19 +105,26 @@ The companion Chrome extension adds a **Ripl** panel to your browser devtools, s
 **Elements** shows:
 
 - an **element tree** of every context on the page, rendered as pseudo-XML with each element's set properties as attributes, scrollable sideways to read long attribute lists, and expandable or collapsible in one click;
+- a **search and type filter** that narrows the tree to matching elements, keeping the groups that contain them so a match still reads in place;
 - an **editable properties** panel to change numbers, strings, colors and more, with edits that round-trip to the live element, badging Ripl's own elements as built-in and linking to their documentation;
 - **renderer debug switches** for an FPS counter, element count, and bounding boxes;
 - an **events** list showing which events the selected element emits and whether any listeners are attached.
 
 **Events** records what the scene actually did:
 
-- a **timeline** — itself drawn with Ripl — with a lane per event source, which you can drag to scrub and scroll to zoom;
-- a **list** of every recorded event with its name, time and originating element;
+- a **timeline** — itself drawn with Ripl — with a lane per event source and a scrub window you drag to select a slice of the recording;
+- a **list** of the events inside that window, with each one's name, time and originating element, narrowable by the same search and type filter;
 - a **details** panel showing the full payload of the selected event, and a jump back to its element in the Elements tab.
+
+The timeline always shows the whole recording; the window selects what the list shows, so scrubbing narrows the list rather than rescaling the timeline. Searching and filtering narrow the view only — they never change what is captured.
 
 Recording uses the [`'*'` wildcard subscription](/docs/core/advanced/events#wildcard), so it observes the scene without changing how it behaves — an observed element is still not a hit-test target.
 
-`updated`, `render` and `tick` are excluded by default because they fire every frame or every state write; switch any of them back on from the toolbar. The filter is applied in the page, so events you have excluded are never sent.
+`updated`, `render` and `tick` are excluded by default because they fire every frame or every state write; switch any of them back on from the toolbar. That filter is applied in the page, so events you have excluded are never sent.
+
+Pointer events that the context re-emits from the DOM are not recorded. The elements those events reach record them as they bubble, so capturing both would only duplicate the stream.
+
+Every context also reports the **version of Ripl the page is running**, shown beside it in the toolbar popup and in the Context section of the properties panel.
 
 A toolbar icon lights up when Ripl is detected on the page; clicking it lists the contexts it found.
 

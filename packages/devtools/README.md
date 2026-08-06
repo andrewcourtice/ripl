@@ -14,7 +14,9 @@ npm install @ripl/devtools
 
 The bridge is idle by default. Until the devtools panel connects, a binding only announces its presence; no scene serialization or event listening occurs, so shipping a binding has effectively zero runtime cost. When the panel connects, tree snapshots are serialized during browser idle time and streamed in small chunks so large scenes never block rendering.
 
-Event recording is a further opt-in on top of that: nothing is observed until the panel's Events tab asks for it, and the subscription is torn down as soon as it stops. It uses `EventBus`'s `'*'` wildcard, which is invisible to `has()`, so recording a scene never turns its elements into hit-test targets. High-frequency types (`updated`, `render`, `tick`) are excluded by default and filtering happens in the page, so suppressed events never reach the wire.
+Event recording is a further opt-in on top of that: nothing is observed until the panel's Events tab asks for it, and the subscription is torn down as soon as it stops. It uses `EventBus`'s `'*'` wildcard, which is invisible to `has()`, so recording a scene never turns its elements into hit-test targets. High-frequency types (`updated`, `render`, `tick`) are excluded by default and filtering happens in the page, so suppressed events never reach the wire. Pointer events re-emitted by the context are skipped too — the elements they reach record them as they bubble, so capturing both would only duplicate the stream.
+
+Each binding reports the version of Ripl it was built against, via `RIPL_VERSION` and `ContextInfo.riplVersion`, so the devtools can show which Ripl a page is running.
 
 ## Usage
 
