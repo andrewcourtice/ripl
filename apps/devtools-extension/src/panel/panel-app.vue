@@ -1,14 +1,17 @@
 <template>
     <div class="panel-app">
         <PanelHeader />
-        <SplitPane v-if="store.hasContexts.value" class="panel-app__body">
-            <template #left>
-                <TreeView />
-            </template>
-            <template #right>
-                <PropertiesPanel />
-            </template>
-        </SplitPane>
+        <template v-if="store.hasContexts.value">
+            <SplitPane v-if="activeTab === 'elements'" class="panel-app__body">
+                <template #left>
+                    <TreeView />
+                </template>
+                <template #right>
+                    <PropertiesPanel />
+                </template>
+            </SplitPane>
+            <div v-else class="panel-app__body panel-app__placeholder">Events</div>
+        </template>
         <div v-else class="panel-app__empty">
             <svg class="panel-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
                 <path :d="RIPL_LOGO_PATH" fill="currentColor" />
@@ -36,6 +39,10 @@ import {
 } from './composables/use-settings';
 
 import {
+    useTabs,
+} from './composables/use-tabs';
+
+import {
     useTheme,
 } from './composables/use-theme';
 
@@ -51,6 +58,10 @@ import {
 const store = useDevtoolsStore();
 const settings = useSettings();
 
+const {
+    activeTab,
+} = useTabs();
+
 useTheme();
 
 // Poll so animation-driven property changes show without extra page-side work; paused while hidden.
@@ -58,7 +69,7 @@ watchEffect(onCleanup => {
     const selection = store.selection.value;
     const rate = settings.pollRate.value;
 
-    if (!selection) {
+    if (!selection || activeTab.value !== 'elements') {
         return;
     }
 
@@ -82,6 +93,14 @@ watchEffect(onCleanup => {
 .panel-app__body {
     flex: 1;
     min-height: 0;
+}
+
+.panel-app__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ripl-text-dim);
+    font-size: 11px;
 }
 
 .panel-app__empty {
