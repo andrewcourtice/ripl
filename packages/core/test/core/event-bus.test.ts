@@ -7,6 +7,7 @@ import {
 
 import {
     Event,
+    EVENT_WILDCARD,
     EventBus,
 } from '../../src';
 
@@ -14,6 +15,7 @@ type TestEventMap = {
     destroyed: null;
     test: string;
     count: number;
+    bespoke: null;
 };
 
 describe('EventBus', () => {
@@ -139,6 +141,136 @@ describe('EventBus', () => {
 
         dispose();
         expect(bus.has('test')).toBe(false);
+    });
+
+    test('Should invoke a wildcard listener for every event type', () => {
+        const bus = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        bus.on(EVENT_WILDCARD, handler);
+        bus.emit('test', 'hello');
+        bus.emit('count', 42);
+        bus.emit('bespoke', null);
+
+        expect(handler).toHaveBeenCalledTimes(3);
+        expect(handler.mock.calls.map(([event]) => event.type)).toEqual(['test', 'count', 'bespoke']);
+    });
+
+    test('Should invoke wildcard listeners after listeners for the event type', () => {
+        const bus = new EventBus<TestEventMap>();
+        const order: string[] = [];
+
+        bus.on(EVENT_WILDCARD, () => order.push('wildcard'));
+        bus.on('test', () => order.push('typed'));
+        bus.emit('test', 'hello');
+
+        expect(order).toEqual(['typed', 'wildcard']);
+    });
+
+    test('Should invoke a wildcard listener once for an event emitted as the wildcard type', () => {
+        const bus = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        bus.on(EVENT_WILDCARD, handler);
+        bus.emit(EVENT_WILDCARD, null);
+
+        expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should see bubbled events on an ancestor wildcard listener with the original target', () => {
+        const parent = new EventBus<TestEventMap>();
+        const child = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        child.parent = parent;
+        parent.on(EVENT_WILDCARD, handler);
+        child.emit('test', 'from-child');
+
+        expect(handler).toHaveBeenCalledTimes(1);
+        expect(handler.mock.calls[0][0].target).toBe(child);
+    });
+
+    test('Should not invoke an ancestor wildcard listener after stopPropagation', () => {
+        const parent = new EventBus<TestEventMap>();
+        const child = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        child.parent = parent;
+        parent.on(EVENT_WILDCARD, handler);
+        child.on('test', event => event.stopPropagation());
+        child.emit('test', 'from-child');
+
+        expect(handler).not.toHaveBeenCalled();
+    });
+
+    test('Should honor the self option for wildcard listeners', () => {
+        const parent = new EventBus<TestEventMap>();
+        const child = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        child.parent = parent;
+        parent.on(EVENT_WILDCARD, handler, {
+            self: true,
+        });
+
+        child.emit('test', 'from-child');
+        expect(handler).not.toHaveBeenCalled();
+
+        parent.emit('test', 'from-parent');
+        expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    // Interaction events only reach elements that `has` them, so an observer must stay invisible here.
+    test('Should not report has() for a type with only a wildcard listener', () => {
+        const bus = new EventBus<TestEventMap>();
+
+        bus.on(EVENT_WILDCARD, () => {});
+
+        expect(bus.has('test')).toBe(false);
+        expect(bus.has('count')).toBe(false);
+    });
+
+    test('Should not list the wildcard in $events', () => {
+        class CustomBus extends EventBus<TestEventMap> {
+            public get $events(): (keyof TestEventMap)[] {
+                return ['test', 'count'];
+            }
+        }
+
+        const bus = new CustomBus();
+
+        bus.on(EVENT_WILDCARD, () => {});
+
+        expect(bus.$events).not.toContain(EVENT_WILDCARD);
+    });
+
+    test('Should unsubscribe a wildcard listener with off() and dispose()', () => {
+        const bus = new EventBus<TestEventMap>();
+        const offHandler = vi.fn();
+        const disposeHandler = vi.fn();
+
+        bus.on(EVENT_WILDCARD, offHandler);
+
+        const { dispose } = bus.on(EVENT_WILDCARD, disposeHandler);
+
+        bus.emit('test', 'first');
+        bus.off(EVENT_WILDCARD, offHandler);
+        dispose();
+        bus.emit('test', 'second');
+
+        expect(offHandler).toHaveBeenCalledTimes(1);
+        expect(disposeHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should fire a once() wildcard listener only once', () => {
+        const bus = new EventBus<TestEventMap>();
+        const handler = vi.fn();
+
+        bus.once(EVENT_WILDCARD, handler);
+        bus.emit('test', 'first');
+        bus.emit('count', 42);
+
+        expect(handler).toHaveBeenCalledTimes(1);
     });
 
     test('Should clear all listeners on destroy()', () => {

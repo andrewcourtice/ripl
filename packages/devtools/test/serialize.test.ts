@@ -15,6 +15,7 @@ import {
     chunkNodes,
     serializeElement,
     serializeElementProperties,
+    serializeEventData,
     serializeProperty,
     serializeTree,
 } from '../src/serialize';
@@ -257,6 +258,43 @@ describe('Serialize', () => {
 
         test('Should produce no chunks for an empty node list', () => {
             expect(chunkNodes([])).toEqual([]);
+        });
+
+    });
+
+    describe('serializeEventData', () => {
+
+        test('Should serialize a keyed payload one property per key', () => {
+            const properties = serializeEventData({
+                x: 10,
+                label: 'hello',
+            });
+
+            expect(properties.map(property => property.key)).toEqual(['x', 'label']);
+            expect(properties[0].value).toBe(10);
+            expect(properties[1].value).toBe('hello');
+        });
+
+        test('Should mark every serialized payload property non-editable', () => {
+            const properties = serializeEventData({
+                x: 10,
+                fill: '#ffffff',
+            });
+
+            expect(properties.every(property => !property.editable)).toBe(true);
+        });
+
+        test('Should serialize an empty list for an absent payload', () => {
+            expect(serializeEventData(null)).toEqual([]);
+            expect(serializeEventData(undefined)).toEqual([]);
+        });
+
+        test('Should serialize a non-keyed payload under a single data key', () => {
+            const [property] = serializeEventData(42);
+
+            expect(property.key).toBe('data');
+            expect(property.value).toBe(42);
+            expect(property.editable).toBe(false);
         });
 
     });

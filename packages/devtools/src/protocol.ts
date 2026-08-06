@@ -71,6 +71,40 @@ export interface ContextInfo {
     hasRenderer: boolean;
     /** The renderer's current debug overlay flags, when a renderer is bound. */
     rendererDebug?: RendererDebugInfo;
+    /**
+     * Optional protocol features the page-side bridge implements (e.g. `events`). Absent when the
+     * page runs a bridge predating capability advertisement, which the devtools treats as
+     * supporting only the base protocol.
+     */
+    capabilities?: string[];
+}
+
+/** The kind of event bus a recorded event was observed on. */
+export type SerializedEventSource = 'element' | 'context' | 'renderer';
+
+/** A single event recorded from a bound context, scene, or renderer. */
+export interface SerializedEvent {
+    /** Monotonic per-binding sequence number, ordering events across batches. */
+    sequence: number;
+    /** The event type (e.g. `click`, `graph`). */
+    type: string;
+    /**
+     * The event's high-resolution timestamp, in the *page's* time origin. Not comparable with
+     * clocks read in the devtools; treat it as relative to other events in the same stream.
+     */
+    timestamp: number;
+    /** The kind of bus the event was observed on. */
+    source: SerializedEventSource;
+    /** The id of the element the event originally targeted, when it targeted one. */
+    elementId?: string;
+    /** The type of the element the event originally targeted, when it targeted one. */
+    elementType?: string;
+    /** The class list of the element the event originally targeted, when it targeted one. */
+    elementClasses?: string[];
+    /** Whether the event reached the observed bus by bubbling rather than being emitted on it. */
+    bubbled: boolean;
+    /** The event payload, serialized key by key. Always non-editable. */
+    data: SerializedProperty[];
 }
 
 /** Listener presence for a single element event type. */
@@ -178,6 +212,16 @@ export type BridgeMessage =
         boundingBox: SerializedBoundingBox;
     }
     | {
+        /** Streams events recorded since the last flush. */
+        kind: 'events:batch';
+        /** The id of the binding the events were recorded on. */
+        contextId: string;
+        /** The recorded events, in emission order. */
+        events: SerializedEvent[];
+        /** How many events the page-side buffer discarded since the last batch. */
+        dropped: number;
+    }
+    | {
         /** Announces that the page is unloading and all bindings are gone. */
         kind: 'bridge:bye';
     };
@@ -241,6 +285,28 @@ export type ExtensionMessage =
         contextId: string;
         /** The full set of debug flags to apply. */
         debug: RendererDebugInfo;
+    }
+    | {
+        /** Starts recording events on a binding. */
+        kind: 'events:start';
+        /** The id of the binding to record. */
+        contextId: string;
+        /** Event types to exclude from recording. See {@link DEFAULT_EVENT_FILTER}. */
+        excluded: string[];
+    }
+    | {
+        /** Stops recording events on a binding and discards anything buffered. */
+        kind: 'events:stop';
+        /** The id of the binding to stop recording. */
+        contextId: string;
+    }
+    | {
+        /** Replaces the set of event types excluded from recording. */
+        kind: 'events:set-filter';
+        /** The id of the binding whose filter to replace. */
+        contextId: string;
+        /** The full set of event types to exclude. */
+        excluded: string[];
     };
 
 /** Envelope wrapping every message exchanged over `window.postMessage`. */

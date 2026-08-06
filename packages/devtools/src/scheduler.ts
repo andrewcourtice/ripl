@@ -1,6 +1,12 @@
 import {
+    EVENT_BUFFER_LIMIT,
+    EVENT_FLUSH_INTERVAL,
     PROPS_FLUSH_INTERVAL,
 } from './constants';
+
+import type {
+    SerializedEvent,
+} from './protocol';
 
 type IdleCallbackScheduler = (callback: () => void) => number;
 type IdleCallbackCanceller = (handle: number) => void;
@@ -179,6 +185,84 @@ export function createPropsCoalescer(flush: (elementIds: string[]) => void): Pro
 
             if (timerHandle === undefined) {
                 timerHandle = setTimeout(flushBuffer, PROPS_FLUSH_INTERVAL);
+            }
+        },
+        dispose: () => {
+            disposed = true;
+            clear();
+        },
+    };
+}
+
+/**
+ * Buffers recorded events and flushes them in batches, bounding retention so a burst of events
+ * cannot grow the page's memory without limit. Once the buffer is full the oldest event is
+ * discarded per push and counted, so the devtools can report the gap rather than silently
+ * showing an incomplete stream.
+ */
+export interface EventBuffer {
+    /** Buffers an event for the next flush, starting the flush timer if it isn't running. */
+    push(event: SerializedEvent): void;
+    /** Drops all buffered events and the drop count, and stops the flush timer. */
+    clear(): void;
+    /** Clears all pending work and permanently disables the buffer. */
+    dispose(): void;
+}
+
+/**
+ * Creates an {@link EventBuffer} that invokes `flush` with the events buffered since the previous
+ * flush and the number discarded to stay within `EVENT_BUFFER_LIMIT`.
+ *
+ * @param flush - Receives the buffered events and the drop count once per flush interval.
+ * @returns The buffer.
+ */
+export function createEventBuffer(flush: (events: SerializedEvent[], dropped: number) => void): EventBuffer {
+    let disposed = false;
+    let timerHandle: ReturnType<typeof setTimeout> | undefined;
+    let dropped = 0;
+
+    let buffer: SerializedEvent[] = [];
+
+    const clear = () => {
+        buffer = [];
+        dropped = 0;
+
+        if (timerHandle !== undefined) {
+            clearTimeout(timerHandle);
+            timerHandle = undefined;
+        }
+    };
+
+    const flushBuffer = () => {
+        timerHandle = undefined;
+
+        const events = buffer;
+        const discarded = dropped;
+
+        buffer = [];
+        dropped = 0;
+
+        if (events.length || discarded) {
+            flush(events, discarded);
+        }
+    };
+
+    return {
+        clear,
+        push: event => {
+            if (disposed) {
+                return;
+            }
+
+            buffer.push(event);
+
+            if (buffer.length > EVENT_BUFFER_LIMIT) {
+                buffer.shift();
+                dropped++;
+            }
+
+            if (timerHandle === undefined) {
+                timerHandle = setTimeout(flushBuffer, EVENT_FLUSH_INTERVAL);
             }
         },
         dispose: () => {
