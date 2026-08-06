@@ -36,6 +36,11 @@ function getOverlay(): HTMLDivElement | undefined {
  * context's on-screen size and its logical size, then offset by the context element's viewport
  * position. A no-op outside browser environments.
  *
+ * The overlay is a fixed-position DOM node, so the mapping wanted here is logical space to CSS
+ * viewport pixels — not the logical/surface seam that {@link Context.toLogicalPoint} and
+ * {@link Context.toSurfacePoint} span. Routing this through those helpers would multiply by the
+ * device pixel ratio and misplace the overlay on any high-DPI display.
+ *
  * @param context - The context the element renders into.
  * @param element - The element to highlight.
  */
