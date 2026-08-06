@@ -238,4 +238,12 @@ function onEnter(event: KeyboardEvent): void {
 .property-row--readonly .property-row__key {
     opacity: 0.7;
 }
+
+/* A disabled input still reads as a field to type into, so flatten it into plain text. */
+.property-row__editor input:disabled {
+    border-color: transparent;
+    background: transparent;
+    opacity: 1;
+    cursor: default;
+}
 </style>

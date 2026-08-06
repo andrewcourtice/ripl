@@ -1,6 +1,6 @@
 <template>
-    <div ref="container" class="split-pane">
-        <div class="split-pane__pane" :style="{ width: `${ratio * 100}%` }">
+    <div ref="container" class="split-pane" :class="`split-pane--${orientation}`">
+        <div class="split-pane__pane" :style="paneStyle">
             <slot name="left" />
         </div>
         <div
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import {
+    computed,
     ref,
 } from 'vue';
 
@@ -26,24 +27,47 @@ import {
     numberClamp,
 } from '@ripl/utilities';
 
-const STORAGE_KEY = 'ripl-devtools:split-ratio';
-const DEFAULT_RATIO = 0.66;
 const MIN_RATIO = 0.2;
 const MAX_RATIO = 0.85;
+
+const props = withDefaults(defineProps<{
+    /** Whether the panes sit side by side or stacked. */
+    orientation?: 'horizontal' | 'vertical';
+    /** localStorage key the pane ratio is persisted under. */
+    storageKey?: string;
+    /** Ratio used before the user has dragged the divider. */
+    defaultRatio?: number;
+}>(), {
+    orientation: 'horizontal',
+    storageKey: 'ripl-devtools:split-ratio',
+    defaultRatio: 0.66,
+});
 
 function clampRatio(value: number): number {
     return numberClamp(value, MIN_RATIO, MAX_RATIO);
 }
 
 function readRatio(): number {
-    const stored = Number.parseFloat(localStorage.getItem(STORAGE_KEY) ?? '');
+    const stored = Number.parseFloat(localStorage.getItem(props.storageKey) ?? '');
 
-    return Number.isNaN(stored) ? DEFAULT_RATIO : clampRatio(stored);
+    return Number.isNaN(stored) ? clampRatio(props.defaultRatio) : clampRatio(stored);
 }
 
 const container = ref<HTMLElement | null>(null);
 const ratio = ref(readRatio());
 const dragging = ref(false);
+
+const isVertical = computed(() => props.orientation === 'vertical');
+
+const paneStyle = computed(() => {
+    const size = `${ratio.value * 100}%`;
+
+    return isVertical.value ? {
+        height: size,
+    } : {
+        width: size,
+    };
+});
 
 function onPointerDown(event: PointerEvent): void {
     dragging.value = true;
@@ -57,8 +81,11 @@ function onPointerMove(event: PointerEvent): void {
 
     const rect = container.value.getBoundingClientRect();
 
-    if (rect.width > 0) {
-        ratio.value = clampRatio((event.clientX - rect.left) / rect.width);
+    const extent = isVertical.value ? rect.height : rect.width;
+    const offset = isVertical.value ? event.clientY - rect.top : event.clientX - rect.left;
+
+    if (extent > 0) {
+        ratio.value = clampRatio(offset / extent);
     }
 }
 
@@ -68,7 +95,7 @@ function onPointerUp(): void {
     }
 
     dragging.value = false;
-    localStorage.setItem(STORAGE_KEY, ratio.value.toFixed(4));
+    localStorage.setItem(props.storageKey, ratio.value.toFixed(4));
 }
 </script>
 
@@ -77,6 +104,10 @@ function onPointerUp(): void {
     display: flex;
     height: 100%;
     min-height: 0;
+}
+
+.split-pane--vertical {
+    flex-direction: column;
 }
 
 .split-pane__pane {
@@ -102,6 +133,17 @@ function onPointerUp(): void {
     border-right: 2px solid transparent;
     background-clip: padding-box;
     background-color: var(--ripl-border);
+}
+
+.split-pane--vertical .split-pane__divider {
+    width: auto;
+    height: 5px;
+    margin: -2px 0;
+    cursor: row-resize;
+    border-left: none;
+    border-right: none;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid transparent;
 }
 
 .split-pane__divider:hover,

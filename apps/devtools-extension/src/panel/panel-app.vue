@@ -10,7 +10,7 @@
                     <PropertiesPanel />
                 </template>
             </SplitPane>
-            <div v-else class="panel-app__body panel-app__placeholder">Events</div>
+            <EventsPane v-else class="panel-app__body" />
         </template>
         <div v-else class="panel-app__empty">
             <svg class="panel-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
@@ -25,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+import EventsPane from './components/events/events-pane.vue';
 import PanelHeader from './components/panel-header.vue';
 import PropertiesPanel from './components/properties/properties-panel.vue';
 import SplitPane from './components/split-pane.vue';
@@ -95,13 +96,6 @@ watchEffect(onCleanup => {
     min-height: 0;
 }
 
-.panel-app__placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--ripl-text-dim);
-    font-size: 11px;
-}
 
 .panel-app__empty {
     flex: 1;

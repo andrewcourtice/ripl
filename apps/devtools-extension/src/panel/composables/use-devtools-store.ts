@@ -10,6 +10,7 @@ import type {
 } from 'vue';
 
 import {
+    DEFAULT_EVENT_FILTER,
     dispatchMessage,
 } from '@ripl/devtools';
 
@@ -22,9 +23,13 @@ import type {
     MessageHandlers,
     RendererDebugInfo,
     SerializedBoundingBox,
+    SerializedEvent,
     SerializedNode,
     SerializedProperty,
 } from '@ripl/devtools';
+
+/** Maximum number of recorded events the panel retains; the oldest are dropped first. */
+export const EVENT_LOG_LIMIT = 5000;
 
 /** A committed tree snapshot for a single context, indexed for fast lookup and child traversal. */
 export interface ContextTree {
@@ -71,6 +76,16 @@ export interface DevtoolsStore {
     contexts: Map<string, ContextInfo>;
     /** Bumped whenever any committed tree mutates; computed trees should depend on it. */
     treeRevision: Ref<number>;
+    /** Events recorded since recording started, oldest first. */
+    events: Ref<RecordedEvent[]>;
+    /** How many events the page discarded to stay within its buffer since recording started. */
+    eventsDropped: Ref<number>;
+    /** The event currently selected in the events list, if any. */
+    selectedEvent: Ref<RecordedEvent | null>;
+    /** Event types currently excluded from recording. */
+    excludedEvents: Ref<string[]>;
+    /** Whether events are being recorded. */
+    recording: Ref<boolean>;
     /** The currently selected element, if any. */
     selection: Ref<TreeSelection | null>;
     /** The latest inspection detail for the selected element. */
@@ -99,6 +114,22 @@ export interface DevtoolsStore {
     setRendererDebug(contextId: string, debug: RendererDebugInfo): void;
     /** Requests a fresh tree snapshot for a context. */
     requestTree(contextId: string): void;
+    /** Starts recording events on a context, discarding anything previously recorded. */
+    startEvents(contextId: string): void;
+    /** Stops recording events on a context. */
+    stopEvents(contextId: string): void;
+    /** Replaces the set of event types excluded from recording. */
+    setExcludedEvents(contextId: string, excluded: string[]): void;
+    /** Selects an event in the events list. */
+    selectEvent(event: RecordedEvent | null): void;
+    /** Discards every recorded event without stopping the recording. */
+    clearEvents(): void;
+}
+
+/** A recorded event, tagged with the context it came from so the list can attribute it. */
+export interface RecordedEvent extends SerializedEvent {
+    /** The id of the context the event was recorded on. */
+    contextId: string;
 }
 
 /** Builds an indexed {@link ContextTree} from a flat list of serialized nodes in document order. */
@@ -148,6 +179,11 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
     const treeRevision = ref(0);
     const selection = ref<TreeSelection | null>(null);
     const selectedDetail = ref<ElementDetail | null>(null);
+    const events = ref<RecordedEvent[]>([]);
+    const eventsDropped = ref(0);
+    const selectedEvent = ref<RecordedEvent | null>(null);
+    const excludedEvents = ref<string[]>([...DEFAULT_EVENT_FILTER]);
+    const recording = ref(false);
 
     const hasContexts = computed(() => contexts.size > 0);
 
@@ -289,13 +325,34 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         }
     }
 
+    function clearEvents(): void {
+        events.value = [];
+        eventsDropped.value = 0;
+        selectedEvent.value = null;
+    }
+
+    function appendEvents(contextId: string, batch: SerializedEvent[], dropped: number): void {
+        const appended = events.value.concat(batch.map(event => ({
+            ...event,
+            contextId,
+        })));
+
+        // Trim from the front so the panel's own retention matches the page's oldest-first policy.
+        const overflow = Math.max(0, appended.length - EVENT_LOG_LIMIT);
+
+        events.value = overflow ? appended.slice(overflow) : appended;
+        eventsDropped.value += dropped + overflow;
+    }
+
     function reset(): void {
         contexts.clear();
         trees.clear();
         pendingSnapshots.clear();
         committedSnapshotIds.clear();
         treeRevision.value += 1;
+        recording.value = false;
         clearSelection();
+        clearEvents();
     }
 
     const messageHandlers: Partial<MessageHandlers<BridgeMessage>> = {
@@ -311,6 +368,7 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
             events: message.events,
             boundingBox: message.boundingBox,
         }),
+        'events:batch': message => appendEvents(message.contextId, message.events, message.dropped),
         'bridge:bye': () => reset(),
     };
 
@@ -359,12 +417,47 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         }
     }
 
+    function startEvents(contextId: string): void {
+        clearEvents();
+        recording.value = true;
+
+        send({
+            contextId,
+            kind: 'events:start',
+            excluded: excludedEvents.value,
+        });
+    }
+
+    function stopEvents(contextId: string): void {
+        recording.value = false;
+
+        send({
+            contextId,
+            kind: 'events:stop',
+        });
+    }
+
+    function setExcludedEvents(contextId: string, excluded: string[]): void {
+        excludedEvents.value = excluded;
+
+        send({
+            contextId,
+            excluded,
+            kind: 'events:set-filter',
+        });
+    }
+
     return {
         connected,
         contexts,
         treeRevision,
         selection,
         selectedDetail,
+        events,
+        eventsDropped,
+        selectedEvent,
+        excludedEvents,
+        recording,
         hasContexts,
         getTree: contextId => trees.get(contextId),
         handleMessage,
@@ -389,6 +482,13 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
             debug,
         }),
         requestTree,
+        startEvents,
+        stopEvents,
+        setExcludedEvents,
+        clearEvents,
+        selectEvent: event => {
+            selectedEvent.value = event;
+        },
     };
 }
 
