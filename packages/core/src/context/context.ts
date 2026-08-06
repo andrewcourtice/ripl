@@ -647,12 +647,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Replaces the current transformation matrix with `[a, b, c, d, e, f]`.
+     *
+     * The matrix is in logical space, so the identity `(1, 0, 0, 1, 0, 0)` restores the context's
+     * own baseline rather than the backend's — on canvas that baseline is the device pixel ratio,
+     * which the backend composes back underneath. Translations are therefore in CSS pixels.
+     *
      * @param a Horizontal scaling.
      * @param b Vertical skewing.
      * @param c Horizontal skewing.
      * @param d Vertical scaling.
-     * @param e Horizontal translation.
-     * @param f Vertical translation.
+     * @param e Horizontal translation, in logical pixels.
+     * @param f Vertical translation, in logical pixels.
      */
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {

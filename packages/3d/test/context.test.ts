@@ -15,6 +15,7 @@ import {
 
 import {
     createScene,
+    factory,
 } from '@ripl/core';
 
 import {
@@ -207,6 +208,50 @@ describe('Context3D surface sizing', () => {
 
         expect(ctx.width).toBe(640);
         expect(ctx.height).toBe(480);
+    });
+
+    describe('Resize ordering', () => {
+
+        const nativeDevicePixelRatio = factory.devicePixelRatio;
+
+        afterEach(() => factory.set({ devicePixelRatio: nativeDevicePixelRatio }));
+
+        // `super.rescale` installs identity scales and emits before the DPR-aware ones land, so a
+        // scene repainting synchronously on resize placed one frame at half scale.
+        test('Should install the device-scaled surface scales before announcing a resize', () => {
+            factory.set({ devicePixelRatio: 2 });
+            sizeHost(400, 300);
+
+            const ctx = createContext(document.createElement('div'));
+            const observed: number[] = [];
+
+            ctx.on('resize', () => observed.push(ctx.scaleX(100)));
+
+            sizeHost(500, 300);
+            ctx['rescale'](500, 300);
+
+            expect(observed).toEqual([200]);
+        });
+
+        test('Should rebuild the projection before announcing a resize', () => {
+            sizeHost(400, 300);
+
+            const ctx = createContext(document.createElement('div'));
+
+            ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
+
+            const observed: unknown[] = [];
+
+            ctx.on('resize', () => observed.push(ctx.viewProjectionMatrix));
+
+            const before = ctx.viewProjectionMatrix;
+
+            sizeHost(800, 300);
+            ctx['rescale'](800, 300);
+
+            expect(observed[0]).not.toBe(before);
+        });
+
     });
 
 });

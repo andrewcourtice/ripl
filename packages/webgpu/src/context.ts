@@ -149,8 +149,8 @@ export class WebGPUContext3D extends Context3D {
         this._hitCanvas.height = scaledHeight;
         this._hitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        super.rescale(width, height);
-
+        this.width = width;
+        this.height = height;
         this.scaleX = scaleContinuous([0, width], [0, scaledWidth]);
         this.scaleY = scaleContinuous([0, height], [0, scaledHeight]);
 
@@ -160,6 +160,10 @@ export class WebGPUContext3D extends Context3D {
         if (this.viewMatrix) {
             this.updateProjectionMatrix();
         }
+
+        // Emitted last, not through `super.rescale`: a bound scene repaints synchronously here, and
+        // would otherwise draw under identity scales and against textures still at the old size.
+        this.emit('resize', null);
     }
 
     // Views are immutable, so they are cached with the texture rather than rebuilt every frame.

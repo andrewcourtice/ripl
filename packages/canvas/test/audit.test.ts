@@ -335,4 +335,56 @@ describe('Canvas audit findings', () => {
         expect(measured[0]?.textBaseline).toBe('middle');
     });
 
+    describe('Transform coordinate space', () => {
+
+        const nativeDevicePixelRatio = factory.devicePixelRatio;
+
+        afterEach(() => factory.set({ devicePixelRatio: nativeDevicePixelRatio }));
+
+        // `setTransform` replaced the CTM outright, taking the DPR matrix `rescaleCanvas` installed
+        // with it — so a logical-space identity silently became a device-space one.
+        test('Should keep the device-pixel matrix under a logical identity transform', () => {
+            factory.set({ devicePixelRatio: 2 });
+
+            const state = mockCanvasState(mockCanvasContext());
+
+            sizeHost(400, 300);
+
+            const context = createContext(el);
+
+            context.setTransform(1, 0, 0, 1, 0, 0);
+
+            expect(state.getMatrix()).toEqual([2, 0, 0, 2, 0, 0]);
+        });
+
+        test('Should express a set transform translation in logical pixels', () => {
+            factory.set({ devicePixelRatio: 2 });
+
+            const state = mockCanvasState(mockCanvasContext());
+
+            sizeHost(400, 300);
+
+            const context = createContext(el);
+
+            context.setTransform(1, 0, 0, 1, 10, 20);
+
+            expect(state.getMatrix()).toEqual([2, 0, 0, 2, 20, 40]);
+        });
+
+        test('Should leave a set transform alone on an unscaled surface', () => {
+            factory.set({ devicePixelRatio: 1 });
+
+            const state = mockCanvasState(mockCanvasContext());
+
+            sizeHost(400, 300);
+
+            const context = createContext(el);
+
+            context.setTransform(2, 0, 0, 2, 5, 5);
+
+            expect(state.getMatrix()).toEqual([2, 0, 0, 2, 5, 5]);
+        });
+
+    });
+
 });

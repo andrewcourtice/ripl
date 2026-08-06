@@ -57,6 +57,23 @@ incoming logical point onto device pixels before the native call. Native `isPoin
 point in untransformed canvas space while the path is transformed by the current matrix, so the
 device-pixel-ratio matrix installed by `rescaleCanvas` has to be applied to the point by hand.
 
+**`CanvasContext.setTransform`** — **behaviour**. The matrix is composed onto the surface's own
+device-pixel base rather than replacing the current one outright. Previously
+`context.setTransform(1, 0, 0, 1, 0, 0)` wiped the ratio matrix `rescaleCanvas` installs, so on a
+retina display it meant "identity in device pixels" — everything drawn afterwards rendered at half
+size, and the translation components were device pixels rather than CSS ones. **Code that
+compensated by passing the device pixel ratio itself (`setTransform(dpr, 0, 0, dpr, 0, 0)`) now
+applies it twice and must drop it.** `transform`, `rotate`, `scale` and `translate` are relative and
+were always correct; they are unchanged.
+
+## @ripl/3d and @ripl/webgpu
+
+**`Context3D.rescale`** and **`WebGPUContext.rescale`** — **behaviour**. `resize` is emitted after
+the device-scaled `scaleX`/`scaleY` and the rebuilt projection matrix are in place, rather than from
+`super.rescale` before either. A bound scene repaints synchronously on `resize`, so the first frame
+after a size change was drawn with identity scales and the previous frame's projection. A `resize`
+handler that read `Context.scaleX` to compensate for the old behaviour should stop.
+
 ## @ripl/webgpu
 
 **`WebGPUContext.isPointInPath`** and **`WebGPUContext.isPointInStroke`** — **behaviour**, and a bug
@@ -65,8 +82,6 @@ surface. Previously `Shape3D` traced its hit path from `Context3D.project`, whic
 coordinates, and compared it against a point the pointer pipeline had already scaled to device
 pixels — so **on a display with a device pixel ratio above 1, hit testing missed by exactly that
 ratio**. No action required; hit testing starts working.
-
-## @ripl/3d
 
 **`Shape3D.intersectsWith`** — **behaviour**. Takes a logical point. The hit path is traced from
 `Context3D.project`, which already emits logical coordinates, so no conversion happens here — the
@@ -87,5 +102,7 @@ longer exists when reading the interaction code.
 2. If you implement a custom `Context` that forwards `isPointInPath`/`isPointInStroke` to a native
    canvas test, add the conversion inside those methods.
 3. If you override `Element.intersectsWith` and converted the point, stop.
-4. Nothing else. Element coordinates, event payloads, bounding boxes, `Context.width`/`height` and
+4. Search for `setTransform`. If you passed the device pixel ratio to compensate for the old
+   replace-outright behaviour, drop it — the backend now supplies it.
+5. Nothing else. Element coordinates, event payloads, bounding boxes, `Context.width`/`height` and
    the navigator were already logical and are untouched.
