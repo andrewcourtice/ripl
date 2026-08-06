@@ -39,6 +39,12 @@ describe('Built-in elements', () => {
         expect(getElementDocsUrl('sparkline')).toBeUndefined();
     });
 
+    // Chart elements are built on the element vocabulary rather than part of it.
+    test('Should not recognise chart elements as built-in', () => {
+        expect(elementTypeIsBuiltIn('ribbon')).toBe(false);
+        expect(elementTypeIsBuiltIn('sankey-link')).toBe(false);
+    });
+
     test('Should link core elements to their documentation page', () => {
         expect(getElementDocsUrl('circle')).toBe('https://www.ripl.run/docs/core/elements/circle.html');
         expect(getElementDocsUrl('group')).toBe('https://www.ripl.run/docs/core/essentials/group.html');

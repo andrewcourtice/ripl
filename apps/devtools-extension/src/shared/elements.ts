@@ -33,6 +33,10 @@ function toDocsEntries(types: string[], prefix: string): [string, string][] {
 /**
  * Documentation URL per built-in element type. Membership is what makes an element "built-in":
  * a type absent from this map came from consumer code and gets no badge or link.
+ *
+ * Scoped to the standard 2D and 3D element set plus the structural container types. Elements that
+ * a higher-level package builds on top of those — `@ripl/charts`'s `ribbon` and `sankey-link` —
+ * are deliberately absent; they are chart internals, not part of the element vocabulary.
  */
 const BUILT_IN_DOCS = new Map<string, string>([
     ...toDocsEntries(CORE_ELEMENT_TYPES, '/docs/core/elements'),
@@ -40,8 +44,6 @@ const BUILT_IN_DOCS = new Map<string, string>([
     ['group', getDocsUrl('/docs/core/essentials/group.html')],
     ['scene', getDocsUrl('/docs/core/essentials/scene.html')],
     ['context', getDocsUrl('/docs/core/essentials/context.html')],
-    ['ribbon', getDocsUrl('/charts/chord.html')],
-    ['sankey-link', getDocsUrl('/charts/sankey.html')],
 ]);
 
 /**
