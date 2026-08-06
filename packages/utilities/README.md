@@ -85,6 +85,14 @@ functionCache(fn); // cache a fn's result until invalidate() is called
 functionMemoize(fn, resolver); // memoize a fn keyed by a resolver (defaults to the first argument)
 ```
 
+### Cache Helpers
+
+```typescript
+createLRUCache(limit); // bounded Map subclass that evicts the least recently used entry when full
+cache.maxSize; // the entry limit the cache was created with (clamped to at least 1)
+[...cache.keys()]; // iterates least recently used first; iterating does not affect recency
+```
+
 ### String Helpers
 
 ```typescript
