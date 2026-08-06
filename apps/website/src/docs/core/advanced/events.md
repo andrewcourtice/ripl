@@ -43,9 +43,17 @@ circle.on('click', () => {
 });
 
 // Drag the circle to reposition it
+let originX = 0;
+let originY = 0;
+
+circle.on('dragstart', () => {
+    originX = circle.cx;
+    originY = circle.cy;
+});
+
 circle.on('drag', (event) => {
-    circle.cx += event.data.deltaX;
-    circle.cy += event.data.deltaY;
+    circle.cx = originX + event.data.deltaX;
+    circle.cy = originY + event.data.deltaY;
     scene.render();
 });
 ```
@@ -152,13 +160,18 @@ circle.on('mouseleave', () => {
 Ripl supports drag interactions on elements via `dragstart`, `drag`, and `dragend` events. A drag begins when the pointer is pressed on an element and moved beyond a configurable threshold (default 3px). Once the threshold is exceeded, `dragstart` fires, followed by `drag` on each subsequent move, and `dragend` on pointer release.
 
 ```ts
+let originX = 0;
+let originY = 0;
+
 circle.on('dragstart', (event) => {
+    originX = circle.cx;
+    originY = circle.cy;
     console.log('Drag started at', event.data.x, event.data.y);
 });
 
 circle.on('drag', (event) => {
-    circle.cx += event.data.deltaX;
-    circle.cy += event.data.deltaY;
+    circle.cx = originX + event.data.deltaX;
+    circle.cy = originY + event.data.deltaY;
     scene.render();
 });
 
@@ -167,9 +180,9 @@ circle.on('dragend', (event) => {
 });
 ```
 
-The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (movement since the last event). Use `deltaX`/`deltaY` for repositioning elements to preserve the offset between the cursor and the element's origin.
+The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (**the total movement since the drag started**, not the step since the previous event). Record the element's position on `dragstart` and add the delta to it, as above: that preserves the offset between the cursor and the element's origin, and — because each payload is a total rather than a running sum — the element stays put under the cursor even if a move event is coalesced or dropped.
 
-Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in **logical** space: CSS pixels relative to the surface origin, the space elements themselves are authored in. They are not device pixels, and they are not element-local, so a `drag` delta can be added straight onto an element's coordinates as above.
+Every pointer payload — `x`/`y`, `startX`/`startY`, and the deltas — is in **logical** space: CSS pixels relative to the surface origin, the space elements themselves are authored in. They are not device pixels, and they are not element-local.
 
 The drag threshold can be configured via context options:
 
@@ -281,19 +294,20 @@ const {
     scene.render();
 
     const colors = { circle: '#3a86ff', rect: '#ff006e' };
+    const origin = { cx: 0, cy: 0, x: 0, y: 0 };
 
     circle.on('mouseenter', () => { circle.fill = '#8338ec'; label.content = 'mouseenter: circle'; scene.render(); });
     circle.on('mouseleave', () => { circle.fill = colors.circle; label.content = 'mouseleave: circle'; scene.render(); });
     circle.on('click', () => { colors.circle = colors.circle === '#3a86ff' ? '#fb5607' : '#3a86ff'; circle.fill = colors.circle; label.content = 'click: circle'; scene.render(); });
-    circle.on('dragstart', () => { label.content = 'dragstart: circle'; scene.render(); });
-    circle.on('drag', (event) => { circle.cx += event.data.deltaX; circle.cy += event.data.deltaY; label.content = 'drag: circle'; scene.render(); });
+    circle.on('dragstart', () => { origin.cx = circle.cx; origin.cy = circle.cy; label.content = 'dragstart: circle'; scene.render(); });
+    circle.on('drag', (event) => { circle.cx = origin.cx + event.data.deltaX; circle.cy = origin.cy + event.data.deltaY; label.content = 'drag: circle'; scene.render(); });
     circle.on('dragend', () => { label.content = 'dragend: circle'; scene.render(); });
 
     rect.on('mouseenter', () => { rect.fill = '#8338ec'; label.content = 'mouseenter: rect'; scene.render(); });
     rect.on('mouseleave', () => { rect.fill = colors.rect; label.content = 'mouseleave: rect'; scene.render(); });
     rect.on('click', () => { colors.rect = colors.rect === '#ff006e' ? '#fb5607' : '#ff006e'; rect.fill = colors.rect; label.content = 'click: rect'; scene.render(); });
-    rect.on('dragstart', () => { label.content = 'dragstart: rect'; scene.render(); });
-    rect.on('drag', (event) => { rect.x += event.data.deltaX; rect.y += event.data.deltaY; label.content = 'drag: rect'; scene.render(); });
+    rect.on('dragstart', () => { origin.x = rect.x; origin.y = rect.y; label.content = 'dragstart: rect'; scene.render(); });
+    rect.on('drag', (event) => { rect.x = origin.x + event.data.deltaX; rect.y = origin.y + event.data.deltaY; label.content = 'drag: rect'; scene.render(); });
     rect.on('dragend', () => { label.content = 'dragend: rect'; scene.render(); });
 });
 </script>
