@@ -397,6 +397,77 @@ describe('DOMContext pointer state machine', () => {
         expect(typesOf(element)).toEqual(['dragstart', 'drag', 'dragend']);
     });
 
+    // The payload advanced a running `dragPrev`, so it reported the step rather than the total the
+    // docs promised, and a consumer following them wrote `x = startX + deltaX` and got a stutter.
+    test('Should report drag deltas as the total since the drag started', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+
+        register(context, [element]);
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mousemove', 140, 140);
+        mouse(context, 'mousemove', 160, 160);
+
+        const drags = element.events.filter(({ type }) => type === 'drag');
+
+        expect(drags[0].data).toMatchObject({
+            deltaX: 130,
+            deltaY: 130,
+        });
+        expect(drags[1].data).toMatchObject({
+            deltaX: 150,
+            deltaY: 150,
+        });
+    });
+
+    test('Should report the dragend delta as the total since the drag started', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+
+        register(context, [element]);
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mousemove', 140, 140);
+        mouse(context, 'mouseup', 160, 160);
+
+        const dragend = element.events.find(({ type }) => type === 'dragend');
+
+        expect(dragend?.data).toMatchObject({
+            startX: 10,
+            startY: 10,
+            deltaX: 150,
+            deltaY: 150,
+        });
+    });
+
+    test('Should report a negative delta for a drag back past its start', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+
+        register(context, [element]);
+
+        mouse(context, 'mousedown', 10, 50);
+
+        // The move that crosses the threshold emits `dragstart` alone, so arm the drag first.
+        mouse(context, 'mousemove', 14, 54);
+        mouse(context, 'mousemove', 30, 80);
+        mouse(context, 'mousemove', 5, 30);
+
+        const drags = element.events.filter(({ type }) => type === 'drag');
+
+        expect(drags[0].data).toMatchObject({
+            deltaX: 20,
+            deltaY: 30,
+        });
+        expect(drags[1].data).toMatchObject({
+            deltaX: -5,
+            deltaY: -20,
+        });
+    });
+
     test('Should not resume a stranded drag once the button is released', () => {
         const context = create();
         const element = createMockElement('a', DRAG_EVENTS);

@@ -32,8 +32,6 @@ interface InteractionState {
     dragElement: RenderElement | undefined;
     dragStartX: number;
     dragStartY: number;
-    dragPrevX: number;
-    dragPrevY: number;
     dragStarted: boolean;
     suppressClick: boolean;
     scheduleHitTest: ReturnType<typeof createFrameBuffer>;
@@ -215,8 +213,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         if (!state.dragStarted) {
             if (getEuclideanDistance(dx, dy) >= this._dragThreshold) {
                 state.dragStarted = true;
-                state.dragPrevX = state.dragStartX;
-                state.dragPrevY = state.dragStartY;
 
                 const payload = {
                     x: state.dragStartX,
@@ -230,19 +226,13 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             return;
         }
 
-        const deltaX = x - state.dragPrevX;
-        const deltaY = y - state.dragPrevY;
-
-        state.dragPrevX = x;
-        state.dragPrevY = y;
-
         const payload = {
             x,
             y,
             startX: state.dragStartX,
             startY: state.dragStartY,
-            deltaX,
-            deltaY,
+            deltaX: dx,
+            deltaY: dy,
         };
 
         this.emit('drag', payload);
@@ -316,8 +306,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
                 y,
                 startX: state.dragStartX,
                 startY: state.dragStartY,
-                deltaX: x - state.dragPrevX,
-                deltaY: y - state.dragPrevY,
+                deltaX: x - state.dragStartX,
+                deltaY: y - state.dragStartY,
             };
 
             this.emit('dragend', dragPayload);
@@ -369,8 +359,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             dragElement: undefined,
             dragStartX: 0,
             dragStartY: 0,
-            dragPrevX: 0,
-            dragPrevY: 0,
             dragStarted: false,
             suppressClick: false,
             scheduleHitTest: createFrameBuffer(),
