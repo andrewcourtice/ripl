@@ -101,6 +101,26 @@ if (orphans.length) {
     fail(`emitted but referenced by nothing: ${orphans.join(', ')}`);
 }
 
+// Vite stamps `crossorigin` on the preload tags it injects, which Chrome cannot match to the
+// module fetch on a chrome-extension:// page: it discards the preload and warns on every page.
+const preloading = referrers
+    .filter(referrer => referrer.endsWith('.html'))
+    .filter(referrer => read(referrer).includes('rel="modulepreload"'));
+
+if (preloading.length) {
+    fail([
+        `module preload links are back in: ${preloading.join(', ')}`,
+        'Keep build.modulePreload false, or Chrome warns about unused preloads on every page.',
+    ].join('\n  '));
+}
+
+const polyfills = fs.readdirSync(path.join(distDir, 'assets'))
+    .filter(name => name.includes('modulepreload-polyfill'));
+
+if (polyfills.length) {
+    fail(`the module preload polyfill is back in: ${polyfills.join(', ')}`);
+}
+
 const noop = () => undefined;
 
 const listener = {
