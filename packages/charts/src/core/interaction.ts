@@ -8,6 +8,8 @@
  */
 
 import type {
+    Arc,
+    ArcState,
     Ease,
     Element,
     ElementInterpolationState,
@@ -186,4 +188,91 @@ export function applyHoverHighlight<TElement extends Element>(
     }
 
     host[HOVER_DISPOSERS] = disposers;
+}
+
+/**
+ * Anchors a tooltip at an arc's centroid, measured against the geometry the arc is animating
+ * toward rather than its current frame, so a tooltip opened mid-transition lands where the
+ * segment settles rather than where it happens to be.
+ *
+ * @param arc - The arc to anchor against.
+ * @returns An {@link HoverHighlightOptions.anchor} resolver.
+ */
+export function arcCentroidAnchor(arc: Arc): () => InteractionPoint {
+    return () => {
+        const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+
+        return {
+            x,
+            y,
+        };
+    };
+}
+
+/**
+ * How a segment reports its hover to the chart around it: the typed event it emits and the
+ * chart-wide highlight it drives.
+ *
+ * @typeParam TPayload - The chart's interaction event payload, which carries the pointer position.
+ */
+export interface SegmentInteractionOptions<TPayload extends InteractionPoint> {
+    /** The event's pointer-independent fields; `x`/`y` are filled in from the pointer per event. */
+    payload: Omit<TPayload, 'x' | 'y'>;
+    /** Emits the chart's enter event for the segment. */
+    onEnter?: (event: TPayload) => void;
+    /** Emits the chart's leave event for the segment. */
+    onLeave?: (event: TPayload) => void;
+    /** Emits the chart's click event for the segment. */
+    onClick?: (event: TPayload) => void;
+    /**
+     * Toggles the chart-wide highlight for the hovered segment, called with `true` on enter and
+     * `false` on leave. Charts whose segments are already solid at rest use it so the hover reads
+     * as the other segments dimming rather than this one lifting.
+     */
+    onHighlight?: (hovered: boolean) => void;
+}
+
+/**
+ * Wires a chart segment's full hover treatment: the tooltip and highlight transition of
+ * {@link applyHoverHighlight}, plus the typed enter/leave/click events and the chart-wide highlight
+ * every segmented chart emits alongside them.
+ *
+ * @typeParam TElement - The element type the hover is attached to.
+ * @typeParam TPayload - The chart's interaction event payload.
+ * @param element - The segment element to make interactive.
+ * @param options - The hover treatment, together with the events the segment reports.
+ */
+export function applySegmentInteraction<TElement extends Element, TPayload extends InteractionPoint>(
+    element: TElement,
+    options: Omit<HoverHighlightOptions, 'onEnter' | 'onLeave' | 'onClick'>
+        & HoverHighlightStates<TElement>
+        & SegmentInteractionOptions<TPayload>
+): void {
+    const {
+        payload,
+        onEnter,
+        onLeave,
+        onClick,
+        onHighlight,
+        ...hover
+    } = options;
+
+    const eventAt = (point: InteractionPoint) => ({
+        ...payload,
+        x: point.x,
+        y: point.y,
+    } as TPayload);
+
+    applyHoverHighlight(element, {
+        ...hover,
+        onEnter: point => {
+            onHighlight?.(true);
+            onEnter?.(eventAt(point));
+        },
+        onLeave: point => {
+            onHighlight?.(false);
+            onLeave?.(eventAt(point));
+        },
+        onClick: point => onClick?.(eventAt(point)),
+    } as HoverHighlightOptions & HoverHighlightStates<TElement>);
 }

@@ -1,5 +1,6 @@
 import {
     ContextPath,
+    getThetaPoint,
     TAU,
 } from '@ripl/core';
 
@@ -60,10 +61,9 @@ export class TerminalPath extends ContextPath {
             args: [x, y, radius, startAngle, endAngle, counterclockwise ? 1 : 0],
         });
 
-        this._openSubpath(x + radius * Math.cos(startAngle), y + radius * Math.sin(startAngle));
+        this._openSubpath(...getThetaPoint(startAngle, radius, x, y));
 
-        this._cursorX = x + radius * Math.cos(endAngle);
-        this._cursorY = y + radius * Math.sin(endAngle);
+        [this._cursorX, this._cursorY] = getThetaPoint(endAngle, radius, x, y);
     }
 
     /** Records a full circle centered at (x, y) as a complete arc. */

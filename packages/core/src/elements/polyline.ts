@@ -25,6 +25,7 @@ import {
 } from '../math';
 
 import {
+    numberClamp,
     numberExtent,
 } from '@ripl/utilities';
 
@@ -59,7 +60,7 @@ export interface PolylineState extends BaseElementState {
 }
 
 function clampIndex(value: number, max: number): number {
-    return Math.max(0, Math.min(Math.round(value), max));
+    return numberClamp(Math.round(value), 0, max);
 }
 
 function runStyleKey(segment?: PolylineSegment): string {

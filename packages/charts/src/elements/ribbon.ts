@@ -134,26 +134,15 @@ export class Ribbon extends Shape2D<RibbonState> {
         } = this;
 
         return super.render(context, path => {
-            path.moveTo(
-                cx + radius * Math.cos(sourceStart),
-                cy + radius * Math.sin(sourceStart)
-            );
+            path.moveTo(...getThetaPoint(sourceStart, radius, cx, cy));
 
             path.arc(cx, cy, radius, sourceStart, sourceEnd);
 
-            path.quadraticCurveTo(
-                cx, cy,
-                cx + radius * Math.cos(targetStart),
-                cy + radius * Math.sin(targetStart)
-            );
+            path.quadraticCurveTo(cx, cy, ...getThetaPoint(targetStart, radius, cx, cy));
 
             path.arc(cx, cy, radius, targetStart, targetEnd);
 
-            path.quadraticCurveTo(
-                cx, cy,
-                cx + radius * Math.cos(sourceStart),
-                cy + radius * Math.sin(sourceStart)
-            );
+            path.quadraticCurveTo(cx, cy, ...getThetaPoint(sourceStart, radius, cx, cy));
 
             path.closePath();
         });

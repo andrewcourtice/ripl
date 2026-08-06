@@ -18,6 +18,7 @@ import type {
 import {
     degreesToRadians,
     Disposer,
+    resolveInteraction,
 } from '@ripl/core';
 
 import {
@@ -70,37 +71,11 @@ export interface CameraOptions {
     interactions?: boolean | CameraInteractions;
 }
 
-interface ResolvedInteraction {
-    enabled: boolean;
-    sensitivity: number;
-}
-
 const INTERACTION_KEY = Symbol('interaction');
 const ORBIT_SENSITIVITY = 0.005;
 const PAN_SENSITIVITY = 0.005;
 const ZOOM_SENSITIVITY = 0.005;
 const PINCH_ZOOM_SENSITIVITY = 0.01;
-
-function resolveInteraction(option: CameraInteractionOption | undefined, fallback: boolean): ResolvedInteraction {
-    if (option === undefined) {
-        return {
-            enabled: fallback,
-            sensitivity: 1,
-        };
-    }
-
-    if (typeIsBoolean(option)) {
-        return {
-            enabled: option,
-            sensitivity: 1,
-        };
-    }
-
-    return {
-        enabled: option.enabled !== false,
-        sensitivity: option.sensitivity ?? 1,
-    };
-}
 
 /** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
 export class Camera extends Disposer {

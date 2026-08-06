@@ -32,8 +32,17 @@ import {
 } from '../core/labels';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
+    arcCentroidAnchor,
 } from '../core/interaction';
+
+import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
+    resolveColorBy,
+} from '../core/color';
 
 import {
     ANIMATION_REFERENCE,
@@ -73,6 +82,7 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
+    getThetaPoint,
     scaleRadial,
     setColorAlpha,
     TAU,
@@ -83,7 +93,6 @@ import {
     arrayMapRange,
     numberFormat,
     numberMaxOf,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** Fill opacity a segment carries at rest, matching the bar series so the two read as one family. */
@@ -236,7 +245,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 cx,
                 cy,
                 radius: isEntry ? innerRadius : levelRadius,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 data: {
                     radius: levelRadius,
@@ -326,10 +335,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         const newLines = lineEntries.map(idx => {
             const angle = startOffset + idx * angleStep;
-            const x2 = cx + maxRadius * Math.cos(angle);
-            const y2 = cy + maxRadius * Math.sin(angle);
-            const x1 = cx + innerRadius * Math.cos(angle);
-            const y1 = cy + innerRadius * Math.sin(angle);
+            const [x2, y2] = getThetaPoint(angle, maxRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(angle, innerRadius, cx, cy);
 
             const line = createLine({
                 id: `polar-axis-${idx}`,
@@ -337,7 +344,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 y1,
                 x2: isEntry ? x1 : x2,
                 y2: isEntry ? y1 : y2,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 data: {
                     x2,
@@ -352,10 +359,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         lineUpdates.forEach(([idx, line]) => {
             const angle = startOffset + idx * angleStep;
-            const x2 = cx + maxRadius * Math.cos(angle);
-            const y2 = cy + maxRadius * Math.sin(angle);
-            const x1 = cx + innerRadius * Math.cos(angle);
-            const y1 = cy + innerRadius * Math.sin(angle);
+            const [x2, y2] = getThetaPoint(angle, maxRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(angle, innerRadius, cx, cy);
 
             line.data = {
                 x1,
@@ -414,14 +419,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             const layout = this.createLayout();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getColor = typeIsFunction(colorBy) ? colorBy : (item: any) => item[colorBy] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
+            const getColor = resolveColorBy<TData>(colorBy);
 
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
@@ -724,36 +725,21 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         const { value, label, key } = segment;
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): PolarAreaChartSegmentEvent => ({
-            x: point.x,
-            y: point.y,
-            value,
-            label,
-            key,
-        });
-
-        applyHoverHighlight(arc, {
+        applySegmentInteraction<Arc, PolarAreaChartSegmentEvent>(arc, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
-            anchor: () => {
-                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
-                return {
-                    x,
-                    y,
-                };
-            },
+            anchor: arcCentroidAnchor(arc),
             content: () => `${label}: ${formatValue(value)}`,
-            onEnter: point => {
-                this.highlightSeries(key);
-                this.emit('segmententer', payload(point));
+            payload: {
+                value,
+                label,
+                key,
             },
-            onLeave: point => {
-                this.highlightSeries(null);
-                this.emit('segmentleave', payload(point));
-            },
-            onClick: point => this.emit('segmentclick', payload(point)),
+            onHighlight: hovered => this.highlightSeries(hovered ? key : null),
+            onEnter: event => this.emit('segmententer', event),
+            onLeave: event => this.emit('segmentleave', event),
+            onClick: event => this.emit('segmentclick', event),
         });
     }
 }

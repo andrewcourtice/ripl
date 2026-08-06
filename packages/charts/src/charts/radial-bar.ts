@@ -36,6 +36,7 @@ import {
 } from '../core/animation';
 
 import {
+    createIndexLookup,
     resolveAccessor,
 } from '../core/data';
 
@@ -76,7 +77,7 @@ import {
 const TOP_ANGLE = -Math.PI / 2;
 
 /** Opacity applied to a bar's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.85;
+const BAR_REST_ALPHA = 0.85;
 
 /** Options for configuring a {@link RadialBarChart}. */
 export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions {
@@ -186,7 +187,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             },
             content: () => content,
             highlight: { stroke: color },
-            restore: { stroke: setColorAlpha(color, REST_ALPHA) },
+            restore: { stroke: setColorAlpha(color, BAR_REST_ALPHA) },
             onEnter: point => this.emit('barenter', payload(point)),
             onLeave: point => this.emit('barleave', payload(point)),
             onClick: point => this.emit('barclick', payload(point)),
@@ -243,6 +244,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const holeRadius = outerRadius * innerRadius;
 
             const activeData = this.filterActive(data, getKey);
+            const activeIndex = createIndexLookup(activeData);
 
             const values = activeData.map(getValue);
             const [, dataMax] = values.length ? numberExtent(values, functionIdentity) : [0, 1];
@@ -310,7 +312,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             exits.forEach(group => group.destroy());
 
             const entryGroups = entries.map(item => {
-                const i = activeData.indexOf(item);
+                const i = activeIndex(item);
                 const itemColor = colorFor(item);
                 const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 
@@ -338,7 +340,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     radius: center,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE,
-                    stroke: setColorAlpha(itemColor, REST_ALPHA),
+                    stroke: setColorAlpha(itemColor, BAR_REST_ALPHA),
                     lineWidth: thickness,
                     lineCap,
                     pointerEvents: 'stroke',
@@ -376,7 +378,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const updatingLabels: Text[] = [];
 
             updates.forEach(([item, group]) => {
-                const i = activeData.indexOf(item);
+                const i = activeIndex(item);
                 const itemColor = colorFor(item);
                 const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 
@@ -399,7 +401,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
                 if (bar) {
                     bar.lineCap = lineCap;
-                    bar.stroke = setColorAlpha(itemColor, REST_ALPHA);
+                    bar.stroke = setColorAlpha(itemColor, BAR_REST_ALPHA);
                     bar.data = {
                         cx,
                         cy,

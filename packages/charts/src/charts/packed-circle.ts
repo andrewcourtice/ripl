@@ -34,6 +34,7 @@ import {
 import {
     ANIMATION_REFERENCE,
     stagger,
+    transitionIfAny,
 } from '../core/animation';
 
 import {
@@ -52,6 +53,10 @@ import {
     enclosingCircle,
     packSiblings,
 } from '../core/pack';
+
+import {
+    REST_ALPHA,
+} from '../constants/opacity';
 
 import {
     Tooltip,
@@ -81,9 +86,6 @@ import {
     arrayJoin,
     numberClamp,
 } from '@ripl/utilities';
-
-/** Opacity applied to a circle's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link PackedCircleChart}. */
 export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOptions {
@@ -413,21 +415,21 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                entryLabels.length ? this.renderer.transition(entryLabels, {
+                transitionIfAny(this.renderer, entryLabels, {
                     duration: enter.duration,
                     ease: easeOutCubic,
                     state: { opacity: 1 },
-                }) : Promise.resolve(),
+                }),
                 this.renderer.transition(updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                updateTexts.length ? this.renderer.transition(updateTexts, element => ({
+                transitionIfAny(this.renderer, updateTexts, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
             ]);
         });
     }

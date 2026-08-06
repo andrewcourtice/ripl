@@ -20,6 +20,10 @@ import {
 } from '../core/interaction';
 
 import {
+    createKeyedLookup,
+} from '../core/data';
+
+import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
 
@@ -34,6 +38,7 @@ import {
 } from '../constants/spacing';
 
 import {
+    COLORS,
     getColorGenerator,
 } from '../constants/colors';
 
@@ -73,6 +78,8 @@ import {
 
 import {
     arrayJoin,
+    functionIdentity,
+    numberMaxOf,
     numberSum,
 } from '@ripl/utilities';
 
@@ -167,7 +174,7 @@ export interface SankeyChartEventMap<TData = unknown> extends EventMap {
 /** Gap, in pixels, between a node's right edge and the label drawn beside it. */
 const NODE_LABEL_GAP = SPACING.xs;
 
-interface LayoutNode {
+interface LayoutNode<TData = unknown> {
     id: string;
     label: string;
     color: string;
@@ -179,12 +186,13 @@ interface LayoutNode {
     value: number;
     sourceY: number;
     targetY: number;
+    data?: TData;
 }
 
-interface LayoutLink {
+interface LayoutLink<TData = unknown> {
     id: string;
-    source: LayoutNode;
-    target: LayoutNode;
+    source: LayoutNode<TData>;
+    target: LayoutNode<TData>;
     value: number;
     sourceY: number;
     targetY: number;
@@ -192,21 +200,22 @@ interface LayoutLink {
     color: string;
 }
 
-interface SankeyLayoutResult {
-    layoutNodes: LayoutNode[];
-    layoutLinks: LayoutLink[];
+interface SankeyLayoutResult<TData = unknown> {
+    layoutNodes: LayoutNode<TData>[];
+    layoutLinks: LayoutLink<TData>[];
 }
 
-function computeSankeyLayout(
-    nodes: SankeyNode[],
+function computeSankeyLayout<TData>(
+    nodes: SankeyNode<TData>[],
     links: SankeyLink[],
     width: number,
     height: number,
     nodeWidth: number,
     nodePadding: number,
     nodeColors: Map<string, string>
-): SankeyLayoutResult {
+): SankeyLayoutResult<TData> {
     // Assign depths via BFS
+    const nodeById = createKeyedLookup(nodes, node => node.id);
     const depthMap = new Map<string, number>();
     const adjacency = new Map<string, string[]>();
 
@@ -259,7 +268,7 @@ function computeSankeyLayout(
         }
     });
 
-    const maxDepth = Math.max(...Array.from(depthMap.values()), 0);
+    const maxDepth = Math.max(0, numberMaxOf(Array.from(depthMap.values()), functionIdentity));
 
     // Compute node values
     const nodeValueMap = new Map<string, number>();
@@ -281,7 +290,7 @@ function computeSankeyLayout(
     });
 
     const xStep = maxDepth > 0 ? (width - nodeWidth) / maxDepth : 0;
-    const layoutNodeMap = new Map<string, LayoutNode>();
+    const layoutNodeMap = new Map<string, LayoutNode<TData>>();
 
     // One global scale so a link's width matches at both ends and the densest column still fits
     let scale = Infinity;
@@ -306,14 +315,15 @@ function computeSankeyLayout(
         let currentY = Math.max(0, (height - columnHeight) / 2);
 
         nodeIds.forEach(nodeId => {
-            const nodeConfig = nodes.find(n => n.id === nodeId);
+            const nodeConfig = nodeById(nodeId);
             const value = nodeValueMap.get(nodeId) ?? 0;
             const nodeHeight = Math.max(value * scale, 2);
-            const color = nodeColors.get(nodeId) ?? '#a1afc4';
+            const color = nodeColors.get(nodeId) ?? COLORS.slate;
 
             layoutNodeMap.set(nodeId, {
                 id: nodeId,
                 label: nodeConfig?.label ?? nodeId,
+                data: nodeConfig?.data,
                 color,
                 x: depth * xStep,
                 y: currentY,
@@ -336,12 +346,12 @@ function computeSankeyLayout(
     const sourceOffsets = new Map<string, number>();
     const targetOffsets = new Map<string, number>();
 
-    const layoutLinks: LayoutLink[] = links.map(link => {
+    const layoutLinks: LayoutLink<TData>[] = links.map(link => {
         const source = layoutNodeMap.get(link.source)!;
         const target = layoutNodeMap.get(link.target)!;
 
         if (!source || !target) {
-            return null as unknown as LayoutLink;
+            return null as unknown as LayoutLink<TData>;
         }
 
         // One global scale → the link's width is the same at both ends, so it tiles the node edges.
@@ -366,7 +376,7 @@ function computeSankeyLayout(
             width: linkWidth,
             color: source.color,
         };
-    }) as LayoutLink[];
+    }) as LayoutLink<TData>[];
 
     return {
         layoutNodes,
@@ -406,12 +416,13 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
      * into — the last has only whatever the layout left it. Reserving the measured width is what keeps
      * those labels inside the chart instead of running off its edge.
      */
-    private _measureLabelBand(layoutNodes: LayoutNode[]): number {
-        const maxDepth = Math.max(...layoutNodes.map(node => node.depth), 0);
+    private _measureLabelBand(layoutNodes: LayoutNode<TData>[]): number {
+        const maxDepth = Math.max(0, numberMaxOf(layoutNodes, node => node.depth));
 
-        const widest = layoutNodes
-            .filter(node => node.depth === maxDepth)
-            .reduce((max, node) => Math.max(max, this.scene.context.measureText(node.label, SEGMENT_LABEL_FONT).width), 0);
+        const widest = numberMaxOf(
+            layoutNodes.filter(node => node.depth === maxDepth),
+            node => this.scene.context.measureText(node.label, SEGMENT_LABEL_FONT).width
+        );
 
         return widest > 0 ? widest + NODE_LABEL_GAP : 0;
     }
@@ -680,7 +691,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
         });
     }
 
-    private _attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
+    private _attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink<TData>, anchorX: number, anchorY: number) {
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -710,7 +721,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
         });
     }
 
-    private _attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
+    private _attachNodeHover(rect: Rect, node: LayoutNode<TData>, anchorX: number, anchorY: number) {
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -720,7 +731,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             id: node.id,
             label: node.label,
             value: node.value,
-            data: this.options.nodes.find(candidate => candidate.id === node.id)?.data,
+            data: node.data,
         });
 
         applyHoverHighlight(rect, {

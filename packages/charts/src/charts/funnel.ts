@@ -24,7 +24,7 @@ import {
 } from '../core/labels';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
 } from '../core/interaction';
 
 import {
@@ -34,6 +34,14 @@ import {
 import {
     resolveColorBy,
 } from '../core/color';
+
+import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
+    REST_ALPHA,
+} from '../constants/opacity';
 
 import {
     Tooltip,
@@ -62,11 +70,7 @@ import {
 
 import {
     arrayJoin,
-    typeIsFunction,
 } from '@ripl/utilities';
-
-/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
@@ -152,12 +156,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 borderRadius = 4,
             } = this.options;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
 
             const getColor = resolveColorBy<TData>(colorBy);
 
@@ -356,16 +357,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
         width: number; }, color: string) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): FunnelChartSegmentEvent => ({
-            x: point.x,
-            y: point.y,
-            value: item.value,
-            label: item.label,
-            key: item.key,
-        });
-
-        applyHoverHighlight(rect, {
+        applySegmentInteraction<Rect, FunnelChartSegmentEvent>(rect, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
@@ -376,9 +368,14 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             content: () => `${item.label}: ${formatValue(item.value)}`,
             highlight: { fill: color },
             restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
-            onClick: point => this.emit('segmentclick', payload(point)),
+            payload: {
+                value: item.value,
+                label: item.label,
+                key: item.key,
+            },
+            onEnter: event => this.emit('segmententer', event),
+            onLeave: event => this.emit('segmentleave', event),
+            onClick: event => this.emit('segmentclick', event),
         });
     }
 

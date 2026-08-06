@@ -6,6 +6,8 @@ import {
 
 import {
     computeStackOffset,
+    createIndexLookup,
+    createKeyedLookup,
     resolveAccessor,
 } from '../src/core/data';
 
@@ -71,5 +73,53 @@ describe('computeStackOffset', () => {
             c: 3,
         }[s.id] ?? 0);
         expect(computeStackOffset(positives, positives[2], {}, allPositive)).toBe(3);
+    });
+
+    it('matches the scanned index when the caller supplies one', () => {
+        expect(computeStackOffset(series, series[1], { key: 'x' }, getValue, 1)).toBe(10);
+    });
+});
+
+describe('createIndexLookup', () => {
+    it('resolves each value to its index', () => {
+        const indexOf = createIndexLookup(['a', 'b', 'c']);
+
+        expect([indexOf('a'), indexOf('b'), indexOf('c')]).toEqual([0, 1, 2]);
+    });
+
+    it('matches indexOf across duplicates, misses, NaN and mixed types', () => {
+        const shared = { id: 'a' };
+        const values: unknown[] = ['a', 'b', 'a', shared, shared, 1, '1', NaN, NaN, 0, -0, undefined, null];
+        const indexOf = createIndexLookup(values);
+        const probes: unknown[] = [...values, 'z', {}, NaN, -0, 0, false];
+
+        probes.forEach(probe => expect(indexOf(probe)).toBe(values.indexOf(probe)));
+    });
+
+    it('resolves -1 against an empty array', () => {
+        expect(createIndexLookup<string>([])('a')).toBe(-1);
+    });
+});
+
+describe('createKeyedLookup', () => {
+    const rows = [
+        {
+            id: 'a',
+            value: 1,
+        },
+        {
+            id: 'b',
+            value: 2,
+        },
+        {
+            id: 'a',
+            value: 3,
+        },
+    ];
+
+    it('matches find across duplicate keys and misses', () => {
+        const byId = createKeyedLookup(rows, row => row.id);
+
+        ['a', 'b', 'z'].forEach(id => expect(byId(id)).toBe(rows.find(row => row.id === id)));
     });
 });

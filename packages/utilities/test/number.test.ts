@@ -120,6 +120,17 @@ describe('numberSum', () => {
         expect(numberSum([-1, -2, 3])).toBe(0);
     });
 
+    // A numeric array once short-circuited past the iteratee, silently summing the raw values.
+    test('Should map a numeric array through the iteratee', () => {
+        expect(numberSum([1, 2], value => value * 2)).toBe(6);
+        expect(numberSum([1, 2, 3], value => value ** 2)).toBe(14);
+        expect(numberSum([3, 4], () => 1)).toBe(2);
+    });
+
+    test('Should treat a missing iteratee result as zero', () => {
+        expect(numberSum([{ value: 1 }, {}], item => (item as { value?: number }).value as number)).toBe(1);
+    });
+
 });
 
 describe('numberRoundTo', () => {

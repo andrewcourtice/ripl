@@ -41,8 +41,13 @@ import {
 } from '../core/animation';
 
 import {
+    createIndexLookup,
     resolveAccessor,
 } from '../core/data';
+
+import {
+    REST_ALPHA,
+} from '../constants/opacity';
 
 import {
     Tooltip,
@@ -71,6 +76,7 @@ import {
     createText,
     degreesToRadians,
     easeOutCubic,
+    getThetaPoint,
     scaleRadial,
     setColorAlpha,
 } from '@ripl/core';
@@ -81,9 +87,6 @@ import {
     functionIdentity,
     numberExtent,
 } from '@ripl/utilities';
-
-/** Opacity applied to a marker's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.7;
 
 /** Configuration for an individual polar scatter series. */
 export interface PolarScatterSeriesOptions<TData> {
@@ -181,7 +184,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
     /** Converts an angle in degrees (0° at top, clockwise) to a canvas point at the given radius. */
     private _point(cx: number, cy: number, angleDeg: number, radius: number): [number, number] {
         const theta = degreesToRadians(angleDeg - 90);
-        return [cx + radius * Math.cos(theta), cy + radius * Math.sin(theta)];
+        return getThetaPoint(theta, radius, cx, cy);
     }
 
     private _drawGrid(cx: number, cy: number, gridRadius: number, levels: number, sectors: number) {
@@ -216,7 +219,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 cy,
                 radius: (gridRadius / levels) * level,
                 fill: 'transparent',
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
             });
 
@@ -389,6 +392,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             this.resolveSeriesColors(series);
 
             const formatValue = resolveValueFormat(this.options.format);
+            const dataIndex = createIndexLookup(data);
             const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
             const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
@@ -536,14 +540,14 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     left: markerEntries,
                     inner: markerUpdates,
                     right: markerExits,
-                } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${data.indexOf(item)}`);
+                } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${dataIndex(item)}`);
 
                 markerExits.forEach(marker => marker.destroy());
 
-                markerEntries.forEach(item => group.add(createMarker(srs, item, data.indexOf(item))));
+                markerEntries.forEach(item => group.add(createMarker(srs, item, dataIndex(item))));
 
                 markerUpdates.forEach(([item, marker]) => {
-                    const spec = computeMarker(srs, item, data.indexOf(item));
+                    const spec = computeMarker(srs, item, dataIndex(item));
                     marker.data = spec.state;
                     this._attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
                 });
@@ -562,21 +566,21 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     left: labelEntries,
                     inner: labelUpdates,
                     right: labelExits,
-                } = arrayJoin(data, valueLabels, (item, label) => label.id === `${srs.id}-${data.indexOf(item)}-label`);
+                } = arrayJoin(data, valueLabels, (item, label) => label.id === `${srs.id}-${dataIndex(item)}-label`);
 
                 labelExits.forEach(label => {
                     void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
                 });
 
                 labelEntries.forEach(item => {
-                    const label = createDataLabel(labelSpec(srs, item, data.indexOf(item)));
+                    const label = createDataLabel(labelSpec(srs, item, dataIndex(item)));
 
                     group.add(label);
                     enteringLabels.push(label);
                 });
 
                 labelUpdates.forEach(([item, label]) => {
-                    const spec = labelSpec(srs, item, data.indexOf(item));
+                    const spec = labelSpec(srs, item, dataIndex(item));
                     const layout = resolveDataLabelLayout(spec);
 
                     // Text content isn't tweenable, so apply it directly.

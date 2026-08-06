@@ -69,6 +69,7 @@ import {
 import {
     functionIdentity,
     numberExtent,
+    numberSum,
 } from '@ripl/utilities';
 
 /** Whether bars are laid out vertically (default) or horizontally. */
@@ -186,7 +187,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     private _percentSeries(series: BarChartSeriesOptions<TData>[], data: TData[]): BarChartSeriesOptions<TData>[] {
         const totals = new Map<TData, number>(data.map(item => [
             item,
-            series.reduce((total, srs) => total + Math.max(0, this._seriesValue(srs, item)), 0),
+            numberSum(series, srs => Math.max(0, this._seriesValue(srs, item))),
         ]));
 
         return series.map(srs => {

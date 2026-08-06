@@ -36,6 +36,10 @@ import {
 } from '../core/color';
 
 import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -63,7 +67,6 @@ import {
     arrayJoin,
     numberClamp,
     numberSum,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link TreemapChart}. */
@@ -189,6 +192,9 @@ function layoutTreemap(
     ];
 }
 
+/** The opacity applied to a cell's fill at rest (full opacity is used on hover). */
+const CELL_REST_ALPHA = 0.65;
+
 /**
  * Treemap chart rendering hierarchical data as nested, space-filling rectangles.
  *
@@ -198,9 +204,6 @@ function layoutTreemap(
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-/** The opacity applied to a cell's fill at rest (full opacity is used on hover). */
-const REST_ALPHA = 0.65;
-
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>, TreemapChartEventMap> {
 
     private _groups: Group[] = [];
@@ -229,12 +232,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 borderRadius = 4,
             } = this.options;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
 
             const getColor = resolveColorBy<TData>(colorBy);
 
@@ -299,14 +299,14 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     y: node.y + node.height / 2,
                     width: 0,
                     height: 0,
-                    fill: setColorAlpha(nodeColor, REST_ALPHA),
+                    fill: setColorAlpha(nodeColor, CELL_REST_ALPHA),
                     borderRadius,
                     data: {
                         x: node.x,
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fill: setColorAlpha(nodeColor, REST_ALPHA),
+                        fill: setColorAlpha(nodeColor, CELL_REST_ALPHA),
                     } as RectState,
                 });
 
@@ -348,7 +348,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fill: setColorAlpha(nodeColor, REST_ALPHA),
+                        fill: setColorAlpha(nodeColor, CELL_REST_ALPHA),
                     } as RectState;
 
                     this._attachCellHover(rect, node, nodeColor);
@@ -463,7 +463,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             }),
             content: () => `${node.label}: ${formatValue(node.value)}`,
             highlight: { fill: color },
-            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            restore: { fill: setColorAlpha(color, CELL_REST_ALPHA) },
             onEnter: point => this.emit('nodeenter', payload(point)),
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),

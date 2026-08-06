@@ -45,18 +45,75 @@ export function resolveAccessor<TData, TValue>(accessor: Accessor<TData, TValue>
 }
 
 /**
+ * Builds a value → index lookup with `Array.prototype.indexOf` semantics: the earliest occurrence
+ * wins for a duplicated value, an absent value resolves to `-1`, and `NaN` matches nothing.
+ *
+ * A render loop that resolves each datum's position with `indexOf` is quadratic over a series;
+ * building the lookup once makes every resolution constant time.
+ *
+ * @typeParam TValue - The array's element type.
+ * @param values - The array to index, in order.
+ * @returns A function resolving a value to its index in `values`, or `-1` when absent.
+ */
+export function createIndexLookup<TValue>(values: readonly TValue[]): (value: TValue) => number {
+    const indices = new Map<TValue, number>();
+
+    values.forEach((value, index) => {
+        // `Map` matches NaN to itself where `indexOf` never does, so leave NaN unindexed.
+        if (indices.has(value) || (typeof value === 'number' && Number.isNaN(value))) {
+            return;
+        }
+
+        indices.set(value, index);
+    });
+
+    return value => indices.get(value) ?? -1;
+}
+
+/**
+ * Builds a key → value lookup with `Array.prototype.find` semantics over a key comparison: the
+ * earliest match wins for a duplicated key, and an unknown key resolves to `undefined`.
+ *
+ * @typeParam TValue - The array's element type.
+ * @typeParam TKey - The key type the values are looked up by.
+ * @param values - The array to index, in order.
+ * @param getKey - Resolves a value's lookup key.
+ * @returns A function resolving a key to its first matching value, or `undefined` when absent.
+ */
+export function createKeyedLookup<TValue, TKey>(values: readonly TValue[], getKey: (value: TValue) => TKey): (key: TKey) => TValue | undefined {
+    const matches = new Map<TKey, TValue>();
+
+    values.forEach(value => {
+        const key = getKey(value);
+
+        if (!matches.has(key)) {
+            matches.set(key, value);
+        }
+    });
+
+    return key => matches.get(key);
+}
+
+/**
  * Computes the stacked baseline offset for a series at a given data item. Positive and negative
  * values stack independently so diverging stacks render correctly. Series earlier in the array
  * sit closer to the baseline.
+ *
+ * @param series - The series that stack together, in stacking order.
+ * @param current - The series to compute the offset for.
+ * @param item - The data item being stacked.
+ * @param getValue - Resolves a series' numeric value at a data item.
+ * @param currentIndex - `current`'s index in `series`, when the caller already holds it. Defaults to
+ * an `indexOf` scan, which is quadratic when the offset is computed for every series in turn.
  */
 export function computeStackOffset<TSeries, TData>(
     series: TSeries[],
     current: TSeries,
     item: TData,
-    getValue: (series: TSeries, item: TData) => number
+    getValue: (series: TSeries, item: TData) => number,
+    currentIndex: number = series.indexOf(current)
 ): number {
     const currentValue = getValue(current, item);
-    const currentIndex = series.indexOf(current);
 
     return series.slice(0, currentIndex).reduce((sum, previous) => {
         const previousValue = getValue(previous, item);

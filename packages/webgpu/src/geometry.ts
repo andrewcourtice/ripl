@@ -1,8 +1,11 @@
+import {
+    vec3TriangleNormal,
+} from '@ripl/3d';
+
 import type {
     Face3D,
     Matrix4,
     MeshSubmission,
-    Vector3,
 } from '@ripl/3d';
 
 import type {
@@ -288,7 +291,7 @@ export function triangulatefaces(
 
     for (const face of faces) {
         const faceVerts = face.vertices;
-        const normal = face.normal ?? computeTriangleNormal(faceVerts[0], faceVerts[1], faceVerts[2]);
+        const normal = face.normal ?? vec3TriangleNormal(faceVerts[0], faceVerts[1], faceVerts[2]);
 
         for (const vertex of faceVerts) {
             vertices[vi++] = vertex[0];
@@ -317,25 +320,4 @@ export function triangulatefaces(
         vertices,
         indices,
     };
-}
-
-function computeTriangleNormal(a: Vector3, b: Vector3, c: Vector3): Vector3 {
-    const ux = b[0] - a[0];
-    const uy = b[1] - a[1];
-    const uz = b[2] - a[2];
-    const vx = c[0] - a[0];
-    const vy = c[1] - a[1];
-    const vz = c[2] - a[2];
-
-    const nx = uy * vz - uz * vy;
-    const ny = uz * vx - ux * vz;
-    const nz = ux * vy - uy * vx;
-
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
-
-    if (len === 0) {
-        return [0, 1, 0];
-    }
-
-    return [nx / len, ny / len, nz / len];
 }

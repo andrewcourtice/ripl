@@ -22,6 +22,10 @@ import {
     applyHoverHighlight,
 } from '../core/interaction';
 
+import {
+    createIndexLookup,
+} from '../core/data';
+
 import type {
     ChartNavigatorSeries,
 } from '../components/navigator';
@@ -200,8 +204,10 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
      * scale, whose first/last marks would overhang the axes).
      */
     private _createCategoryScale(keys: string[], left: number, right: number): Scale<string> {
+        const keyIndex = createIndexLookup(keys);
+
         const convert = (value: string) => {
-            const index = keys.indexOf(value);
+            const index = keyIndex(value);
             return left + ((index + 0.5) / Math.max(1, keys.length)) * (right - left);
         };
 

@@ -30,6 +30,10 @@ import {
 } from '../core/interaction';
 
 import {
+    createIndexLookup,
+} from '../core/data';
+
+import {
     ANIMATION_REFERENCE,
     exitElement,
 } from '../core/animation';
@@ -191,10 +195,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             for (let i = 0; i <= categories.length; i++) {
                 const angle = i * angleStep - TAU / 4;
-                points.push([
-                    cx + levelRadius * Math.cos(angle),
-                    cy + levelRadius * Math.sin(angle),
-                ]);
+                points.push(getThetaPoint(angle, levelRadius, cx, cy));
             }
 
             return points;
@@ -216,7 +217,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             const polygon = createPolyline({
                 id: `radar-level-${level}`,
-                stroke: '#e5e7eb',
+                stroke: this.theme.gridColor,
                 lineWidth: 1,
                 points: isEntry ? points.map(() => [cx, cy] as Point) : points,
                 data: {
@@ -246,7 +247,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         const axisEnd = (index: number): Point => {
             const angle = index * angleStep - TAU / 4;
-            return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+            return getThetaPoint(angle, radius, cx, cy);
         };
 
         const {
@@ -298,8 +299,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         // --- Axis labels ---
         const labelProps = (index: number) => {
             const angle = index * angleStep - TAU / 4;
-            const labelX = cx + (radius + 15) * Math.cos(angle);
-            const labelY = cy + (radius + 15) * Math.sin(angle);
+            const [labelX, labelY] = getThetaPoint(angle, radius + 15, cx, cy);
 
             let textAlign: CanvasTextAlign = 'center';
 
@@ -428,8 +428,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 const value = getValue(item);
                 const scaledRadius = radiusScale(value);
                 const angle = index * angleStep - TAU / 4;
-                const x = cx + scaledRadius * Math.cos(angle);
-                const y = cy + scaledRadius * Math.sin(angle);
+                const [x, y] = getThetaPoint(angle, scaledRadius, cx, cy);
 
                 return {
                     point: [x, y] as Point,
@@ -582,18 +581,20 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 return group;
             }
 
+            const pointIndex = createIndexLookup(pointsData);
+
             const {
                 left: labelEntries,
                 inner: labelUpdates,
                 right: labelExits,
-            } = arrayJoin(pointsData, labels, (pd, label) => label.id === `${srs.id}-label-${pointsData.indexOf(pd)}`);
+            } = arrayJoin(pointsData, labels, (pd, label) => label.id === `${srs.id}-label-${pointIndex(pd)}`);
 
             labelExits.forEach(label => {
                 void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
             });
 
             labelEntries.forEach(pd => {
-                const label = buildLabel(srs.id, pd, pointsData.indexOf(pd));
+                const label = buildLabel(srs.id, pd, pointIndex(pd));
 
                 group.add(label);
                 enteringLabels.push(label);

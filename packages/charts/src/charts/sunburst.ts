@@ -21,7 +21,8 @@ import {
 } from '../core/options';
 
 import {
-    applyHoverHighlight,
+    applySegmentInteraction,
+    arcCentroidAnchor,
 } from '../core/interaction';
 
 import {
@@ -365,37 +366,23 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
     private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        const payload = (point: { x: number;
-            y: number; }): SunburstChartNodeEvent<TData> => ({
-            x: point.x,
-            y: point.y,
-            value: arc.value,
-            label: arc.label,
-            id: arc.id,
-            data: arc.data,
-        });
-
-        applyHoverHighlight(segment, {
+        applySegmentInteraction<Arc, SunburstChartNodeEvent<TData>>(segment, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
-            anchor: () => {
-                const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
-                return {
-                    x,
-                    y,
-                };
-            },
+            anchor: arcCentroidAnchor(segment),
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
-            onEnter: point => {
-                super.highlightSeries(`node:${arc.id}`);
-                this.emit('nodeenter', payload(point));
+            payload: {
+                value: arc.value,
+                label: arc.label,
+                id: arc.id,
+                data: arc.data,
             },
-            onLeave: point => {
-                super.highlightSeries(null);
-                this.emit('nodeleave', payload(point));
-            },
-            onClick: point => this.emit('nodeclick', payload(point)),
+            // Hovering a segment isolates that node alone, unlike the legend hover the override widens.
+            onHighlight: hovered => super.highlightSeries(hovered ? `node:${arc.id}` : null),
+            onEnter: event => this.emit('nodeenter', event),
+            onLeave: event => this.emit('nodeleave', event),
+            onClick: event => this.emit('nodeclick', event),
         });
     }
 

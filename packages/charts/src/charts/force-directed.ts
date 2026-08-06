@@ -29,6 +29,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    transitionIfAny,
 } from '../core/animation';
 
 import type {
@@ -72,10 +73,11 @@ import {
     arrayJoin,
     functionIdentity,
     numberExtent,
+    numberMaxOf,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.85;
+const NODE_REST_ALPHA = 0.85;
 
 /** A node in a force-directed network. */
 export interface ForceNetworkNode<TData = unknown> {
@@ -175,7 +177,7 @@ export interface ForceDirectedChartEventMap<TData = unknown> extends EventMap {
     linkleave: ForceDirectedLinkEvent;
 }
 
-interface PlacedNode {
+interface PlacedNode<TData> {
     id: string;
     label: string;
     value: number;
@@ -183,6 +185,7 @@ interface PlacedNode {
     x: number;
     y: number;
     r: number;
+    data?: TData;
 }
 
 /**
@@ -214,7 +217,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
         this.init();
     }
 
-    private _attachNodeHover(circle: Circle, node: PlacedNode, content: string) {
+    private _attachNodeHover(circle: Circle, node: PlacedNode<TData>, content: string) {
 
         const payload = (point: { x: number;
             y: number; }): ForceDirectedNodeEvent<TData> => ({
@@ -223,7 +226,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             id: node.id,
             label: node.label,
             value: node.value,
-            data: this.options.nodes.find(candidate => candidate.id === node.id)?.data,
+            data: node.data,
         });
 
         applyHoverHighlight(circle, {
@@ -236,7 +239,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             }),
             content: () => content,
             highlight: { fill: node.color },
-            restore: { fill: setColorAlpha(node.color, REST_ALPHA) },
+            restore: { fill: setColorAlpha(node.color, NODE_REST_ALPHA) },
             onEnter: point => this.emit('nodeenter', payload(point)),
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
@@ -377,7 +380,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const ys = simNodes.map(node => node.y);
             const [minX, maxX] = xs.length ? numberExtent(xs, functionIdentity) : [-1, 1];
             const [minY, maxY] = ys.length ? numberExtent(ys, functionIdentity) : [-1, 1];
-            const maxNodeR = Math.max(nodeRadius, ...activeNodes.map(nodeRadiusFor));
+            const maxNodeR = Math.max(nodeRadius, numberMaxOf(activeNodes, nodeRadiusFor));
             const spanX = Math.max(1e-3, maxX - minX);
             const spanY = Math.max(1e-3, maxY - minY);
             const pad = maxNodeR + 12;
@@ -386,7 +389,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const midX = (minX + maxX) / 2;
             const midY = (minY + maxY) / 2;
 
-            const placed = new Map<string, PlacedNode>();
+            const placed = new Map<string, PlacedNode<TData>>();
 
             activeNodes.forEach(node => {
                 const sim = simById.get(node.id)!;
@@ -398,6 +401,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     x: cx + (sim.x - midX) * scale,
                     y: cy + (sim.y - midY) * scale,
                     r: nodeRadiusFor(node),
+                    data: node.data,
                 });
             });
 
@@ -433,7 +437,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 }
             }
 
-            const maxDepth = depthById.size ? Math.max(...depthById.values()) : 0;
+            const maxDepth = depthById.size ? numberMaxOf(Array.from(depthById.values()), functionIdentity) : 0;
             const depthOf = (id: string) => depthById.get(id) ?? maxDepth + 1;
 
             const rootPlaced = rootId ? placed.get(rootId) : undefined;
@@ -551,11 +555,11 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             nodeExits.forEach(group => group.destroy());
 
-            const nodeContent = (node: PlacedNode) => `${node.label}: ${formatValue(node.value)}`;
+            const nodeContent = (node: PlacedNode<TData>) => `${node.label}: ${formatValue(node.value)}`;
 
             const entryNodeGroups = nodeEntries.map(node => {
                 const placedNode = placed.get(node.id)!;
-                const restFill = setColorAlpha(placedNode.color, REST_ALPHA);
+                const restFill = setColorAlpha(placedNode.color, NODE_REST_ALPHA);
 
                 // Start each node at the root's position and spring it out to its settled spot.
                 const circle = createCircle({
@@ -602,7 +606,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             nodeUpdates.forEach(([node, group]) => {
                 const placedNode = placed.get(node.id)!;
-                const restFill = setColorAlpha(placedNode.color, REST_ALPHA);
+                const restFill = setColorAlpha(placedNode.color, NODE_REST_ALPHA);
                 const circle = group.getElementsByType('circle')[0] as Circle;
                 const text = group.getElementsByType('text')[0] as Text | undefined;
 
@@ -648,18 +652,18 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             );
 
             return Promise.all([
-                newLinks.length ? this.renderer.transition(newLinks, element => ({
+                transitionIfAny(this.renderer, newLinks, element => ({
                     duration: enter.duration,
                     // Wait for the ripple to reach this link's root-ward endpoint before drawing it.
                     delay: linkEntryDelays.get((element as Line).id) ?? 0,
                     ease: easeOutCubic,
                     state: element.data as Partial<LineState>,
-                })) : Promise.resolve(),
-                linkUpdates.length ? this.renderer.transition(linkUpdates.map(([, line]) => line), element => ({
+                })),
+                transitionIfAny(this.renderer, linkUpdates.map(([, line]) => line), element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as Partial<LineState>,
-                })) : Promise.resolve(),
+                })),
                 this.renderer.transition(entryCircles, element => ({
                     duration: enter.duration,
                     delay: delayForChild(element.id, 'circle'),
@@ -667,22 +671,22 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     ease: easeOutBack,
                     state: element.data as CircleState,
                 })),
-                entryLabels.length ? this.renderer.transition(entryLabels, element => ({
+                transitionIfAny(this.renderer, entryLabels, element => ({
                     duration: enter.duration,
                     delay: delayForChild(element.id, 'label'),
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
                 this.renderer.transition(updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
                 })),
-                updateTexts.length ? this.renderer.transition(updateTexts, element => ({
+                transitionIfAny(this.renderer, updateTexts, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
-                })) : Promise.resolve(),
+                })),
             ]);
         });
     }

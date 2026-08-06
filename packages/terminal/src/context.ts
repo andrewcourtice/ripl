@@ -1,6 +1,7 @@
 import {
     Context,
     ContextText,
+    dataURLToBlob,
     scaleContinuous,
 } from '@ripl/core';
 
@@ -230,23 +231,6 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
         },
     },
 };
-
-/** Converts a base64 data URL into a `Blob` synchronously. */
-function dataURLToBlob(dataURL: string): Blob {
-    const [header, data] = dataURL.split(',');
-    const mimeMatch = /:(.*?);/.exec(header);
-    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-
-    return new Blob([bytes], {
-        type: mime,
-    });
-}
 
 /**
  * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`

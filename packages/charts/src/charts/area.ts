@@ -68,6 +68,7 @@ import type {
 import {
     functionIdentity,
     numberExtent,
+    numberSum,
 } from '@ripl/utilities';
 
 /** Maps a pointer interaction phase to the corresponding area-chart marker event name. */
@@ -243,7 +244,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     private _percentSeries(series: AreaChartSeriesOptions<TData>[], data: TData[]): AreaChartSeriesOptions<TData>[] {
         const totals = new Map<TData, number>(data.map(item => [
             item,
-            series.reduce((total, srs) => total + Math.max(0, this._seriesValue(srs, item)), 0),
+            numberSum(series, srs => Math.max(0, this._seriesValue(srs, item))),
         ]));
 
         return series.map(srs => {

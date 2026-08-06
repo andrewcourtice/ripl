@@ -34,14 +34,15 @@ export function numberClamp(value: number, lower: number, upper: number): number
     return Math.min(trueUpper, Math.max(trueLower, value));
 }
 
-/** Returns the minimum numeric value extracted from an array via the accessor. */
+/** Returns the minimum numeric value extracted from an array via the accessor (`Infinity` when empty). */
 export function numberMinOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return Math.min(...values.map(accessor));
+    // Folded rather than spread into `Math.min`, whose argument count is capped by the stack.
+    return values.reduce((min, value) => Math.min(min, accessor(value)), Infinity);
 }
 
-/** Returns the maximum numeric value extracted from an array via the accessor. */
+/** Returns the maximum numeric value extracted from an array via the accessor (`-Infinity` when empty). */
 export function numberMaxOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return Math.max(...values.map(accessor));
+    return values.reduce((max, value) => Math.max(max, accessor(value)), -Infinity);
 }
 
 /** Returns the fractional part of a number (e.g. `numberFractional(3.7)` → `0.7`). */
@@ -67,14 +68,23 @@ export function numberExtent<TValue>(values: TValue[], accessor: (value: TValue)
     ];
 }
 
-/** Computes the sum of an array of numbers, or of values mapped through an optional iteratee. */
+/**
+ * Computes the sum of an array of numbers, or of values mapped through an optional iteratee.
+ *
+ * The iteratee wins wherever one is given, so a numeric array is summed through it rather than
+ * raw. Anything that does not resolve to a number — a value with no iteratee to map it, or an
+ * iteratee returning `undefined` — contributes `0`.
+ *
+ * @typeParam TValue - The element type of the array.
+ * @param values - The values to sum.
+ * @param iteratee - Maps each value to the number it contributes.
+ * @returns The sum, or `0` for an empty array.
+ */
 export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number) {
     return values.reduce((total, value) => {
-        const output = typeIsNumber(value)
-            ? value
-            : iteratee?.(value);
+        const output = iteratee ? iteratee(value) : value;
 
-        return total + (output ?? 0);
+        return total + (typeIsNumber(output) ? output : 0);
     }, 0);
 }
 

@@ -22,6 +22,7 @@ import {
     ANIMATION_REFERENCE,
     exitElement,
     stagger,
+    transitionIfAny,
 } from '../core/animation';
 
 import {
@@ -59,7 +60,7 @@ import {
 } from '@ripl/utilities';
 
 /** The opacity applied to a bin's fill at rest (full opacity on hover). */
-const REST_ALPHA = 0.78;
+const BIN_REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link HistogramChart}. */
 export interface HistogramChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
@@ -188,7 +189,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 thresholds,
             });
 
-            const color = setColorAlpha(this.getSeriesColor('histogram'), REST_ALPHA);
+            const color = setColorAlpha(this.getSeriesColor('histogram'), BIN_REST_ALPHA);
             const maxCount = Math.max(1, ...histogram.map(current => current.count));
             const valueExtent: [number, number] = histogram.length
                 ? [histogram[0].x0, histogram[histogram.length - 1].x1]
@@ -311,22 +312,18 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
-        const entriesTransition = entryRects.length
-            ? this.renderer.transition(entryRects, (element, index, length) => ({
-                duration: enter.duration,
-                delay: stagger(index, length, enter.duration),
-                ease: easeOutCubic,
-                state: element.data as RectState,
-            }))
-            : Promise.resolve();
+        const entriesTransition = transitionIfAny(this.renderer, entryRects, (element, index, length) => ({
+            duration: enter.duration,
+            delay: stagger(index, length, enter.duration),
+            ease: easeOutCubic,
+            state: element.data as RectState,
+        }));
 
-        const updatesTransition = updates.length
-            ? this.renderer.transition(updates.map(([, rect]) => rect), element => ({
-                duration: update.duration,
-                ease: update.ease,
-                state: element.data as Partial<RectState>,
-            }))
-            : Promise.resolve();
+        const updatesTransition = transitionIfAny(this.renderer, updates.map(([, rect]) => rect), element => ({
+            duration: update.duration,
+            ease: update.ease,
+            state: element.data as Partial<RectState>,
+        }));
 
         return Promise.all([
             entriesTransition,

@@ -15,6 +15,7 @@ import {
     mat4TransformPoint,
     mat4Translate,
     vec3Normalize,
+    vec3TriangleNormal,
 } from '../math';
 
 import type {
@@ -531,27 +532,6 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
 }
 
-function computeTriangleNormal(a: Vector3, b: Vector3, c: Vector3): Vector3 {
-    const ux = b[0] - a[0];
-    const uy = b[1] - a[1];
-    const uz = b[2] - a[2];
-    const vx = c[0] - a[0];
-    const vy = c[1] - a[1];
-    const vz = c[2] - a[2];
-
-    const nx = uy * vz - uz * vy;
-    const ny = uz * vx - ux * vz;
-    const nz = ux * vy - uy * vx;
-
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
-
-    if (len === 0) {
-        return [0, 1, 0];
-    }
-
-    return [nx / len, ny / len, nz / len];
-}
-
 function countFaceVertices(faces: Face3D[]): number {
     let count = 0;
 
@@ -573,7 +553,7 @@ function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
 
     for (const face of faces) {
         const verts = face.vertices;
-        const normal = face.normal ?? computeTriangleNormal(verts[0], verts[1], verts[2]);
+        const normal = face.normal ?? vec3TriangleNormal(verts[0], verts[1], verts[2]);
 
         for (const vertex of verts) {
             data[offset++] = vertex[0];

@@ -1,23 +1,10 @@
+import {
+    dataURLToBlob,
+} from '@ripl/core';
+
 import type {
     ContextExport,
 } from '@ripl/core';
-
-/** Converts a base64 data URL into a `Blob` synchronously (avoids the async `canvas.toBlob`). */
-function dataURLToBlob(dataURL: string): Blob {
-    const [header, data] = dataURL.split(',');
-    const mimeMatch = /:(.*?);/.exec(header);
-    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-
-    return new Blob([bytes], {
-        type: mime,
-    });
-}
 
 /**
  * Builds a {@link ContextExport} from an `HTMLCanvasElement`, shared by every canvas-backed context

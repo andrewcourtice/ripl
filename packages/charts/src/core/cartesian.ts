@@ -36,6 +36,10 @@ import type {
     ResolvedAnimation,
 } from './animation';
 
+import {
+    createIndexLookup,
+} from './data';
+
 import type {
     ChartAxisInput,
     ChartAxisItemOptions,
@@ -140,7 +144,10 @@ import type {
 } from '@ripl/utilities';
 
 import {
+    functionIdentity,
     numberClamp,
+    numberExtent,
+    numberSum,
     typeIsArray,
     typeIsDate,
     typeIsNumber,
@@ -1000,7 +1007,7 @@ export abstract class CartesianChart<
         const yBandFor = (alignment: ChartYAxisAlignment) => {
             const group = this.yAxes.filter(axis => axis.visible && axis.alignment === alignment);
 
-            return group.reduce((sum, axis) => sum + axis.measure(), 0)
+            return numberSum(group, axis => axis.measure())
                 + AXIS_STACK_GAP * Math.max(0, group.length - 1);
         };
 
@@ -1282,9 +1289,10 @@ export abstract class CartesianChart<
      */
     protected pointScale(keys: string[], left: number, right: number): Scale<string> {
         const span = Math.max(1, keys.length - 1);
+        const keyIndex = createIndexLookup(keys);
 
         const convert = (value: string) => {
-            const index = keys.indexOf(value);
+            const index = keyIndex(value);
             const t = index < 0 ? 0 : index / span;
             return left + t * (right - left);
         };
@@ -1318,8 +1326,7 @@ export abstract class CartesianChart<
         }
 
         const times = keys.map(key => new Date(key).getTime()).filter(Number.isFinite);
-        const min = times.length > 0 ? Math.min(...times) : 0;
-        const max = times.length > 0 ? Math.max(...times) : 1;
+        const [min, max] = times.length > 0 ? numberExtent(times, functionIdentity) : [0, 1];
 
         return this._timeScaleFacade([min, max], left, right);
     }

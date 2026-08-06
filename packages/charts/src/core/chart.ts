@@ -20,6 +20,7 @@ import {
 } from '@ripl/canvas';
 
 import {
+    COLORS,
     getColorGenerator,
 } from '../constants/colors';
 
@@ -544,7 +545,7 @@ export class Chart<
     }
 
     protected getSeriesColor(seriesId: string): string {
-        return this._seriesColorMap.get(seriesId) ?? '#a1afc4';
+        return this._seriesColorMap.get(seriesId) ?? COLORS.slate;
     }
 
     /**
