@@ -18,6 +18,8 @@ background service worker (per-tab context registry, action icon state, message 
 devtools panel · popup
 ```
 
+The two script entries — `src/background/service-worker.ts` and `src/content/content-script.ts` — **must keep distinct file basenames**. `@crxjs/vite-plugin` emits each manifest entry with `name: basename(file)`, and Rolldown derives the chunk's reference id by hashing that name, so two entries both called `index.ts` collide on one id and the service-worker loader ends up importing the content script — which dies on `window` at module scope. `scripts/verify-bundle.mjs` runs after every build and fails if that happens again.
+
 ## Development
 
 ```bash

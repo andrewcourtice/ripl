@@ -320,7 +320,7 @@ export default tseslint.config(
     // Build/tooling scripts may log progress to the console.
     {
         name: 'ripl/scripts',
-        files: ['apps/website/scripts/**/*.mjs', 'apps/website/scripts/**/*.js'],
+        files: ['apps/*/scripts/**/*.mjs', 'apps/*/scripts/**/*.js'],
         rules: {
             'no-console': 'off',
         },
