@@ -1,6 +1,8 @@
 # Ripl Devtools Extension
 
-Chrome (Manifest V3) extension providing rich devtools for [Ripl](https://www.ripl.run): a devtools **Ripl** panel with a live element tree, editable properties, renderer debug switches, and event listener info, plus a toolbar icon that lights up when Ripl is detected on the page.
+Chrome (Manifest V3) extension providing rich devtools for [Ripl](https://www.ripl.run): a devtools **Ripl** panel with two tabs — **Elements** (live element tree, editable properties, renderer debug switches, listener info) and **Events** (a Ripl-drawn timeline, event list, and payload details) — plus a toolbar icon that lights up when Ripl is detected on the page.
+
+Event recording rides on `EventBus`'s `'*'` wildcard subscription, which is invisible to `has()`, so observing a scene never turns its elements into hit-test targets. `updated`, `render` and `tick` are filtered out page-side by default.
 
 Pages opt in by calling [`createDevtools`](../../packages/devtools) from `@ripl/devtools` — see that package's README for the page-side setup.
 
@@ -35,6 +37,18 @@ yarn workspace @ripl/devtools-extension dev:example
 2. Open `chrome://extensions`, enable **Developer mode**.
 3. **Load unpacked** → select `apps/devtools-extension/dist`.
 4. Open the example page (`dev:example`), then open Chrome devtools → **Ripl** panel. The toolbar icon turns blue when Ripl is detected; clicking it lists the detected contexts.
+
+### Manual checklist
+
+Everything touching `chrome.*` is verified by hand:
+
+1. **Elements** — expand all, scroll a long row sideways, select a `circle` and confirm the Built-in badge and its docs link. An element whose type Ripl does not ship gets neither.
+2. **Events** — move the pointer over the canvas (context `mousemove` rows), click the chip and drag the green handle (element-attributed rows), select an event and read its payload, then **Show in Elements**.
+3. Drag the timeline to scrub and scroll to zoom; panning must not change the selection.
+4. Tick `updated` in the toolbar and confirm rows appear; untick and confirm they stop.
+5. Switch back to **Elements** and confirm the event count stops growing.
+6. Reload the page mid-session and confirm the panel recovers.
+7. Against a page pinned to a published `@ripl/devtools` without event support, confirm Elements still works and Events shows the upgrade notice.
 
 ### Icons
 

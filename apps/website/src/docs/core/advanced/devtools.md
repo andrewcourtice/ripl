@@ -6,7 +6,7 @@ outline: "deep"
 
 Ripl ships browser developer tools for inspecting and editing live scenes. They come in two parts: the **[@ripl/devtools](https://www.npmjs.com/package/@ripl/devtools)** package (a small runtime bridge you opt into in your app) and the **[Ripl Devtools Chrome extension](https://chromewebstore.google.com/detail/ripl-devtools/fbcceifmhbcmmbmkphpjepigabdiamjb)** that adds a **Ripl** panel to the browser devtools, much like the built-in Elements panel.
 
-Once bound, the panel shows the full element tree of every Ripl context on the page, lets you edit element properties live, toggles renderer debug overlays, and reports which events have listeners attached.
+Once bound, the panel shows the full element tree of every Ripl context on the page, lets you edit element properties live, toggles renderer debug overlays, and records every event the scene fires onto a timeline.
 
 > [!NOTE]
 > For the full API, see the [Devtools API Reference](/docs/api/@ripl/devtools/).
@@ -100,14 +100,29 @@ createDevtools(context, scene, renderer, {
 
 ## Browser extension
 
-The companion Chrome extension adds a **Ripl** panel to your browser devtools with:
+The companion Chrome extension adds a **Ripl** panel to your browser devtools, split into two tabs.
 
-- an **element tree** of every context on the page, rendered as pseudo-XML with each element's set properties as attributes;
-- an **editable properties** panel to change numbers, strings, colors and more, with edits that round-trip to the live element;
+**Elements** shows:
+
+- an **element tree** of every context on the page, rendered as pseudo-XML with each element's set properties as attributes, scrollable sideways to read long attribute lists, and expandable or collapsible in one click;
+- an **editable properties** panel to change numbers, strings, colors and more, with edits that round-trip to the live element, badging Ripl's own elements as built-in and linking to their documentation;
 - **renderer debug switches** for an FPS counter, element count, and bounding boxes;
-- an **events** view showing which events the selected element emits and whether any listeners are attached.
+- an **events** list showing which events the selected element emits and whether any listeners are attached.
+
+**Events** records what the scene actually did:
+
+- a **timeline** — itself drawn with Ripl — with a lane per event source, which you can drag to scrub and scroll to zoom;
+- a **list** of every recorded event with its name, time and originating element;
+- a **details** panel showing the full payload of the selected event, and a jump back to its element in the Elements tab.
+
+Recording uses the [`'*'` wildcard subscription](/docs/core/advanced/events#wildcard), so it observes the scene without changing how it behaves — an observed element is still not a hit-test target.
+
+`updated`, `render` and `tick` are excluded by default because they fire every frame or every state write; switch any of them back on from the toolbar. The filter is applied in the page, so events you have excluded are never sent.
 
 A toolbar icon lights up when Ripl is detected on the page; clicking it lists the contexts it found.
+
+> [!NOTE]
+> Event recording needs a page-side bridge that supports it. A page running an older `@ripl/devtools` still works for everything else; the Events tab tells you to upgrade rather than showing an empty timeline.
 
 > [!TIP]
 > **[Install Ripl Devtools from the Chrome Web Store.](https://chromewebstore.google.com/detail/ripl-devtools/fbcceifmhbcmmbmkphpjepigabdiamjb)**

@@ -123,10 +123,32 @@ function setupCanvas(): void {
         });
     });
 
+    // Pointer events only fire on elements that listen for them, so give the Events tab something to record.
+    chip.on('mouseenter', () => chip.lineWidth = 3);
+    chip.on('mouseleave', () => chip.lineWidth = 0);
+
+    const handle = createRect({
+        class: 'handle draggable',
+        x: 40,
+        y: 180,
+        width: 64,
+        height: 40,
+        borderRadius: 6,
+        fill: '#1e8e3e',
+    });
+
+    handle.on('drag', event => {
+        handle.x = event.data.x - handle.width / 2;
+        handle.y = event.data.y - handle.height / 2;
+    });
+
+    handle.on('mousemove', () => handle.stroke = '#202124');
+    handle.on('mouseleave', () => handle.stroke = undefined);
+
     ringsCore.add(pulse);
     ringsInner.add([ringsCore, block]);
     rings.add([ringsInner, chip]);
-    scene.add(rings);
+    scene.add([rings, handle]);
 
     // Continuous animation so property polling has something to show.
     renderer.transition(pulse, {

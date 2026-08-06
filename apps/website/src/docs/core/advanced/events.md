@@ -68,16 +68,41 @@ Every element in Ripl extends `EventBus`, which provides the core event subscrip
 
 ### `on(event, handler, options?)`
 
-Subscribe to an event. Returns an unsubscribe function:
+Subscribe to an event. Returns a disposable subscription:
 
 ```ts
-const off = circle.on('click', (event) => {
+const subscription = circle.on('click', (event) => {
     console.log('Clicked!', event.data);
 });
 
 // Later, unsubscribe
-off();
+subscription.dispose();
 ```
+
+### `on('*', handler, options?)` {#wildcard}
+
+Subscribe to the wildcard event type to receive **every** event emitted on a bus, whatever its
+type — including custom types that never appear in `$events`. Because events bubble, a wildcard
+subscription on a group or scene observes its whole subtree, and each event's `target` still
+identifies the element it was emitted on:
+
+```ts
+import {
+    EVENT_WILDCARD,
+} from '@ripl/core';
+
+scene.on(EVENT_WILDCARD, (event) => {
+    console.log(event.type, 'from', event.target.type);
+});
+```
+
+Handlers for the event's own type run first, then wildcard handlers. `stopPropagation()` and the
+`self` option apply exactly as they do to a typed subscription.
+
+A wildcard subscription is deliberately invisible to [`has()`](#tracked-events): it reports only
+listeners registered for a concrete type. Since pointer events are dispatched to elements that
+`has` them, observing a bus never turns it into a hit-test target — which is what lets the
+[devtools](/docs/core/advanced/devtools) record a scene's events without changing how it behaves.
 
 ### `once(event, handler)`
 
@@ -89,15 +114,15 @@ circle.once('click', (event) => {
 });
 ```
 
-### `off(event?, handler?)`
+### `off(event, handler)`
 
-Remove event handlers. With no arguments, removes all handlers. With just an event name, removes all handlers for that event:
+Remove a previously registered handler:
 
 ```ts
-circle.off('click', myHandler); // Remove specific handler
-circle.off('click'); // Remove all click handlers
-circle.off(); // Remove all handlers
+circle.off('click', myHandler);
 ```
+
+To drop every listener on an element, use `destroy()`.
 
 ### `emit(event, data?)`
 
@@ -109,7 +134,7 @@ circle.emit('custom-event', { value: 42 });
 
 ## Event Object
 
-Event handlers receive an `Event` object containing `type`, `data` (the payload), `source` (the originating element), and `currentTarget` (the element handling the event).
+Event handlers receive an `Event` object containing `type`, `data` (the payload), `target` (the bus the event was originally emitted on, preserved as it bubbles), and `timestamp` (a high-resolution time reading taken when the event was created).
 
 ### `stopPropagation()`
 
@@ -209,7 +234,7 @@ const group = createGroup({ children: [circle] });
 
 // This fires when the circle (or any child) is clicked
 group.on('click', (event) => {
-    console.log('Group received click from:', event.source.type);
+    console.log('Group received click from:', event.target.type);
 });
 ```
 

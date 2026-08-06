@@ -7,10 +7,13 @@
         "types": [
             "vitest/importMeta",
             "@webgpu/types",
-            "node"
+            "node",
+            "chrome"
         ]
     },
+    // The extension's `.vue` blocks need `vue-tsc` and stay uncovered; its `.ts` is checked here.
     "include": [
-        "packages/*/src/**/*.ts"
+        "packages/*/src/**/*.ts",
+        "apps/devtools-extension/src/**/*.ts"
     ]
 }
