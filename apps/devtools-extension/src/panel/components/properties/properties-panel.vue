@@ -2,7 +2,10 @@
     <div class="properties-panel">
         <ContextSection v-if="activeContext" :context="activeContext" />
         <section class="properties-panel__section properties-panel__section--grow">
-            <h3 class="properties-panel__heading">Properties</h3>
+            <h3 class="properties-panel__heading">
+                <span>Properties</span>
+                <ElementBadge v-if="selectedType" :element-type="selectedType" />
+            </h3>
             <PropertyGrid v-if="store.selection.value" />
             <div v-else class="properties-panel__empty">Select an element</div>
         </section>
@@ -12,6 +15,7 @@
 
 <script setup lang="ts">
 import ContextSection from './context-section.vue';
+import ElementBadge from './element-badge.vue';
 import EventsSection from './events-section.vue';
 import PropertyGrid from './property-grid.vue';
 
@@ -24,6 +28,16 @@ import {
 } from 'vue';
 
 const store = useDevtoolsStore();
+
+const selectedType = computed(() => {
+    const selection = store.selection.value;
+
+    if (!selection) {
+        return;
+    }
+
+    return store.getTree(selection.contextId)?.nodes.get(selection.elementId)?.elementType;
+});
 
 const activeContext = computed(() => {
     const selection = store.selection.value;
@@ -62,6 +76,10 @@ const activeContext = computed(() => {
 
 .properties-panel__heading {
     flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ripl-space-2);
     margin: 0;
     padding: var(--ripl-section-pad-y) var(--ripl-section-pad-x);
     font-size: 11px;

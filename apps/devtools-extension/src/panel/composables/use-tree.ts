@@ -63,6 +63,10 @@ export interface UseTree {
     collapseNode(nodeId: string): void;
     /** Toggles a node's expanded state. */
     toggleNode(nodeId: string): void;
+    /** Expands every node that has children, across every context tree. */
+    expandAll(): void;
+    /** Collapses every expanded node. */
+    collapseAll(): void;
 }
 
 /** Derives the pseudo-XML attribute list for a node: id, class (when present), then its set properties. */
@@ -180,8 +184,15 @@ export function flattenTree(contextId: string, tree: ContextTree, expandedIds: R
     return rows;
 }
 
-/** Provides the flattened, expansion-aware row list over every context tree in the store. */
-export function useTree(store: DevtoolsStore): UseTree {
+/**
+ * Creates the flattened, expansion-aware row list over every context tree in the store. Prefer
+ * {@link useTree}, which shares one instance across the panel so controls outside the tree view
+ * (expand all, collapse all) act on the rows the tree view renders.
+ *
+ * @param store - The devtools store to read committed trees from.
+ * @returns The tree state and interaction handles.
+ */
+export function createTree(store: DevtoolsStore): UseTree {
     const expandedIds = ref(new Set<string>());
 
     const rows = computed(() => {
@@ -235,6 +246,24 @@ export function useTree(store: DevtoolsStore): UseTree {
         }
     }
 
+    function expandAll(): void {
+        const expanded = new Set<string>();
+
+        Array.from(store.contexts.keys()).forEach(contextId => {
+            store.getTree(contextId)?.childrenByParent.forEach((childIds, parentId) => {
+                if (parentId !== null && childIds.length > 0) {
+                    expanded.add(parentId);
+                }
+            });
+        });
+
+        expandedIds.value = expanded;
+    }
+
+    function collapseAll(): void {
+        expandedIds.value = new Set<string>();
+    }
+
     return {
         rows,
         expandedIds,
@@ -242,5 +271,16 @@ export function useTree(store: DevtoolsStore): UseTree {
         expandNode,
         collapseNode,
         toggleNode,
+        expandAll,
+        collapseAll,
     };
+}
+
+let activeTree: UseTree | undefined;
+
+/** Returns the panel's shared tree state, creating it on first use. */
+export function useTree(store: DevtoolsStore): UseTree {
+    activeTree ??= createTree(store);
+
+    return activeTree;
 }

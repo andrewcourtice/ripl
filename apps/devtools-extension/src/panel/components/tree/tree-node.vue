@@ -70,9 +70,13 @@ const indent = computed(() => `${props.row.depth * 14 + 6}px`);
 </script>
 
 <style scoped>
+/* `max-content` lets a long tag overflow the viewport so it can be scrolled to; `min-width`
+   keeps the hover and selection backgrounds spanning the full scrolled width. */
 .tree-node {
     display: flex;
     align-items: center;
+    width: max-content;
+    min-width: 100%;
     height: var(--ripl-row-height);
     line-height: var(--ripl-row-height);
     white-space: nowrap;
@@ -106,10 +110,8 @@ const indent = computed(() => `${props.row.depth * 14 + 6}px`);
 /* The tag markup lives in its own inline formatting context so the spaces
    between attribute spans render — as flex items they would collapse. */
 .tree-node__label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: none;
+    padding-right: var(--ripl-section-pad-x);
 }
 
 .tree-node__bracket {

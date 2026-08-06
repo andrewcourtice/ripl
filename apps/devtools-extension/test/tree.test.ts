@@ -12,8 +12,13 @@ import {
     createDevtoolsStore,
 } from '../src/panel/composables/use-devtools-store';
 
+import type {
+    DevtoolsStore,
+} from '../src/panel/composables/use-devtools-store';
+
 import {
     createContextRootNode,
+    createTree,
     flattenTree,
     formatNodeTag,
     getNodeAttributes,
@@ -298,7 +303,7 @@ describe('Devtools tree', () => {
                 snapshotId: 1,
             });
 
-            const tree = useTree(store);
+            const tree = createTree(store);
             const rows = tree.rows.value;
 
             const bareRows = rows.filter(row => row.contextId === 'ctx-bare');
@@ -312,6 +317,83 @@ describe('Devtools tree', () => {
             expect(sceneRows.length).toBe(1);
             expect(sceneRows[0].node.id).toBe('scene-1');
             expect(sceneRows[0].hasChildren).toBe(true);
+        });
+
+    });
+
+    describe('Bulk expansion', () => {
+
+        function createPopulatedStore(): DevtoolsStore {
+            const store = createDevtoolsStore(() => {});
+            const nodes = createSampleNodes();
+
+            store.handleMessage({
+                kind: 'context:added',
+                context: {
+                    contextId: CONTEXT_ID,
+                    label: 'Canvas',
+                    contextType: 'canvas',
+                    width: 800,
+                    height: 600,
+                    hasScene: true,
+                    hasRenderer: false,
+                },
+            });
+            store.handleMessage({
+                kind: 'tree:snapshot-begin',
+                contextId: CONTEXT_ID,
+                snapshotId: 1,
+                nodeCount: nodes.length,
+            });
+            store.handleMessage({
+                kind: 'tree:chunk',
+                contextId: CONTEXT_ID,
+                snapshotId: 1,
+                seq: 0,
+                nodes,
+            });
+            store.handleMessage({
+                kind: 'tree:snapshot-end',
+                contextId: CONTEXT_ID,
+                snapshotId: 1,
+            });
+
+            return store;
+        }
+
+        test('Should expand every node that has children', () => {
+            const tree = createTree(createPopulatedStore());
+
+            tree.expandAll();
+
+            expect(Array.from(tree.expandedIds.value).sort()).toEqual(['group-1', 'scene-1']);
+        });
+
+        test('Should reveal every node once expanded', () => {
+            const tree = createTree(createPopulatedStore());
+
+            tree.expandAll();
+
+            const rendered = new Set(tree.rows.value.map(row => row.node.id));
+
+            expect(rendered).toEqual(new Set(['scene-1', 'group-1', 'rect-1', 'rect-2', 'circle-1']));
+        });
+
+        test('Should collapse back to the roots', () => {
+            const tree = createTree(createPopulatedStore());
+
+            tree.expandAll();
+            tree.collapseAll();
+
+            expect(tree.expandedIds.value.size).toBe(0);
+            expect(tree.rows.value.map(row => row.node.id)).toEqual(['scene-1']);
+        });
+
+        // Controls outside the tree view act on the rows it renders, so both must share one instance.
+        test('Should share a single tree instance across the panel', () => {
+            const store = createPopulatedStore();
+
+            expect(useTree(store)).toBe(useTree(store));
         });
 
     });

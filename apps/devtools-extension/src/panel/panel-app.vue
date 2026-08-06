@@ -4,7 +4,7 @@
         <template v-if="store.hasContexts.value">
             <SplitPane v-if="activeTab === 'elements'" class="panel-app__body">
                 <template #left>
-                    <TreeView />
+                    <ElementsPane />
                 </template>
                 <template #right>
                     <PropertiesPanel />
@@ -28,7 +28,7 @@
 import PanelHeader from './components/panel-header.vue';
 import PropertiesPanel from './components/properties/properties-panel.vue';
 import SplitPane from './components/split-pane.vue';
-import TreeView from './components/tree/tree-view.vue';
+import ElementsPane from './components/tree/elements-pane.vue';
 
 import {
     useDevtoolsStore,

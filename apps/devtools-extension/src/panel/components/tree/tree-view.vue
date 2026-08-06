@@ -199,7 +199,9 @@ function onKeydown(event: KeyboardEvent): void {
     font-size: 11.5px;
 }
 
+/* Zero-width spacers would shrink the scroll width as rows recycle, so they track the viewport. */
 .tree-view__spacer {
     flex: none;
+    width: 100%;
 }
 </style>
