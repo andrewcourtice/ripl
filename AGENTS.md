@@ -456,10 +456,9 @@ Put every `UPPER_SNAKE_CASE` constant after the file's type declarations and bef
 
 ### Class Conventions
 
-- **Explicit scope identifiers** — every member must have `private`, `protected`, `public`, or `static` (enforced by ESLint `@typescript-eslint/explicit-member-accessibility`). Internal (`private`) members carry a leading underscore (`private _name`) to signal they are backing state
-- **Native `#` private fields** — use JS `#` prefix for private fields (e.g. `#elements`), not the TypeScript `private` keyword, for truly private data
+- **Explicit scope identifiers** — every member must have `private`, `protected`, `public`, or `static` (enforced by ESLint `@typescript-eslint/explicit-member-accessibility`). Internal (`private`) members carry a leading underscore (`private _name`) to signal they are backing state. Use the TypeScript keyword, never a native `#` field: a `#` field throws when read through a Proxy, which breaks `reactive()` on any instance the docs site hands to Vue
 - **Member ordering:**
-  1. Private fields (`#field`)
+  1. Private fields (`private _field`)
   2. Protected/public fields
   3. Getters/setters
   4. Constructor
