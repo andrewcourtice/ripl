@@ -17,6 +17,10 @@ import {
 } from '@ripl/core';
 
 import type {
+    Vector2,
+} from '../math/vector2';
+
+import type {
     Vector3,
 } from '../math/vector';
 
@@ -101,9 +105,18 @@ export class Cylinder extends Shape3D<CylinderState> {
             const normalA = sideNormal(a1, rTop, rBot, this.height);
             const normalB = sideNormal(a2, rTop, rBot, this.height);
 
+            const uTop = seg / segments;
+            const uBot = (seg + 1) / segments;
+
             faces.push({
                 vertices: [topA, topB, botB, botA],
                 normals: [normalA, normalB, normalB, normalA],
+                uvs: [
+                    [uTop, 1],
+                    [uBot, 1],
+                    [uBot, 0],
+                    [uTop, 0],
+                ],
             });
 
             // Top cap
@@ -111,6 +124,7 @@ export class Cylinder extends Shape3D<CylinderState> {
                 faces.push({
                     vertices: [topCenter, topA, topB],
                     normal: [0, 1, 0],
+                    uvs: [capUV(0, 0), capUV(Math.cos(a1), Math.sin(a1)), capUV(Math.cos(a2), Math.sin(a2))],
                 });
             }
 
@@ -119,6 +133,7 @@ export class Cylinder extends Shape3D<CylinderState> {
                 faces.push({
                     vertices: [botCenter, botB, botA],
                     normal: [0, -1, 0],
+                    uvs: [capUV(0, 0), capUV(Math.cos(a2), Math.sin(a2)), capUV(Math.cos(a1), Math.sin(a1))],
                 });
             }
         }
@@ -126,6 +141,11 @@ export class Cylinder extends Shape3D<CylinderState> {
         return faces;
     }
 
+}
+
+// A cap samples the texture as a disc inscribed in the unit square, matching three.js.
+function capUV(x: number, y: number): Vector2 {
+    return [x * 0.5 + 0.5, y * 0.5 + 0.5];
 }
 
 // The side of a tapered cylinder is a cone frustum, so its normal tilts by the slope of the taper

@@ -18,6 +18,10 @@ import {
 } from '@ripl/core';
 
 import type {
+    Vector2,
+} from '../math/vector2';
+
+import type {
     Vector3,
 } from '../math/vector';
 
@@ -92,18 +96,29 @@ export class Cone extends Shape3D<ConeState> {
             faces.push({
                 vertices: [apex, baseB, baseA],
                 normals: [vec3Normalize(vec3Add(normalA, normalB)), normalB, normalA],
+                uvs: [
+                    [(seg + 0.5) / segments, 1],
+                    [(seg + 1) / segments, 0],
+                    [seg / segments, 0],
+                ],
             });
 
             // Base cap
             faces.push({
                 vertices: [baseCenter, baseA, baseB],
                 normal: [0, -1, 0],
+                uvs: [capUV(0, 0), capUV(Math.cos(a1), Math.sin(a1)), capUV(Math.cos(a2), Math.sin(a2))],
             });
         }
 
         return faces;
     }
 
+}
+
+// A cap samples the texture as a disc inscribed in the unit square, matching three.js.
+function capUV(x: number, y: number): Vector2 {
+    return [x * 0.5 + 0.5, y * 0.5 + 0.5];
 }
 
 /** Factory function that creates a new `Cone` instance. */

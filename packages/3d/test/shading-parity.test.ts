@@ -37,6 +37,7 @@ import {
     shadeSurface,
     vec3Normalize,
     vec3Sub,
+    VERTEX_FLOATS,
 } from '../src';
 
 import type {
@@ -70,8 +71,9 @@ const BASE_RGBA = parseColor(FILL) as ColorRGBA;
 // The default rig's ambient intensity, which the directional light's 0.7 completes.
 const AMBIENT = 0.3;
 
-// Mirrors VERTEX_STRIDE in @ripl/webgpu: position(3), normal(3), colour(4).
-const FLOATS_PER_VERTEX = 10;
+// Imported rather than restated, so a change to the interleaved layout cannot silently mis-stride
+// this replay into reporting faces that do not exist.
+const FLOATS_PER_VERTEX = VERTEX_FLOATS;
 const NORMAL_OFFSET = 3;
 
 /**

@@ -16,12 +16,13 @@ import {
 import {
     MODEL_UNIFORM_BYTES,
     SCENE_UNIFORM_BYTES,
+    VERTEX_FLOATS,
 } from '@ripl/3d';
 
 describe('Pipeline constants', () => {
 
-    test('VERTEX_STRIDE is 40 bytes (10 floats × 4)', () => {
-        expect(VERTEX_STRIDE).toBe(10 * 4);
+    test('VERTEX_STRIDE matches the interleaved layout in @ripl/3d', () => {
+        expect(VERTEX_STRIDE).toBe(VERTEX_FLOATS * 4);
     });
 
     test('SCENE_UNIFORM_SIZE matches the shared layout descriptor', () => {
@@ -42,8 +43,29 @@ describe('VERTEX_BUFFER_LAYOUT', () => {
         expect(VERTEX_BUFFER_LAYOUT.arrayStride).toBe(VERTEX_STRIDE);
     });
 
-    test('has 3 attributes', () => {
-        expect(VERTEX_BUFFER_LAYOUT.attributes).toHaveLength(3);
+    test('has one attribute per interleaved channel', () => {
+        expect(VERTEX_BUFFER_LAYOUT.attributes).toHaveLength(4);
+    });
+
+    // The attributes must together account for exactly the stride, or the GPU reads a vertex the
+    // CPU-side writer never wrote.
+    test('covers the whole stride with no gaps', () => {
+        const attributes = [...VERTEX_BUFFER_LAYOUT.attributes as GPUVertexAttribute[]]
+            .sort((left, right) => left.offset - right.offset);
+        const sizes: Record<string, number> = {
+            float32x2: 8,
+            float32x3: 12,
+            float32x4: 16,
+        };
+
+        let cursor = 0;
+
+        for (const attribute of attributes) {
+            expect(attribute.offset).toBe(cursor);
+            cursor += sizes[attribute.format];
+        }
+
+        expect(cursor).toBe(VERTEX_STRIDE);
     });
 
     test('position attribute at location 0, offset 0, float32x3', () => {

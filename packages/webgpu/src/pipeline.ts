@@ -6,10 +6,11 @@ import {
 import {
     MODEL_UNIFORM_BYTES,
     SCENE_UNIFORM_BYTES,
+    VERTEX_FLOATS,
 } from '@ripl/3d';
 
-/** Byte stride for a single vertex: position(3) + normal(3) + color(4) = 10 floats × 4 bytes. */
-export const VERTEX_STRIDE = 10 * 4;
+/** Byte stride for a single vertex, derived from the interleaved layout in `@ripl/3d`. */
+export const VERTEX_STRIDE = VERTEX_FLOATS * 4;
 
 /** Size in bytes of the scene uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
 export const SCENE_UNIFORM_SIZE = SCENE_UNIFORM_BYTES;
@@ -39,6 +40,12 @@ export const VERTEX_BUFFER_LAYOUT: GPUVertexBufferLayout = {
             offset: 24,
             format: 'float32x4',
         },
+        {
+            // uv: vec2f
+            shaderLocation: 3,
+            offset: 40,
+            format: 'float32x2',
+        },
     ],
 };
 
@@ -65,6 +72,24 @@ export const MODEL_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
     },
 ];
 
+/** Bind group layout entries for the material texture and its sampler (group 2). */
+export const TEXTURE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
+    {
+        binding: 0,
+        visibility: 0x2, // GPUShaderStage.FRAGMENT
+        texture: {
+            sampleType: 'float',
+        },
+    },
+    {
+        binding: 1,
+        visibility: 0x2, // GPUShaderStage.FRAGMENT
+        sampler: {
+            type: 'filtering',
+        },
+    },
+];
+
 /** Holds all GPU pipeline objects and layouts needed for rendering. */
 export interface PipelineState {
     /** The GPU device that owns the pipeline and its resources. */
@@ -75,6 +100,8 @@ export interface PipelineState {
     sceneBindGroupLayout: GPUBindGroupLayout;
     /** Bind group layout for per-model uniforms (group 1). */
     modelBindGroupLayout: GPUBindGroupLayout;
+    /** Bind group layout for the material texture and sampler (group 2). */
+    textureBindGroupLayout: GPUBindGroupLayout;
     /** Texture format used for the depth buffer. */
     depthFormat: GPUTextureFormat;
     /** Texture format of the canvas presentation surface. */
@@ -102,8 +129,12 @@ export function createPipeline(device: GPUDevice, format: GPUTextureFormat, opti
         entries: MODEL_BIND_GROUP_LAYOUT_ENTRIES,
     });
 
+    const textureBindGroupLayout = device.createBindGroupLayout({
+        entries: TEXTURE_BIND_GROUP_LAYOUT_ENTRIES,
+    });
+
     const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [sceneBindGroupLayout, modelBindGroupLayout],
+        bindGroupLayouts: [sceneBindGroupLayout, modelBindGroupLayout, textureBindGroupLayout],
     });
 
     const vertexModule = device.createShaderModule({
@@ -162,6 +193,7 @@ export function createPipeline(device: GPUDevice, format: GPUTextureFormat, opti
         pipeline,
         sceneBindGroupLayout,
         modelBindGroupLayout,
+        textureBindGroupLayout,
         depthFormat,
         presentationFormat: format,
         sampleCount,

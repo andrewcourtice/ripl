@@ -103,6 +103,12 @@ export class Torus extends Shape3D<TorusState> {
                         torusNormal(u2, v2),
                         torusNormal(u1, v2),
                     ],
+                    uvs: [
+                        [ti / tubSegs, ri / radSegs],
+                        [(ti + 1) / tubSegs, ri / radSegs],
+                        [(ti + 1) / tubSegs, (ri + 1) / radSegs],
+                        [ti / tubSegs, (ri + 1) / radSegs],
+                    ],
                 });
             }
         }

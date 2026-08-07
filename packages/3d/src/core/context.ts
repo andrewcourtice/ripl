@@ -29,6 +29,10 @@ import type {
 } from './material';
 
 import type {
+    Texture,
+} from './texture';
+
+import type {
     ProjectedFace3D,
     ProjectedFaceState3D,
 } from './shape';
@@ -51,6 +55,7 @@ import {
 import type {
     Matrix4,
     ProjectedPoint,
+    Vector2,
     Vector3,
 } from '../math';
 
@@ -660,6 +665,11 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
             ctx.fill();
         }
 
+        if (face.texture && face.uvs) {
+            this._drawFaceTexture(face, face.texture, face.uvs);
+            applied.fill = '';
+        }
+
         if (!face.strokeStyle) {
             return;
         }
@@ -675,6 +685,56 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         }
 
         ctx.stroke();
+    }
+
+    /**
+     * Maps a texture across one projected face, one fan triangle at a time.
+     *
+     * Each triangle gets the affine transform carrying its UV corners onto its screen corners, so
+     * the image is stretched linearly across it. That is affine, not perspective-correct: a large
+     * face seen at a steep angle will show the seam along its fan diagonal, which subdividing the
+     * geometry removes. The shaded fill is already down, so the image is multiplied over it and the
+     * lighting still applies.
+     *
+     * Everything here drives the raw 2D context rather than this context's own `drawImage`, which
+     * flushes the face buffer first — calling it from inside the flush would re-enter it and split
+     * the global back-to-front sort.
+     */
+    private _drawFaceTexture(face: ProjectedFace3D, texture: Texture, uvs: Vector2[]): void {
+        const source = texture.source as CanvasImageSource;
+        const width = texture.width;
+        const height = texture.height;
+
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        const ctx = this.context;
+        const points = face.points;
+
+        for (let idx = 1; idx < points.length - 1; idx++) {
+            const transform = solveAffineUVTransform(
+                uvs[0], uvs[idx], uvs[idx + 1],
+                points[0], points[idx], points[idx + 1],
+                width, height, texture
+            );
+
+            if (!transform) {
+                continue;
+            }
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            ctx.lineTo(points[idx][0], points[idx][1]);
+            ctx.lineTo(points[idx + 1][0], points[idx + 1][1]);
+            ctx.closePath();
+            ctx.clip();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.transform(...transform);
+            ctx.drawImage(source, 0, 0);
+            ctx.restore();
+        }
     }
 
     /** Fills a path or text, flushing any buffered 3D faces first so paint order follows scene order. */
@@ -720,6 +780,59 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         super.popGroup();
     }
 
+}
+
+/**
+ * Solves the affine transform mapping a triangle's texture pixels onto its screen corners.
+ *
+ * @returns The six-component transform, or `null` when the triangle is degenerate in UV space.
+ */
+function solveAffineUVTransform(
+    uvA: Vector2,
+    uvB: Vector2,
+    uvC: Vector2,
+    screenA: ProjectedPoint,
+    screenB: ProjectedPoint,
+    screenC: ProjectedPoint,
+    width: number,
+    height: number,
+    texture: Texture
+): Matrix | null {
+    const scaleU = texture.repeat[0] || 1;
+    const scaleV = texture.repeat[1] || 1;
+
+    const ax = (uvA[0] * scaleU + texture.offset[0]) * width;
+    const ay = (texture.flipY ? 1 - uvA[1] * scaleV - texture.offset[1] : uvA[1] * scaleV + texture.offset[1]) * height;
+    const bx = (uvB[0] * scaleU + texture.offset[0]) * width;
+    const by = (texture.flipY ? 1 - uvB[1] * scaleV - texture.offset[1] : uvB[1] * scaleV + texture.offset[1]) * height;
+    const cx = (uvC[0] * scaleU + texture.offset[0]) * width;
+    const cy = (texture.flipY ? 1 - uvC[1] * scaleV - texture.offset[1] : uvC[1] * scaleV + texture.offset[1]) * height;
+
+    const det = (bx - ax) * (cy - ay) - (cx - ax) * (by - ay);
+
+    if (det === 0 || !isFinite(det)) {
+        return null;
+    }
+
+    const inv = 1 / det;
+    const dxB = screenB[0] - screenA[0];
+    const dyB = screenB[1] - screenA[1];
+    const dxC = screenC[0] - screenA[0];
+    const dyC = screenC[1] - screenA[1];
+
+    const scaleX = (dxB * (cy - ay) - dxC * (by - ay)) * inv;
+    const skewY = (dyB * (cy - ay) - dyC * (by - ay)) * inv;
+    const skewX = (dxC * (bx - ax) - dxB * (cx - ax)) * inv;
+    const scaleY = (dyC * (bx - ax) - dyB * (cx - ax)) * inv;
+
+    return [
+        scaleX,
+        skewY,
+        skewX,
+        scaleY,
+        screenA[0] - scaleX * ax - skewX * ay,
+        screenA[1] - skewY * ax - scaleY * ay,
+    ];
 }
 
 /** Creates a Canvas 2D–backed 3D rendering context attached to the given DOM target. */

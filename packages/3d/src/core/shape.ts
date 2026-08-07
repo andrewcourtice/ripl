@@ -23,6 +23,7 @@ import {
 import type {
     Matrix4,
     ProjectedPoint,
+    Vector2,
     Vector3,
 } from '../math';
 
@@ -42,6 +43,10 @@ import type {
     Material,
     ResolvedMaterial,
 } from './material';
+
+import type {
+    Texture,
+} from './texture';
 
 import {
     DEFAULT_SURFACE_COLOR,
@@ -99,6 +104,8 @@ export interface Face3D {
      * on this wants enough subdivision that each face is close to one colour.
      */
     colors?: string[];
+    /** Per-vertex texture coordinates, parallel to {@link vertices}, used when the material has a `map`. */
+    uvs?: Vector2[];
 }
 
 /**
@@ -154,6 +161,10 @@ export interface ProjectedFace3D {
      * does not defer its face drawing.
      */
     state?: ProjectedFaceState3D;
+    /** The texture to map across the face, if the material has one and the face carries UVs. */
+    texture?: Texture;
+    /** The face's texture coordinates, parallel to {@link points}. */
+    uvs?: Vector2[];
 }
 
 /** State interface for a 3D shape, defining position and rotation around each axis. */
@@ -189,6 +200,14 @@ const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPa
     stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
     fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
 };
+
+/**
+ * Floats per interleaved vertex: position(3), normal(3), colour(4), uv(2).
+ *
+ * The GPU backend derives its vertex stride from this, so the two cannot disagree about the layout
+ * {@link triangulateFacesFlat} writes.
+ */
+export const VERTEX_FLOATS = 12;
 
 /** Base class for 3D shapes, handling model transforms, face projection, shading, and hit testing. */
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
@@ -482,6 +501,8 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 lineWidth: this.lineWidth,
                 depth,
                 state,
+                texture: !material.wireframe && face.uvs ? material.map : undefined,
+                uvs: face.uvs,
             });
 
             hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
@@ -699,8 +720,15 @@ function faceCentroid(vertices: Vector3[]): Vector3 {
     return [cx / count, cy / count, cz / count];
 }
 
-function triangulateFacesFlat(faces: Face3D[], material: ResolvedMaterial): Float32Array {
-    const data = new Float32Array(numberSum(faces, face => face.vertices.length) * 10);
+/**
+ * Flattens faces into the interleaved vertex buffer a GPU backend uploads.
+ *
+ * @param faces - The mesh's faces.
+ * @param material - The resolved material supplying the base colour and shading mode.
+ * @returns Interleaved position, normal, colour and UV data, {@link VERTEX_FLOATS} per vertex.
+ */
+export function triangulateFacesFlat(faces: Face3D[], material: ResolvedMaterial): Float32Array {
+    const data = new Float32Array(numberSum(faces, face => face.vertices.length) * VERTEX_FLOATS);
     // The GPU mesh needs numeric channels, so an unparseable colour degrades to grey there.
     const base = material.color ?? DEFAULT_MESH_COLOR;
     const [baseR, baseG, baseB] = rgbToUnit(base);
@@ -739,13 +767,24 @@ function triangulateFacesFlat(faces: Face3D[], material: ResolvedMaterial): Floa
                 data[offset++] = baseB;
                 data[offset++] = baseA;
             }
+
+            const uv = face.uvs?.[index];
+
+            data[offset++] = uv ? uv[0] : 0;
+            data[offset++] = uv ? uv[1] : 0;
         }
     }
 
     return data;
 }
 
-function triangulateFacesIndices(faces: Face3D[]): Uint32Array {
+/**
+ * Fan-triangulates faces into an index buffer addressing {@link triangulateFacesFlat}'s vertices.
+ *
+ * @param faces - The mesh's faces.
+ * @returns Triangle indices.
+ */
+export function triangulateFacesIndices(faces: Face3D[]): Uint32Array {
     let indexCount = 0;
 
     for (const face of faces) {

@@ -8,8 +8,8 @@ import * as webgpu from '../src/index';
 
 describe('Index re-exports', () => {
 
-    test('exports triangulatefaces from geometry', () => {
-        expect(webgpu.triangulatefaces).toBeTypeOf('function');
+    test('exports GeometryManager from geometry', () => {
+        expect(webgpu.GeometryManager).toBeTypeOf('function');
     });
 
     test('exports VERTEX_SHADER from shaders', () => {

@@ -163,6 +163,7 @@ struct VertexInput {
     @location(0) position: vec3f,
     @location(1) normal: vec3f,
     @location(2) color: vec4f,
+    @location(3) uv: vec2f,
 };
 
 struct VertexOutput {
@@ -170,6 +171,7 @@ struct VertexOutput {
     @location(0) worldNormal: vec3f,
     @location(1) color: vec4f,
     @location(2) worldPosition: vec3f,
+    @location(3) uv: vec2f,
 };
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -184,6 +186,7 @@ fn main(input: VertexInput) -> VertexOutput {
     output.worldNormal = normalize((model.normalMatrix * vec4f(input.normal, 0.0)).xyz);
     output.color = input.color;
     output.worldPosition = worldPosition.xyz;
+    output.uv = input.uv;
 
     return output;
 }
@@ -197,6 +200,8 @@ ${MODEL_UNIFORM_WGSL}
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(1) @binding(0) var<uniform> model: ModelUniforms;
+@group(2) @binding(0) var materialTexture: texture_2d<f32>;
+@group(2) @binding(1) var materialSampler: sampler;
 
 ${SHADING_WGSL}
 
@@ -206,6 +211,7 @@ fn main(
     @location(0) worldNormal: vec3f,
     @location(1) color: vec4f,
     @location(2) worldPosition: vec3f,
+    @location(3) uv: vec2f,
 ) -> @location(0) vec4f {
     let side = u32(model.params.x);
 
@@ -228,8 +234,12 @@ fn main(
         model.specular.w,
         model.emissive.rgb
     );
-    let shaded = color.rgb * illumination.diffuse + illumination.additive;
+    // An untextured mesh binds a 1x1 white texel, so this multiplies by one rather than branching
+    // and the backend keeps a single pipeline.
+    let sampled = textureSample(materialTexture, materialSampler, uv * model.mapTransform.xy + model.mapTransform.zw);
+    let surfaceColor = color * sampled;
+    let shaded = surfaceColor.rgb * illumination.diffuse + illumination.additive;
 
-    return vec4f(applyFog(shaded, worldPosition), color.a);
+    return vec4f(applyFog(shaded, worldPosition), surfaceColor.a);
 }
 `;

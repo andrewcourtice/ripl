@@ -14,6 +14,10 @@ import type {
 } from './shading';
 
 import type {
+    Vector2,
+} from '../math/vector2';
+
+import type {
     Vector3,
 } from '../math/vector';
 
@@ -289,10 +293,16 @@ export const MODEL_UNIFORM_FIELDS: UniformField[] = [
         offset: 40,
         size: 4,
     },
+    {
+        name: 'mapTransform',
+        type: 'vec4f',
+        offset: 44,
+        size: 4,
+    },
 ];
 
 /** Floats occupied by the whole model uniform. */
-export const MODEL_UNIFORM_FLOATS = 44;
+export const MODEL_UNIFORM_FLOATS = 48;
 
 /** Size in bytes of the model uniform buffer. */
 export const MODEL_UNIFORM_BYTES = MODEL_UNIFORM_FLOATS * 4;
@@ -311,6 +321,10 @@ export interface ModelUniformInput {
     emissive: ColorUnitRGB;
     /** The material side, one of {@link MATERIAL_SIDE_CODE}. */
     side: number;
+    /** The texture's repeat across the surface. */
+    mapRepeat: Vector2;
+    /** The texture's offset across the surface. */
+    mapOffset: Vector2;
 }
 
 /**
@@ -338,6 +352,11 @@ export function packModelUniform(target: Float32Array, input: ModelUniformInput)
     target[41] = 0;
     target[42] = 0;
     target[43] = 0;
+
+    target[44] = input.mapRepeat[0];
+    target[45] = input.mapRepeat[1];
+    target[46] = input.mapOffset[0];
+    target[47] = input.mapOffset[1];
 
     return target;
 }

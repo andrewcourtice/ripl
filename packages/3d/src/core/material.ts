@@ -13,6 +13,10 @@ import type {
 } from './shading';
 
 import type {
+    Texture,
+} from './texture';
+
+import type {
     ColorRGBA,
 } from '@ripl/core';
 
@@ -49,6 +53,8 @@ export interface Material {
     flatShading?: boolean;
     /** Uses each face's `colors` in place of the surface colour. Defaults to `false`. */
     vertexColors?: boolean;
+    /** An image mapped across the surface using each face's `uvs`. */
+    map?: Texture;
 }
 
 /** A material with every property resolved, as the render path consumes it. */
@@ -70,6 +76,8 @@ export interface ResolvedMaterial {
     flatShading: boolean;
     /** Whether per-face vertex colours replace the surface colour. */
     vertexColors: boolean;
+    /** The image mapped across the surface, or `undefined` when there is none. */
+    map: Texture | undefined;
 }
 
 const BLACK = '#000000';
@@ -127,6 +135,7 @@ export function resolveMaterial(material: Material | undefined, fill: string | u
         wireframe: material?.wireframe ?? false,
         flatShading: material?.flatShading ?? false,
         vertexColors: material?.vertexColors ?? false,
+        map: material?.map,
     };
 }
 

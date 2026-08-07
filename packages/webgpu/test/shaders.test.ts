@@ -108,7 +108,18 @@ describe('Shaders', () => {
         });
 
         test('outputs color with alpha', () => {
-            expect(FRAGMENT_SHADER).toContain('color.a');
+            expect(FRAGMENT_SHADER).toContain('surfaceColor.a');
+        });
+
+        test('samples the material texture through its own bind group', () => {
+            expect(FRAGMENT_SHADER).toContain('@group(2) @binding(0) var materialTexture: texture_2d<f32>');
+            expect(FRAGMENT_SHADER).toContain('@group(2) @binding(1) var materialSampler: sampler');
+            expect(FRAGMENT_SHADER).toContain('textureSample(materialTexture, materialSampler');
+        });
+
+        test('applies the texture repeat and offset from the model uniform', () => {
+            expect(FRAGMENT_SHADER).toContain('model.mapTransform.xy');
+            expect(FRAGMENT_SHADER).toContain('model.mapTransform.zw');
         });
 
     });

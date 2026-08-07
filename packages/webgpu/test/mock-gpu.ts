@@ -1,6 +1,7 @@
 import {
     MODEL_BIND_GROUP_LAYOUT_ENTRIES,
     SCENE_BIND_GROUP_LAYOUT_ENTRIES,
+    TEXTURE_BIND_GROUP_LAYOUT_ENTRIES,
 } from '../src/pipeline';
 
 import type {
@@ -235,6 +236,30 @@ export class MockGPUCanvasContext {
 }
 
 /** Minimal stand-in for a `GPUQueue` that validates and records buffer writes. */
+/** A recorded `writeTexture` call. */
+export interface WriteTextureCall {
+    /** The texture written to. */
+    texture: MockGPUTexture;
+    /** The number of bytes written. */
+    byteLength: number;
+    /** The texel layout the write declared. */
+    layout: GPUTexelCopyBufferLayout;
+    /** The extent the write covered. */
+    size: GPUExtent3DStrict;
+}
+
+/** A recorded `copyExternalImageToTexture` call. */
+export interface CopyExternalImageCall {
+    /** The texture uploaded to. */
+    texture: MockGPUTexture;
+    /** The image the upload read from. */
+    source: unknown;
+    /** Whether the upload flipped the image vertically. */
+    flipY: boolean;
+    /** The extent the upload covered. */
+    size: GPUExtent3DStrict;
+}
+
 export class MockGPUQueue {
 
     /** Every `writeBuffer` call, in call order. */
@@ -275,6 +300,50 @@ export class MockGPUQueue {
             buffer,
             bufferOffset,
             byteLength: bytes.byteLength,
+        });
+    }
+
+    /** Every `writeTexture` call, in call order. */
+    public readonly writeTextureCalls: WriteTextureCall[] = [];
+
+    /** Every `copyExternalImageToTexture` call, in call order. */
+    public readonly copyExternalImageCalls: CopyExternalImageCall[] = [];
+
+    /** Records a texture write. */
+    public writeTexture(
+        destination: { texture: MockGPUTexture },
+        data: ArrayBuffer | ArrayBufferView,
+        layout: GPUTexelCopyBufferLayout,
+        size: GPUExtent3DStrict
+    ): void {
+        if (destination.texture.destroyed) {
+            throw new Error('writeTexture called on a destroyed texture');
+        }
+
+        this.writeTextureCalls.push({
+            texture: destination.texture,
+            byteLength: extractWriteBytes(data, 0).byteLength,
+            layout,
+            size,
+        });
+    }
+
+    /** Records an image upload. */
+    public copyExternalImageToTexture(
+        source: { source: unknown;
+            flipY?: boolean; },
+        destination: { texture: MockGPUTexture },
+        size: GPUExtent3DStrict
+    ): void {
+        if (destination.texture.destroyed) {
+            throw new Error('copyExternalImageToTexture called on a destroyed texture');
+        }
+
+        this.copyExternalImageCalls.push({
+            texture: destination.texture,
+            source: source.source,
+            flipY: !!source.flipY,
+            size,
         });
     }
 
@@ -389,6 +458,9 @@ export class MockGPUDevice {
     /** Every buffer created via `createBuffer`, in creation order. */
     public readonly buffers: MockGPUBuffer[] = [];
 
+    /** Descriptor of every `createSampler` call, in call order. */
+    public readonly samplerDescriptors: GPUSamplerDescriptor[] = [];
+
     /** Descriptor of every `createBindGroup` call, in call order. */
     public readonly bindGroupDescriptors: GPUBindGroupDescriptor[] = [];
 
@@ -413,6 +485,15 @@ export class MockGPUDevice {
     }
 
     /** Records the descriptor and returns an opaque bind group token. */
+    /** Records a sampler descriptor and returns an opaque handle. */
+    public createSampler(descriptor: GPUSamplerDescriptor = {}): GPUSampler {
+        this.samplerDescriptors.push(descriptor);
+
+        return {
+            label: `mock-sampler-${this.samplerDescriptors.length}`,
+        } as unknown as GPUSampler;
+    }
+
     public createBindGroup(descriptor: GPUBindGroupDescriptor): GPUBindGroup {
         this.bindGroupDescriptors.push(descriptor);
 
@@ -486,6 +567,7 @@ export function createMockPipelineState(device: MockGPUDevice): PipelineState {
         pipeline: { label: 'mock-render-pipeline' } as unknown as GPURenderPipeline,
         sceneBindGroupLayout: device.createBindGroupLayout({ entries: SCENE_BIND_GROUP_LAYOUT_ENTRIES }),
         modelBindGroupLayout: device.createBindGroupLayout({ entries: MODEL_BIND_GROUP_LAYOUT_ENTRIES }),
+        textureBindGroupLayout: device.createBindGroupLayout({ entries: TEXTURE_BIND_GROUP_LAYOUT_ENTRIES }),
         depthFormat: 'depth24plus',
         presentationFormat: 'bgra8unorm',
         sampleCount: 4,

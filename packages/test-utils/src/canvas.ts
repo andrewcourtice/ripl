@@ -23,6 +23,42 @@ export function polyfillPath2D() {
     }
 }
 
+/**
+ * Installs a minimal `ImageData` polyfill on `globalThis` if not already present.
+ *
+ * jsdom ships a canvas API but no `ImageData` constructor, which anything sampling pixel data needs
+ * in order to build a fixture image.
+ */
+export function polyfillImageData() {
+    if (typeof globalThis.ImageData !== 'undefined') {
+        return;
+    }
+
+
+    (globalThis as any).ImageData = class ImageData {
+
+        public readonly data: Uint8ClampedArray;
+        public readonly width: number;
+        public readonly height: number;
+        public readonly colorSpace = 'srgb';
+
+        constructor(dataOrWidth: Uint8ClampedArray | number, widthOrHeight: number, height?: number) {
+            if (typeof dataOrWidth === 'number') {
+                this.width = dataOrWidth;
+                this.height = widthOrHeight;
+                this.data = new Uint8ClampedArray(this.width * this.height * 4);
+
+                return;
+            }
+
+            this.data = dataOrWidth;
+            this.width = widthOrHeight;
+            this.height = height ?? dataOrWidth.length / 4 / widthOrHeight;
+        }
+
+    };
+}
+
 /** Per-character and vertical metrics the fake text measurer reports. */
 export interface MockTextMetricsOptions {
     /** Advance width, in pixels, of a single character. Defaults to `7`. */
