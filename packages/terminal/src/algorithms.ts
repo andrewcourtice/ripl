@@ -18,6 +18,9 @@ export interface Vertex {
     y: number;
 }
 
+/** Fewest segments a bezier is ever flattened into, so a short curve still reads as a curve. */
+const MIN_CURVE_STEPS = 8;
+
 /** Rasterizes a line segment from (x0,y0) to (x1,y1) using Bresenham's algorithm. */
 export function rasterizeLine(x0: number, y0: number, x1: number, y1: number, plot: PixelCallback): void {
     let ix0 = Math.round(x0);
@@ -252,9 +255,10 @@ export function flattenQuadBezier(
     cpx: number, cpy: number,
     x1: number, y1: number
 ): Vertex[] {
-    const dx = Math.abs(x1 - x0) + Math.abs(cpx - x0);
-    const dy = Math.abs(y1 - y0) + Math.abs(cpy - y0);
-    const steps = Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
+    const steps = estimateCurveSteps(
+        Math.abs(x1 - x0) + Math.abs(cpx - x0),
+        Math.abs(y1 - y0) + Math.abs(cpy - y0)
+    );
     const points: Vertex[] = [{
         x: x0,
         y: y0,
@@ -282,6 +286,11 @@ export function rasterizeQuadBezier(
     rasterizePolyline(flattenQuadBezier(x0, y0, cpx, cpy, x1, y1), plot);
 }
 
+/** Segments needed for a bezier whose control polygon spans `dx` by `dy`, shared by both degrees. */
+function estimateCurveSteps(dx: number, dy: number): number {
+    return Math.max(MIN_CURVE_STEPS, Math.ceil(Math.hypot(dx, dy) / 2));
+}
+
 /** Estimates a reasonable number of line segments for a cubic bezier curve. */
 function estimateBezierSteps(
     x0: number, y0: number,
@@ -289,10 +298,10 @@ function estimateBezierSteps(
     cp2x: number, cp2y: number,
     x1: number, y1: number
 ): number {
-    const dx = Math.abs(x1 - x0) + Math.abs(cp1x - x0) + Math.abs(cp2x - x1);
-    const dy = Math.abs(y1 - y0) + Math.abs(cp1y - y0) + Math.abs(cp2y - y1);
-
-    return Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
+    return estimateCurveSteps(
+        Math.abs(x1 - x0) + Math.abs(cp1x - x0) + Math.abs(cp2x - x1),
+        Math.abs(y1 - y0) + Math.abs(cp1y - y0) + Math.abs(cp2y - y1)
+    );
 }
 
 /**
