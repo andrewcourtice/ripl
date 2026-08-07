@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    TAU,
+} from '@ripl/core';
+
 import type {
     Vector3,
 } from '../math/vector';
@@ -69,8 +73,8 @@ export class Cone extends Shape3D<ConeState> {
         const baseCenter: Vector3 = [0, -halfH, 0];
 
         for (let seg = 0; seg < segments; seg++) {
-            const a1 = (seg / segments) * Math.PI * 2;
-            const a2 = ((seg + 1) / segments) * Math.PI * 2;
+            const a1 = (seg / segments) * TAU;
+            const a2 = ((seg + 1) / segments) * TAU;
 
             const baseA: Vector3 = [Math.cos(a1) * radius, -halfH, Math.sin(a1) * radius];
             const baseB: Vector3 = [Math.cos(a2) * radius, -halfH, Math.sin(a2) * radius];

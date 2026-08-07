@@ -1,8 +1,7 @@
 import {
-    vec3Cross,
     vec3Dot,
     vec3Normalize,
-    vec3Sub,
+    vec3TriangleNormal,
 } from '../math/vector';
 
 import type {
@@ -23,12 +22,18 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-/** Computes the surface normal of a face from its first three vertices via the cross product. */
+/**
+ * Computes the surface normal of a face from its first three vertices via the cross product.
+ *
+ * Delegates to {@link vec3TriangleNormal} so the CPU painter and the GPU mesh path agree on
+ * degenerate faces — the two used to disagree, one shading a collapsed face black and the other
+ * treating it as facing up.
+ *
+ * @param vertices - The face's vertices; only the first three are read.
+ * @returns The face's unit normal.
+ */
 export function computeFaceNormal(vertices: Vector3[]): Vector3 {
-    const edge1 = vec3Sub(vertices[1], vertices[0]);
-    const edge2 = vec3Sub(vertices[2], vertices[0]);
-
-    return vec3Normalize(vec3Cross(edge1, edge2));
+    return vec3TriangleNormal(vertices[0], vertices[1], vertices[2]);
 }
 
 /** Computes a 0–1 brightness value for a face given its normal and a light direction. */

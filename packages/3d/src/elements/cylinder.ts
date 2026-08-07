@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    TAU,
+} from '@ripl/core';
+
 import type {
     Vector3,
 } from '../math/vector';
@@ -81,8 +85,8 @@ export class Cylinder extends Shape3D<CylinderState> {
         const botCenter: Vector3 = [0, -halfH, 0];
 
         for (let seg = 0; seg < segments; seg++) {
-            const a1 = (seg / segments) * Math.PI * 2;
-            const a2 = ((seg + 1) / segments) * Math.PI * 2;
+            const a1 = (seg / segments) * TAU;
+            const a2 = ((seg + 1) / segments) * TAU;
 
             const topA: Vector3 = [Math.cos(a1) * rTop, halfH, Math.sin(a1) * rTop];
             const topB: Vector3 = [Math.cos(a2) * rTop, halfH, Math.sin(a2) * rTop];

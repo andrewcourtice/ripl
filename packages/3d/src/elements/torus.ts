@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    TAU,
+} from '@ripl/core';
+
 import type {
     Vector3,
 } from '../math/vector';
@@ -79,12 +83,12 @@ export class Torus extends Shape3D<TorusState> {
         const tube = this.tube;
 
         for (let ti = 0; ti < tubSegs; ti++) {
-            const u1 = (ti / tubSegs) * Math.PI * 2;
-            const u2 = ((ti + 1) / tubSegs) * Math.PI * 2;
+            const u1 = (ti / tubSegs) * TAU;
+            const u2 = ((ti + 1) / tubSegs) * TAU;
 
             for (let ri = 0; ri < radSegs; ri++) {
-                const v1 = (ri / radSegs) * Math.PI * 2;
-                const v2 = ((ri + 1) / radSegs) * Math.PI * 2;
+                const v1 = (ri / radSegs) * TAU;
+                const v2 = ((ri + 1) / radSegs) * TAU;
 
                 faces.push({
                     vertices: [

@@ -31,8 +31,13 @@ import {
 } from './shading';
 
 import {
+    DEFAULT_SURFACE_COLOR,
+    resolveColor,
+    rgbToUnit,
+} from './color';
+
+import {
     Box,
-    parseColor,
     Shape,
 } from '@ripl/core';
 
@@ -142,10 +147,8 @@ export interface Shape3DState extends BaseElementState {
 /** Options for constructing a 3D shape, with all state properties optional. */
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
 
-const DEFAULT_FILL_STYLE = '#888888';
-
 // The GPU mesh needs numeric channels, so an unparseable fill degrades to the default grey there.
-const DEFAULT_MESH_COLOR: ColorRGBA = [136, 136, 136, 1];
+const DEFAULT_MESH_COLOR = resolveColor(DEFAULT_SURFACE_COLOR)!;
 
 /**
  * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
@@ -321,6 +324,8 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const faces = this._getCachedFaces();
         const matrix = this.getModelMatrix();
 
+        // Accumulated in one pass rather than via numberMinOf/numberMaxOf: this projects every
+        // vertex of every face, and materialising the points first would cost four extra passes.
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
@@ -353,8 +358,8 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
         super.render(context, () => {
             const faces = this._getCachedFaces();
-            const baseFillStyle = this.fill || DEFAULT_FILL_STYLE;
-            const baseRGBA = parseColor(baseFillStyle);
+            const baseFillStyle = this.fill || DEFAULT_SURFACE_COLOR;
+            const baseRGBA = resolveColor(baseFillStyle);
             const matrix = this.getModelMatrix();
 
             // The projection moves every frame, so any built path is dropped and rebuilt on demand.
@@ -442,7 +447,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     private _resetHitGeometry(faces: Face3D[]): void {
-        const coordinateCount = countFaceVertices(faces) * 2;
+        const coordinateCount = numberSum(faces, face => face.vertices.length) * 2;
 
         if (this._hitPoints.length < coordinateCount) {
             this._hitPoints = new Float32Array(coordinateCount);
@@ -543,21 +548,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
 }
 
-function countFaceVertices(faces: Face3D[]): number {
-    let count = 0;
-
-    for (const face of faces) {
-        count += face.vertices.length;
-    }
-
-    return count;
-}
-
 function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
-    const data = new Float32Array(countFaceVertices(faces) * 10);
-    const cr = color[0] / 255;
-    const cg = color[1] / 255;
-    const cb = color[2] / 255;
+    const data = new Float32Array(numberSum(faces, face => face.vertices.length) * 10);
+    const [cr, cg, cb] = rgbToUnit(color);
     const ca = color[3];
 
     let offset = 0;

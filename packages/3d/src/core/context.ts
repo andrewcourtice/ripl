@@ -14,8 +14,11 @@ import {
     mat4Orthographic,
     mat4Perspective,
     mat4TransformDirectionInverse,
-    mat4TransformPoint,
 } from '../math/matrix';
+
+import {
+    projectPoint,
+} from '../math/projection';
 
 import type {
     Matrix4,
@@ -250,13 +253,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 
     /** Projects a 3D world-space point to 2D logical coordinates — CSS pixels relative to the context's top-left — plus a depth for z-ordering. */
     public project(point: Vector3): ProjectedPoint {
-        const clip = mat4TransformPoint(this.viewProjectionMatrix, point);
-
-        return [
-            (clip[0] * 0.5 + 0.5) * this.width,
-            (-clip[1] * 0.5 + 0.5) * this.height,
-            clip[2],
-        ];
+        return projectPoint(point, this.viewProjectionMatrix, this);
     }
 
     /**

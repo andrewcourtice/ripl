@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    TAU,
+} from '@ripl/core';
+
 import type {
     Vector3,
 } from '../math/vector';
@@ -71,8 +75,8 @@ export class Sphere extends Shape3D<SphereState> {
             const phi2 = ((ring + 1) / rings) * Math.PI;
 
             for (let seg = 0; seg < segments; seg++) {
-                const theta1 = (seg / segments) * Math.PI * 2;
-                const theta2 = ((seg + 1) / segments) * Math.PI * 2;
+                const theta1 = (seg / segments) * TAU;
+                const theta2 = ((seg + 1) / segments) * TAU;
 
                 const p00 = sphereVertex(radius, phi1, theta1);
                 const p10 = sphereVertex(radius, phi1, theta2);
