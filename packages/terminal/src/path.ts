@@ -10,6 +10,10 @@ import type {
     BorderRadius,
 } from '@ripl/core';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 /** Types of drawing commands recorded by a terminal path. */
 export type TerminalPathCommandType =
     | 'moveTo'
@@ -216,7 +220,7 @@ export class TerminalPath extends ContextPath {
         }
 
         const limit = Math.min(Math.abs(width), Math.abs(height)) / 2;
-        const [topLeft, topRight, bottomRight, bottomLeft] = normalizeBorderRadius(radii).map(radius => Math.min(Math.max(0, radius), limit));
+        const [topLeft, topRight, bottomRight, bottomLeft] = normalizeBorderRadius(radii).map(radius => numberClamp(radius, 0, limit));
 
         if (!topLeft && !topRight && !bottomRight && !bottomLeft) {
             this.rect(x, y, width, height);

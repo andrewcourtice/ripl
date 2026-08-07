@@ -6,13 +6,17 @@ import type {
     FillRule,
 } from '@ripl/core';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 /** Squared distance from `(x, y)` to the segment `a`–`b`. */
 function squaredDistanceToSegment(x: number, y: number, a: Vertex, b: Vertex): number {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const lengthSquared = dx * dx + dy * dy;
 
-    const t = lengthSquared ? Math.min(1, Math.max(0, ((x - a.x) * dx + (y - a.y) * dy) / lengthSquared)) : 0;
+    const t = lengthSquared ? numberClamp(((x - a.x) * dx + (y - a.y) * dy) / lengthSquared, 0, 1) : 0;
     const px = x - (a.x + t * dx);
     const py = y - (a.y + t * dy);
 

@@ -20,6 +20,10 @@ import type {
     ColorRGBA,
 } from '@ripl/core';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 /** Options controlling how a rasterizer serializes its grid to a string. */
 export interface SerializeOptions {
     /** When `false`, emit plain newline-separated braille text without ANSI color/cursor codes. Defaults to `true`. */
@@ -95,8 +99,6 @@ function toAnsiForeground(red: number, green: number, blue: number): string {
  */
 export class BrailleRasterizer implements Rasterizer {
 
-    #ansiCache = new Map<number, string>();
-
     private _cols: number;
     private _rows: number;
     private _background: ColorRGBA;
@@ -106,6 +108,9 @@ export class BrailleRasterizer implements Rasterizer {
         char: string;
         color: TerminalColor;
     }>;
+
+    // Not a `#private` field: those throw when accessed through a Proxy, which breaks Vue's `reactive()`.
+    private _ansiCache = new Map<number, string>();
 
     /** Total pixel width of the grid (columns times cell width). */
     public get pixelWidth() {
@@ -147,7 +152,7 @@ export class BrailleRasterizer implements Rasterizer {
         }
 
         const [red, green, blue, alpha] = color;
-        const source = Math.min(1, Math.max(0, alpha));
+        const source = numberClamp(alpha, 0, 1);
         const destination = pixels[offset + 3] / 255;
         const composite = source + destination * (1 - source);
 
@@ -222,13 +227,13 @@ export class BrailleRasterizer implements Rasterizer {
     /** Composites a color against the assumed background and caches the resulting escape sequence. */
     private _toAnsi(red: number, green: number, blue: number, alpha: number): string {
         const [backdropRed, backdropGreen, backdropBlue] = this._background;
-        const weight = Math.min(1, Math.max(0, alpha));
+        const weight = numberClamp(alpha, 0, 1);
 
         const key = (Math.round(red * weight + backdropRed * (1 - weight)) << 16)
             | (Math.round(green * weight + backdropGreen * (1 - weight)) << 8)
             | Math.round(blue * weight + backdropBlue * (1 - weight));
 
-        const cached = this.#ansiCache.get(key);
+        const cached = this._ansiCache.get(key);
 
         if (cached) {
             return cached;
@@ -236,7 +241,7 @@ export class BrailleRasterizer implements Rasterizer {
 
         const sequence = toAnsiForeground((key >> 16) & 0xff, (key >> 8) & 0xff, key & 0xff);
 
-        this.#ansiCache.set(key, sequence);
+        this._ansiCache.set(key, sequence);
 
         return sequence;
     }
