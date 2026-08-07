@@ -120,7 +120,6 @@ export class Torus extends Shape3D<TorusState> {
 
 // The outward normal at a point on the tube is the unit vector from the tube's centre circle,
 // which is the same expression as the vertex with the major radius dropped.
-// eslint-disable-next-line id-length
 function torusNormal(u: number, v: number): Vector3 {
     return [
         Math.cos(v) * Math.cos(u),
@@ -129,7 +128,6 @@ function torusNormal(u: number, v: number): Vector3 {
     ];
 }
 
-// eslint-disable-next-line id-length
 function torusVertex(radius: number, tube: number, u: number, v: number): Vector3 {
     return [
         (radius + tube * Math.cos(v)) * Math.cos(u),

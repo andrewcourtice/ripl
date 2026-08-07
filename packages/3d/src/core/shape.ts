@@ -7,14 +7,11 @@ import type {
 } from './context';
 
 import {
-    mat4Identity,
+    mat4Compose,
+    mat4Multiply,
     mat4NormalMatrix,
-    mat4RotateX,
-    mat4RotateY,
-    mat4RotateZ,
     mat4TransformDirection,
     mat4TransformPoint,
-    mat4Translate,
     vec3Normalize,
     vec3Sub,
     vec3TriangleNormal,
@@ -38,6 +35,9 @@ import {
     materialDrawsFace,
     resolveMaterial,
 } from './material';
+
+// Imported for its registration side effect, which every 3D element depends on for animation.
+import './interpolators';
 
 import type {
     Material,
@@ -181,12 +181,21 @@ export interface Shape3DState extends BaseElementState {
     rotationY: number;
     /** The rotation around the Z axis, in radians. */
     rotationZ: number;
+    /** The scale along the X axis. */
+    scaleX: number;
+    /** The scale along the Y axis. */
+    scaleY: number;
+    /** The scale along the Z axis. */
+    scaleZ: number;
     /** How the surface responds to light. When omitted, the element shades from its `fill` alone. */
     material?: Material;
 }
 
 /** Options for constructing a 3D shape, with all state properties optional. */
-export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
+export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>> & {
+    /** A uniform scale, applied to all three axes. Overridden by any per-axis scale also given. */
+    scale?: number;
+};
 
 // The GPU mesh needs numeric channels, so an unparseable fill degrades to the default grey there.
 const DEFAULT_MESH_COLOR = resolveColor(DEFAULT_SURFACE_COLOR)!;
@@ -279,6 +288,49 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationZ', value);
     }
 
+    /** The scale along the X axis. */
+    public get scaleX() {
+        return this.getStateValue('scaleX');
+    }
+
+    public set scaleX(value) {
+        this.setStateValue('scaleX', value);
+    }
+
+    /** The scale along the Y axis. */
+    public get scaleY() {
+        return this.getStateValue('scaleY');
+    }
+
+    public set scaleY(value) {
+        this.setStateValue('scaleY', value);
+    }
+
+    /** The scale along the Z axis. */
+    public get scaleZ() {
+        return this.getStateValue('scaleZ');
+    }
+
+    public set scaleZ(value) {
+        this.setStateValue('scaleZ', value);
+    }
+
+    /**
+     * The uniform scale, when all three axes agree.
+     *
+     * Reads back the X scale, so a shape scaled non-uniformly reports only that axis. Writing sets
+     * all three.
+     */
+    public get scale() {
+        return this.getStateValue('scaleX');
+    }
+
+    public set scale(value) {
+        this.setStateValue('scaleX', value);
+        this.setStateValue('scaleY', value);
+        this.setStateValue('scaleZ', value);
+    }
+
     /**
      * How the surface responds to light.
      *
@@ -307,6 +359,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     constructor(type: string, options: Shape3DOptions<TState>) {
+        const {
+            scale = 1,
+            ...rest
+        } = options;
+
         super(type, {
             x: 0,
             y: 0,
@@ -314,7 +371,10 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             rotationX: 0,
             rotationY: 0,
             rotationZ: 0,
-            ...options,
+            scaleX: scale,
+            scaleY: scale,
+            scaleZ: scale,
+            ...rest,
         } as unknown as ElementOptions<TState>);
 
         this._getCachedFaces = functionCache(() => this.computeFaces());
@@ -356,12 +416,37 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     protected getModelMatrix(): Matrix4 {
-        let matrix = mat4Identity();
+        const local = mat4Compose(
+            [this.x, this.y, this.z],
+            [this.rotationX, this.rotationY, this.rotationZ],
+            [this.scaleX, this.scaleY, this.scaleZ]
+        );
+        const parent = this.getParentMatrix3D();
 
-        matrix = mat4Translate(matrix, [this.x, this.y, this.z]);
-        matrix = mat4RotateX(matrix, this.rotationX);
-        matrix = mat4RotateY(matrix, this.rotationY);
-        matrix = mat4RotateZ(matrix, this.rotationZ);
+        return parent ? mat4Multiply(parent, local) : local;
+    }
+
+    /**
+     * The composed transform of every {@link Group3D} this shape sits inside, or `null` when it sits
+     * under none.
+     *
+     * A plain 2D {@link Group} contributes nothing here, so a shape under one keeps behaving as it
+     * always has.
+     */
+    protected getParentMatrix3D(): Matrix4 | null {
+        let node = this.parent as { parent?: unknown;
+            getGroupMatrix3D?: () => Matrix4; } | undefined;
+        let matrix: Matrix4 | null = null;
+
+        while (node) {
+            const groupMatrix = node.getGroupMatrix3D?.();
+
+            if (groupMatrix) {
+                matrix = matrix ? mat4Multiply(groupMatrix, matrix) : groupMatrix;
+            }
+
+            node = node.parent as typeof node;
+        }
 
         return matrix;
     }
