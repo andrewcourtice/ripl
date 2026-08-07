@@ -458,13 +458,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return parent ? mat4Multiply(parent, local) : local;
     }
 
-    /**
-     * The composed transform of every {@link Group3D} this shape sits inside, or `null` when it sits
-     * under none.
-     *
-     * A plain 2D {@link Group} contributes nothing here, so a shape under one keeps behaving as it
-     * always has.
-     */
+    // Only a Group3D answers, so a shape under a plain 2D group keeps behaving as it always has.
     protected getParentMatrix3D(): Matrix4 | null {
         let node = this.parent as { parent?: unknown;
             getGroupMatrix3D?: () => Matrix4; } | undefined;

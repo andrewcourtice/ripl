@@ -73,6 +73,20 @@ const cylinder = createCylinder({
 - **`segments`**: number of radial segments (default `16`)
 - **`x`** / **`y`** / **`z`**: position in world space (default `0`)
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
+
+## Type Guard
+
+```ts
+import {
+    elementIsCylinder,
+} from '@ripl/3d';
+
+if (elementIsCylinder(element)) {
+    console.log(element.height);
+}
+```
 
 <script lang="ts" setup>
 import {

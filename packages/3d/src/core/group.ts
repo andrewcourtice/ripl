@@ -191,8 +191,8 @@ export class Group3D<TEventMap extends ElementEventMap = ElementEventMap> extend
     /**
      * The group's own transform, which descendants compose into their model matrices.
      *
-     * {@link Shape3D} discovers this structurally while walking its ancestors, so a plain 2D group in
-     * the chain simply does not answer and contributes nothing.
+     * A shape discovers this structurally while walking its ancestors, so a plain 2D group in the
+     * chain simply does not answer and contributes nothing.
      */
     public getGroupMatrix3D(): Matrix4 {
         return mat4Compose(this._position, this._rotation, this._scale);

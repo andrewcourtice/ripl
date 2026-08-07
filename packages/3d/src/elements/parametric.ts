@@ -133,18 +133,10 @@ export class Parametric extends Shape3D<ParametricState> {
 
 }
 
-/**
- * Approximates a parametric surface's normal at `(u, v)` from its numeric partial derivatives.
- *
- * The step is clamped to stay inside the domain at the edges, so a surface defined only on `[0, 1]`
- * is never sampled outside it.
- *
- * @param surface - The surface to differentiate.
- * @param u - The first parameter.
- * @param v - The second parameter.
- * @returns The unit normal.
- */
-export function parametricNormal(surface: ParametricSurface, u: number, v: number): Vector3 {
+// How far inside the domain to retreat when the surface degenerates at the sample point.
+const POLE_RETREAT = 1e-3;
+
+function partialNormal(surface: ParametricSurface, u: number, v: number): Vector3 {
     const uLow = Math.max(0, u - DERIVATIVE_STEP);
     const uHigh = Math.min(1, u + DERIVATIVE_STEP);
     const vLow = Math.max(0, v - DERIVATIVE_STEP);
@@ -154,6 +146,44 @@ export function parametricNormal(surface: ParametricSurface, u: number, v: numbe
     const tangentV = vec3Sub(surface(u, vHigh), surface(u, vLow));
 
     return vec3Normalize(vec3Cross(tangentU, tangentV));
+}
+
+/**
+ * Approximates a parametric surface's normal at `(u, v)` from its numeric partial derivatives.
+ *
+ * The step is clamped to stay inside the domain at the edges, so a surface defined only on `[0, 1]`
+ * is never sampled outside it.
+ *
+ * A surface of revolution collapses to a point at each pole, where the tangents are parallel and the
+ * cross product vanishes. Rather than hand back a zero normal — which shades the pole black — this
+ * retreats a little way into the domain and takes the normal there, which for a smooth surface is
+ * the limit the pole is approaching.
+ *
+ * @param surface - The surface to differentiate.
+ * @param u - The first parameter.
+ * @param v - The second parameter.
+ * @returns The unit normal, or the up vector for a surface degenerate in both directions.
+ */
+export function parametricNormal(surface: ParametricSurface, u: number, v: number): Vector3 {
+    const normal = partialNormal(surface, u, v);
+
+    if (normal[0] !== 0 || normal[1] !== 0 || normal[2] !== 0) {
+        return normal;
+    }
+
+    for (const [offsetU, offsetV] of [[0, POLE_RETREAT], [0, -POLE_RETREAT], [POLE_RETREAT, 0], [-POLE_RETREAT, 0]]) {
+        const retreated = partialNormal(
+            surface,
+            Math.min(1, Math.max(0, u + offsetU)),
+            Math.min(1, Math.max(0, v + offsetV))
+        );
+
+        if (retreated[0] !== 0 || retreated[1] !== 0 || retreated[2] !== 0) {
+            return retreated;
+        }
+    }
+
+    return [0, 1, 0];
 }
 
 /**
