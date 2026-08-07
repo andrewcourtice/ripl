@@ -347,6 +347,7 @@ export class WebGPUContext3D extends Context3D {
             viewProjectionMatrix: this.viewProjectionMatrix,
             cameraPosition: this.cameraPosition,
             lights: this.resolveLights(),
+            fog: this.resolvedFog,
         });
 
         device.queue.writeBuffer(this._sceneUniformBuffer, 0, this._sceneUniformData);

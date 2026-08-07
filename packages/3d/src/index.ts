@@ -2,6 +2,7 @@ export * from './math';
 export * from './core/constants';
 export * from './core/color';
 export * from './core/uniforms';
+export * from './core/fog';
 export * from './core/lights';
 export * from './core/material';
 export * from './core/texture';

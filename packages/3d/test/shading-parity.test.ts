@@ -35,6 +35,7 @@ import {
     PLAIN_SURFACE,
     shadeFaceColor,
     shadeSurface,
+    vec3Length,
     vec3Normalize,
     vec3Sub,
     VERTEX_FLOATS,
@@ -43,8 +44,10 @@ import {
 import type {
     Context3DOptions,
     CubeState,
+    Fog,
     Light,
     MeshSubmission,
+    ResolvedFog,
     ResolvedLight,
     Shape3DOptions,
     Vector3,
@@ -168,7 +171,12 @@ function capturedFaces(submission: MeshSubmission): CapturedFace[] {
  * the two agree exactly only at the face centroid — which is precisely where the CPU painter, which
  * can only fill a flat polygon, evaluates it too.
  */
-function shadeSubmission(submission: MeshSubmission, lights: ResolvedLight[], cameraPosition: Vector3): string[] {
+function shadeSubmission(
+    submission: MeshSubmission,
+    lights: ResolvedLight[],
+    cameraPosition: Vector3,
+    fog: ResolvedFog | null
+): string[] {
     const illumination = createSurfaceIllumination();
 
     return capturedFaces(submission).map(({ normal, centroid }) => composeSurfaceColor(
@@ -180,7 +188,9 @@ function shadeSubmission(submission: MeshSubmission, lights: ResolvedLight[], ca
             PLAIN_SURFACE,
             lights,
             illumination
-        )
+        ),
+        fog,
+        fog ? vec3Length(vec3Sub(cameraPosition, centroid)) : 0
     ));
 }
 
@@ -206,6 +216,8 @@ describe('CPU and WebGPU shading parity', () => {
     interface ShadingCase {
         /** Replaces the default rig entirely, when given. */
         lights?: () => Light[];
+        /** Atmospheric haze to apply to both contexts, when given. */
+        fog?: Fog;
         /** Applied to both contexts before the cube renders. */
         configure: (context: Context3D) => void;
         /** The world-space light both backends are required to shade against. */
@@ -241,8 +253,9 @@ describe('CPU and WebGPU shading parity', () => {
 
     function shade(shadingCase: ShadingCase): ShadingResult {
         // Rebuilt per context: a light carries a back-reference to the list it was added to.
-        const options = () => shadingCase.lights && {
-            lights: shadingCase.lights(),
+        const options = () => (shadingCase.lights || shadingCase.fog) && {
+            lights: shadingCase.lights?.(),
+            fog: shadingCase.fog,
         };
 
         const cpuContext = createContext(host, options());
@@ -269,7 +282,8 @@ describe('CPU and WebGPU shading parity', () => {
             gpu: shadeSubmission(
                 gpuContext.submissions[0],
                 gpuContext.resolveLights(),
-                gpuContext.cameraPosition
+                gpuContext.cameraPosition,
+                gpuContext.resolvedFog
             ).sort(),
             uniformLight: gpuContext.getLightDirectionForRender(),
             expectedLight,
@@ -588,6 +602,87 @@ describe('CPU and WebGPU shading parity', () => {
             expect(lights[0].intensity).toBe(AMBIENT);
             expect(lights[1].type).toBe('directional');
             expect(lights[1].intensity).toBeCloseTo(1 - AMBIENT, 12);
+        });
+
+    });
+
+    /*
+     * Fog is one extra term applied after shading, and the WGSL `applyFog` mirrors `computeFogFactor`
+     * exactly — so it belongs in the parity contract alongside the lights.
+     */
+    describe('Fog', () => {
+
+        const fogCases: [name: string, fog: Fog][] = [
+            ['linear fog across the geometry', {
+                color: '#204060',
+                near: 3,
+                far: 8,
+            }],
+            ['linear fog that has not reached the geometry', {
+                color: '#204060',
+                near: 50,
+                far: 80,
+            }],
+            ['linear fog that fully obscures the geometry', {
+                color: '#204060',
+                near: 0,
+                far: 1,
+            }],
+            ['exponential fog', {
+                mode: 'exponential',
+                color: '#ffffff',
+                density: 0.15,
+            }],
+            ['dense exponential fog', {
+                mode: 'exponential',
+                color: '#000000',
+                density: 2,
+            }],
+        ];
+
+        test.each(fogCases)('Should shade every face the same under %s', (_name, fog) => {
+            const result = shade({
+                fog,
+                configure: context => context.setCamera([3, 2, 4], [0, 0, 0], [0, 1, 0]),
+                worldLight: context => context.lightDirection,
+                cube: {
+                    rotationY: Math.PI / 5,
+                    rotationX: 0.4,
+                },
+            });
+
+            expect(result.gpu).toHaveLength(6);
+            expect(result.cpu).toEqual(result.gpu);
+        });
+
+        test('Should shade the same with fog over a full light rig', () => {
+            const result = shade({
+                fog: {
+                    color: '#88aacc',
+                    near: 2,
+                    far: 10,
+                },
+                lights: () => [
+                    createAmbientLight({ intensity: 0.2 }),
+                    createPointLight({
+                        position: [3, 3, 3],
+                        intensity: 6,
+                    }),
+                    createSpotLight({
+                        position: [0, 4, 0],
+                        direction: [0, -1, 0],
+                        angle: 0.9,
+                        intensity: 10,
+                    }),
+                ],
+                configure: context => context.setCamera([3, 2, 4], [0, 0, 0], [0, 1, 0]),
+                worldLight: context => context.lightDirection,
+                cube: {
+                    rotationY: Math.PI / 5,
+                },
+            });
+
+            expect(result.cpu).toEqual(result.gpu);
         });
 
     });

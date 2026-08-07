@@ -12,6 +12,10 @@ import {
     mat4NormalMatrix,
     mat4TransformDirection,
     mat4TransformPoint,
+    rayAt,
+    rayHitBarycentric,
+    rayIntersectTriangle,
+    vec3Length,
     vec3Normalize,
     vec3Sub,
     vec3TriangleNormal,
@@ -20,6 +24,8 @@ import {
 import type {
     Matrix4,
     ProjectedPoint,
+    Ray,
+    RayTriangleHit,
     Vector2,
     Vector3,
 } from '../math';
@@ -165,6 +171,32 @@ export interface ProjectedFace3D {
     texture?: Texture;
     /** The face's texture coordinates, parallel to {@link points}. */
     uvs?: Vector2[];
+}
+
+/** Options for a raycast against 3D geometry. */
+export interface Raycast3DOptions {
+    /** Whether a triangle met from behind counts as a hit. Defaults to `true`, matching the unculled render. */
+    backFaces?: boolean;
+}
+
+/** Where a ray met a shape's geometry. */
+export interface Intersection3D {
+    /** The shape that was hit. */
+    element: Shape3D;
+    /** Distance along the ray, in world units. */
+    distance: number;
+    /** The world-space point of the hit. */
+    point: Vector3;
+    /** The face that was hit. */
+    face: Face3D;
+    /** The index of the hit face within the shape's face list. */
+    faceIndex: number;
+    /** Whether the triangle was met from behind. */
+    backFacing: boolean;
+    /** The world-space surface normal at the hit, interpolated when the face carries vertex normals. */
+    normal: Vector3;
+    /** The texture coordinate at the hit, when the face carries UVs. */
+    uv: Vector2 | undefined;
 }
 
 /** State interface for a 3D shape, defining position and rotation around each axis. */
@@ -457,6 +489,60 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return vertices.map(vertex => mat4TransformPoint(mat, vertex));
     }
 
+    /**
+     * Intersects a world-space ray with this shape's geometry.
+     *
+     * Unlike {@link intersectsWith}, which tests a flattened silhouette and so reports a hit through
+     * the hole of a torus, this walks the actual triangles.
+     *
+     * @param ray - The world-space ray to cast.
+     * @param options - Whether to accept back-facing hits.
+     * @returns The nearest intersection, or `null` when the ray misses.
+     */
+    public raycast(ray: Ray, options?: Raycast3DOptions): Intersection3D | null {
+        const matrix = this.getModelMatrix();
+        const normalMatrix = mat4NormalMatrix(matrix);
+        const backFaces = options?.backFaces ?? true;
+        const faces = this._getCachedFaces();
+
+        let nearest: Intersection3D | null = null;
+        let faceIndex = 0;
+
+        for (const face of faces) {
+            const vertices = this.transformVertices(face.vertices, matrix);
+
+            // Fan-triangulated to match how the face is drawn, so a hit and a fill agree.
+            for (let corner = 1; corner < vertices.length - 1; corner++) {
+                const hit = rayIntersectTriangle(ray, vertices[0], vertices[corner], vertices[corner + 1]);
+
+                if (!hit || (!backFaces && hit.backFacing)) {
+                    continue;
+                }
+
+                if (nearest && hit.distance >= nearest.distance) {
+                    continue;
+                }
+
+                nearest = {
+                    element: this,
+                    distance: hit.distance,
+                    point: rayAt(ray, hit.distance),
+                    face,
+                    faceIndex,
+                    backFacing: hit.backFacing,
+                    normal: resolveHitNormal(face, vertices, corner, hit, normalMatrix),
+                    uv: face.uvs
+                        ? rayHitBarycentric<Vector2>(hit, face.uvs[0], face.uvs[corner], face.uvs[corner + 1])
+                        : undefined,
+                };
+            }
+
+            faceIndex++;
+        }
+
+        return nearest;
+    }
+
     /** Returns the projected depth of this shape's origin in the given 3D context. */
     public getDepth(context: Context3D): number {
         return context.project([this.x, this.y, this.z])[2];
@@ -542,6 +628,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const illumination = createSurfaceIllumination();
         const cameraPosition = context.cameraPosition;
         const normalMatrix = mat4NormalMatrix(matrix);
+        const fog = context.resolvedFog;
 
         // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
         const state = context.captureFaceState(this.getWorldTransform());
@@ -566,14 +653,19 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const centroid = faceCentroid(transformed);
             const baseColor = resolveFaceColor(face, material);
             const fillColor = baseColor
-                ? composeSurfaceColor(baseColor, shadeSurface(
-                    normal,
-                    centroid,
-                    vec3Normalize(vec3Sub(cameraPosition, centroid)),
-                    material.surface,
-                    lights,
-                    illumination
-                ))
+                ? composeSurfaceColor(
+                    baseColor,
+                    shadeSurface(
+                        normal,
+                        centroid,
+                        vec3Normalize(vec3Sub(cameraPosition, centroid)),
+                        material.surface,
+                        lights,
+                        illumination
+                    ),
+                    fog,
+                    fog ? vec3Length(vec3Sub(cameraPosition, centroid)) : 0
+                )
                 : material.colorStyle;
             const depth = numberSum(points, p => p[2]) / points.length;
 
@@ -718,6 +810,27 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             : isAnyIntersecting();
     }
 
+}
+
+function resolveHitNormal(
+    face: Face3D,
+    vertices: Vector3[],
+    corner: number,
+    hit: RayTriangleHit,
+    normalMatrix: Matrix4
+): Vector3 {
+    if (face.normals?.length) {
+        return vec3Normalize(mat4TransformDirection(normalMatrix, rayHitBarycentric<Vector3>(
+            hit,
+            face.normals[0],
+            face.normals[corner],
+            face.normals[corner + 1]
+        )));
+    }
+
+    return face.normal
+        ? vec3Normalize(mat4TransformDirection(normalMatrix, face.normal))
+        : vec3TriangleNormal(vertices[0], vertices[corner], vertices[corner + 1]);
 }
 
 /** Twice the signed area of a projected polygon, negative when its winding faces the camera. */

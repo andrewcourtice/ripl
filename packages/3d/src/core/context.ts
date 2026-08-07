@@ -15,6 +15,18 @@ import {
     MAX_LIGHTS,
 } from './uniforms';
 
+import {
+    resolveFog,
+} from './fog';
+
+import type {
+    Fog,
+} from './fog';
+
+import type {
+    ResolvedFog,
+} from './uniforms';
+
 import type {
     DirectionalLight,
     Light,
@@ -32,9 +44,16 @@ import type {
     Texture,
 } from './texture';
 
+import {
+    elementIsShape3D,
+} from './shape';
+
 import type {
+    Intersection3D,
     ProjectedFace3D,
     ProjectedFaceState3D,
+    Raycast3DOptions,
+    Shape3D,
 } from './shape';
 
 import {
@@ -50,11 +69,13 @@ import {
 
 import {
     projectPoint,
+    rayFromScreen,
 } from '../math/projection';
 
 import type {
     Matrix4,
     ProjectedPoint,
+    Ray,
     Vector2,
     Vector3,
 } from '../math';
@@ -68,6 +89,7 @@ import type {
     ContextFactory,
     ContextOptions,
     ContextText,
+    Element,
     FillRule,
     Matrix,
 } from '@ripl/core';
@@ -135,6 +157,8 @@ export interface Context3DOptions extends ContextOptions<Context3DMeta> {
     lights?: Light[];
     /** Intensity of the default rig's ambient light. Defaults to `0.3`. */
     ambientIntensity?: number;
+    /** Atmospheric haze blending distant geometry towards a colour. Omit for none. */
+    fog?: Fog;
 }
 
 /** Base 3D rendering context providing view/projection matrices, camera, lighting, and projection. Subclassed by CanvasContext3D and WebGPUContext3D. */
@@ -167,6 +191,29 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     private _resolvedLights: ResolvedLight[] = [];
     private _resolvedVersion = -1;
     private _resolvedView?: Matrix4;
+    private _fog: Fog | null = null;
+    private _resolvedFog: ResolvedFog | null = null;
+
+    /**
+     * Atmospheric haze blending distant geometry towards a colour, or `null` for none.
+     *
+     * Both backends resolve it identically. Assign a new object to change it — mutating the existing
+     * one in place will not repaint.
+     */
+    public get fog(): Fog | null {
+        return this._fog;
+    }
+
+    public set fog(value: Fog | null) {
+        this._fog = value;
+        this._resolvedFog = resolveFog(value);
+        this.requestRender();
+    }
+
+    /** The resolved fog both backends shade against, or `null` when there is none. */
+    public get resolvedFog(): ResolvedFog | null {
+        return this._resolvedFog;
+    }
 
     /** The projection currently in effect, which a resize preserves. */
     public get projectionMode(): 'perspective' | 'orthographic' {
@@ -256,6 +303,8 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         this.projectionMatrix = mat4Identity();
         this.viewProjectionMatrix = mat4Identity();
         this.lights = new LightList(() => this.requestRender());
+        this._fog = options?.fog ?? null;
+        this._resolvedFog = resolveFog(this._fog);
 
         if (options?.lights) {
             this.lights.add(...options.lights);
@@ -359,6 +408,49 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         }
 
         return this.lightDirection;
+    }
+
+    /**
+     * Builds the world-space ray through a point on the surface.
+     *
+     * @param x - Screen-space x, in logical CSS pixels relative to the context's top-left.
+     * @param y - Screen-space y.
+     * @returns The ray, or `null` when the view-projection matrix is singular.
+     */
+    public raycast(x: number, y: number): Ray | null {
+        return rayFromScreen(x, y, this.viewProjectionMatrix, this);
+    }
+
+    /**
+     * Casts a ray through a point on the surface and returns every 3D shape it meets.
+     *
+     * Walks the actual triangles rather than the flattened silhouette {@link Element.intersectsWith}
+     * tests, so a ray through the hole of a torus passes cleanly through it.
+     *
+     * @param root - The element to search, typically the scene.
+     * @param x - Screen-space x, in logical CSS pixels relative to the context's top-left.
+     * @param y - Screen-space y.
+     * @param options - Whether to accept back-facing hits.
+     * @returns The intersections, nearest first.
+     */
+    public raycastAll(root: Element, x: number, y: number, options?: Raycast3DOptions): Intersection3D[] {
+        const ray = this.raycast(x, y);
+
+        if (!ray) {
+            return [];
+        }
+
+        const hits: Intersection3D[] = [];
+
+        for (const element of collectShapes(root)) {
+            const hit = element.raycast(ray, options);
+
+            if (hit) {
+                hits.push(hit);
+            }
+        }
+
+        return hits.sort((left, right) => left.distance - right.distance);
     }
 
     /**
@@ -833,6 +925,27 @@ function solveAffineUVTransform(
         screenA[0] - scaleX * ax - skewX * ay,
         screenA[1] - skewY * ax - scaleY * ay,
     ];
+}
+
+function collectShapes(root: Element): Shape3D[] {
+    const shapes: Shape3D[] = [];
+    const queue: Element[] = [root];
+
+    while (queue.length) {
+        const element = queue.pop()!;
+
+        if (elementIsShape3D(element)) {
+            shapes.push(element);
+        }
+
+        const children = (element as { children?: Element[] }).children;
+
+        if (children) {
+            queue.push(...children);
+        }
+    }
+
+    return shapes;
 }
 
 /** Creates a Canvas 2D–backed 3D rendering context attached to the given DOM target. */

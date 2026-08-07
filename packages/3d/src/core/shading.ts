@@ -3,6 +3,14 @@ import {
 } from './uniforms';
 
 import {
+    computeFogFactor,
+} from './fog';
+
+import type {
+    ResolvedFog,
+} from './uniforms';
+
+import {
     resolveColor,
 } from './color';
 
@@ -284,18 +292,37 @@ export function shadeSurface(
  *
  * @param baseColor - The surface's own colour, in `0`–`255` channels.
  * @param illumination - The light arriving at the surface.
+ * @param fog - The resolved fog to blend towards, or `null` for none.
+ * @param distance - Distance from the camera to the surface, used only when `fog` is given.
  * @returns The shaded colour as a CSS `rgba()` string.
  */
-export function composeSurfaceColor(baseColor: ColorRGBA, illumination: SurfaceIllumination): string {
+export function composeSurfaceColor(
+    baseColor: ColorRGBA,
+    illumination: SurfaceIllumination,
+    fog?: ResolvedFog | null,
+    distance = 0
+): string {
     const {
         diffuse,
         additive,
     } = illumination;
 
+    let red = baseColor[0] * diffuse[0] + additive[0] * 255;
+    let green = baseColor[1] * diffuse[1] + additive[1] * 255;
+    let blue = baseColor[2] * diffuse[2] + additive[2] * 255;
+
+    if (fog) {
+        const factor = computeFogFactor(fog, distance);
+
+        red += (fog.color[0] * 255 - red) * factor;
+        green += (fog.color[1] * 255 - green) * factor;
+        blue += (fog.color[2] * 255 - blue) * factor;
+    }
+
     return serializeRGBA(
-        clampChannel(baseColor[0] * diffuse[0] + additive[0] * 255),
-        clampChannel(baseColor[1] * diffuse[1] + additive[1] * 255),
-        clampChannel(baseColor[2] * diffuse[2] + additive[2] * 255),
+        clampChannel(red),
+        clampChannel(green),
+        clampChannel(blue),
         baseColor[3]
     );
 }
