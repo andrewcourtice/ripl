@@ -82,12 +82,39 @@ export function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: El
     return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
 }
 
+// Registered factories are consulted before the built-ins, because a built-in predicate can be
+// broader than a package's own: interpolateBorderRadius matches any array of up to four numbers,
+// which would claim a 3D vector before @ripl/3d's own interpolator ever saw it.
+const registeredInterpolators: InterpolatorFactory<never>[] = [];
+
+/**
+ * Registers an interpolator factory for {@link getInterpolator} to consider.
+ *
+ * A package that adds a value type — a 3D vector, a quaternion — registers its interpolator here so
+ * a transition on that type animates rather than snapping. Registered factories are tried before
+ * the built-ins and in registration order, and each must carry a `test` predicate. Registering the
+ * same factory twice is a no-op.
+ *
+ * @param interpolator - The factory to register. Ignored when it has no `test` predicate.
+ * @typeParam TValue - The value type the factory interpolates.
+ */
+export function registerInterpolator<TValue>(interpolator: InterpolatorFactory<TValue>): void {
+    const entry = interpolator as unknown as InterpolatorFactory<never>;
+
+    if (!interpolator.test || registeredInterpolators.includes(entry)) {
+        return;
+    }
+
+    registeredInterpolators.push(entry);
+}
+
 export function getInterpolator<TValue>(value: TValue, key?: string) {
     if (key && TRANSFORM_INTERPOLATORS[key]) {
         return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
     }
 
     const interpolator = [
+        ...registeredInterpolators,
         interpolateNumber,
         interpolateGradient,
         interpolatePattern,

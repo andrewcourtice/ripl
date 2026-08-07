@@ -69,6 +69,20 @@ const sphere = createSphere({
 - **`rings`**: number of vertical rings (default `12`)
 - **`x`** / **`y`** / **`z`**: position in world space (default `0`)
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
+
+## Type Guard
+
+```ts
+import {
+    elementIsSphere,
+} from '@ripl/3d';
+
+if (elementIsSphere(element)) {
+    console.log(element.radius);
+}
+```
 
 <script lang="ts" setup>
 import {

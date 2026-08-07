@@ -208,6 +208,8 @@ export default tseslint.config(
                     'p',
                     'q',
                     't',
+                    // Surface parameters, as in a parametric or Bezier patch evaluation
+                    'u',
                     'w',
                     'z',
                 ],

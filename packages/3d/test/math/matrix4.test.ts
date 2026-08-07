@@ -5,17 +5,26 @@ import {
 } from 'vitest';
 
 import {
+    mat4Compose,
     mat4Identity,
+    mat4Invert,
     mat4LookAt,
     mat4Multiply,
+    mat4NormalMatrix,
     mat4Orthographic,
     mat4Perspective,
     mat4RotateX,
     mat4RotateY,
     mat4RotateZ,
     mat4Scale,
+    mat4TransformDirection,
     mat4TransformPoint,
     mat4Translate,
+    mat4Transpose,
+    vec3Cross,
+    vec3Dot,
+    vec3Normalize,
+    vec3Sub,
 } from '../../src';
 
 import type {
@@ -203,6 +212,103 @@ describe('Matrix4', () => {
 
         for (let idx = 0; idx < 16; idx++) {
             expect(abThenC[idx]).toBeCloseTo(aThenBc[idx], 10);
+        }
+    });
+
+    describe('mat4Invert', () => {
+
+        const cases: [label: string, matrix: () => ReturnType<typeof mat4Identity>][] = [
+            ['identity', () => mat4Identity()],
+            ['translation', () => mat4Translate(mat4Identity(), [3, -4, 5])],
+            ['rotation', () => mat4RotateY(mat4RotateX(mat4Identity(), 0.7), -1.3)],
+            ['non-uniform scale', () => mat4Scale(mat4Identity(), [2, 0.5, 4])],
+            ['composed TRS', () => mat4Compose([1, 2, 3], [0.3, -0.9, 1.1], [2, 0.25, 3])],
+            ['perspective', () => mat4Perspective(Math.PI / 3, 1.5, 0.1, 100)],
+        ];
+
+        test.each(cases)('round-trips a %s matrix to the identity', (_label, build) => {
+            const matrix = build();
+            const inverse = mat4Invert(matrix)!;
+
+            expect(inverse).not.toBeNull();
+
+            const product = mat4Multiply(matrix, inverse);
+            const identity = mat4Identity();
+
+            for (let idx = 0; idx < 16; idx++) {
+                expect(product[idx]).toBeCloseTo(identity[idx], 10);
+            }
+        });
+
+        test('returns null for a singular matrix', () => {
+            expect(mat4Invert(mat4Scale(mat4Identity(), [1, 0, 1]))).toBeNull();
+        });
+
+    });
+
+    test('mat4Transpose swaps rows and columns', () => {
+        const matrix = mat4Compose([1, 2, 3], [0.4, 0.5, 0.6], [2, 3, 4]);
+        const transposed = mat4Transpose(matrix);
+
+        for (let col = 0; col < 4; col++) {
+            for (let row = 0; row < 4; row++) {
+                expect(transposed[col * 4 + row]).toBe(matrix[row * 4 + col]);
+            }
+        }
+    });
+
+    test('mat4Transpose is its own inverse', () => {
+        const matrix = mat4Compose([5, 6, 7], [1, 2, 3], [1, 2, 3]);
+        const roundTripped = mat4Transpose(mat4Transpose(matrix));
+
+        for (let idx = 0; idx < 16; idx++) {
+            expect(roundTripped[idx]).toBe(matrix[idx]);
+        }
+    });
+
+    // Transforming a normal by the model matrix is only correct under uniform scale; this pins the
+    // non-uniform case, where the naive transform shears the normal off the surface.
+    test('mat4NormalMatrix keeps a normal perpendicular under non-uniform scale', () => {
+        const model = mat4Scale(mat4RotateY(mat4Identity(), 0.6), [3, 0.2, 1.5]);
+        const normalMatrix = mat4NormalMatrix(model);
+
+        // Slanted rather than axis-aligned: a normal that lies along a scale axis survives the
+        // naive transform intact, so an axis-aligned surface cannot tell the two apart.
+        const origin: Vector3 = [0, 0, 0];
+        const alongU: Vector3 = [1, 1, 0];
+        const alongV: Vector3 = [0, 0, 1];
+        const normal = vec3Normalize(vec3Cross(alongU, alongV));
+
+        const worldOrigin = mat4TransformPoint(model, origin);
+        const edgeU = vec3Normalize(vec3Sub(mat4TransformPoint(model, alongU), worldOrigin));
+        const edgeV = vec3Normalize(vec3Sub(mat4TransformPoint(model, alongV), worldOrigin));
+        const worldNormal = vec3Normalize(mat4TransformDirection(normalMatrix, normal));
+
+        expect(vec3Dot(worldNormal, edgeU)).toBeCloseTo(0, 10);
+        expect(vec3Dot(worldNormal, edgeV)).toBeCloseTo(0, 10);
+
+        const naive = vec3Normalize(mat4TransformDirection(model, normal));
+
+        expect(Math.abs(vec3Dot(naive, edgeU))).toBeGreaterThan(0.1);
+    });
+
+    test('mat4NormalMatrix falls back to the identity for a singular model', () => {
+        const normalMatrix = mat4NormalMatrix(mat4Scale(mat4Identity(), [0, 1, 1]));
+
+        expect(Array.from(normalMatrix)).toEqual(Array.from(mat4Identity()));
+    });
+
+    test('mat4Compose matches translate then rotate then scale', () => {
+        const composed = mat4Compose([1, 2, 3], [0.2, 0.4, 0.6], [2, 3, 4]);
+
+        let expected = mat4Translate(mat4Identity(), [1, 2, 3]);
+        expected = mat4RotateX(expected, 0.2);
+        expected = mat4RotateY(expected, 0.4);
+        expected = mat4RotateZ(expected, 0.6);
+        expected = mat4Scale(expected, [2, 3, 4]);
+
+        for (let idx = 0; idx < 16; idx++) {
+            expect(composed[idx]).toBeCloseTo(expected[idx], 12);
         }
     });
 

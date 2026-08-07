@@ -231,6 +231,124 @@ export function mat4Orthographic(
     return out;
 }
 
+/**
+ * Inverts a 4×4 matrix, or returns `null` when it is singular.
+ *
+ * Mirrors the `matrixInvert` contract from `@ripl/core`'s 2D matrix module: a matrix with a zero
+ * determinant has no inverse, and `null` says so rather than propagating `Infinity` through every
+ * downstream coordinate.
+ *
+ * @param m - The matrix to invert.
+ * @returns The inverse, or `null` if `m` is singular.
+ */
+export function mat4Invert(m: Matrix4): Matrix4 | null {
+    const a00 = m[0]; const a01 = m[1]; const a02 = m[2]; const a03 = m[3];
+    const a10 = m[4]; const a11 = m[5]; const a12 = m[6]; const a13 = m[7];
+    const a20 = m[8]; const a21 = m[9]; const a22 = m[10]; const a23 = m[11];
+    const a30 = m[12]; const a31 = m[13]; const a32 = m[14]; const a33 = m[15];
+
+    const b00 = a00 * a11 - a01 * a10;
+    const b01 = a00 * a12 - a02 * a10;
+    const b02 = a00 * a13 - a03 * a10;
+    const b03 = a01 * a12 - a02 * a11;
+    const b04 = a01 * a13 - a03 * a11;
+    const b05 = a02 * a13 - a03 * a12;
+    const b06 = a20 * a31 - a21 * a30;
+    const b07 = a20 * a32 - a22 * a30;
+    const b08 = a20 * a33 - a23 * a30;
+    const b09 = a21 * a32 - a22 * a31;
+    const b10 = a21 * a33 - a23 * a31;
+    const b11 = a22 * a33 - a23 * a32;
+
+    const det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (det === 0 || !isFinite(det)) {
+        return null;
+    }
+
+    const inv = 1 / det;
+    const out = mat4Create();
+
+    out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * inv;
+    out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * inv;
+    out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * inv;
+    out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * inv;
+    out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * inv;
+    out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * inv;
+    out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * inv;
+    out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * inv;
+    out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * inv;
+    out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * inv;
+    out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * inv;
+    out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * inv;
+    out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * inv;
+    out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * inv;
+    out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * inv;
+    out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * inv;
+
+    return out;
+}
+
+/** Returns the transpose of a 4×4 matrix. */
+export function mat4Transpose(m: Matrix4): Matrix4 {
+    const out = mat4Create();
+
+    for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < 4; row++) {
+            out[col * 4 + row] = m[row * 4 + col];
+        }
+    }
+
+    return out;
+}
+
+/**
+ * Builds the normal matrix for a model matrix — the inverse transpose of its upper-3×3.
+ *
+ * Transforming a normal by the model matrix itself is only correct under uniform scale; under
+ * non-uniform scale it shears the normal off the surface and the shading goes wrong. The
+ * translation column is dropped because a normal is a direction, not a position.
+ *
+ * @param m - The model matrix.
+ * @returns The normal matrix, or the identity when `m` is singular.
+ */
+export function mat4NormalMatrix(m: Matrix4): Matrix4 {
+    const linear = mat4Clone(m);
+
+    linear[12] = 0;
+    linear[13] = 0;
+    linear[14] = 0;
+    linear[3] = 0;
+    linear[7] = 0;
+    linear[11] = 0;
+    linear[15] = 1;
+
+    const inverse = mat4Invert(linear);
+
+    return inverse ? mat4Transpose(inverse) : mat4Identity();
+}
+
+/**
+ * Composes a transform from translation, per-axis rotation and scale, applied in that order.
+ *
+ * Matches the order `Shape3D` builds its model matrix in, so a composed matrix and an element's
+ * own transform agree.
+ *
+ * @param translation - Translation applied last.
+ * @param rotation - Rotation around the X, Y and Z axes, in radians.
+ * @param scale - Per-axis scale applied first.
+ * @returns The composed matrix.
+ */
+export function mat4Compose(translation: Vector3, rotation: Vector3, scale: Vector3): Matrix4 {
+    let out = mat4Translate(mat4Identity(), translation);
+
+    out = mat4RotateX(out, rotation[0]);
+    out = mat4RotateY(out, rotation[1]);
+    out = mat4RotateZ(out, rotation[2]);
+
+    return mat4Scale(out, scale);
+}
+
 /** Transforms a direction vector by the upper-3×3 of a 4×4 matrix, ignoring translation. */
 export function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3 {
     return [
