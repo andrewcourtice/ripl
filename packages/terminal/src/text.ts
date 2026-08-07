@@ -73,6 +73,11 @@ function snapDirection(dx: number, dy: number): [number, number] {
     return [Math.round(Math.cos(angle)), Math.round(Math.sin(angle))];
 }
 
+/** Whether a run advancing in this direction would read right-to-left or bottom-to-top. */
+function readsBackwards(stepCol: number, stepRow: number): boolean {
+    return stepCol < 0 || (stepCol === 0 && stepRow < 0);
+}
+
 /**
  * Lays a text run onto the character grid, honoring the current transform.
  *
@@ -103,7 +108,7 @@ export function layoutGlyphRun(options: GlyphRunOptions): GlyphRun | undefined {
     }
 
     const anchor = transform.point(x, y);
-    const [stepCol, stepRow] = snapDirection(transform.matrix[0], transform.matrix[1]);
+    const [dirCol, dirRow] = snapDirection(transform.matrix[0], transform.matrix[1]);
 
     const alignFactor = TEXT_ALIGN_FACTORS[textAlign] ?? 0;
     const baselineFactor = TEXT_BASELINE_FACTORS[textBaseline] ?? 1;
@@ -111,11 +116,27 @@ export function layoutGlyphRun(options: GlyphRunOptions): GlyphRun | undefined {
     // The baseline shifts across the run, so it follows the direction perpendicular to it.
     const alignShift = text.length * alignFactor;
 
+    const col = Math.round(anchor.x / cellWidth - dirCol * alignShift + dirRow * baselineFactor);
+    const row = Math.round(anchor.y / cellHeight - dirRow * alignShift - dirCol * baselineFactor);
+
+    // Canvas rotates the glyphs too, so a backwards baseline still reads forwards there. Upright
+    // glyphs cannot, so walk the same cells from the far end instead of spelling the run backwards.
+    if (readsBackwards(dirCol, dirRow)) {
+        return {
+            content: text,
+            col: col + dirCol * (text.length - 1),
+            row: row + dirRow * (text.length - 1),
+            // Subtracted rather than negated: `-0` is not `0` under the strict equality tests use.
+            stepCol: 0 - dirCol,
+            stepRow: 0 - dirRow,
+        };
+    }
+
     return {
         content: text,
-        col: Math.round(anchor.x / cellWidth - stepCol * alignShift + stepRow * baselineFactor),
-        row: Math.round(anchor.y / cellHeight - stepRow * alignShift - stepCol * baselineFactor),
-        stepCol,
-        stepRow,
+        col,
+        row,
+        stepCol: dirCol,
+        stepRow: dirRow,
     };
 }

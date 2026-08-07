@@ -95,13 +95,24 @@ describe('Glyph run layout', () => {
         expect(run?.stepRow).toBe(1);
     });
 
-    test('Should advance up the column for a negative quarter turn', () => {
+    // Canvas rotates the glyphs, so a run advancing upward still reads forwards there. Upright
+    // glyphs cannot, so this used to spell the content bottom-to-top.
+    test('Should advance down the column for a negative quarter turn', () => {
         const run = layout('ABCD', {
             transform: createTerminalTransform(matrixIdentity(), [0, -1, 1, 0, 0, 0]),
         });
 
         expect(run?.stepCol).toBe(0);
-        expect(run?.stepRow).toBe(-1);
+        expect(run?.stepRow).toBe(1);
+    });
+
+    test('Should advance left to right for a half turn', () => {
+        const run = layout('ABCD', {
+            transform: createTerminalTransform(matrixIdentity(), [-1, 0, 0, -1, 0, 0]),
+        });
+
+        expect(run?.stepCol).toBe(1);
+        expect(run?.stepRow).toBe(0);
     });
 
     test('Should advance diagonally for an eighth turn', () => {
@@ -112,6 +123,37 @@ describe('Glyph run layout', () => {
 
         expect(run?.stepCol).toBe(1);
         expect(run?.stepRow).toBe(1);
+    });
+
+    test('Should never read right-to-left or bottom-to-top, whatever the rotation', () => {
+        for (let step = 0; step < 16; step++) {
+            const angle = (step * Math.PI) / 8;
+            const run = layout('ABCD', {
+                transform: createTerminalTransform(matrixIdentity(), [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle), 0, 0]),
+            })!;
+
+            expect(run.stepCol).toBeGreaterThanOrEqual(0);
+            expect(run.stepCol === 0 && run.stepRow < 0).toBe(false);
+        }
+    });
+
+    // Flipping a backwards run reverses the order glyphs are placed in; it must not move the run.
+    test('Should occupy the cells the unflipped run would have, in reverse', () => {
+        const run = layout('ABCD', {
+            transform: createTerminalTransform(matrixIdentity(), [0, -1, 1, 0, 0, 0]),
+        })!;
+
+        const cells = Array.from({
+            length: run.content.length,
+        }, (unused, index) => [run.content[index], run.col + run.stepCol * index, run.row + run.stepRow * index]);
+
+        // Advancing up from row 0 would have put A at 0 and D at -3; reading down, D lands at 0.
+        expect(cells).toEqual([
+            ['A', 0, -3],
+            ['B', 0, -2],
+            ['C', 0, -1],
+            ['D', 0, 0],
+        ]);
     });
 
     test('Should truncate the run to maxWidth', () => {
