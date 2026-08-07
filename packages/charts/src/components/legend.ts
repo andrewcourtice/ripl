@@ -75,8 +75,10 @@ export interface LegendOptions extends ChartComponentOptions {
     onHighlight?: (id: string | null) => void;
 }
 
-const SWATCH_SIZE = 10;
-const SWATCH_RADIUS = 2;
+/** Smallest a swatch may be. It otherwise fills its row, so it scales with the label beside it. */
+const MIN_SWATCH_SIZE = 10;
+/** Corner radius as a fraction of the swatch, so a larger swatch keeps the same rounded look. */
+const SWATCH_RADIUS_RATIO = 0.2;
 const ITEM_GAP_X = SPACING.md;
 const ROW_GAP = SPACING.sm;
 const LABEL_GAP = SPACING.sm;
@@ -87,6 +89,7 @@ const INACTIVE_LABEL_COLOR = '#999999';
 
 interface ItemPlacement {
     item: LegendItem;
+    swatchSize: number;
     swatchX: number;
     swatchY: number;
     labelX: number;
@@ -173,8 +176,16 @@ export class Legend extends ChartComponent {
         return width;
     }
 
+    /**
+     * The swatch fills its row, so it stays square against the label rather than a fixed size that
+     * a backend's own resolution can make far larger or far smaller than the text beside it.
+     */
+    private get _swatchSize(): number {
+        return Math.max(MIN_SWATCH_SIZE, this._fontHeight);
+    }
+
     private _itemWidth(item: LegendItem): number {
-        return SWATCH_SIZE + LABEL_GAP + this._measureLabel(item.label);
+        return this._swatchSize + LABEL_GAP + this._measureLabel(item.label);
     }
 
     /**
@@ -182,7 +193,8 @@ export class Legend extends ChartComponent {
      * Horizontal legends wrap across the available width; vertical legends stack in a column.
      */
     private _computeLayout(region: ChartArea): LegendLayout {
-        const rowHeight = Math.max(SWATCH_SIZE, this._fontHeight);
+        const swatchSize = this._swatchSize;
+        const rowHeight = swatchSize;
         const placements: ItemPlacement[] = [];
 
         if (this._isHorizontal) {
@@ -220,8 +232,9 @@ export class Legend extends ChartComponent {
                     placements.push({
                         item,
                         swatchX: x,
-                        swatchY: y + (rowHeight - SWATCH_SIZE) / 2,
-                        labelX: x + SWATCH_SIZE + LABEL_GAP,
+                        swatchSize,
+                        swatchY: y + (rowHeight - swatchSize) / 2,
+                        labelX: x + swatchSize + LABEL_GAP,
                         labelY: y + rowHeight / 2,
                     });
 
@@ -249,8 +262,9 @@ export class Legend extends ChartComponent {
             placements.push({
                 item,
                 swatchX: x,
-                swatchY: y + (rowHeight - SWATCH_SIZE) / 2,
-                labelX: x + SWATCH_SIZE + LABEL_GAP,
+                swatchSize,
+                swatchY: y + (rowHeight - swatchSize) / 2,
+                labelX: x + swatchSize + LABEL_GAP,
                 labelY: y + rowHeight / 2,
             });
 
@@ -330,9 +344,9 @@ export class Legend extends ChartComponent {
                 id: `legend-swatch-${item.id}`,
                 x: placement.swatchX,
                 y: placement.swatchY,
-                width: SWATCH_SIZE,
-                height: SWATCH_SIZE,
-                borderRadius: SWATCH_RADIUS,
+                width: placement.swatchSize,
+                height: placement.swatchSize,
+                borderRadius: placement.swatchSize * SWATCH_RADIUS_RATIO,
                 fill: isActive ? item.color : INACTIVE_COLOR,
                 opacity: animation?.enabled ? 0 : restOpacity,
                 data: item,
@@ -394,12 +408,17 @@ export class Legend extends ChartComponent {
             const target = placementById.get(item.id)!;
 
             if (animation?.enabled) {
+                // Size is tweened, not assigned: it tracks the row, so a font or backend change
+                // between renders resizes an existing swatch rather than leaving it at its old size.
                 this.renderer.transition(swatch, {
                     duration: animation.duration,
                     ease: animation.ease,
                     state: {
                         x: target.swatchX,
                         y: target.swatchY,
+                        width: target.swatchSize,
+                        height: target.swatchSize,
+                        borderRadius: target.swatchSize * SWATCH_RADIUS_RATIO,
                         opacity: isActive ? 1 : 0.5,
                     },
                 });
@@ -418,6 +437,9 @@ export class Legend extends ChartComponent {
             } else {
                 swatch.x = target.swatchX;
                 swatch.y = target.swatchY;
+                swatch.width = target.swatchSize;
+                swatch.height = target.swatchSize;
+                swatch.borderRadius = target.swatchSize * SWATCH_RADIUS_RATIO;
                 swatch.opacity = isActive ? 1 : 0.5;
 
                 if (label) {
