@@ -5,15 +5,13 @@ import {
 } from 'vitest';
 
 import {
-    buildSurfaceBands,
-    createSurfaceBand,
+    buildSurface,
+    createSurface,
     createSurfaceBounds,
-    elementIsSurfaceBand,
-    SURFACE_BAND_COUNT,
-    surfaceBandColors,
-    surfaceBandIndex,
+    elementIsSurface,
+    surfaceColorScale,
     surfaceWorldPoint,
-    updateSurfaceBands,
+    updateSurface,
 } from './surface-3d';
 
 import type {
@@ -68,70 +66,48 @@ function createField(resolution: number, height: (x: number, y: number) => numbe
     };
 }
 
-function totalFaces(field: SurfaceField, bandCount: number = SURFACE_BAND_COUNT): Face3D[] {
-    return buildSurfaceBands(field, {
-        bandCount,
-    }).flatMap(band => computeFaces(band));
+function totalFaces(field: SurfaceField): Face3D[] {
+    return computeFaces(buildSurface(field));
 }
 
 function isFiniteVertex(vertex: number[]): boolean {
     return vertex.every(component => Number.isFinite(component));
 }
 
-describe('surfaceBandIndex', () => {
+describe('surfaceColorScale', () => {
 
-    test('Should place the lowest height in the first band', () => {
-        expect(surfaceBandIndex(-1, -1, 1, 8)).toBe(0);
+    test('Should map the range ends to different colours', () => {
+        const scale = surfaceColorScale(-1, 1);
+
+        expect(scale(-1)).not.toBe(scale(1));
     });
 
-    test('Should place the highest height in the last band', () => {
-        expect(surfaceBandIndex(1, -1, 1, 8)).toBe(7);
-    });
+    // The colormap used to be quantised into 14 bands, one element each, because a 3D element
+    // carried a single fill. Per-vertex colours make it continuous.
+    test('Should be continuous rather than banded', () => {
+        const scale = surfaceColorScale(-1, 1);
+        const seen = new Set<string>();
 
-    test('Should cover every band across the height range', () => {
-        const seen = new Set<number>();
-
-        for (let i = 0; i <= 1000; i++) {
-            seen.add(surfaceBandIndex(-1 + i / 500, -1, 1, 8));
+        for (let i = 0; i <= 200; i++) {
+            seen.add(scale(-1 + i / 100));
         }
 
-        expect(Array.from(seen).sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+        expect(seen.size).toBeGreaterThan(100);
     });
 
-    test('Should return the same band for the same height', () => {
-        expect(surfaceBandIndex(0.37, -1, 1, 12)).toBe(surfaceBandIndex(0.37, -1, 1, 12));
+    test('Should be deterministic for a given height', () => {
+        const scale = surfaceColorScale(-1, 1);
+
+        expect(scale(0.25)).toBe(scale(0.25));
+        expect(scale(-0.5)).not.toBe(scale(0.5));
     });
 
-    test('Should increase monotonically with height', () => {
-        expect(surfaceBandIndex(-0.5, -1, 1, 12)).toBeLessThan(surfaceBandIndex(0.5, -1, 1, 12));
+    test('Should return a colour for a flat field', () => {
+        expect(surfaceColorScale(3, 3)(3)).toMatch(/^(#|rgb)/);
     });
 
-    test('Should collapse a flat field onto the first band', () => {
-        expect(surfaceBandIndex(3, 3, 3, 12)).toBe(0);
-    });
-
-    test('Should collapse a non-finite height onto the first band', () => {
-        expect(surfaceBandIndex(NaN, -1, 1, 12)).toBe(0);
-    });
-
-});
-
-describe('surfaceBandColors', () => {
-
-    test('Should return one color per band', () => {
-        expect(surfaceBandColors(-1, 1, 12)).toHaveLength(12);
-    });
-
-    test('Should return a distinct color per band', () => {
-        expect(new Set(surfaceBandColors(-1, 1, 12)).size).toBe(12);
-    });
-
-    test('Should return colors for a flat field', () => {
-        expect(surfaceBandColors(0, 0, 4)).toHaveLength(4);
-    });
-
-    test('Should default to the shared band count', () => {
-        expect(surfaceBandColors(-1, 1)).toHaveLength(SURFACE_BAND_COUNT);
+    test('Should return a colour for a non-finite height', () => {
+        expect(surfaceColorScale(-1, 1)(NaN)).toMatch(/^(#|rgb)/);
     });
 
 });
@@ -169,15 +145,12 @@ describe('surfaceWorldPoint', () => {
 
 });
 
-describe('SurfaceBand geometry', () => {
+describe('Surface geometry', () => {
 
-    test('Should emit one quad per grid cell when the surface is a single band', () => {
+    test('Should emit one quad per grid cell', () => {
         const field = createField(9, (x, y) => Math.sin(x) * Math.cos(y));
-        const [band] = buildSurfaceBands(field, {
-            bandCount: 1,
-        });
 
-        expect(computeFaces(band)).toHaveLength(8 * 8);
+        expect(totalFaces(field)).toHaveLength(8 * 8);
     });
 
     test('Should preserve the total quad count across the banded split', () => {
@@ -192,19 +165,27 @@ describe('SurfaceBand geometry', () => {
         expect(totalFaces(field)).toHaveLength(12 * 12);
     });
 
-    test('Should populate more than one band for a varying field', () => {
-        const field = createField(17, (x, y) => x + y);
-        const populated = buildSurfaceBands(field).filter(band => computeFaces(band).length > 0);
-
-        expect(populated.length).toBeGreaterThan(5);
-    });
-
-    test('Should place each quad in exactly one band', () => {
+    test('Should emit each grid cell exactly once', () => {
         const field = createField(17, (x, y) => x + y);
         const faces = totalFaces(field);
         const corners = new Set(faces.map(face => `${face.vertices[0][0]}:${face.vertices[0][2]}`));
 
         expect(corners.size).toBe(faces.length);
+    });
+
+    test('Should colour every vertex of every quad', () => {
+        const field = createField(17, (x, y) => x + y);
+
+        expect(totalFaces(field).every(face => face.colors?.length === face.vertices.length)).toBe(true);
+    });
+
+    // One element per band was the workaround for a 3D element carrying a single fill; per-vertex
+    // colours are what let the whole surface be one element.
+    test('Should resolve many distinct colours across a varying field', () => {
+        const field = createField(33, (x, y) => x + y);
+        const colors = new Set(totalFaces(field).flatMap(face => face.colors ?? []));
+
+        expect(colors.size).toBeGreaterThan(50);
     });
 
     test('Should emit four vertices per quad', () => {
@@ -267,164 +248,145 @@ describe('SurfaceBand geometry', () => {
 
 });
 
-describe('SurfaceBand element', () => {
-
-    test('Should default to the shared band count', () => {
-        const field = createField(5, (x, y) => x + y);
-        const band = createSurfaceBand({
-            field,
-            bounds: createSurfaceBounds(field),
-        });
-
-        expect(band.bandCount).toBe(SURFACE_BAND_COUNT);
-    });
+describe('Surface element', () => {
 
     test('Should report the grid resolution as its segment count', () => {
         const field = createField(7, (x, y) => x + y);
-        const band = createSurfaceBand({
+        const surface = createSurface({
             field,
             bounds: createSurfaceBounds(field),
         });
 
-        expect(band.segments).toBe(7);
+        expect(surface.segments).toBe(7);
     });
 
-    test('Should carry the surface-band element type', () => {
+    test('Should carry the surface element type', () => {
         const field = createField(5, (x, y) => x + y);
-        const band = createSurfaceBand({
+        const surface = createSurface({
             field,
             bounds: createSurfaceBounds(field),
         });
 
-        expect(band.type).toBe('surface-band');
+        expect(surface.type).toBe('surface');
     });
 
     test('Should rebuild its mesh at the new resolution after setField', () => {
         const field = createField(5, (x, y) => x + y);
-        const band = createSurfaceBand({
+        const surface = createSurface({
             field,
             bounds: createSurfaceBounds(field),
-            bandCount: 1,
         });
 
-        expect(computeFaces(band)).toHaveLength(4 * 4);
+        expect(computeFaces(surface)).toHaveLength(4 * 4);
 
         const refined = createField(9, (x, y) => x + y);
 
-        band.setField(refined, createSurfaceBounds(refined));
+        surface.setField(refined, createSurfaceBounds(refined));
 
-        expect(computeFaces(band)).toHaveLength(8 * 8);
+        expect(computeFaces(surface)).toHaveLength(8 * 8);
     });
 
     test('Should bump its revision on every field swap', () => {
         const field = createField(5, (x, y) => x + y);
-        const band = createSurfaceBand({
+        const surface = createSurface({
             field,
             bounds: createSurfaceBounds(field),
         });
 
-        band.setField(field, createSurfaceBounds(field));
+        surface.setField(field, createSurfaceBounds(field));
 
-        expect(band.revision).toBe(1);
+        expect(surface.revision).toBe(1);
     });
 
-    test('Should identify surface bands', () => {
+    test('Should identify surfaces', () => {
         const field = createField(5, (x, y) => x + y);
-        const band = createSurfaceBand({
+        const surface = createSurface({
             field,
             bounds: createSurfaceBounds(field),
         });
 
-        expect(elementIsSurfaceBand(band)).toBe(true);
+        expect(elementIsSurface(surface)).toBe(true);
     });
 
-    test('Should reject a non-band value', () => {
-        expect(elementIsSurfaceBand({})).toBe(false);
+    test('Should reject a non-surface value', () => {
+        expect(elementIsSurface({})).toBe(false);
+    });
+
+    test('Should enable vertex colours by default', () => {
+        const field = createField(5, (x, y) => x + y);
+        const surface = createSurface({
+            field,
+            bounds: createSurfaceBounds(field),
+        });
+
+        expect(surface.material?.vertexColors).toBe(true);
     });
 
 });
 
-describe('buildSurfaceBands', () => {
+describe('buildSurface', () => {
 
-    test('Should create one element per band', () => {
+    test('Should create a single element', () => {
         const field = createField(9, (x, y) => x + y);
 
-        expect(buildSurfaceBands(field)).toHaveLength(SURFACE_BAND_COUNT);
+        expect(elementIsSurface(buildSurface(field))).toBe(true);
     });
 
-    test('Should give each band its own fill', () => {
+    test('Should apply the requested edge stroke', () => {
         const field = createField(9, (x, y) => x + y);
-        const fills = buildSurfaceBands(field).map(band => band.fill);
-
-        expect(new Set(fills).size).toBe(SURFACE_BAND_COUNT);
-    });
-
-    test('Should apply the requested edge stroke to every band', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field, {
+        const surface = buildSurface(field, {
             stroke: '#123456',
             lineWidth: 0.25,
         });
 
-        expect(bands.every(band => band.stroke === '#123456')).toBe(true);
+        expect(surface.stroke).toBe('#123456');
+        expect(surface.lineWidth).toBe(0.25);
     });
 
-    test('Should share one bounds object across every band', () => {
+    test('Should fit the world box to the field', () => {
         const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
 
-        expect(bands.every(band => band.bounds === bands[0].bounds)).toBe(true);
+        expect(buildSurface(field).bounds.zMax).toBe(4);
     });
 
 });
 
-describe('updateSurfaceBands', () => {
+describe('updateSurface', () => {
 
-    test('Should re-point every band at the new field', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
+    test('Should re-point the surface at the new field', () => {
+        const surface = buildSurface(createField(9, (x, y) => x + y));
         const refined = createField(13, (x, y) => x + y);
 
-        updateSurfaceBands(bands, refined);
+        updateSurface(surface, refined);
 
-        expect(bands.every(band => band.field === refined)).toBe(true);
+        expect(surface.field).toBe(refined);
     });
 
-    test('Should preserve the total quad count after a resolution swap', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
-        const refined = createField(13, (x, y) => x + y);
+    test('Should preserve the quad count after a resolution swap', () => {
+        const surface = buildSurface(createField(9, (x, y) => x + y));
 
-        updateSurfaceBands(bands, refined);
+        updateSurface(surface, createField(13, (x, y) => x + y));
 
-        expect(bands.flatMap(band => computeFaces(band))).toHaveLength(12 * 12);
+        expect(computeFaces(surface)).toHaveLength(12 * 12);
     });
 
     test('Should refit the world box to the new height range', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
+        const surface = buildSurface(createField(9, (x, y) => x + y));
 
-        updateSurfaceBands(bands, createField(9, (x, y) => (x + y) * 10));
+        updateSurface(surface, createField(9, (x, y) => (x + y) * 10));
 
-        expect(bands[0].bounds.zMax).toBe(40);
+        expect(surface.bounds.zMax).toBe(40);
     });
 
-    test('Should keep every band filled after a swap', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
+    test('Should recolour to the new height range', () => {
+        const surface = buildSurface(createField(9, (x, y) => x + y));
+        const before = computeFaces(surface).flatMap(face => face.colors ?? []);
 
-        updateSurfaceBands(bands, createField(9, (x, y) => (x + y) * 10));
+        updateSurface(surface, createField(9, (x, y) => (x + y) * 10));
 
-        expect(bands.every(band => !!band.fill)).toBe(true);
-    });
+        const after = computeFaces(surface).flatMap(face => face.colors ?? []);
 
-    test('Should keep the element count constant across a swap', () => {
-        const field = createField(9, (x, y) => x + y);
-        const bands = buildSurfaceBands(field);
-
-        updateSurfaceBands(bands, createField(13, (x, y) => x + y));
-
-        expect(bands).toHaveLength(SURFACE_BAND_COUNT);
+        expect(after).toEqual(before);
     });
 
 });

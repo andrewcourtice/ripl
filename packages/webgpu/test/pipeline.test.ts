@@ -14,6 +14,7 @@ import {
 } from '../src/pipeline';
 
 import {
+    MODEL_UNIFORM_BYTES,
     SCENE_UNIFORM_BYTES,
 } from '@ripl/3d';
 
@@ -28,8 +29,9 @@ describe('Pipeline constants', () => {
         expect(SCENE_UNIFORM_SIZE % 16).toBe(0);
     });
 
-    test('MODEL_UNIFORM_SIZE is 128 bytes (2 × mat4)', () => {
-        expect(MODEL_UNIFORM_SIZE).toBe(128);
+    test('MODEL_UNIFORM_SIZE matches the shared layout descriptor', () => {
+        expect(MODEL_UNIFORM_SIZE).toBe(MODEL_UNIFORM_BYTES);
+        expect(MODEL_UNIFORM_SIZE % 16).toBe(0);
     });
 
 });
@@ -84,10 +86,12 @@ describe('Bind group layout entries', () => {
         expect(MODEL_BIND_GROUP_LAYOUT_ENTRIES).toHaveLength(1);
     });
 
-    test('model entry is at binding 0 with vertex-only visibility', () => {
+    // The fragment stage reads the material terms the model uniform carries, so it is no longer
+    // vertex-only.
+    test('model entry is at binding 0 and visible to both stages', () => {
         const entry = MODEL_BIND_GROUP_LAYOUT_ENTRIES[0];
         expect(entry.binding).toBe(0);
-        expect(entry.visibility).toBe(0x1);
+        expect(entry.visibility).toBe(0x3);
         expect(entry.buffer?.type).toBe('uniform');
     });
 

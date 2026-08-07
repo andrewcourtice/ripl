@@ -3,6 +3,7 @@ export * from './core/constants';
 export * from './core/color';
 export * from './core/uniforms';
 export * from './core/lights';
+export * from './core/material';
 export * from './core/context';
 export * from './core/camera';
 export * from './core/shape';

@@ -4,6 +4,7 @@ import {
 } from './shaders';
 
 import {
+    MODEL_UNIFORM_BYTES,
     SCENE_UNIFORM_BYTES,
 } from '@ripl/3d';
 
@@ -13,8 +14,8 @@ export const VERTEX_STRIDE = 10 * 4;
 /** Size in bytes of the scene uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
 export const SCENE_UNIFORM_SIZE = SCENE_UNIFORM_BYTES;
 
-/** Size in bytes of the model uniform buffer: mat4(64) + mat4(64) = 128 bytes. */
-export const MODEL_UNIFORM_SIZE = 128;
+/** Size in bytes of the model uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
+export const MODEL_UNIFORM_SIZE = MODEL_UNIFORM_BYTES;
 
 /** Vertex buffer layout describing position, normal, and color attributes. */
 export const VERTEX_BUFFER_LAYOUT: GPUVertexBufferLayout = {
@@ -56,7 +57,8 @@ export const SCENE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
 export const MODEL_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
     {
         binding: 0,
-        visibility: 0x1, // GPUShaderStage.VERTEX
+        // The fragment stage reads the material terms the model uniform now carries.
+        visibility: 0x3, // GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
         buffer: {
             type: 'uniform',
         },

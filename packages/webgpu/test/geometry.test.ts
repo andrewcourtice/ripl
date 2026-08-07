@@ -20,6 +20,10 @@ import {
     GPU_BUFFER_USAGE,
 } from './mock-gpu';
 
+import {
+    resolveMaterial,
+} from '@ripl/3d';
+
 import type {
     Face3D,
     MeshSubmission,
@@ -315,6 +319,8 @@ describe('GeometryManager', () => {
         };
     }
 
+    const material = resolveMaterial(undefined, '#ffffff');
+
     function createSubmission(vertexCount: number, seed: number = 0): MeshSubmission {
         const vertices = new Float32Array(vertexCount * floatsPerVertex);
 
@@ -333,6 +339,7 @@ describe('GeometryManager', () => {
             indices,
             modelMatrix: identity,
             normalMatrix: identity,
+            material,
         };
     }
 
@@ -372,6 +379,7 @@ describe('GeometryManager', () => {
                 indices: mesh.indices,
                 modelMatrix: identity,
                 normalMatrix: identity,
+                material,
             },
         ])!;
 

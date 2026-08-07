@@ -1,4 +1,6 @@
 import {
+    materialSideCode,
+    packModelUniform,
     vec3TriangleNormal,
 } from '@ripl/3d';
 
@@ -113,7 +115,7 @@ export class GeometryManager {
                 indexData[indexOffset + i] = sub.indices[i] + baseVertex;
             }
 
-            const modelBindGroup = this._getModelBindGroup(sub.modelMatrix, sub.normalMatrix);
+            const modelBindGroup = this._getModelBindGroup(sub);
 
             draws.push({
                 indexCount: sub.indices.length,
@@ -193,7 +195,7 @@ export class GeometryManager {
         });
     }
 
-    private _getModelBindGroup(modelMatrix: Matrix4, normalMatrix: Matrix4): GPUBindGroup {
+    private _getModelBindGroup(submission: MeshSubmission): GPUBindGroup {
         if (this._poolIndex >= this._modelUniformBuffers.length) {
             const buffer = this._device.createBuffer({
                 size: MODEL_UNIFORM_SIZE,
@@ -217,13 +219,19 @@ export class GeometryManager {
         }
 
         const buffer = this._modelUniformBuffers[this._poolIndex];
-        const data = this._modelUniformData;
+        const material = submission.material;
 
-        data.set(modelMatrix, 0);
-        data.set(normalMatrix, 16);
+        packModelUniform(this._modelUniformData, {
+            modelMatrix: submission.modelMatrix,
+            normalMatrix: submission.normalMatrix,
+            specular: material.surface.specular,
+            shininess: material.surface.shininess,
+            emissive: material.surface.emissive,
+            side: materialSideCode(material.side),
+        });
 
         // writeBuffer copies the data at call time, so the scratch array is safe to reuse.
-        this._device.queue.writeBuffer(buffer, 0, data);
+        this._device.queue.writeBuffer(buffer, 0, this._modelUniformData);
 
         const bindGroup = this._modelBindGroups[this._poolIndex];
         this._poolIndex++;

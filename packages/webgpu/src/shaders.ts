@@ -1,7 +1,9 @@
 import {
     FOG_MODE_CODE,
     LIGHT_TYPE_CODE,
+    MATERIAL_SIDE_CODE,
     MAX_LIGHTS,
+    MODEL_UNIFORM_WGSL,
     SCENE_UNIFORM_WGSL,
 } from '@ripl/3d';
 
@@ -155,10 +157,7 @@ fn applyFog(color: vec3f, position: vec3f) -> vec3f {
 export const VERTEX_SHADER = /* wgsl */ `
 ${SCENE_UNIFORM_WGSL}
 
-struct ModelUniforms {
-    modelMatrix: mat4x4f,
-    normalMatrix: mat4x4f,
-};
+${MODEL_UNIFORM_WGSL}
 
 struct VertexInput {
     @location(0) position: vec3f,
@@ -194,19 +193,41 @@ fn main(input: VertexInput) -> VertexOutput {
 export const FRAGMENT_SHADER = /* wgsl */ `
 ${SCENE_UNIFORM_WGSL}
 
+${MODEL_UNIFORM_WGSL}
+
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(1) @binding(0) var<uniform> model: ModelUniforms;
 
 ${SHADING_WGSL}
 
 @fragment
 fn main(
+    @builtin(front_facing) frontFacing: bool,
     @location(0) worldNormal: vec3f,
     @location(1) color: vec4f,
     @location(2) worldPosition: vec3f,
 ) -> @location(0) vec4f {
+    let side = u32(model.params.x);
+
+    // Discarded rather than culled by the pipeline, so every material shares one pipeline.
+    if (side == ${MATERIAL_SIDE_CODE.front}u && !frontFacing) {
+        discard;
+    }
+
+    if (side == ${MATERIAL_SIDE_CODE.back}u && frontFacing) {
+        discard;
+    }
+
     let normal = normalize(worldNormal);
     let viewDirection = normalize(uniforms.cameraPosition.xyz - worldPosition);
-    let illumination = shadeSurface(normal, worldPosition, viewDirection, vec3f(0.0), 0.0, vec3f(0.0));
+    let illumination = shadeSurface(
+        normal,
+        worldPosition,
+        viewDirection,
+        model.specular.rgb,
+        model.specular.w,
+        model.emissive.rgb
+    );
     let shaded = color.rgb * illumination.diffuse + illumination.additive;
 
     return vec4f(applyFog(shaded, worldPosition), color.a);

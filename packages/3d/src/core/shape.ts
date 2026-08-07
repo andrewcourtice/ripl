@@ -8,6 +8,7 @@ import type {
 
 import {
     mat4Identity,
+    mat4NormalMatrix,
     mat4RotateX,
     mat4RotateY,
     mat4RotateZ,
@@ -29,9 +30,18 @@ import {
     composeSurfaceColor,
     computeFaceNormal,
     createSurfaceIllumination,
-    PLAIN_SURFACE,
     shadeSurface,
 } from './shading';
+
+import {
+    materialDrawsFace,
+    resolveMaterial,
+} from './material';
+
+import type {
+    Material,
+    ResolvedMaterial,
+} from './material';
 
 import {
     DEFAULT_SURFACE_COLOR,
@@ -74,6 +84,21 @@ export interface Face3D {
     vertices: Vector3[];
     /** The precomputed surface normal. When omitted, it is derived from the first three vertices. */
     normal?: Vector3;
+    /**
+     * Per-vertex normals, parallel to {@link vertices}, enabling smooth shading.
+     *
+     * The GPU interpolates these across the face. The CPU painter can only fill a flat polygon, so
+     * it shades from their average — closer to the true surface than the face normal, but still one
+     * colour per face.
+     */
+    normals?: Vector3[];
+    /**
+     * Per-vertex colours, parallel to {@link vertices}, used when the material sets `vertexColors`.
+     *
+     * The GPU interpolates these across the face; the CPU painter averages them, so a mesh relying
+     * on this wants enough subdivision that each face is close to one colour.
+     */
+    colors?: string[];
 }
 
 /**
@@ -115,8 +140,8 @@ export interface ProjectedFaceState3D {
 export interface ProjectedFace3D {
     /** The face's screen-space points, each carrying a depth component. */
     points: ProjectedPoint[];
-    /** The shaded fill color applied to the face. */
-    fillColor: string;
+    /** The shaded fill color applied to the face, or `undefined` when the material is a wireframe. */
+    fillColor: string | undefined;
     /** The stroke style applied to the face edges, if any. */
     strokeStyle: string | undefined;
     /** The stroke line width, if any. */
@@ -145,6 +170,8 @@ export interface Shape3DState extends BaseElementState {
     rotationY: number;
     /** The rotation around the Z axis, in radians. */
     rotationZ: number;
+    /** How the surface responds to light. When omitted, the element shades from its `fill` alone. */
+    material?: Material;
 }
 
 /** Options for constructing a 3D shape, with all state properties optional. */
@@ -234,6 +261,20 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     /**
+     * How the surface responds to light.
+     *
+     * Read as a plain value rather than observed, so assign a new object to change it — mutating
+     * the existing one in place will not repaint.
+     */
+    public get material() {
+        return this.getStateValue('material');
+    }
+
+    public set material(value) {
+        this.setStateValue('material', value);
+    }
+
+    /**
      * The stacking order, derived from the depth of the shape's **nearest projected face** — the
      * one the painter's algorithm draws last, so a hit test resolves to the shape whose geometry is
      * actually on top. Not settable on 3D shapes.
@@ -262,7 +303,12 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
     protected override setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         super.setStateValue(key, value);
-        this._getCachedFaces.invalidate();
+
+        // A material only changes how the geometry is shaded, so rebuilding the mesh for it would
+        // put every tessellator on the path of a colour tweak.
+        if (key !== 'material') {
+            this._getCachedFaces.invalidate();
+        }
     }
 
     /**
@@ -361,8 +407,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
         super.render(context, () => {
             const faces = this._getCachedFaces();
-            const baseFillStyle = this.fill || DEFAULT_SURFACE_COLOR;
-            const baseRGBA = resolveColor(baseFillStyle);
+            const material = resolveMaterial(this.material, this.fill);
             const matrix = this.getModelMatrix();
 
             // The projection moves every frame, so any built path is dropped and rebuilt on demand.
@@ -370,29 +415,29 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             this._hasHitGeometry = false;
 
             if (context.renderStrategy !== 'gpu') {
-                return this._renderCPU(context, faces, baseRGBA, baseFillStyle, matrix);
+                return this._renderCPU(context, faces, material, matrix);
             }
 
             context.submitMesh({
-                vertices: triangulateFacesFlat(faces, baseRGBA ?? DEFAULT_MESH_COLOR),
+                vertices: triangulateFacesFlat(faces, material),
                 indices: triangulateFacesIndices(faces),
                 modelMatrix: matrix,
-                normalMatrix: matrix, // Valid when model has no non-uniform scale
+                normalMatrix: mat4NormalMatrix(matrix),
+                material,
             });
 
             this._renderGPU(context, faces, matrix);
         });
     }
 
-    // No back-face culling, matching the GPU pipeline's `cullMode: 'none'`: a face's winding is
-    // whatever the element author emitted, and rejecting on it would silently drop geometry from
-    // any shape that is not a closed, consistently wound solid. The cost is that every face of a
-    // closed shape is filled, and with `fill` alpha below 1 the hidden ones bleed through.
-    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
+    // Culling is decided per face from the projected signed area, so a material that leaves `side`
+    // at its default draws every face exactly as the unculled model did — including the hidden ones
+    // of a closed shape, which bleed through when `fill` alpha is below 1.
+    private _renderCPU(context: Context3D, faces: Face3D[], material: ResolvedMaterial, matrix: Matrix4): void {
         const lights = context.resolveLights();
-        const surface = PLAIN_SURFACE;
         const illumination = createSurfaceIllumination();
         const cameraPosition = context.cameraPosition;
+        const normalMatrix = mat4NormalMatrix(matrix);
 
         // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
         const state = context.captureFaceState(this.getWorldTransform());
@@ -405,29 +450,35 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
-            const normal = face.normal
-                ? vec3Normalize(mat4TransformDirection(matrix, face.normal))
-                : computeFaceNormal(transformed);
+            const points = transformed.map(vertex => context.project(vertex));
+
+            if (!materialDrawsFace(material.side, projectedSignedArea(points))) {
+                hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
+
+                continue;
+            }
+
+            const normal = resolveFaceNormal(face, transformed, normalMatrix, material.flatShading);
             const centroid = faceCentroid(transformed);
-            const fillColor = baseRGBA
-                ? composeSurfaceColor(baseRGBA, shadeSurface(
+            const baseColor = resolveFaceColor(face, material);
+            const fillColor = baseColor
+                ? composeSurfaceColor(baseColor, shadeSurface(
                     normal,
                     centroid,
                     vec3Normalize(vec3Sub(cameraPosition, centroid)),
-                    surface,
+                    material.surface,
                     lights,
                     illumination
                 ))
-                : baseFillStyle;
-            const points = transformed.map(vertex => context.project(vertex));
+                : material.colorStyle;
             const depth = numberSum(points, p => p[2]) / points.length;
 
             nearestDepth = Math.min(nearestDepth, depth);
 
             context.faceBuffer.push({
                 points,
-                fillColor,
-                strokeStyle: this.stroke,
+                fillColor: material.wireframe ? undefined : fillColor,
+                strokeStyle: material.wireframe ? this.stroke ?? fillColor : this.stroke,
                 lineWidth: this.lineWidth,
                 depth,
                 state,
@@ -563,6 +614,73 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
 }
 
+/** Twice the signed area of a projected polygon, negative when its winding faces the camera. */
+function projectedSignedArea(points: ProjectedPoint[]): number {
+    let area = 0;
+
+    for (let idx = 0; idx < points.length; idx++) {
+        const current = points[idx];
+        const next = points[(idx + 1) % points.length];
+
+        area += current[0] * next[1] - next[0] * current[1];
+    }
+
+    return area;
+}
+
+// The painter fills a flat polygon, so smooth shading can only average the vertex normals rather
+// than interpolate them — closer to the true surface than the face normal, but still one colour.
+function resolveFaceNormal(face: Face3D, transformed: Vector3[], normalMatrix: Matrix4, flatShading: boolean): Vector3 {
+    if (!flatShading && face.normals?.length) {
+        let nx = 0;
+        let ny = 0;
+        let nz = 0;
+
+        for (const normal of face.normals) {
+            nx += normal[0];
+            ny += normal[1];
+            nz += normal[2];
+        }
+
+        const averaged = vec3Normalize(mat4TransformDirection(normalMatrix, [nx, ny, nz]));
+
+        if (averaged[0] !== 0 || averaged[1] !== 0 || averaged[2] !== 0) {
+            return averaged;
+        }
+    }
+
+    return face.normal
+        ? vec3Normalize(mat4TransformDirection(normalMatrix, face.normal))
+        : computeFaceNormal(transformed);
+}
+
+// Averaged for the same reason as the normal: one fill per face is all the painter can express.
+function resolveFaceColor(face: Face3D, material: ResolvedMaterial): ColorRGBA | undefined {
+    const base = material.color;
+
+    if (!base || !material.vertexColors || !face.colors?.length) {
+        return base;
+    }
+
+    let cr = 0;
+    let cg = 0;
+    let cb = 0;
+    let ca = 0;
+
+    for (const color of face.colors) {
+        const parsed = resolveColor(color) ?? base;
+
+        cr += parsed[0];
+        cg += parsed[1];
+        cb += parsed[2];
+        ca += parsed[3];
+    }
+
+    const count = face.colors.length;
+
+    return [cr / count, cg / count, cb / count, ca / count];
+}
+
 // The CPU painter fills a flat polygon, so the whole face is shaded from its centroid. Positional
 // lights need a point to measure distance from, and the centroid is the only one a flat fill has.
 function faceCentroid(vertices: Vector3[]): Vector3 {
@@ -581,28 +699,46 @@ function faceCentroid(vertices: Vector3[]): Vector3 {
     return [cx / count, cy / count, cz / count];
 }
 
-function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
+function triangulateFacesFlat(faces: Face3D[], material: ResolvedMaterial): Float32Array {
     const data = new Float32Array(numberSum(faces, face => face.vertices.length) * 10);
-    const [cr, cg, cb] = rgbToUnit(color);
-    const ca = color[3];
+    // The GPU mesh needs numeric channels, so an unparseable colour degrades to grey there.
+    const base = material.color ?? DEFAULT_MESH_COLOR;
+    const [baseR, baseG, baseB] = rgbToUnit(base);
+    const baseA = base[3];
+    const smooth = !material.flatShading;
 
     let offset = 0;
 
     for (const face of faces) {
         const verts = face.vertices;
         const normal = face.normal ?? vec3TriangleNormal(verts[0], verts[1], verts[2]);
+        const normals = smooth ? face.normals : undefined;
+        const colors = material.vertexColors ? face.colors : undefined;
 
-        for (const vertex of verts) {
+        for (let index = 0; index < verts.length; index++) {
+            const vertex = verts[index];
+            const vertexNormal = normals?.[index] ?? normal;
+
             data[offset++] = vertex[0];
             data[offset++] = vertex[1];
             data[offset++] = vertex[2];
-            data[offset++] = normal[0];
-            data[offset++] = normal[1];
-            data[offset++] = normal[2];
-            data[offset++] = cr;
-            data[offset++] = cg;
-            data[offset++] = cb;
-            data[offset++] = ca;
+            data[offset++] = vertexNormal[0];
+            data[offset++] = vertexNormal[1];
+            data[offset++] = vertexNormal[2];
+
+            const vertexColor = colors?.[index] ? resolveColor(colors[index]) : undefined;
+
+            if (vertexColor) {
+                data[offset++] = vertexColor[0] / 255;
+                data[offset++] = vertexColor[1] / 255;
+                data[offset++] = vertexColor[2] / 255;
+                data[offset++] = vertexColor[3] * baseA;
+            } else {
+                data[offset++] = baseR;
+                data[offset++] = baseG;
+                data[offset++] = baseB;
+                data[offset++] = baseA;
+            }
         }
     }
 

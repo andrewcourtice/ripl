@@ -9,6 +9,11 @@ import type {
 } from '../core/shape';
 
 import {
+    vec3Add,
+    vec3Normalize,
+} from '../math/vector';
+
+import {
     TAU,
 } from '@ripl/core';
 
@@ -80,8 +85,13 @@ export class Cone extends Shape3D<ConeState> {
             const baseB: Vector3 = [Math.cos(a2) * radius, -halfH, Math.sin(a2) * radius];
 
             // Side triangle
+            const slope = radius / (this.height || 1);
+            const normalA = vec3Normalize([Math.cos(a1), slope, Math.sin(a1)]);
+            const normalB = vec3Normalize([Math.cos(a2), slope, Math.sin(a2)]);
+
             faces.push({
                 vertices: [apex, baseB, baseA],
+                normals: [vec3Normalize(vec3Add(normalA, normalB)), normalB, normalA],
             });
 
             // Base cap

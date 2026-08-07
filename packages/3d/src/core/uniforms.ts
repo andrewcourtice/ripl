@@ -247,6 +247,101 @@ export function packSceneUniform(target: Float32Array, input: SceneUniformInput)
     return target;
 }
 
+/** Numeric discriminators for each material side, shared by the packer and the shader. */
+export const MATERIAL_SIDE_CODE = {
+    /** Draw both facings. */
+    double: 0,
+    /** Draw only faces wound counter-clockwise towards the camera. */
+    front: 1,
+    /** Draw only faces wound away from the camera. */
+    back: 2,
+} as const;
+
+/** The per-model fields, in declaration order. */
+export const MODEL_UNIFORM_FIELDS: UniformField[] = [
+    {
+        name: 'modelMatrix',
+        type: 'mat4x4f',
+        offset: 0,
+        size: 16,
+    },
+    {
+        name: 'normalMatrix',
+        type: 'mat4x4f',
+        offset: 16,
+        size: 16,
+    },
+    {
+        name: 'specular',
+        type: 'vec4f',
+        offset: 32,
+        size: 4,
+    },
+    {
+        name: 'emissive',
+        type: 'vec4f',
+        offset: 36,
+        size: 4,
+    },
+    {
+        name: 'params',
+        type: 'vec4f',
+        offset: 40,
+        size: 4,
+    },
+];
+
+/** Floats occupied by the whole model uniform. */
+export const MODEL_UNIFORM_FLOATS = 44;
+
+/** Size in bytes of the model uniform buffer. */
+export const MODEL_UNIFORM_BYTES = MODEL_UNIFORM_FLOATS * 4;
+
+/** Everything the per-model uniform needs, independent of any particular backend. */
+export interface ModelUniformInput {
+    /** The mesh's model matrix. */
+    modelMatrix: ArrayLike<number>;
+    /** The mesh's normal matrix. */
+    normalMatrix: ArrayLike<number>;
+    /** The specular highlight colour, in unit RGB. */
+    specular: ColorUnitRGB;
+    /** The Blinn-Phong specular exponent. */
+    shininess: number;
+    /** Light the surface emits, in unit RGB. */
+    emissive: ColorUnitRGB;
+    /** The material side, one of {@link MATERIAL_SIDE_CODE}. */
+    side: number;
+}
+
+/**
+ * Writes the per-model uniform into a `Float32Array` laid out per {@link MODEL_UNIFORM_FIELDS}.
+ *
+ * @param target - The scratch array to write into; must hold at least {@link MODEL_UNIFORM_FLOATS}.
+ * @param input - The mesh state to pack.
+ * @returns `target`, for convenience.
+ */
+export function packModelUniform(target: Float32Array, input: ModelUniformInput): Float32Array {
+    target.set(input.modelMatrix as ArrayLike<number> & Iterable<number>, 0);
+    target.set(input.normalMatrix as ArrayLike<number> & Iterable<number>, 16);
+
+    target[32] = input.specular[0];
+    target[33] = input.specular[1];
+    target[34] = input.specular[2];
+    target[35] = input.shininess;
+
+    target[36] = input.emissive[0];
+    target[37] = input.emissive[1];
+    target[38] = input.emissive[2];
+    target[39] = 0;
+
+    target[40] = input.side;
+    target[41] = 0;
+    target[42] = 0;
+    target[43] = 0;
+
+    return target;
+}
+
 function renderStruct(name: string, fields: UniformField[]): string {
     const members = fields.map(field => `    ${field.name}: ${field.type},`).join('\n');
 
@@ -263,3 +358,6 @@ export const SCENE_UNIFORM_WGSL = [
     renderStruct('Light', LIGHT_UNIFORM_FIELDS),
     renderStruct('Uniforms', SCENE_UNIFORM_FIELDS),
 ].join('\n\n');
+
+/** The WGSL declaration of the per-model uniform, generated from {@link MODEL_UNIFORM_FIELDS}. */
+export const MODEL_UNIFORM_WGSL = renderStruct('ModelUniforms', MODEL_UNIFORM_FIELDS);

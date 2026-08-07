@@ -9,6 +9,10 @@ import type {
 } from '../core/shape';
 
 import {
+    vec3Scale,
+} from '../math/vector';
+
+import {
     TAU,
 } from '@ripl/core';
 
@@ -84,17 +88,11 @@ export class Sphere extends Shape3D<SphereState> {
                 const p11 = sphereVertex(radius, phi2, theta2);
 
                 if (ring === 0) {
-                    faces.push({
-                        vertices: [p00, p11, p01],
-                    });
+                    faces.push(sphereFace([p00, p11, p01], radius));
                 } else if (ring === rings - 1) {
-                    faces.push({
-                        vertices: [p00, p10, p11],
-                    });
+                    faces.push(sphereFace([p00, p10, p11], radius));
                 } else {
-                    faces.push({
-                        vertices: [p00, p10, p11, p01],
-                    });
+                    faces.push(sphereFace([p00, p10, p11, p01], radius));
                 }
             }
         }
@@ -102,6 +100,15 @@ export class Sphere extends Shape3D<SphereState> {
         return faces;
     }
 
+}
+
+// Every point on a sphere centred at the origin has its position as its outward normal, so the
+// smooth normals come free rather than needing an averaging pass over adjacent faces.
+function sphereFace(vertices: Vector3[], radius: number): Face3D {
+    return {
+        vertices,
+        normals: vertices.map(vertex => vec3Scale(vertex, 1 / (radius || 1))),
+    };
 }
 
 function sphereVertex(radius: number, phi: number, theta: number): Vector3 {

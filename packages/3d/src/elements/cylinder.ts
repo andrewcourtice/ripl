@@ -9,6 +9,10 @@ import type {
 } from '../core/shape';
 
 import {
+    vec3Normalize,
+} from '../math/vector';
+
+import {
     TAU,
 } from '@ripl/core';
 
@@ -94,8 +98,12 @@ export class Cylinder extends Shape3D<CylinderState> {
             const botB: Vector3 = [Math.cos(a2) * rBot, -halfH, Math.sin(a2) * rBot];
 
             // Side face
+            const normalA = sideNormal(a1, rTop, rBot, this.height);
+            const normalB = sideNormal(a2, rTop, rBot, this.height);
+
             faces.push({
                 vertices: [topA, topB, botB, botA],
+                normals: [normalA, normalB, normalB, normalA],
             });
 
             // Top cap
@@ -118,6 +126,14 @@ export class Cylinder extends Shape3D<CylinderState> {
         return faces;
     }
 
+}
+
+// The side of a tapered cylinder is a cone frustum, so its normal tilts by the slope of the taper
+// rather than pointing straight out — a radial normal would light a cone-like cylinder as a tube.
+function sideNormal(angle: number, radiusTop: number, radiusBottom: number, height: number): Vector3 {
+    const slope = (radiusBottom - radiusTop) / (height || 1);
+
+    return vec3Normalize([Math.cos(angle), slope, Math.sin(angle)]);
 }
 
 /** Factory function that creates a new `Cylinder` instance. */

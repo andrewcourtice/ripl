@@ -25,6 +25,10 @@ import type {
 } from './shading';
 
 import type {
+    ResolvedMaterial,
+} from './material';
+
+import type {
     ProjectedFace3D,
     ProjectedFaceState3D,
 } from './shape';
@@ -101,6 +105,8 @@ export interface MeshSubmission {
     modelMatrix: Matrix4;
     /** The matrix transforming surface normals into world space. */
     normalMatrix: Matrix4;
+    /** The resolved material the mesh is shaded with. */
+    material: ResolvedMaterial;
 }
 
 /** Options for the 3D rendering context, extending the base context options with camera parameters. */
@@ -645,12 +651,14 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
         ctx.closePath();
 
-        if (face.fillColor !== applied.fill) {
-            ctx.fillStyle = face.fillColor;
-            applied.fill = face.fillColor;
-        }
+        if (face.fillColor) {
+            if (face.fillColor !== applied.fill) {
+                ctx.fillStyle = face.fillColor;
+                applied.fill = face.fillColor;
+            }
 
-        ctx.fill();
+            ctx.fill();
+        }
 
         if (!face.strokeStyle) {
             return;
