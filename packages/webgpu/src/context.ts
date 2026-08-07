@@ -13,6 +13,7 @@ import type {
 
 import {
     Context3D,
+    packSceneUniform,
 } from '@ripl/3d';
 
 import type {
@@ -335,17 +336,14 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        // Write scene uniforms (reused scratch array; writeBuffer copies at call time)
-        const uniformData = this._sceneUniformData;
-        uniformData.set(this.viewProjectionMatrix, 0);
+        // Reused scratch array; writeBuffer copies at call time.
+        packSceneUniform(this._sceneUniformData, {
+            viewProjectionMatrix: this.viewProjectionMatrix,
+            cameraPosition: this.cameraPosition,
+            lights: this.resolveLights(),
+        });
 
-        const lightDir = this.getLightDirectionForRender();
-        uniformData[16] = lightDir[0];
-        uniformData[17] = lightDir[1];
-        uniformData[18] = lightDir[2];
-        uniformData[19] = 0.3; // ambient
-
-        device.queue.writeBuffer(this._sceneUniformBuffer, 0, uniformData);
+        device.queue.writeBuffer(this._sceneUniformBuffer, 0, this._sceneUniformData);
 
         // Flush geometry
         const flushResult = this._geometryManager.flush();

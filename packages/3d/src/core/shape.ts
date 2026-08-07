@@ -15,6 +15,7 @@ import {
     mat4TransformPoint,
     mat4Translate,
     vec3Normalize,
+    vec3Sub,
     vec3TriangleNormal,
 } from '../math';
 
@@ -25,9 +26,11 @@ import type {
 } from '../math';
 
 import {
-    computeFaceBrightness,
+    composeSurfaceColor,
     computeFaceNormal,
-    shadeFaceColor,
+    createSurfaceIllumination,
+    PLAIN_SURFACE,
+    shadeSurface,
 } from './shading';
 
 import {
@@ -386,7 +389,10 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     // any shape that is not a closed, consistently wound solid. The cost is that every face of a
     // closed shape is filled, and with `fill` alpha below 1 the hidden ones bleed through.
     private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
-        const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
+        const lights = context.resolveLights();
+        const surface = PLAIN_SURFACE;
+        const illumination = createSurfaceIllumination();
+        const cameraPosition = context.cameraPosition;
 
         // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
         const state = context.captureFaceState(this.getWorldTransform());
@@ -402,8 +408,17 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const normal = face.normal
                 ? vec3Normalize(mat4TransformDirection(matrix, face.normal))
                 : computeFaceNormal(transformed);
-            const brightness = computeFaceBrightness(normal, normalizedLight, true);
-            const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
+            const centroid = faceCentroid(transformed);
+            const fillColor = baseRGBA
+                ? composeSurfaceColor(baseRGBA, shadeSurface(
+                    normal,
+                    centroid,
+                    vec3Normalize(vec3Sub(cameraPosition, centroid)),
+                    surface,
+                    lights,
+                    illumination
+                ))
+                : baseFillStyle;
             const points = transformed.map(vertex => context.project(vertex));
             const depth = numberSum(points, p => p[2]) / points.length;
 
@@ -546,6 +561,24 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             : isAnyIntersecting();
     }
 
+}
+
+// The CPU painter fills a flat polygon, so the whole face is shaded from its centroid. Positional
+// lights need a point to measure distance from, and the centroid is the only one a flat fill has.
+function faceCentroid(vertices: Vector3[]): Vector3 {
+    let cx = 0;
+    let cy = 0;
+    let cz = 0;
+
+    for (const vertex of vertices) {
+        cx += vertex[0];
+        cy += vertex[1];
+        cz += vertex[2];
+    }
+
+    const count = vertices.length || 1;
+
+    return [cx / count, cy / count, cz / count];
 }
 
 function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {

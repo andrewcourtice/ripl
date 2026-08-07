@@ -13,14 +13,19 @@ import {
     VERTEX_STRIDE,
 } from '../src/pipeline';
 
+import {
+    SCENE_UNIFORM_BYTES,
+} from '@ripl/3d';
+
 describe('Pipeline constants', () => {
 
     test('VERTEX_STRIDE is 40 bytes (10 floats × 4)', () => {
         expect(VERTEX_STRIDE).toBe(10 * 4);
     });
 
-    test('SCENE_UNIFORM_SIZE is 80 bytes (mat4 + vec3 + f32, aligned)', () => {
-        expect(SCENE_UNIFORM_SIZE).toBe(80);
+    test('SCENE_UNIFORM_SIZE matches the shared layout descriptor', () => {
+        expect(SCENE_UNIFORM_SIZE).toBe(SCENE_UNIFORM_BYTES);
+        expect(SCENE_UNIFORM_SIZE % 16).toBe(0);
     });
 
     test('MODEL_UNIFORM_SIZE is 128 bytes (2 × mat4)', () => {

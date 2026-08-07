@@ -3,11 +3,15 @@ import {
     VERTEX_SHADER,
 } from './shaders';
 
+import {
+    SCENE_UNIFORM_BYTES,
+} from '@ripl/3d';
+
 /** Byte stride for a single vertex: position(3) + normal(3) + color(4) = 10 floats × 4 bytes. */
 export const VERTEX_STRIDE = 10 * 4;
 
-/** Size in bytes of the scene uniform buffer: mat4(64) + vec3(12) + f32(4) = 80 bytes, aligned to 16 = 80. */
-export const SCENE_UNIFORM_SIZE = 80;
+/** Size in bytes of the scene uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
+export const SCENE_UNIFORM_SIZE = SCENE_UNIFORM_BYTES;
 
 /** Size in bytes of the model uniform buffer: mat4(64) + mat4(64) = 128 bytes. */
 export const MODEL_UNIFORM_SIZE = 128;
