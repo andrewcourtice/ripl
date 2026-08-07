@@ -92,7 +92,7 @@ In Node, `@ripl/node` supplies the stdout-backed adapter (`createTerminalOutput(
 The optional `logicalWidth`/`logicalHeight` options let you author in CSS-pixel coordinates; the context scales and letterboxes that space into the character grid, so the chart renders proportionally in any terminal size.
 
 > [!WARNING]
-> The terminal context is a pure rasterizer: pointer events and hit-testing, gradients, images, and transforms are not supported. Interactive features (tooltips, hover highlights, crosshair) are inert there, and charts render best with `animation: false`.
+> The terminal context is a pure rasterizer: gradients and images are not supported, and it has no pointer input of its own, so interactive features (tooltips, hover highlights, crosshair) are inert unless the host feeds it pointer coordinates. Transforms, clipping and hit-testing *are* supported. Charts render best with `animation: false`.
 
 For the full terminal context reference, see the [Terminal context docs](/docs/core/contexts/terminal).
 

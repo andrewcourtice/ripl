@@ -13,14 +13,18 @@ import type {
 } from '../src/rasterizer';
 
 import type {
+    TerminalColor,
+} from '../src/color';
+
+import type {
     TerminalOutput,
 } from '../src/output';
 
 /** A pixel handed to the rasterizer: `[x, y, color]`. */
-export type SpyPixel = [number, number, string];
+export type SpyPixel = [number, number, TerminalColor];
 
 /** A glyph handed to the rasterizer: `[col, row, char, color]`. */
-export type SpyChar = [number, number, string, string];
+export type SpyChar = [number, number, string, TerminalColor];
 
 /** A {@link Rasterizer} that records everything drawn into it, for asserting on paint decisions. */
 export interface SpyRasterizer extends Rasterizer {
@@ -50,14 +54,16 @@ export function createSpyRasterizer(cols: number, rows: number): SpyRasterizer {
         get pixelHeight() {
             return currentRows * BRAILLE_CELL_HEIGHT;
         },
+        cellWidth: BRAILLE_CELL_WIDTH,
+        cellHeight: BRAILLE_CELL_HEIGHT,
         resize(nextCols: number, nextRows: number) {
             currentCols = nextCols;
             currentRows = nextRows;
         },
-        setPixel(x: number, y: number, color: string) {
+        setPixel(x: number, y: number, color: TerminalColor) {
             pixels.push([x, y, color]);
         },
-        setChar(col: number, row: number, char: string, color: string) {
+        setChar(col: number, row: number, char: string, color: TerminalColor) {
             chars.push([col, row, char, color]);
         },
         clear() {

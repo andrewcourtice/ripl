@@ -4,7 +4,7 @@ outline: "deep"
 
 # Terminal Context
 
-The **Terminal context** renders elements to a character-based terminal using Unicode braille patterns (U+2800–U+28FF). Each terminal cell encodes a 2×4 grid of sub-pixel dots, giving 8× the resolution of plain text. It supports ANSI truecolor for full-color output.
+The **Terminal context** renders elements to a character-based terminal using Unicode braille patterns (U+2800–U+28FF). Each terminal cell encodes a 2×4 grid of sub-pixel dots, giving 8× the resolution of plain text. It supports ANSI truecolor for full-color output, honors affine transforms and clipping, and composites overlapping shapes in an RGBA framebuffer.
 
 ## Demo
 
@@ -121,23 +121,40 @@ The default `BrailleRasterizer` can be swapped for alternative character sets by
 interface Rasterizer {
     readonly pixelWidth: number;
     readonly pixelHeight: number;
+    readonly cellWidth: number;
+    readonly cellHeight: number;
     resize(cols: number, rows: number): void;
-    setPixel(x: number, y: number, color: string): void;
-    setChar(col: number, row: number, char: string, color: string): void;
+    setPixel(x: number, y: number, color: TerminalColor): void;
+    setChar(col: number, row: number, char: string, color: TerminalColor): void;
     clear(): void;
     serialize(): string;
+    toImageData(): ImageData;
 }
 ```
 
+A `TerminalColor` is an `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground.
+`cellWidth`/`cellHeight` describe the rasterizer's cell geometry; text placement reads them, so a
+non-braille cell size positions text correctly.
+
 Pass a custom rasterizer via the `rasterizer` option when creating a context.
+
+## Transforms
+
+Element and group transforms are honored. Geometry is mapped through the full affine matrix, so a
+rotated marker draws rotated and a translated group draws where the transform puts it.
+
+Text is the one place a terminal cannot follow exactly: a glyph fills a whole cell and cannot itself
+be rotated. A rotated run instead advances along whichever of eight compass directions the transform
+is nearest, so a quarter-turn axis title reads down the side of a chart rather than across it.
 
 ## Limitations
 
-- **No interaction**: terminal contexts do not support pointer events or hit testing
-- **No gradients**: CSS gradient strings are not supported; use solid colors
+- **No gradients**: a cell cannot interpolate, so a gradient or pattern paints as its first
+  non-transparent color
 - **No image drawing**: `drawImage` is a no-op
 - **Monospace text**: text is placed at character-grid positions; font metrics are approximate
-- **No transforms**: `rotate`, `scale`, `translate` are currently no-ops
+- **No pointer source**: hit testing works, but `@ripl/terminal` has no pointer input of its own — a
+  host that has one (xterm.js in a browser) drives `Context.hitTest` itself
 - **Resolution**: limited by braille dot density (2×4 per cell)
 
 ## When to Use Terminal

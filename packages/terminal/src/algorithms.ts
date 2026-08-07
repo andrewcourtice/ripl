@@ -183,13 +183,31 @@ function quadBezierAt(t: number, p0: number, p1: number, p2: number): number {
 }
 
 /** Rasterizes a polyline by drawing a line between each consecutive pair of points. */
-function rasterizePolyline(points: Vertex[], plot: PixelCallback): void {
+export function rasterizePolyline(points: Vertex[], plot: PixelCallback): void {
     for (let i = 1; i < points.length; i++) {
         const prev = points[i - 1];
         const next = points[i];
 
         rasterizeLine(prev.x, prev.y, next.x, next.y, plot);
     }
+}
+
+/**
+ * Rasterizes a closed polygon outline, joining the last point back to the first. Used for shapes
+ * whose axis-aligned form has a dedicated rasterizer but whose transformed form does not — a
+ * transformed rect is a parallelogram, not a rect.
+ */
+export function rasterizePolygon(points: Vertex[], plot: PixelCallback): void {
+    if (points.length < 2) {
+        return;
+    }
+
+    rasterizePolyline(points, plot);
+
+    const first = points[0];
+    const last = points[points.length - 1];
+
+    rasterizeLine(last.x, last.y, first.x, first.y, plot);
 }
 
 /** Samples a cubic bezier curve into a polyline of points (inclusive of both endpoints). */
@@ -277,32 +295,63 @@ function estimateBezierSteps(
     return Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
 }
 
-/** Samples an arc from startAngle to endAngle into a polyline of points (inclusive of both endpoints). */
+/**
+ * Estimates a reasonable number of line segments for an arc of the given raster-space radius.
+ *
+ * @param radius - The arc's radius, in raster pixels.
+ * @param sweep - The angle the arc sweeps through, in radians.
+ * @returns The number of segments to sample the arc with.
+ */
+export function estimateArcSteps(radius: number, sweep: number): number {
+    return Math.max(8, Math.ceil(Math.abs(sweep) * Math.abs(radius) / 2));
+}
+
+/**
+ * Resolves an arc's signed sweep, wrapping the end angle by a full turn when the requested
+ * direction contradicts the angles as given.
+ *
+ * @param startAngle - Angle the sweep starts at, in radians.
+ * @param endAngle - Angle the sweep ends at, in radians.
+ * @param counterclockwise - Whether the sweep runs counterclockwise.
+ * @returns The signed sweep, in radians.
+ */
+export function normalizeArcSweep(startAngle: number, endAngle: number, counterclockwise: boolean): number {
+    if (counterclockwise && endAngle > startAngle) {
+        return endAngle - TAU - startAngle;
+    }
+
+    if (!counterclockwise && endAngle < startAngle) {
+        return endAngle + TAU - startAngle;
+    }
+
+    return endAngle - startAngle;
+}
+
+/**
+ * Samples an arc from startAngle to endAngle into a polyline of points (inclusive of both endpoints).
+ *
+ * Pass `steps` when the sampled points are about to be transformed into a different space: the
+ * default count is derived from `radius`, so sampling in one space and rasterizing in a larger one
+ * would under-segment the curve.
+ */
 export function flattenArc(
     cx: number, cy: number,
     radius: number,
     startAngle: number, endAngle: number,
-    counterclockwise: boolean
+    counterclockwise: boolean,
+    steps?: number
 ): Vertex[] {
     const start = startAngle;
-
-    let end = endAngle;
-
-    if (counterclockwise && end > start) {
-        end -= TAU;
-    } else if (!counterclockwise && end < start) {
-        end += TAU;
-    }
-
-    const angleDiff = Math.abs(end - start);
-    const steps = Math.max(8, Math.ceil(angleDiff * radius / 2));
+    const sweep = normalizeArcSweep(startAngle, endAngle, counterclockwise);
+    const end = start + sweep;
+    const segments = steps ?? estimateArcSteps(radius, sweep);
     const points: Vertex[] = [{
         x: cx + radius * Math.cos(start),
         y: cy + radius * Math.sin(start),
     }];
 
-    for (let i = 1; i <= steps; i++) {
-        const angle = start + (end - start) * (i / steps);
+    for (let i = 1; i <= segments; i++) {
+        const angle = start + (end - start) * (i / segments);
 
         points.push({
             x: cx + radius * Math.cos(angle),
@@ -330,6 +379,35 @@ function isFullSweep(startAngle: number, endAngle: number): boolean {
 }
 
 /**
+ * Estimates a reasonable number of line segments for an ellipse of the given raster-space radii.
+ *
+ * @param rx - Radius along the ellipse's own x axis, in raster pixels.
+ * @param ry - Radius along the ellipse's own y axis, in raster pixels.
+ * @param sweep - The angle the ellipse sweeps through, in radians.
+ * @returns The number of segments to sample the ellipse with.
+ */
+export function estimateEllipseSteps(rx: number, ry: number, sweep: number): number {
+    return Math.max(16, Math.ceil(Math.abs(sweep) * Math.max(Math.abs(rx), Math.abs(ry)) / 2));
+}
+
+/**
+ * Resolves an ellipse's signed sweep. A full turn is reported as a whole turn regardless of
+ * direction, matching how {@link flattenEllipse} closes the curve implicitly.
+ *
+ * @param startAngle - Angle the sweep starts at, in radians.
+ * @param endAngle - Angle the sweep ends at, in radians.
+ * @param counterclockwise - Whether the sweep runs counterclockwise.
+ * @returns The signed sweep, in radians.
+ */
+export function normalizeEllipseSweep(startAngle: number, endAngle: number, counterclockwise: boolean): number {
+    if (isFullSweep(startAngle, endAngle)) {
+        return TAU;
+    }
+
+    return normalizeArcSweep(startAngle, endAngle, counterclockwise);
+}
+
+/**
  * Samples an ellipse outline into a polyline of points.
  *
  * @param cx - X coordinate of the ellipse center.
@@ -340,6 +418,8 @@ function isFullSweep(startAngle: number, endAngle: number): boolean {
  * @param startAngle - Angle the sweep starts at, in radians.
  * @param endAngle - Angle the sweep ends at, in radians.
  * @param counterclockwise - Whether the sweep runs counterclockwise.
+ * @param steps - Segment count to sample with. Pass it when the sampled points are about to be
+ * transformed into a larger space, which the radius-derived default would under-segment for.
  * @returns The sampled points. A full sweep omits the duplicate closing point (the curve is closed
  * implicitly); a partial sweep includes both endpoints, so filling it closes the segment with a chord
  * exactly as canvas does.
@@ -350,28 +430,19 @@ export function flattenEllipse(
     rotation: number = 0,
     startAngle: number = 0,
     endAngle: number = TAU,
-    counterclockwise: boolean = false
+    counterclockwise: boolean = false,
+    steps?: number
 ): Vertex[] {
     const full = isFullSweep(startAngle, endAngle);
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
-
-    let end = endAngle;
-
-    if (!full && counterclockwise && end > startAngle) {
-        end -= TAU;
-    } else if (!full && !counterclockwise && end < startAngle) {
-        end += TAU;
-    }
-
-    const sweep = full ? TAU : end - startAngle;
-    const radius = Math.max(Math.abs(rx), Math.abs(ry));
-    const steps = Math.max(16, Math.ceil(Math.abs(sweep) * radius / 2));
-    const count = full ? steps : steps + 1;
+    const sweep = normalizeEllipseSweep(startAngle, endAngle, counterclockwise);
+    const segments = steps ?? estimateEllipseSteps(rx, ry, sweep);
+    const count = full ? segments : segments + 1;
     const points: Vertex[] = [];
 
     for (let i = 0; i < count; i++) {
-        const angle = startAngle + sweep * (i / steps);
+        const angle = startAngle + sweep * (i / segments);
         const ax = rx * Math.cos(angle);
         const ay = ry * Math.sin(angle);
 
