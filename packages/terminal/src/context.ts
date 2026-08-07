@@ -2,6 +2,11 @@ import {
     Context,
     ContextText,
     dataURLToBlob,
+    matrixIdentity,
+    matrixMultiply,
+    matrixRotate,
+    matrixScale,
+    matrixTranslate,
     scaleContinuous,
 } from '@ripl/core';
 
@@ -10,37 +15,28 @@ import type {
     ContextExport,
     ContextFactory,
     ContextOptions,
+    ContextPath,
     FillRule,
+    Matrix,
     TextOptions,
 } from '@ripl/core';
 
 import {
     ANSI_RESET,
-    colorToAnsiFg,
+    resolveTerminalPaint,
+} from './color';
+
+import type {
+    TerminalColor,
 } from './color';
 
 import {
     TerminalPath,
 } from './path';
 
-import type {
-    TerminalPathCommandType,
-} from './path';
-
 import {
     dashPixels,
     fillPolygon,
-    flattenArc,
-    flattenCubicBezier,
-    flattenEllipse,
-    flattenQuadBezier,
-    rasterizeArc,
-    rasterizeCircle,
-    rasterizeCubicBezier,
-    rasterizeEllipse,
-    rasterizeLine,
-    rasterizeQuadBezier,
-    rasterizeRect,
     thickenPixels,
 } from './algorithms';
 
@@ -49,13 +45,47 @@ import type {
     Vertex,
 } from './algorithms';
 
+import {
+    TERMINAL_COMMAND_HANDLERS,
+} from './commands';
+
+import type {
+    ContourContext,
+    RasterContext,
+} from './commands';
+
+import {
+    createTerminalTransform,
+    letterboxMatrix,
+} from './transform';
+
+import type {
+    TerminalTransform,
+} from './transform';
+
+import {
+    layoutGlyphRun,
+} from './text';
+
+import {
+    clipPixels,
+    createClipMask,
+} from './clip';
+
+import type {
+    ClipMask,
+} from './clip';
+
+import {
+    isPointInContours,
+    isPointOnContours,
+} from './hit';
+
 import type {
     Rasterizer,
 } from './rasterizer';
 
 import {
-    BRAILLE_CELL_HEIGHT,
-    BRAILLE_CELL_WIDTH,
     BrailleRasterizer,
 } from './rasterizer';
 
@@ -83,154 +113,8 @@ export interface TerminalContextOptions extends ContextOptions {
     logicalHeight?: number;
 }
 
-/** Coordinate mapping shared by both command passes: points via `sx`/`sy`, radii via `s`. */
-interface TerminalCommandScale {
-    sx(value: number): number;
-    sy(value: number): number;
-    s: number;
-}
-
-/** Contour-building state passed to a command's `toContour` handler. */
-interface ContourContext extends TerminalCommandScale {
-    contours: Vertex[][];
-    flush(): void;
-    append(point: Vertex): void;
-}
-
-/** Rasterization state passed to a command's `rasterize` handler. */
-interface RasterContext extends TerminalCommandScale {
-    plot: PixelCallback;
-}
-
-/** A path command's two rendering passes: contour flattening (for fills) and outline rasterization. */
-interface TerminalCommandHandler {
-    toContour(context: ContourContext, args: number[]): void;
-    rasterize(context: RasterContext, args: number[]): void;
-}
-
-/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
-const TEXT_ALIGN_FACTORS: Record<string, number> = {
-    left: 0,
-    start: 0,
-    center: 0.5,
-    right: 1,
-    end: 1,
-};
-
-/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
-const TEXT_BASELINE_FACTORS: Record<string, number> = {
-    top: 0,
-    hanging: 0,
-    middle: 0.5,
-    alphabetic: 1,
-    ideographic: 1,
-    bottom: 1,
-};
-
-/**
- * Dispatch table keyed by path command type, replacing the parallel `switch` statements in
- * {@link TerminalContext.buildContours} and {@link TerminalContext.executeCommands}.
- */
-const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommandHandler> = {
-    moveTo: {
-        toContour({ sx, sy, flush, append }, args) {
-            flush();
-            append({
-                x: sx(args[0]),
-                y: sy(args[1]),
-            });
-        },
-        rasterize() {
-            // No pixels to draw for moveTo.
-        },
-    },
-    lineTo: {
-        toContour({ sx, sy, append }, args) {
-            append({
-                x: sx(args[0]),
-                y: sy(args[1]),
-            });
-            append({
-                x: sx(args[2]),
-                y: sy(args[3]),
-            });
-        },
-        rasterize({ sx, sy, plot }, args) {
-            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-        },
-    },
-    arc: {
-        toContour({ sx, sy, s, append }, args) {
-            flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
-        },
-        rasterize({ sx, sy, s, plot }, args) {
-            if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
-                rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
-            } else {
-                rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
-            }
-        },
-    },
-    ellipse: {
-        toContour({ sx, sy, s, contours, flush }, args) {
-            flush();
-            contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, args[4], args[5], args[6], !!args[7]));
-        },
-        rasterize({ sx, sy, s, plot }, args) {
-            rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, args[4], args[5], args[6], !!args[7], plot);
-        },
-    },
-    bezierCurveTo: {
-        toContour({ sx, sy, append }, args) {
-            flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
-        },
-        rasterize({ sx, sy, plot }, args) {
-            rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
-        },
-    },
-    quadraticCurveTo: {
-        toContour({ sx, sy, append }, args) {
-            flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
-        },
-        rasterize({ sx, sy, plot }, args) {
-            rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
-        },
-    },
-    rect: {
-        toContour({ sx, sy, s, contours, flush }, args) {
-            flush();
-            contours.push([
-                {
-                    x: sx(args[0]),
-                    y: sy(args[1]),
-                },
-                {
-                    x: sx(args[0]) + args[2] * s,
-                    y: sy(args[1]),
-                },
-                {
-                    x: sx(args[0]) + args[2] * s,
-                    y: sy(args[1]) + args[3] * s,
-                },
-                {
-                    x: sx(args[0]),
-                    y: sy(args[1]) + args[3] * s,
-                },
-            ]);
-        },
-        rasterize({ sx, sy, s, plot }, args) {
-            rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
-        },
-    },
-    closePath: {
-        toContour({ flush }) {
-            flush();
-        },
-        rasterize({ sx, sy, plot }, args) {
-            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-        },
-    },
-};
+/** Maps logical coordinates onto themselves, for the passes that stay in logical space. */
+const IDENTITY_TRANSFORM = createTerminalTransform(matrixIdentity());
 
 /**
  * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
@@ -263,34 +147,30 @@ function terminalSnapshotToURL(imageData: ImageData, text: string): string {
  * Terminal rendering context that rasterizes Ripl elements into character-based output via a
  * `TerminalOutput` adapter.
  *
- * A character grid cannot honor the full canvas contract, so the following constraints apply:
+ * Affine transforms, clipping and hit testing are all honored. A character grid still cannot honor
+ * the whole canvas contract, so the following constraints apply:
  *
  * - **Text metrics are approximate**: every glyph occupies exactly one terminal cell, so
  *   `measureText` reports one cell of width per character regardless of font, and the `font`
  *   state (family, size, weight) has no visual effect.
+ * - **Rotated text runs along the grid**: a glyph fills a whole cell and cannot itself be rotated,
+ *   so a rotated run advances along whichever of eight compass directions the transform is nearest.
+ *   A quarter-turn axis title reads down the side of a chart; it is not drawn sideways.
+ * - **Stroke width approximates a non-uniform scale**: a round pen is genuinely elliptical under
+ *   one, so `lineWidth` maps through the geometric mean of the transform's scale factors.
  * - **Fills use the even-odd rule only**: the scanline rasterizer ignores a `nonzero` fill rule
- *   (see {@link TerminalContext.applyFill}).
- * - **No hit testing**: `isPointInPath`/`isPointInStroke` always return `false`, so pointer
- *   events never match elements.
- * - **Affine transforms are discarded**: `rotate`/`scale`/`translate`/`setTransform`/`transform`
- *   are inherited as no-ops from {@link Context}, so an element or group transform has *no* effect
- *   — it is dropped, not approximated. The context's own `scaleX`/`scaleY` mapping is a single
- *   global letterbox and cannot stand in for per-element placement. Concretely: a rotated axis
- *   title draws horizontally across the plot, a diamond marker rotated by π/4 draws as an
- *   unrotated square, and a translated element draws at its untranslated coordinates. A
- *   non-identity transform warns once per context.
- * - **Alpha is approximated by attenuation**: a cell is lit or unlit, so `opacity` and a paint's
- *   own alpha darken the emitted color toward an assumed dark background. Zero alpha draws
- *   nothing at all.
- * - **Stroke geometry is 1 pixel wide**: `lineWidth`, `lineCap`, `lineJoin` and `miterLimit` have
- *   no expressible form in a 1-bit raster and are ignored. `lineDash`/`lineDashOffset` *are*
- *   honored, with arc length approximated by plotted-pixel count.
+ *   (see {@link TerminalContext.applyFill}). Hit testing honors both.
+ * - **Stroke joins and caps are always round**: `lineWidth` is honored by stamping a round brush
+ *   along the path, so `lineCap`, `lineJoin` and `miterLimit` have no effect.
+ *   `lineDash`/`lineDashOffset` *are* honored, with arc length approximated by plotted-pixel count.
+ * - **Gradients and patterns resolve to one color**: a cell cannot interpolate, so a multi-color
+ *   paint paints as its first non-transparent color.
  * - **No shadows, filters, or compositing**: `shadow*`, `filter` and `globalCompositeOperation`
  *   are ignored. `globalCompositeOperation: 'destination-out'` warns, because canvas *erases*
  *   where the terminal *draws* — the output is inverted rather than merely degraded.
  * - **Text on a path is drawn straight**: `ContextText.pathData`/`startOffset` are ignored and the
  *   run is laid out from its anchor along a straight line.
- * - **No clipping or images**: `applyClip` and `drawImage` are inherited as no-ops.
+ * - **No images**: `drawImage` is inherited as a no-op.
  */
 export class TerminalContext extends Context<Element> {
 
@@ -307,12 +187,17 @@ export class TerminalContext extends Context<Element> {
     private _rasterScale: number = 1;
     private _offsetX: number = 0;
     private _offsetY: number = 0;
+    private _matrix: Matrix = matrixIdentity();
+    private _matrixStack: Matrix[] = [];
+    private _clip: ClipMask | null = null;
+    private _clipStack: (ClipMask | null)[] = [];
 
     /**
-     * The terminal applies no transform when drawing, so a hit point is already in the space the
-     * element was drawn in and must not be mapped back through the element's world transform.
+     * A hit point arrives in logical space while a path's recorded commands are in the element's own
+     * local space, and no transform is in force by the time a hit test runs — so the point has to be
+     * mapped back through the element's world transform, as it is on canvas.
      */
-    public hitTestHonorsTransform = true;
+    public hitTestHonorsTransform = false;
 
     /** Terminal paths are inert command recorders, so a cached path stays valid across frames. */
     public get supportsPathCaching(): boolean {
@@ -365,9 +250,12 @@ export class TerminalContext extends Context<Element> {
         console.warn(message);
     }
 
-    /** Warns the first time a scene relies on a transform, which this backend discards entirely. */
-    private _warnTransformDropped(): void {
-        this._warnOnce('transform', 'TerminalContext: transforms are not supported and this one was discarded — the element renders untransformed. Position elements in absolute coordinates for terminal output.');
+    /**
+     * The mapping every drawing path goes through: the context's letterbox composed with whatever
+     * transform is currently in force.
+     */
+    private _renderTransform(): TerminalTransform {
+        return createTerminalTransform(letterboxMatrix(this._rasterScale, this._offsetX, this._offsetY), this._matrix);
     }
 
     /**
@@ -445,61 +333,82 @@ export class TerminalContext extends Context<Element> {
         this._rasterizer.clear();
     }
 
-    /** Resets the drawing state, the saved-state stack, and the character grid. */
+    /** Pushes the drawing state, the current transform, and the clip region onto the saved-state stack. */
+    public save(): void {
+        super.save();
+        this._matrixStack.push(this._matrix);
+        this._clipStack.push(this._clip);
+    }
+
+    /** Restores the drawing state, the transform, and the clip region saved most recently. */
+    public restore(): void {
+        // The base restore no-ops at depth zero, so popping unconditionally would discard live state.
+        if (this.saveDepth === 0) {
+            return;
+        }
+
+        super.restore();
+        this._matrix = this._matrixStack.pop() ?? matrixIdentity();
+        this._clip = this._clipStack.pop() ?? null;
+    }
+
+    /** Resets the drawing state, the saved-state stack, the transform, the clip region, and the character grid. */
     public reset(): void {
         super.reset();
+
+        this._matrix = matrixIdentity();
+        this._matrixStack = [];
+        this._clip = null;
+        this._clipStack = [];
+
         this._rasterizer.clear();
     }
 
-    /** Applies a rotation transformation. Discarded by this backend; warns once per context. */
+    /** Applies a rotation transformation, in radians. */
     public rotate(angle: number): void {
-        if (angle) {
-            this._warnTransformDropped();
-        }
+        this._matrix = matrixMultiply(this._matrix, matrixRotate(angle));
     }
 
-    /** Applies a scale transformation. Discarded by this backend; warns once per context. */
+    /** Applies a scale transformation with the given horizontal and vertical factors. */
     public scale(x: number, y: number): void {
-        if (x !== 1 || y !== 1) {
-            this._warnTransformDropped();
-        }
+        this._matrix = matrixMultiply(this._matrix, matrixScale(x, y));
     }
 
-    /** Applies a translation transformation. Discarded by this backend; warns once per context. */
+    /** Applies a translation transformation, in logical units. */
     public translate(x: number, y: number): void {
-        if (x || y) {
-            this._warnTransformDropped();
-        }
+        this._matrix = matrixMultiply(this._matrix, matrixTranslate(x, y));
     }
 
     /**
-     * Replaces the current transformation matrix. Discarded by this backend; warns once per context.
+     * Replaces the current transformation matrix.
+     *
+     * The matrix is in logical space, and this backend keeps its letterbox outside the transform, so
+     * the identity restores the context's own baseline with nothing to recompose underneath.
+     *
      * @param a Horizontal scaling.
      * @param b Vertical skewing.
      * @param c Horizontal skewing.
      * @param d Vertical scaling.
-     * @param e Horizontal translation.
-     * @param f Vertical translation.
+     * @param e Horizontal translation, in logical units.
+     * @param f Vertical translation, in logical units.
      */
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        if (a !== 1 || b || c || d !== 1 || e || f) {
-            this._warnTransformDropped();
-        }
+        this._matrix = [a, b, c, d, e, f];
     }
 
     /**
-     * Multiplies the current transformation matrix. Discarded by this backend; warns once per context.
+     * Multiplies the current transformation matrix by the given one.
      * @param a Horizontal scaling.
      * @param b Vertical skewing.
      * @param c Horizontal skewing.
      * @param d Vertical scaling.
-     * @param e Horizontal translation.
-     * @param f Vertical translation.
+     * @param e Horizontal translation, in logical units.
+     * @param f Vertical translation, in logical units.
      */
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        this.setTransform(a, b, c, d, e, f);
+        this._matrix = matrixMultiply(this._matrix, [a, b, c, d, e, f]);
     }
 
     /** Ends the render pass and, at the outermost depth, flushes the rasterized output to the terminal. */
@@ -529,7 +438,7 @@ export class TerminalContext extends Context<Element> {
     // `fillRule` is ignored: the braille scanline rasterizer implements only the even-odd rule.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: ContextElement, fillRule?: FillRule): void {
-        const color = colorToAnsiFg(this.fill, this.opacity);
+        const color = resolveTerminalPaint(this.fill, this.opacity);
 
         if (color === undefined) {
             return;
@@ -550,7 +459,7 @@ export class TerminalContext extends Context<Element> {
      * stroke color, since a character cell has no outline to trace.
      */
     public applyStroke(element: ContextElement): void {
-        const color = colorToAnsiFg(this.stroke, this.opacity);
+        const color = resolveTerminalPaint(this.stroke, this.opacity);
 
         if (color === undefined) {
             return;
@@ -565,11 +474,65 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
-    /** Measures text in logical units, sizing each glyph to one braille cell. */
+    /**
+     * Confines subsequent drawing to the given path, intersected with any clip already in force.
+     *
+     * @param path - The clip geometry.
+     * @param fillRule - Accepted for signature compatibility; the scanline rasterizer implements
+     * only the even-odd rule.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public applyClip(path: ContextPath, fillRule?: FillRule): void {
+        if (!(path instanceof TerminalPath)) {
+            return;
+        }
+
+        this._clip = createClipMask(
+            this._buildContours(path, this._renderTransform()),
+            this._rasterizer.pixelWidth,
+            this._rasterizer.pixelHeight,
+            this._clip
+        );
+    }
+
+    /**
+     * Tests whether a logical-space point falls inside the given path.
+     *
+     * @param path - The path to test against.
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @param fillRule - The fill rule to apply. Defaults to `nonzero`, as canvas does.
+     * @returns `true` when the point is inside the path.
+     */
+    public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
+        if (!(path instanceof TerminalPath)) {
+            return false;
+        }
+
+        return isPointInContours(this._buildContours(path, IDENTITY_TRANSFORM), x, y, fillRule);
+    }
+
+    /**
+     * Tests whether a logical-space point falls on the given path's stroke.
+     *
+     * @param path - The path to test against.
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @returns `true` when the point is on the stroke.
+     */
+    public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
+        if (!(path instanceof TerminalPath)) {
+            return false;
+        }
+
+        return isPointOnContours(this._buildContours(path, IDENTITY_TRANSFORM), x, y, this.lineWidth);
+    }
+
+    /** Measures text in logical units, sizing each glyph to one character cell. */
     public measureText(text: string): TextMetrics {
         // Report metrics in logical units so layout code sizes text consistently with its space.
-        const charWidth = BRAILLE_CELL_WIDTH / this._rasterScale;
-        const charHeight = BRAILLE_CELL_HEIGHT / this._rasterScale;
+        const charWidth = this._rasterizer.cellWidth / this._rasterScale;
+        const charHeight = this._rasterizer.cellHeight / this._rasterScale;
 
         return {
             width: text.length * charWidth,
@@ -615,7 +578,7 @@ export class TerminalContext extends Context<Element> {
 
     /** Restores the terminal's SGR and cursor state before tearing the context down. */
     public destroy(): void {
-        const rows = this._rasterizer.pixelHeight / BRAILLE_CELL_HEIGHT;
+        const rows = this._rasterizer.pixelHeight / this._rasterizer.cellHeight;
 
         this._output.write(`${ANSI_RESET}\x1b[?25h\x1b[${rows + 1};1H`);
 
@@ -627,37 +590,52 @@ export class TerminalContext extends Context<Element> {
         this._output.write(data);
     }
 
-    private _rasterizeText(text: ContextText, color: string): void {
-        const rasterizer = this._rasterizer;
-        const content = text.maxWidth
-            ? text.content.slice(0, Math.floor((text.maxWidth * this._rasterScale) / BRAILLE_CELL_WIDTH))
-            : text.content;
-
-        // Glyphs stay cell-sized, so approximate `textAlign`/`textBaseline` by shifting the anchor cell.
-        const alignFactor = TEXT_ALIGN_FACTORS[this.textAlign] ?? 0;
-        const baselineFactor = TEXT_BASELINE_FACTORS[this.textBaseline] ?? 1;
-
-        const col = Math.round(this.scaleX(text.x) / BRAILLE_CELL_WIDTH - content.length * alignFactor);
-        const row = Math.round(this.scaleY(text.y) / BRAILLE_CELL_HEIGHT - baselineFactor);
-
-        for (let i = 0; i < content.length; i++) {
-            rasterizer.setChar(col + i, row, content[i], color);
-        }
-    }
-
-    private _rasterizePath(path: TerminalPath, color: string, fill: boolean): void {
+    private _rasterizeText(text: ContextText, color: TerminalColor): void {
         const rasterizer = this._rasterizer;
 
-        const plot: PixelCallback = (x, y) => {
-            rasterizer.setPixel(x, y, color);
-        };
+        const run = layoutGlyphRun({
+            content: text.content,
+            x: text.x,
+            y: text.y,
+            maxWidth: text.maxWidth,
+            transform: this._renderTransform(),
+            cellWidth: rasterizer.cellWidth,
+            cellHeight: rasterizer.cellHeight,
+            textAlign: this.textAlign,
+            textBaseline: this.textBaseline,
+        });
 
-        if (fill) {
-            fillPolygon(this._buildContours(path), plot);
+        if (!run) {
             return;
         }
 
-        this._executeCommands(path, this._dashPlot(this._thickPlot(plot)));
+        for (let i = 0; i < run.content.length; i++) {
+            const col = run.col + run.stepCol * i;
+            const row = run.row + run.stepRow * i;
+
+            // A glyph fills a whole cell, so it is clipped on the cell's centre rather than per dot.
+            if (this._clip && !this._clip.contains(col * rasterizer.cellWidth + rasterizer.cellWidth / 2, row * rasterizer.cellHeight + rasterizer.cellHeight / 2)) {
+                continue;
+            }
+
+            rasterizer.setChar(col, row, run.content[i], color);
+        }
+    }
+
+    private _rasterizePath(path: TerminalPath, color: TerminalColor, fill: boolean): void {
+        const rasterizer = this._rasterizer;
+        const transform = this._renderTransform();
+
+        const plot = clipPixels(this._clip, (x, y) => {
+            rasterizer.setPixel(x, y, color);
+        });
+
+        if (fill) {
+            fillPolygon(this._buildContours(path, transform), plot);
+            return;
+        }
+
+        this._executeCommands(path, this._dashPlot(this._thickPlot(plot, transform), transform), transform);
     }
 
     /**
@@ -665,16 +643,16 @@ export class TerminalContext extends Context<Element> {
      * pixels. Nested inside {@link TerminalContext._dashPlot} so the dash pattern still measures
      * arc length along the centreline rather than across the brush.
      */
-    private _thickPlot(plot: PixelCallback): PixelCallback {
+    private _thickPlot(plot: PixelCallback, transform: TerminalTransform): PixelCallback {
         // A brush wider than the grid is stamped entirely out of bounds, so cap the wasted work.
         const limit = Math.max(this._rasterizer.pixelWidth, this._rasterizer.pixelHeight);
-        const width = Math.min(this.lineWidth * this._rasterScale, limit);
+        const width = Math.min(transform.scalar(this.lineWidth), limit);
 
         return thickenPixels(width, plot);
     }
 
     /** Gates a plot callback on the current dash pattern, mapped from logical units into raster pixels. */
-    private _dashPlot(plot: PixelCallback): PixelCallback {
+    private _dashPlot(plot: PixelCallback, transform: TerminalTransform): PixelCallback {
         const pattern = this.lineDash;
 
         if (!pattern.length) {
@@ -682,8 +660,8 @@ export class TerminalContext extends Context<Element> {
         }
 
         return dashPixels(
-            pattern.map(length => length * this._rasterScale),
-            this.lineDashOffset * this._rasterScale,
+            pattern.map(length => transform.scalar(length)),
+            transform.scalar(this.lineDashOffset),
             plot
         );
     }
@@ -698,11 +676,13 @@ export class TerminalContext extends Context<Element> {
     }
 
     /**
-     * Flattens the path's commands into closed contours in raster space (following canvas subpath
-     * semantics) so the interior can be filled with the even-odd rule. Mirrors the coordinate mapping
-     * used by {@link executeCommands}: points via `scaleX`/`scaleY`, radii via `rasterScale`.
+     * Flattens the path's commands into closed contours (following canvas subpath semantics) so the
+     * interior can be filled with the even-odd rule.
+     *
+     * The mapping is a parameter rather than the context's own, because hit testing flattens the
+     * same path in logical space while drawing flattens it into the raster.
      */
-    private _buildContours(path: TerminalPath): Vertex[][] {
+    private _buildContours(path: TerminalPath, transform: TerminalTransform): Vertex[][] {
         const contours: Vertex[][] = [];
 
         let current: Vertex[] = [];
@@ -724,9 +704,7 @@ export class TerminalContext extends Context<Element> {
         };
 
         const context: ContourContext = {
-            sx: this.scaleX,
-            sy: this.scaleY,
-            s: this._rasterScale,
+            transform,
             contours,
             flush,
             append,
@@ -741,12 +719,9 @@ export class TerminalContext extends Context<Element> {
         return contours;
     }
 
-    private _executeCommands(path: TerminalPath, plot: PixelCallback): void {
-        // Map logical coordinates into the raster (identity when no logical size is configured).
+    private _executeCommands(path: TerminalPath, plot: PixelCallback, transform: TerminalTransform): void {
         const context: RasterContext = {
-            sx: this.scaleX,
-            sy: this.scaleY,
-            s: this._rasterScale,
+            transform,
             plot,
         };
 

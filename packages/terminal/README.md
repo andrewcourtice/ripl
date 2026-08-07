@@ -20,18 +20,31 @@ The terminal context is a rasterizer onto a character grid, so parts of the canv
 
 | Feature | Behavior |
 |---|---|
-| **Transforms** (`translate`/`rotate`/`scale`, and element/group transform state) | **Discarded.** Not approximated — an element renders at its untransformed coordinates. A rotated axis title draws horizontally across the plot; a marker rotated by π/4 draws unrotated. Warns once per context. |
-| **Hit testing** | Not supported. `isPointInPath`/`isPointInStroke` always return `false`, so pointer events never match elements. |
-| **Clipping and images** | `applyClip` and `drawImage` are no-ops. |
+| **Transforms** (`translate`/`rotate`/`scale`, and element/group transform state) | **Honored.** Geometry is mapped through the full affine matrix, so a rotated marker draws rotated and a translated group draws where the transform puts it. |
+| **Rotated text** | A glyph fills a whole cell and cannot itself be rotated, so a rotated run advances along whichever of eight compass directions the transform is nearest. A quarter-turn axis title reads *down the side* of a chart. |
+| **Stroke width under a transform** | A round pen is genuinely elliptical under a non-uniform scale, so `lineWidth` maps through the geometric mean of the transform's scale factors. |
+| **Clipping** | Honored. `applyClip` intersects with any clip already in force, so nested clips narrow rather than replace, and glyphs clip on their cell centre. |
+| **Hit testing** | Honored. `isPointInPath`/`isPointInStroke` test the path's flattened contours in logical space; both fill rules are supported. Note that `@ripl/terminal` has no pointer source of its own — a host that has one (xterm.js in a browser) drives `Context.hitTest` itself. |
+| **Images** | `drawImage` is a no-op. |
 | **Text metrics** | One terminal cell per glyph, regardless of `font`. The `font` state has no visual effect. |
 | **Text on a path** | Drawn straight from the anchor; `pathData`/`startOffset` are ignored. |
-| **Fill rule** | Even-odd only; a `nonzero` fill rule is ignored. |
+| **Fill rule** | Even-odd only when rasterizing; a `nonzero` fill rule is ignored there, though hit testing honors both. |
 | **Gradients and patterns** | Resolved to a single color — the gradient's first stop, or the pattern's foreground. |
-| **Opacity and alpha** | A cell is lit or unlit, so `opacity` and a paint's own alpha darken the color toward an assumed dark background. Zero alpha draws nothing. |
+| **Opacity and alpha** | Pixels are composited source-over in an RGBA framebuffer, so overlapping translucent shapes blend correctly. A cell emits one color — the alpha-weighted mean of its lit dots — and residual alpha composites against an assumed background (opaque black by default, configurable per rasterizer). Zero alpha draws nothing. |
 | **Stroke geometry** | `lineWidth` **is** honored, by stamping a round brush along the path. The brush centres on a dot, so thickness quantises to an odd number of dots — widths of 1, 2, 3, 4 and 5 give strokes 1, 3, 3, 5 and 5 dots across. `lineCap`, `lineJoin` and `miterLimit` are ignored: the brush makes every cap and join round. `lineDash`/`lineDashOffset` **are** honored, with arc length measured along the centreline and approximated by plotted-pixel count. |
 | **Shadows, filters, compositing** | Ignored. `globalCompositeOperation: 'destination-out'` warns: canvas *erases* where the terminal *draws*, so that geometry renders inverted rather than merely degraded. |
 
-Charts that rely on transforms (rotated axis titles, rotated symbols) render legibly but not identically to canvas.
+## Migrating a custom rasterizer
+
+The `Rasterizer` interface changed so that pixels can be composited rather than overwritten. A custom implementation needs three changes:
+
+- `setPixel(x, y, color)` and `setChar(col, row, char, color)` now take a `TerminalColor` — an
+  `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground — instead of a pre-baked
+  ANSI escape string. Alpha is no longer folded into the color before it arrives.
+- Add `cellWidth` and `cellHeight`. Text placement and teardown read them instead of assuming
+  braille's 2×4 cell, so a rasterizer with different cell geometry now positions text correctly.
+- A cell can only emit one color; deriving it from the pixels it covers is the implementation's job.
+  `BrailleRasterizer` uses the alpha-weighted mean of its lit dots.
 
 ## Usage
 

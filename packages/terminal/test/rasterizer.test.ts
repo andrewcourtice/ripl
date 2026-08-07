@@ -35,7 +35,7 @@ describe('BrailleRasterizer', () => {
     test('Should set a pixel and produce a non-empty braille character', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
 
         const output = rasterizer.serialize();
 
@@ -58,8 +58,8 @@ describe('BrailleRasterizer', () => {
     test('Should ignore non-finite pixels', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        expect(() => rasterizer.setPixel(NaN, 0, '')).not.toThrow();
-        expect(() => rasterizer.setPixel(0, Infinity, '')).not.toThrow();
+        expect(() => rasterizer.setPixel(NaN, 0, null)).not.toThrow();
+        expect(() => rasterizer.setPixel(0, Infinity, null)).not.toThrow();
         expect(rasterizer.serialize()).not.toMatch(/[⠁-⣿]/);
     });
 
@@ -76,7 +76,7 @@ describe('BrailleRasterizer', () => {
     test('Should map pixel (0,0) to top-left braille dot (bit 0)', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, '');
+        rasterizer.setPixel(0, 0, null);
 
         const output = rasterizer.serialize();
 
@@ -87,7 +87,7 @@ describe('BrailleRasterizer', () => {
     test('Should map pixel (1,0) to bit 3 of braille cell', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(1, 0, '');
+        rasterizer.setPixel(1, 0, null);
 
         const output = rasterizer.serialize();
 
@@ -98,8 +98,8 @@ describe('BrailleRasterizer', () => {
     test('Should combine multiple dots in the same cell', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, ''); // bit 0 = 0x01
-        rasterizer.setPixel(1, 0, ''); // bit 3 = 0x08
+        rasterizer.setPixel(0, 0, null); // bit 0 = 0x01
+        rasterizer.setPixel(1, 0, null); // bit 3 = 0x08
 
         const output = rasterizer.serialize();
 
@@ -122,10 +122,10 @@ describe('BrailleRasterizer', () => {
     test('Should ignore out-of-bounds chars', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setChar(-1, 0, 'X', '');
-        rasterizer.setChar(0, -1, 'X', '');
-        rasterizer.setChar(100, 0, 'X', '');
-        rasterizer.setChar(0, 100, 'X', '');
+        rasterizer.setChar(-1, 0, 'X', null);
+        rasterizer.setChar(0, -1, 'X', null);
+        rasterizer.setChar(100, 0, 'X', null);
+        rasterizer.setChar(0, 100, 'X', null);
 
         const output = rasterizer.serialize();
 
@@ -135,8 +135,8 @@ describe('BrailleRasterizer', () => {
     test('setChar should take priority over dots in the same cell', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, '');
-        rasterizer.setChar(0, 0, 'A', '');
+        rasterizer.setPixel(0, 0, null);
+        rasterizer.setChar(0, 0, 'A', null);
 
         const output = rasterizer.serialize();
 
@@ -148,8 +148,8 @@ describe('BrailleRasterizer', () => {
     test('Should reset all state after clear', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
-        rasterizer.setChar(1, 0, 'X', '');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
+        rasterizer.setChar(1, 0, 'X', null);
         rasterizer.clear();
 
         const output = rasterizer.serialize();
@@ -163,7 +163,7 @@ describe('BrailleRasterizer', () => {
     test('Should update dimensions and clear state on resize', () => {
         const rasterizer = new BrailleRasterizer(10, 5);
 
-        rasterizer.setPixel(0, 0, '');
+        rasterizer.setPixel(0, 0, null);
         rasterizer.resize(20, 10);
 
         expect(rasterizer.pixelWidth).toBe(20 * BRAILLE_CELL_WIDTH);
@@ -188,7 +188,7 @@ describe('BrailleRasterizer', () => {
     test('Should emit ANSI reset after colored cells', () => {
         const rasterizer = new BrailleRasterizer(5, 1);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
 
         const output = rasterizer.serialize();
 
@@ -200,8 +200,8 @@ describe('BrailleRasterizer', () => {
     test('Should reset before an uncolored character following a colored cell', () => {
         const rasterizer = new BrailleRasterizer(4, 1);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
-        rasterizer.setChar(1, 0, 'X', '');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
+        rasterizer.setChar(1, 0, 'X', null);
 
         expect(rasterizer.serialize()).toContain(`\x1b[38;2;255;0;0m⠁${ANSI_RESET}X`);
     });
@@ -209,8 +209,8 @@ describe('BrailleRasterizer', () => {
     test('Should reset before an uncolored braille cell following a colored one', () => {
         const rasterizer = new BrailleRasterizer(4, 1);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
-        rasterizer.setPixel(2, 0, '');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
+        rasterizer.setPixel(2, 0, null);
 
         expect(rasterizer.serialize()).toContain(`\x1b[38;2;255;0;0m⠁${ANSI_RESET}⠁`);
     });
@@ -218,9 +218,9 @@ describe('BrailleRasterizer', () => {
     test('Should never leave a color open past the cells it applies to', () => {
         const rasterizer = new BrailleRasterizer(4, 2);
 
-        rasterizer.setPixel(0, 0, '\x1b[38;2;255;0;0m');
-        rasterizer.setChar(3, 0, 'X', '');
-        rasterizer.setChar(0, 1, 'Y', '\x1b[38;2;0;255;0m');
+        rasterizer.setPixel(0, 0, [255, 0, 0, 1]);
+        rasterizer.setChar(3, 0, 'X', null);
+        rasterizer.setChar(0, 1, 'Y', [0, 255, 0, 1]);
 
         const output = rasterizer.serialize();
         const trailing = output.slice(output.lastIndexOf('\x1b[38;2;0;255;0m'));
@@ -264,13 +264,11 @@ describe('BrailleRasterizer', () => {
 
     test('Should include color escape before colored braille character', () => {
         const rasterizer = new BrailleRasterizer(3, 1);
-        const color = '\x1b[38;2;0;255;0m';
-
-        rasterizer.setPixel(0, 0, color);
+        rasterizer.setPixel(0, 0, [0, 255, 0, 1]);
 
         const output = rasterizer.serialize();
 
-        expect(output).toContain(color);
+        expect(output).toContain('\x1b[38;2;0;255;0m');
     });
 
 });

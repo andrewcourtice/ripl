@@ -224,14 +224,33 @@ describe('TerminalPath', () => {
 
     // ── roundRect ─────────────────────────────────────────────────
 
-    test('roundRect should delegate to rect', () => {
+    test('roundRect should trace each corner as a quarter arc', () => {
         const path = new TerminalPath();
 
         path.roundRect(5, 10, 100, 50, [8, 8, 8, 8]);
 
+        expect(path.commands.filter(command => command.type === 'arc')).toHaveLength(4);
+        expect(path.commands.filter(command => command.type === 'lineTo')).toHaveLength(4);
+        expect(path.commands.at(-1)?.type).toBe('closePath');
+    });
+
+    test('roundRect should delegate to rect when every radius is zero', () => {
+        const path = new TerminalPath();
+
+        path.roundRect(5, 10, 100, 50, [0, 0, 0, 0]);
+
         expect(path.commands).toHaveLength(1);
         expect(path.commands[0].type).toBe('rect');
         expect(path.commands[0].args).toEqual([5, 10, 100, 50]);
+    });
+
+    // A radius wider than half the shorter side would make opposite corners overlap.
+    test('roundRect should clamp a radius to half the shorter side', () => {
+        const path = new TerminalPath();
+
+        path.roundRect(0, 0, 100, 20, [40, 40, 40, 40]);
+
+        expect(path.commands.filter(command => command.type === 'arc').every(command => command.args[2] === 10)).toBe(true);
     });
 
     // ── arcTo ─────────────────────────────────────────────────────
