@@ -4,7 +4,7 @@ title: Raycasting
 
 # Raycasting
 
-**Raycasting** casts a ray into the scene and reports what it meets — the shape, the exact point, the face, its normal and its texture coordinate. It walks the real triangles, so it is accurate where a flattened hit test is not.
+**Raycasting** casts a ray into the scene and reports what it meets — the shape, the exact point, the face, its normal and its texture coordinate. Pointer events raycast too, but only ever answer *which* shape; this is how you get the rest.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -74,11 +74,11 @@ const hit = torus.raycast(ray, { backFaces: false });
 
 ## Why not just use pointer events
 
-3D shapes support the ordinary pointer events, and for most interactions those are the right tool — they are cheaper and need no wiring.
+3D shapes support the ordinary pointer events, and for most interactions those are the right tool — they need no wiring, and they raycast too: a pointer over the hole of a torus passes through it, and where two parts overlap the nearer one wins.
 
-But a shape's hit test flattens it to its projected silhouette. For a convex shape that is indistinguishable from the truth. For a torus it is not: the silhouette is a filled disc, so a pointer over the hole registers as a hit on the ring.
+What they cannot give you is the hit itself. `mouseenter` says *that* a shape was hit, not where, on which face, at what texture coordinate, or how far along the ray. Reach for `raycast` when you need any of that — placing a marker on a surface, reading a value off a plot, aligning something to the normal at the hit — or when you want to query the scene without a pointer at all.
 
-Raycasting walks the triangles, so it passes cleanly through the hole. Reach for it when you need the exact point, the surface normal, the texture coordinate, or accuracy through concave geometry.
+Two things pointer events do not honour, because they have no meaning for a solid: `pointerEvents: 'fill'` and `'stroke'` are both treated as `'all'`. `'none'` still opts a shape out entirely.
 
 <script lang="ts" setup>
 import {

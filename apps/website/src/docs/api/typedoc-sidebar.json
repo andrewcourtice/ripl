@@ -271,6 +271,10 @@
             "link": "/docs/api/@ripl/3d/interfaces/TextureOptions.md"
           },
           {
+            "text": "TexturePattern",
+            "link": "/docs/api/@ripl/3d/interfaces/TexturePattern.md"
+          },
+          {
             "text": "TorusState",
             "link": "/docs/api/@ripl/3d/interfaces/TorusState.md"
           },
@@ -359,6 +363,10 @@
           {
             "text": "TextureFilter",
             "link": "/docs/api/@ripl/3d/type-aliases/TextureFilter.md"
+          },
+          {
+            "text": "TexturePatternRepetition",
+            "link": "/docs/api/@ripl/3d/type-aliases/TexturePatternRepetition.md"
           },
           {
             "text": "TextureSource",
@@ -797,8 +805,20 @@
             "link": "/docs/api/@ripl/3d/functions/rayHitBarycentric.md"
           },
           {
+            "text": "rayIntersectsBox",
+            "link": "/docs/api/@ripl/3d/functions/rayIntersectsBox.md"
+          },
+          {
             "text": "rayIntersectTriangle",
             "link": "/docs/api/@ripl/3d/functions/rayIntersectTriangle.md"
+          },
+          {
+            "text": "rayIntersectTriangleBuffer",
+            "link": "/docs/api/@ripl/3d/functions/rayIntersectTriangleBuffer.md"
+          },
+          {
+            "text": "releaseTexturePatternCache",
+            "link": "/docs/api/@ripl/3d/functions/releaseTexturePatternCache.md"
           },
           {
             "text": "resolveColor",
@@ -825,6 +845,10 @@
             "link": "/docs/api/@ripl/3d/functions/resolveMaterial.md"
           },
           {
+            "text": "resolveTexturePattern",
+            "link": "/docs/api/@ripl/3d/functions/resolveTexturePattern.md"
+          },
+          {
             "text": "rgbaToUnit",
             "link": "/docs/api/@ripl/3d/functions/rgbaToUnit.md"
           },
@@ -847,6 +871,10 @@
           {
             "text": "tessellateParametric",
             "link": "/docs/api/@ripl/3d/functions/tessellateParametric.md"
+          },
+          {
+            "text": "texturePatternRepetition",
+            "link": "/docs/api/@ripl/3d/functions/texturePatternRepetition.md"
           },
           {
             "text": "textureSourceHeight",

@@ -14,7 +14,9 @@ import {
     mat4TransformPoint,
     rayAt,
     rayHitBarycentric,
+    rayIntersectsBox,
     rayIntersectTriangle,
+    rayIntersectTriangleBuffer,
     vec3Length,
     vec3Normalize,
     vec3Sub,
@@ -62,6 +64,8 @@ import {
 
 import {
     Box,
+    matrixApplyToPoint,
+    matrixInvert,
     Shape,
 } from '@ripl/core';
 
@@ -69,7 +73,7 @@ import type {
     BaseElementState,
     ColorRGBA,
     Context,
-    ContextPath,
+    Element,
     ElementInterpolationState,
     ElementInterpolators,
     ElementIntersectionOptions,
@@ -233,16 +237,6 @@ export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial
 const DEFAULT_MESH_COLOR = resolveColor(DEFAULT_SURFACE_COLOR)!;
 
 /**
- * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
- * to testing both fill and stroke.
- */
-const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPath, x: number, y: number) => boolean> = {
-    none: () => false,
-    stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
-    fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
-};
-
-/**
  * Floats per interleaved vertex: position(3), normal(3), colour(4), uv(2).
  *
  * The GPU backend derives its vertex stride from this, so the two cannot disagree about the layout
@@ -253,18 +247,28 @@ export const VERTEX_FLOATS = 12;
 /** Base class for 3D shapes, handling model transforms, face projection, shading, and hit testing. */
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
-    protected hitPath?: ContextPath;
-
     private _depth = 0;
     private _getCachedFaces: CachedFunction<() => Face3D[]>;
     private _hitFaceCount = 0;
     private _hitFaceOffsets = new Uint32Array(0);
 
-    // Reused across frames and overwritten in place, so a frame no one hit-tests allocates nothing.
-    private _hitPoints = new Float32Array(0);
+    // World-space vertices of the faces this frame actually drew, three floats each. The painter
+    // already transforms every vertex and used to throw the result away; retaining it is what makes
+    // a per-pointer-move raycast affordable. Reused across frames and overwritten in place.
+    private _hitVertices = new Float64Array(0);
 
-    // Not `_hitFaceCount > 0`: a rendered shape with no faces hit-tests as an empty path, not a box.
+    // The world-space AABB of the same vertices, as [minX, minY, minZ, maxX, maxY, maxZ]. Free to
+    // accumulate while writing them, and it rejects most of an assembly before any triangle work.
+    private _hitBounds = new Float64Array(6);
+
+    // Not `_hitFaceCount > 0`: a rendered shape with no faces hit-tests as empty, not as a box.
     private _hasHitGeometry = false;
+
+    // One raycast per pointer position: `hitTest` asks whether each candidate is hit and then asks
+    // again for the distance to rank it, and a pointer move is one hit test per animation frame.
+    private _hitQueryX = NaN;
+    private _hitQueryY = NaN;
+    private _hitQueryDistance = -1;
 
     /** The X position of the shape's origin in world space. */
     public get x() {
@@ -378,9 +382,10 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     /**
-     * The stacking order, derived from the depth of the shape's **nearest projected face** — the
-     * one the painter's algorithm draws last, so a hit test resolves to the shape whose geometry is
-     * actually on top. Not settable on 3D shapes.
+     * The stacking order, derived from the depth of the shape's **nearest projected face** — the one
+     * the painter's algorithm draws last. Not settable on 3D shapes, and not what hit testing ranks
+     * by: {@link Context3D} casts a ray and ranks by the distance to the geometry itself, which no
+     * per-shape scalar can reproduce for interleaved parts.
      */
     public override get zIndex(): number {
         return -this._depth;
@@ -486,8 +491,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     /**
      * Intersects a world-space ray with this shape's geometry.
      *
-     * Unlike {@link intersectsWith}, which tests a flattened silhouette and so reports a hit through
-     * the hole of a torus, this walks the actual triangles.
+     * {@link intersectsWith} answers only whether the pointer is over the shape; this reports where
+     * the ray met it, on which face, and at what texture coordinate. It also works before the shape
+     * has rendered, and against any ray rather than one through a pointer position.
      *
      * @param ray - The world-space ray to cast.
      * @param options - Whether to accept back-facing hits.
@@ -594,9 +600,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const material = resolveMaterial(this.material, this.fill);
             const matrix = this.getModelMatrix();
 
-            // The projection moves every frame, so any built path is dropped and rebuilt on demand.
-            this.hitPath = undefined;
+            // The camera moves every frame, so the retained hit geometry and any memoized pointer
+            // query belong to the frame that wrote them and nothing later.
             this._hasHitGeometry = false;
+            this._hitQueryX = NaN;
+            this._hitQueryY = NaN;
 
             if (context.renderStrategy !== 'gpu') {
                 return this._renderCPU(context, faces, material, matrix);
@@ -610,7 +618,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 material,
             });
 
-            this._renderGPU(context, faces, matrix);
+            this._renderGPU(context, faces, material, matrix);
         });
     }
 
@@ -637,9 +645,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const transformed = this.transformVertices(face.vertices, matrix);
             const points = transformed.map(vertex => context.project(vertex));
 
+            // A culled face is neither painted nor hit: what the pointer resolves to is what the
+            // frame drew, so the two cannot disagree about which side of a mesh is there.
             if (!materialDrawsFace(material.side, projectedSignedArea(points))) {
-                hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
-
                 continue;
             }
 
@@ -676,15 +684,17 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 uvs: face.uvs,
             });
 
-            hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
+            hitCursor = this._writeFaceHitVertices(hitFace++, hitCursor, transformed);
         }
 
+        this._hitFaceCount = hitFace;
         this._hasHitGeometry = true;
         this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
-    // Redundant-looking on a backend that holds the geometry, but it is the only source of `_depth`.
-    private _renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
+    // Redundant-looking on a backend that holds the geometry, but it is the only source of `_depth`
+    // and of the world-space vertices a pointer raycast reads.
+    private _renderGPU(context: Context3D, faces: Face3D[], material: ResolvedMaterial, matrix: Matrix4): void {
         this._resetHitGeometry(faces);
 
         let nearestDepth = Infinity;
@@ -695,37 +705,57 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const transformed = this.transformVertices(face.vertices, matrix);
             const points = transformed.map(vertex => context.project(vertex));
 
+            if (!materialDrawsFace(material.side, projectedSignedArea(points))) {
+                continue;
+            }
+
             nearestDepth = Math.min(nearestDepth, numberSum(points, p => p[2]) / points.length);
 
-            hitCursor = this._writeFaceHitPoints(hitFace++, hitCursor, points);
+            hitCursor = this._writeFaceHitVertices(hitFace++, hitCursor, transformed);
         }
 
+        this._hitFaceCount = hitFace;
         this._hasHitGeometry = true;
         this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
     private _resetHitGeometry(faces: Face3D[]): void {
-        const coordinateCount = numberSum(faces, face => face.vertices.length) * 2;
+        const componentCount = numberSum(faces, face => face.vertices.length) * 3;
 
-        if (this._hitPoints.length < coordinateCount) {
-            this._hitPoints = new Float32Array(coordinateCount);
+        if (this._hitVertices.length < componentCount) {
+            this._hitVertices = new Float64Array(componentCount);
         }
 
         if (this._hitFaceOffsets.length < faces.length + 1) {
             this._hitFaceOffsets = new Uint32Array(faces.length + 1);
         }
 
-        this._hitFaceCount = faces.length;
+        this._hitFaceCount = 0;
+        this._hitBounds[0] = Infinity;
+        this._hitBounds[1] = Infinity;
+        this._hitBounds[2] = Infinity;
+        this._hitBounds[3] = -Infinity;
+        this._hitBounds[4] = -Infinity;
+        this._hitBounds[5] = -Infinity;
     }
 
-    private _writeFaceHitPoints(faceIndex: number, offset: number, points: ProjectedPoint[]): number {
-        const buffer = this._hitPoints;
+    private _writeFaceHitVertices(faceIndex: number, offset: number, vertices: Vector3[]): number {
+        const buffer = this._hitVertices;
+        const bounds = this._hitBounds;
 
         let cursor = offset;
 
-        for (const point of points) {
-            buffer[cursor++] = point[0];
-            buffer[cursor++] = point[1];
+        for (const vertex of vertices) {
+            buffer[cursor++] = vertex[0];
+            buffer[cursor++] = vertex[1];
+            buffer[cursor++] = vertex[2];
+
+            bounds[0] = Math.min(bounds[0], vertex[0]);
+            bounds[1] = Math.min(bounds[1], vertex[1]);
+            bounds[2] = Math.min(bounds[2], vertex[2]);
+            bounds[3] = Math.max(bounds[3], vertex[0]);
+            bounds[4] = Math.max(bounds[4], vertex[1]);
+            bounds[5] = Math.max(bounds[5], vertex[2]);
         }
 
         this._hitFaceOffsets[faceIndex] = offset;
@@ -734,74 +764,96 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return cursor;
     }
 
-    private _getHitPath(): ContextPath | undefined {
-        if (!this._hasHitGeometry || !this.context) {
-            return undefined;
+    // Fan-triangulated to match how the face was drawn, so a hit and a fill agree.
+    private _raycastHitGeometry(ray: Ray): number {
+        if (!rayIntersectsBox(ray, this._hitBounds)) {
+            return -1;
         }
 
-        return this.hitPath ??= this._buildHitPath(this.context);
-    }
-
-    private _buildHitPath(context: Context): ContextPath {
-        const hitPath = context.createPath(`${this.id}:hit`);
+        const vertices = this._hitVertices;
         const offsets = this._hitFaceOffsets;
 
-        for (let idx = 0; idx < this._hitFaceCount; idx++) {
-            this._traceFaceHitPath(hitPath, offsets[idx], offsets[idx + 1]);
+        let nearest = -1;
+
+        for (let face = 0; face < this._hitFaceCount; face++) {
+            const start = offsets[face];
+            const end = offsets[face + 1];
+
+            for (let corner = start + 3; corner + 6 <= end; corner += 3) {
+                const distance = rayIntersectTriangleBuffer(ray, vertices, start, corner, corner + 3);
+
+                if (distance >= 0 && (nearest < 0 || distance < nearest)) {
+                    nearest = distance;
+                }
+            }
         }
 
-        return hitPath;
-    }
-
-    private _traceFaceHitPath(hitPath: ContextPath, start: number, end: number): void {
-        const points = this._hitPoints;
-
-        hitPath.moveTo(points[start], points[start + 1]);
-
-        for (let idx = start + 2; idx < end; idx += 2) {
-            hitPath.lineTo(points[idx], points[idx + 1]);
-        }
-
-        hitPath.closePath();
+        return nearest;
     }
 
     /**
-     * Tests whether a point intersects this shape's projected silhouette.
+     * The distance along the pointer ray at which this shape is hit, or `null` when it is missed.
      *
-     * The hit path is traced from {@link Context3D.project}, which already emits logical
-     * coordinates, so the point needs no mapping — unlike {@link Shape2D}, whose path is local.
+     * {@link intersectsWith} can only answer whether a shape was hit, and a scene painted with a
+     * global depth sort needs to know which hit is nearest to say which shape the pointer is really
+     * on. {@link Context3D} ranks its hits with this; the result is memoized per pointer position,
+     * so asking twice costs one raycast.
+     *
+     * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left).
+     * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
+     * @returns The world-space distance to the nearest hit, or `null` when the shape is missed or has not rendered.
+     */
+    public raycastDistance(x: number, y: number): number | null {
+        const context = this.context;
+
+        if (!this._hasHitGeometry || !contextIsContext3D(context)) {
+            return null;
+        }
+
+        if (x !== this._hitQueryX || y !== this._hitQueryY) {
+            const [localX, localY] = this._toProjectionPoint(x, y);
+            const ray = context.raycast(localX, localY);
+
+            this._hitQueryX = x;
+            this._hitQueryY = y;
+            this._hitQueryDistance = ray ? this._raycastHitGeometry(ray) : -1;
+        }
+
+        return this._hitQueryDistance < 0 ? null : this._hitQueryDistance;
+    }
+
+    // The painter applies the element's 2D world transform on top of the projection, so a shape
+    // under a 2D group is painted somewhere the projection alone does not put it.
+    private _toProjectionPoint(x: number, y: number): [number, number] {
+        const worldTransform = (this as unknown as Element).getWorldTransform();
+        const inverse = worldTransform && matrixInvert(worldTransform);
+
+        return inverse ? matrixApplyToPoint(inverse, [x, y]) : [x, y];
+    }
+
+    /**
+     * Tests whether a point hits this shape, by casting the pointer ray through its triangles.
+     *
+     * A projected silhouette reports a hit anywhere inside a shape's outline — through the hole of a
+     * torus, between the blades of a fan, across the bore of a casing — so the geometry itself is
+     * what decides here. `pointerEvents: 'none'` still suppresses the hit; `'fill'` and `'stroke'`
+     * have no meaning for a solid and are treated as `'all'`.
      *
      * @param x - X coordinate in logical space (CSS pixels relative to the context's top-left), the same space pointer event payloads report.
      * @param y - Y coordinate in logical space (CSS pixels relative to the context's top-left).
      * @param options - Hit-testing options, such as whether the test originates from a pointer event.
-     * @returns Whether the point lies within the shape's projected faces, honoring its pointer-event region.
+     * @returns Whether the pointer ray meets the shape's geometry.
      */
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        const context = this.context;
-        const hitPath = this._getHitPath();
-
-        if (!context || !hitPath) {
+        if (!this._hasHitGeometry || !contextIsContext3D(this.context)) {
             return super.intersectsWith(x, y, options);
         }
 
-        const {
-            isPointer = false,
-        } = options || {};
-
-        const isAnyIntersecting = () => (
-            context.isPointInStroke(hitPath, x, y) ||
-            context.isPointInPath(hitPath, x, y)
-        );
-
-        if (!isPointer) {
-            return isAnyIntersecting();
+        if (options?.isPointer && this.pointerEvents === 'none') {
+            return false;
         }
 
-        const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
-
-        return hitTest
-            ? hitTest(context, hitPath, x, y)
-            : isAnyIntersecting();
+        return this.raycastDistance(x, y) !== null;
     }
 
 }

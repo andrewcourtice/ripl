@@ -162,11 +162,8 @@ describe('Raycasting', () => {
             expect(hit.face.vertices).toHaveLength(4);
         });
 
-        /*
-         * The 2D hit test flattens a shape to its projected silhouette, which reports a hit anywhere
-         * inside the torus outline — including straight through the hole. Walking the triangles is
-         * the whole point of raycasting.
-         */
+        // Walking the triangles is the whole point: any test that flattens a shape to its outline
+        // reports a hit straight through the hole.
         test('Should pass through the hole of a torus rather than hitting its silhouette', () => {
             const torus = createTorus({
                 radius: 2,

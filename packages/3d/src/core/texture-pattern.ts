@@ -152,8 +152,8 @@ function createTexturePattern(ctx: CanvasRenderingContext2D, texture: Texture): 
 }
 
 /**
- * Builds the repeating {@link CanvasPattern} that maps a texture across a surface, caching it per
- * context and texture version.
+ * Builds the repeating `CanvasPattern` that maps a texture across a surface, caching it per context
+ * and texture version.
  *
  * A pattern tiles infinitely, which is what makes a `repeat` above `1` cover the whole surface — a
  * single `drawImage` paints one tile and leaves the rest bare. It is also one fill per triangle

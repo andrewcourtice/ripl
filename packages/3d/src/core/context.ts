@@ -61,6 +61,10 @@ import type {
     Shape3D,
 } from './shape';
 
+import type {
+    RenderElement,
+} from '@ripl/core';
+
 import {
     mat4Identity,
     mat4Invert,
@@ -429,8 +433,9 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     /**
      * Casts a ray through a point on the surface and returns every 3D shape it meets.
      *
-     * Walks the actual triangles rather than the flattened silhouette {@link Element.intersectsWith}
-     * tests, so a ray through the hole of a torus passes cleanly through it.
+     * Reports the full intersection — point, face, normal and texture coordinate — where
+     * {@link hitTest} answers only which elements the pointer is over. It also ignores
+     * `pointerEvents` and whether a shape has any handlers, so it sees the whole scene.
      *
      * @param root - The element to search, typically the scene.
      * @param x - Screen-space x, in logical CSS pixels relative to the context's top-left.
@@ -456,6 +461,50 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         }
 
         return hits.sort((left, right) => left.distance - right.distance);
+    }
+
+    /**
+     * Tests which rendered elements the pointer is over, ranking 3D shapes by how near their
+     * geometry is rather than by paint order.
+     *
+     * The base class ranks by paint order, which for 2D is exactly right — the last thing painted is
+     * the thing on top. A 3D scene does not paint in element order: {@link CanvasContext3D.flushFaces}
+     * buffers the faces of every shape and depth-sorts them globally, so what you see is ordered by
+     * depth while what the base class hits is ordered by the position an element happened to take in
+     * the render stream. For an assembly of interleaved parts those two orders routinely disagree.
+     *
+     * 2D elements keep their paint order and their positions in the list, so a 2D element painted
+     * over a 3D one still wins: it flushed the face buffer, and paint order genuinely does decide
+     * there.
+     */
+    protected override hitTest(events: string[], x: number, y: number): RenderElement[] {
+        const hits = super.hitTest(events, x, y);
+
+        if (hits.length < 2) {
+            return hits;
+        }
+
+        const positions: number[] = [];
+        const shapes: Shape3D[] = [];
+
+        hits.forEach((element, index) => {
+            if (elementIsShape3D(element)) {
+                positions.push(index);
+                shapes.push(element);
+            }
+        });
+
+        if (shapes.length < 2) {
+            return hits;
+        }
+
+        // The distance is memoized per pointer position, so the comparator costs no extra raycasts.
+        shapes.sort((left, right) => (left.raycastDistance(x, y) ?? Infinity) - (right.raycastDistance(x, y) ?? Infinity));
+        positions.forEach((position, index) => {
+            hits[position] = shapes[index];
+        });
+
+        return hits;
     }
 
     /**
