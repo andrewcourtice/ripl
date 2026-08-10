@@ -44,7 +44,12 @@ The Canvas API is low-level: it has no concept of objects, hierarchy, or events.
 - **14 scale types** inspired by D3 (continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time), plus `scaleLog`/`scaleSqrt` shortcuts
 - **25 pre-built chart types** via `@ripl/charts`: line, bar, area, trend, scatter, histogram, box plot, stock (candlestick/OHLC), realtime, pie/donut, polar area, polar scatter, radial bar, radar, gauge, heatmap, treemap, sunburst, packed circle, sankey, chord, arc diagram, force-directed, funnel and gantt
 - **Built-in shape primitives**: arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
-- **3D primitives**: cube, sphere, cylinder, cone, plane, torus
+- **9 3D shapes**: cube, sphere, cylinder, cone, plane, torus, mesh (an explicit face list), parametric (tessellated from a function of two parameters), and bezier-surface (bicubic Bézier patches)
+- **5 light types**: ambient, hemisphere, directional, point, and spot, each with a `create*Light` factory; directional and spot lights are either fixed in world space or carried by the camera
+- **3D materials**: `color`, `opacity`, `emissive`/`emissiveIntensity`, Blinn-Phong `specular`/`shininess`, `side` (`front`/`back`/`double`), `wireframe`, `flatShading`, `vertexColors`, and a texture `map`
+- **Textures** with `clamp`/`repeat`/`mirror` wrapping, `nearest`/`linear` filtering, and a repeat/offset UV transform, sampled the same way by the Canvas and WebGPU backends
+- **Triangle raycasting** reporting the shape, world-space point, face, normal, and texture coordinate of every hit
+- **Fog**, linear or exponential, resolved term for term by both 3D backends
 - **Easing library** covering linear, quad, cubic, quart, quint, sine, exponential, circular, back, elastic, and bounce (in/out/inOut variants)
 - **Color utilities** for parsing, serialization, and color scales
 - **Math & geometry** helpers: degree/radian conversion, point operations, border radius normalization, polygon extrapolation
@@ -525,7 +530,7 @@ scale.bandwidth; // width of each band
 
 ## 3D Rendering
 
-`@ripl/3d` extends the Canvas context with perspective/orthographic projection, camera controls, and flat shading.
+`@ripl/3d` extends the Canvas context with perspective and orthographic projection, camera controls, lighting, materials, textures and fog.
 
 ```typescript
 import {
@@ -536,7 +541,9 @@ import {
 } from '@ripl/3d';
 ```
 
-Available 3D primitives: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`.
+Available 3D shapes: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`, `mesh` (an explicit face list), `parametric` (tessellated from a function of two parameters), and `bezier-surface` (bicubic Bézier patches). Every shape accepts a `Material` — color, opacity, emissive, Blinn-Phong specular, side, wireframe, flat shading, vertex colors and a texture map — and `Group3D` transforms a subtree as a unit.
+
+Scenes are lit by five light types (`createAmbientLight`, `createHemisphereLight`, `createDirectionalLight`, `createPointLight`, `createSpotLight`), with linear or exponential fog. `context.raycastAll(root, x, y)` casts a ray through a point on the surface and returns every hit nearest first, each carrying the shape, world-space point, face, normal and texture coordinate.
 
 Camera supports interactive zoom, pivot, and pan with configurable sensitivity. For hardware-accelerated rendering, `@ripl/webgpu` provides a drop-in WebGPU context with a real depth buffer, MSAA, and WGSL shaders; the same `Shape3D` elements work in both.
 

@@ -81,9 +81,15 @@ Ripl draws through a `Context` abstraction, so one scene renders anywhere the li
 
 ### 3D
 
-- **Six primitives** — cube, sphere, cylinder, cone, plane and torus. See [3D](/docs/3d/).
+- **Nine shapes** — cube, sphere, cylinder, cone, plane and torus, plus a [mesh](/docs/3d/shapes/mesh) from an explicit face list, a [parametric](/docs/3d/shapes/parametric) surface tessellated from a function of two parameters, and a [Bézier surface](/docs/3d/shapes/bezier-surface) from bicubic patches. See [3D](/docs/3d/).
+- **Five light types** — ambient, hemisphere, directional, point and spot, each with colour and intensity. Directional and spot lights are fixed in world space or locked to the camera; point and spot lights take a distance falloff and decay. See [Lighting](/docs/3d/essentials/lighting).
+- **Materials** — colour, opacity, emissive output, specular highlight and shininess, front, back or double-sided drawing, wireframe, flat shading and per-vertex colours. See [Materials](/docs/3d/essentials/materials).
+- **Textures** — image, canvas and bitmap sources mapped by UV, with clamp, repeat or mirror wrapping, nearest or linear filtering, and identical sampling on Canvas and WebGPU. See [Textures](/docs/3d/essentials/textures).
+- **Fog** — linear or exponential distance haze, resolved the same by both backends. See [Fog](/docs/3d/essentials/lighting#fog).
+- **Raycasting** — cast a ray into the scene and read back the shape it meets, the exact hit point, the face, its normal and its texture coordinate. See [Raycasting](/docs/3d/essentials/raycasting).
+- **3D groups** — `Group3D` positions, rotates and scales a subtree as a unit, composing into every shape beneath it.
 - **Camera** — perspective and orthographic projection, with orbit, pan and zoom interaction. See [Camera](/docs/3d/essentials/camera).
-- **Shading** — flat shading computed from face normals against a configurable light direction. See [Shading](/docs/3d/essentials/shading).
+- **Shading** — curved shapes shade smoothly from per-vertex normals; `flatShading` switches to one normal per face. See [Shading](/docs/3d/essentials/shading).
 - **Vector and matrix math** — the projection pipeline is exported, not hidden.
 
 ### Export

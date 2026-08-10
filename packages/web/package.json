@@ -2,6 +2,20 @@
     "name": "@ripl/web",
     "version": "1.2.0",
     "description": "Ripl for the web: re-exports core with Canvas as the default context",
+    "keywords": [
+        "ripl",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "zero-dependency",
+        "browser",
+        "canvas",
+        "drawing",
+        "charts",
+        "animation",
+        "rendering"
+    ],
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -24,8 +38,10 @@
     "sideEffects": true,
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andrewcourtice/ripl.git"
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "packages/web"
     },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",

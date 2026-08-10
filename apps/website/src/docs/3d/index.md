@@ -1,11 +1,13 @@
 ---
 title: Introduction
-description: "@ripl/3d adds 3D rendering to Ripl: six primitives (cube, sphere, cylinder, cone, plane, torus), an orbit camera, flat shading, and Canvas or WebGPU output."
+description: "@ripl/3d builds 3D scenes from nine shapes lit by five light types, with materials, textures, fog, raycasting and an orbit camera, on Canvas or WebGPU."
 ---
 
 # 3D
 
-The `@ripl/3d` package extends Ripl with 3D shape rendering projected onto a 2D canvas. It provides a `Context3D` (extending `CanvasContext`), a reactive camera system with orbit/pan/zoom interactions, six built-in primitives (Cube, Sphere, Cylinder, Cone, Plane, Torus), and flat shading utilities driven by configurable light direction. Because it builds on the core canvas context, you get Ripl's animation system, event handling, and scene management for free.
+The `@ripl/3d` package extends Ripl with 3D geometry projected onto a 2D canvas. It provides a `Context3D` (extending `CanvasContext`), a reactive camera with orbit, pan and zoom, and nine built-in shapes: cube, sphere, cylinder, cone, plane and torus, plus a [mesh](/docs/3d/shapes/mesh) built from an explicit face list, a [parametric](/docs/3d/shapes/parametric) surface tessellated from a function of two parameters, and a [Bézier surface](/docs/3d/shapes/bezier-surface) built from bicubic patches. Because it builds on the core canvas context, you get Ripl's animation system, event handling, and scene management for free.
+
+A scene carries five [light types](/docs/3d/essentials/lighting) — ambient, hemisphere, directional, point and spot — plus linear or exponential fog. Directional and spot lights are fixed in world space or locked to the camera. Surfaces take a [material](/docs/3d/essentials/materials) with colour, opacity, emissive and specular terms, wireframe, flat shading and per-vertex colours, and a [texture](/docs/3d/essentials/textures) mapped by UV. [Raycasting](/docs/3d/essentials/raycasting) reports the shape a screen point meets, the exact hit point, the face, its normal and its texture coordinate.
 
 Two backends draw the same `Shape3D` elements. `@ripl/3d` rasterizes them onto a 2D canvas, sorting faces with a painter's algorithm; [`@ripl/webgpu`](/docs/3d/contexts/webgpu) rasterizes them on the GPU with WGSL shaders, hardware depth testing, and 4× MSAA. Swapping between them is one import change.
 
@@ -51,7 +53,11 @@ renderer.render();
 
 - **Context3D**: extends `CanvasContext` with view/projection matrices and a `project()` method
 - **Camera**: reactive camera with orbit, pan, zoom, and microtask-batched updates
-- **Built-in Shapes**: Cube, Sphere, Cylinder, Cone, Plane, Torus
-- **Flat Shading**: automatic face shading based on normals and light direction, in world or camera light mode
+- **Built-in Shapes**: Cube, Sphere, Cylinder, Cone, Plane, Torus, Mesh, Parametric, BezierSurface
+- **Lighting**: ambient, hemisphere, directional, point and spot lights, with world- or camera-space orientation on the directed ones, plus linear or exponential fog
+- **Materials**: colour, opacity, emissive, specular and shininess, front/back/double side, wireframe, flat shading and per-vertex colours
+- **Textures**: image, canvas and bitmap sources with clamp/repeat/mirror wrapping, nearest or linear filtering and UV transforms
+- **Raycasting**: read the shape, hit point, face, normal and texture coordinate under a screen position
+- **Groups**: `Group3D` positions, rotates and scales a subtree as a unit
 - **Vector3 Interpolator**: animate 3D positions with Ripl's animation system
 - **WebGPU backend**: swap in `@ripl/webgpu` for GPU rasterization with WGSL shaders, a depth buffer, and 4× MSAA

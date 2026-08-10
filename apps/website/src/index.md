@@ -3,7 +3,7 @@
 layout: home
 title: "Ripl: charting, drawing and animation for Canvas, SVG, terminal and 3D"
 titleTemplate: false
-description: "Ripl is a zero-dependency TypeScript charting, drawing and animation library. 25 chart types and a full 2D drawing API, rendered to Canvas, SVG, the terminal or WebGPU 3D."
+description: "Zero-dependency TypeScript charting, drawing and animation library. 25 chart types and a full 2D drawing API, rendered to Canvas, SVG, terminal or WebGPU 3D."
 
 hero:
   name: "Ripl"
@@ -31,7 +31,7 @@ features:
   - title: One familiar API
     details: Draw to any context through a single, DOM-like API. Ripl mirrors the DOM and CSSOM (hierarchy, property inheritance, events, styling, and CSS-like querying), so switching between Canvas and SVG is a one-line change.
   - title: Terminal & 3D rendering
-    details: Render the same scene to Unicode braille and ANSI colour in a terminal, to a Node process for server-side output, or to 3D geometry on Canvas and WebGPU with a camera, shading and WGSL shaders.
+    details: Render the same scene to Unicode braille and ANSI colour in a terminal, to a Node process for server-side output, or as 3D geometry on Canvas and WebGPU — nine shapes, five light types, materials, textures, fog and raycasting.
 ---
 
 ## Draw once, render anywhere
@@ -52,4 +52,4 @@ Underneath the charts is a general-purpose 2D drawing API: arcs, circles, ellips
 
 ### 3D rendering
 
-`@ripl/3d` builds 3D scenes from cubes, spheres, cylinders, cones, planes and tori, with a perspective or orthographic camera, orbit controls and flat shading. `@ripl/webgpu` renders the same scenes on the GPU with WGSL shaders, hardware depth testing and 4× MSAA. [Explore 3D](/docs/3d/).
+`@ripl/3d` builds 3D scenes from nine shapes — cubes, spheres, cylinders, cones, planes and tori, plus a mesh from an explicit face list, a parametric surface tessellated from a function of two parameters, and bicubic Bézier patches — under ambient, hemisphere, directional, point and spot lights. Surfaces carry materials and textures, scenes carry fog, and a raycast reports the exact point, face, normal and texture coordinate under the pointer, all driven by a perspective or orthographic orbit camera. `@ripl/webgpu` renders the same scenes on the GPU with WGSL shaders, hardware depth testing and 4× MSAA. [Explore 3D](/docs/3d/).
