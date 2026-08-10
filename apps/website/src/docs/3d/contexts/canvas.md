@@ -1,5 +1,6 @@
 ---
 title: Canvas (Context3D)
+description: "Context3D extends the Ripl canvas context with view and projection matrices, perspective or orthographic setup, and projection of 3D world points to 2D."
 outline: "deep"
 ---
 

@@ -1,10 +1,11 @@
 ---
 title: Cylinder
+description: "The Cylinder 3D primitive with separate top and bottom radii, so it also draws truncated cones. Segment count sets the smoothness of the circular section."
 ---
 
 # Cylinder
 
-The **Cylinder** is a 3D primitive with configurable top and bottom radii; set different values to create a truncated cone. Segment count controls the smoothness of the circular cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Cylinder** is a 3D primitive with separate `radiusTop` and `radiusBottom`; give them different values and it draws a truncated cone. `segments` (default `16`) sets the smoothness of the circular cross-section.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).

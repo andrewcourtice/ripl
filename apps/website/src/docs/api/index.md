@@ -1,3 +1,8 @@
+---
+title: API Reference
+description: "TypeScript API reference for Ripl: elements, the scene graph, renderer, animation, 14 scale types and 25 chart types across Canvas, SVG, terminal and WebGPU."
+---
+
 <div align="center">
   <img src="_media/Ripl 512.svg" width="120" alt="Ripl logo"/>
 </div>
@@ -6,7 +11,7 @@
 
 Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes a 3D rendering package.
 
-Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
+The canvas API is imperative and low-level; SVG gives you a retained tree but pays for it in node count. The two differ enough that a project usually commits to one at the outset. Ripl puts one element model over both and mimics the DOM/CSSOM where it can — grouping, property inheritance, event bubbling, CSS-like querying — so moving between Canvas and SVG is a single import change.
 
 <div align="center">
   <table>
@@ -19,7 +24,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
     <tr>
       <td align="center"><b>Bubble Scatter</b><br><img src="_media/scatter-chart.png" width="300" alt="Scatter Plot"/></td>
       <td align="center"><b>Candlestick Chart</b><br><img src="_media/stock-chart.png" width="300" alt="Stock Market Chart"/></td>
-      <td align="center"><b>Jet Engine Model</b><br><img src="_media/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
+      <td align="center"><b>3D Jet Engine</b><br><img src="_media/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
     </tr>
   </table>
 </div>
@@ -123,7 +128,7 @@ Built-in 2D shape primitives: `arc`, `circle`, `rect`, `line`, `polyline`, `poly
 
 ### Modify Element Properties
 
-To modify an element simply change any of its properties and re-render it.
+Set any property on the element and re-render it.
 
 ```typescript
 circle.fill = '#FF0000';
@@ -371,7 +376,7 @@ window.open(chart.export().toURL(), '_blank');
 
 ## Charts
 
-`@ripl/charts` provides 25 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+`@ripl/charts` provides 25 animated chart types. Each one supports tooltips, legends, crosshairs, grids, axes, and animated data updates.
 
 | Chart | Factory |
 |-------|---------|

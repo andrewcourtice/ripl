@@ -1,5 +1,6 @@
 ---
 title: WebGPU (WebGPUContext3D)
+description: "A WebGPU renderer for Ripl 3D scenes: WGSL shaders, hardware depth testing and 4× MSAA, swapped in for the Canvas context with the same Shape3D elements."
 outline: "deep"
 ---
 
@@ -199,7 +200,7 @@ const context = await createContext('#app');
 - Event handlers (`mouseenter`, `mouseleave`, etc.) work unchanged
 - Transitions and animations work unchanged
 
-### What changes under the hood
+### What changes in the rendering path
 
 | Aspect | Context3D (Canvas 2D) | WebGPUContext3D |
 |--------|----------------------|-----------------|

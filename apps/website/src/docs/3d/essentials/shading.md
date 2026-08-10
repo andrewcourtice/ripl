@@ -1,5 +1,6 @@
 ---
 title: Shading
+description: "Flat shading for 3D geometry: per-face brightness from surface normals and a light direction, with world-fixed or camera-locked light modes and three helpers."
 ---
 
 # Shading

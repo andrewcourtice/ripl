@@ -1,5 +1,6 @@
 ---
 title: Cube
+description: "The Cube 3D primitive: side length from one size property, x/y/z world placement, per-axis rotation in radians, and flat shading on each of its six faces."
 ---
 
 # Cube

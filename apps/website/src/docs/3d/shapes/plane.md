@@ -1,10 +1,11 @@
 ---
 title: Plane
+description: "The Plane 3D primitive: a flat rectangle sized by width and height, for ground surfaces and walls, with x/y/z placement, per-axis rotation and flat shading."
 ---
 
 # Plane
 
-The **Plane** is a flat rectangular 3D primitive. It's useful as a ground surface, wall, or any flat element in a 3D scene. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Plane** is a flat rectangle in 3D, sized by `width` and `height`. Lay it down with `rotationX` for a ground surface or leave it upright for a wall or backdrop; either way its single face is flat shaded.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).

@@ -1,11 +1,13 @@
 ---
 title: Introduction
-description: "@ripl/3d brings 3D rendering to Ripl with an interactive orbit/pan/zoom camera, flat shading, and six primitives (cube, sphere, cylinder, cone, plane, torus), projected onto Canvas or hardware-accelerated with WebGPU."
+description: "@ripl/3d adds 3D rendering to Ripl: six primitives (cube, sphere, cylinder, cone, plane, torus), an orbit camera, flat shading, and Canvas or WebGPU output."
 ---
 
 # 3D
 
 The `@ripl/3d` package extends Ripl with 3D shape rendering projected onto a 2D canvas. It provides a `Context3D` (extending `CanvasContext`), a reactive camera system with orbit/pan/zoom interactions, six built-in primitives (Cube, Sphere, Cylinder, Cone, Plane, Torus), and flat shading utilities driven by configurable light direction. Because it builds on the core canvas context, you get Ripl's animation system, event handling, and scene management for free.
+
+Two backends draw the same `Shape3D` elements. `@ripl/3d` rasterizes them onto a 2D canvas, sorting faces with a painter's algorithm; [`@ripl/webgpu`](/docs/3d/contexts/webgpu) rasterizes them on the GPU with WGSL shaders, hardware depth testing, and 4× MSAA. Swapping between them is one import change.
 
 > [!NOTE]
 > For the full 3D API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -50,5 +52,6 @@ renderer.render();
 - **Context3D**: extends `CanvasContext` with view/projection matrices and a `project()` method
 - **Camera**: reactive camera with orbit, pan, zoom, and microtask-batched updates
 - **Built-in Shapes**: Cube, Sphere, Cylinder, Cone, Plane, Torus
-- **Flat Shading**: automatic face shading based on normals and light direction
+- **Flat Shading**: automatic face shading based on normals and light direction, in world or camera light mode
 - **Vector3 Interpolator**: animate 3D positions with Ripl's animation system
+- **WebGPU backend**: swap in `@ripl/webgpu` for GPU rasterization with WGSL shaders, a depth buffer, and 4× MSAA

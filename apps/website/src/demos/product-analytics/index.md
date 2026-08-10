@@ -1,4 +1,6 @@
 ---
+title: Product Analytics
+description: "A product analytics dashboard drawn with Ripl charts: line, bar, pie, heatmap, sankey, funnel, gauge and scatter panels behind one shared period selector."
 layout: page
 ---
 
