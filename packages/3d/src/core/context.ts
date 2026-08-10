@@ -40,6 +40,11 @@ import type {
     ResolvedMaterial,
 } from './material';
 
+import {
+    releaseTexturePatternCache,
+    resolveTexturePattern,
+} from './texture-pattern';
+
 import type {
     Texture,
 } from './texture';
@@ -788,12 +793,16 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
      * geometry removes. The shaded fill is already down, so the image is multiplied over it and the
      * lighting still applies.
      *
+     * The paint is a repeating {@link CanvasPattern}, not a single `drawImage`: the transform folds
+     * the texture's `repeat` into the UV mapping, so one image draw covers only `1 / (ru * rv)` of
+     * the surface and leaves the rest bare. Tiling the pattern instead covers all of it, and carries
+     * the wrap modes the Canvas backend could not otherwise express.
+     *
      * Everything here drives the raw 2D context rather than this context's own `drawImage`, which
      * flushes the face buffer first — calling it from inside the flush would re-enter it and split
      * the global back-to-front sort.
      */
     private _drawFaceTexture(face: ProjectedFace3D, texture: Texture, uvs: Vector2[]): void {
-        const source = texture.source as CanvasImageSource;
         const width = texture.width;
         const height = texture.height;
 
@@ -803,6 +812,15 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
         const ctx = this.context;
         const points = face.points;
+        const { pattern } = resolveTexturePattern(ctx, texture);
+
+        if (!pattern) {
+            return;
+        }
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = pattern;
 
         for (let idx = 1; idx < points.length - 1; idx++) {
             const transform = solveAffineUVTransform(
@@ -815,18 +833,19 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
                 continue;
             }
 
-            ctx.save();
+            // The pattern carries the transform so the triangle itself stays in screen space; a CTM
+            // change would move the path too, and the path is what bounds the fill.
+            pattern.setTransform(assignPatternMatrix(transform));
+
             ctx.beginPath();
             ctx.moveTo(points[0][0], points[0][1]);
             ctx.lineTo(points[idx][0], points[idx][1]);
             ctx.lineTo(points[idx + 1][0], points[idx + 1][1]);
             ctx.closePath();
-            ctx.clip();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.transform(...transform);
-            ctx.drawImage(source, 0, 0);
-            ctx.restore();
+            ctx.fill();
         }
+
+        ctx.restore();
     }
 
     /** Fills a path or text, flushing any buffered 3D faces first so paint order follows scene order. */
@@ -872,7 +891,39 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         super.popGroup();
     }
 
+    /** Destroys the context, releasing the texture patterns and tile canvases cached against it. */
+    public override destroy(): void {
+        releaseTexturePatternCache(this.context);
+
+        super.destroy();
+    }
+
 }
+
+/* eslint-disable id-length -- `a`–`f` are the canvas matrix components, not free variable names. */
+
+// One instance, overwritten per triangle: `setTransform` reads the matrix and keeps nothing.
+const patternMatrix: DOMMatrix2DInit = {
+    a: 1,
+    b: 0,
+    c: 0,
+    d: 1,
+    e: 0,
+    f: 0,
+};
+
+function assignPatternMatrix(transform: Matrix): DOMMatrix2DInit {
+    patternMatrix.a = transform[0];
+    patternMatrix.b = transform[1];
+    patternMatrix.c = transform[2];
+    patternMatrix.d = transform[3];
+    patternMatrix.e = transform[4];
+    patternMatrix.f = transform[5];
+
+    return patternMatrix;
+}
+
+/* eslint-enable id-length */
 
 /**
  * Solves the affine transform mapping a triangle's texture pixels onto its screen corners.

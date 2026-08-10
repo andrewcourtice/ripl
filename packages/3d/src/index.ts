@@ -6,6 +6,7 @@ export * from './core/fog';
 export * from './core/lights';
 export * from './core/material';
 export * from './core/texture';
+export * from './core/texture-pattern';
 export * from './core/context';
 export * from './core/camera';
 export * from './core/shape';
