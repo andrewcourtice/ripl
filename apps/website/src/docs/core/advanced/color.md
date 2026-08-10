@@ -1,4 +1,6 @@
 ---
+title: Color
+description: "Parse, convert and serialize colors across HEX, RGB, HSL, HSV and the CSS named keywords, then build schemes, color scales and interpolate between two colors."
 outline: "deep"
 ---
 
@@ -228,7 +230,7 @@ setColorAlpha('rgb(255, 0, 110)', 0.8); // 'rgba(255, 0, 110, 0.8)'
 
 ## Color Interpolation
 
-When animating between colors via `renderer.transition()`, Ripl uses `interpolateColor` under the hood. It parses both colors to RGBA, interpolates each channel linearly, and serializes back:
+When animating between colors via `renderer.transition()`, Ripl reaches for `interpolateColor`. It parses both colors to RGBA, interpolates each channel linearly, and serializes back:
 
 ```ts
 import {

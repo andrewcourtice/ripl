@@ -1,4 +1,6 @@
 ---
+title: Scene
+description: "Scene binds a group to a rendering context and owns the draw lifecycle: clearing, a flat z-sorted render buffer for O(n) rendering, and re-render on resize."
 outline: "deep"
 ---
 

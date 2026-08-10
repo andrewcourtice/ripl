@@ -1,4 +1,6 @@
 ---
+title: Custom Elements
+description: "Build your own Ripl element by extending Shape or Element: a state interface, accessor pairs, a local bounding box, a render callback, factory and type guard."
 outline: "deep"
 ---
 

@@ -49,8 +49,8 @@ Ripl draws through a `Context` abstraction, so one scene renders anywhere the li
 - **Transitions** — animate any property over time and `await` the result; every transition is cancelable. See [Animations](/docs/core/advanced/animations).
 - **Keyframes** — CSS-like keyframe sequences with per-keyframe offsets.
 - **Thirty-one easing functions** — linear plus quad, cubic, quart, quint, sine, expo, circ, back, elastic and bounce, each in in/out/in-out form, alongside custom easing functions.
-- **Type-aware interpolation** — numbers, strings, colours, gradients, points, paths and arrays interpolate without configuration. See [Interpolators](/docs/core/advanced/interpolators).
-- **Path morphing** — shapes tween between differing geometries.
+- **Type-aware interpolation** — numbers, colours, gradients, pattern fills, dates, point arrays and border radii are detected and interpolated without configuration; anything else falls back to a generic interpolator. See [Interpolators](/docs/core/advanced/interpolators).
+- **Point-set morphing** — outlines tween between point arrays of differing length, matched by key so a curve stays curved across the transition.
 
 ### Interaction
 

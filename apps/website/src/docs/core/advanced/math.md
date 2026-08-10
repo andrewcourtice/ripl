@@ -1,4 +1,6 @@
 ---
+title: Math & Geometry
+description: "Ripl's geometry toolkit: angle conversion, point operations, bounding boxes, polygon generation and SVG path sampling, used throughout the rendering engine."
 outline: "deep"
 ---
 

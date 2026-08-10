@@ -1,10 +1,14 @@
 ---
+title: Scales
+description: "Map a data domain onto a visual range with Ripl's scales: continuous, band, point, ordinal, discrete, log, power, symlog, diverging, radial, quantile and time."
 outline: "deep"
 ---
 
 # Scales
 
-**Scales** map data values to visual values, turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen. Ripl ships with a full family of scale types covering continuous, categorical, ordinal, logarithmic, symmetric-log, radial, quantile, and time-based mappings.
+**Scales** map data values to visual values, turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen — the piece of a data visualization that sits between the numbers and the geometry.
+
+Fourteen scale factories ship with `@ripl/core`: `scaleContinuous`, `scaleBand`, `scalePoint`, `scaleDiscrete`, `scaleOrdinal`, `scaleDiverging`, `scaleLogarithmic` (aliased `scaleLog`), `scaleSymlog`, `scalePower` (with a `scaleSqrt` shorthand), `scaleRadial`, `scaleQuantile`, `scaleQuantize`, `scaleThreshold` and `scaleTime`.
 
 Every scale is a callable function: pass a domain value in, get a range value out. Scales also expose `inverse` (reverse mapping), `ticks` (nice axis values), `includes` (domain membership), and the original `domain`/`range` arrays.
 

@@ -44,7 +44,7 @@ Ripl (pronounced "ripple") is a high-performance, zero-dependency graphics libra
 
 ### A drawing and animation library
 
-Underneath the charts is a general-purpose 2D drawing API: arcs, circles, ellipses, images, lines, paths, polygons, polylines, rectangles and text, arranged in a scene graph that inherits styles and bubbles events the way the DOM does. Animate any property with keyframes, easing and awaitable transitions, or morph one path into another. [Read the tutorial](/docs/core/getting-started/tutorial).
+Underneath the charts is a general-purpose 2D drawing API: arcs, circles, ellipses, images, lines, paths, polygons, polylines, rectangles and text, arranged in a scene graph that inherits styles and bubbles events the way the DOM does. Animate any property with keyframes, easing and awaitable transitions, or tween one outline into another. [Read the tutorial](/docs/core/getting-started/tutorial).
 
 ### Terminal rendering
 

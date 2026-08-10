@@ -1,4 +1,6 @@
 ---
+title: Tutorial
+description: "Step-by-step Ripl tutorial: draw a circle to a canvas context, nest elements in groups and a scene, query the scene graph, then add events and transitions."
 outline: "deep"
 ---
 
@@ -113,7 +115,7 @@ group.render(context);
 
 ### Querying Elements
 
-Groups and scenes support DOM-like querying methods: `getElementById`, `getElementsByType`, `query`, and `queryAll`. This makes it easy to find elements deep in the tree without keeping references to every element.
+Groups and scenes support DOM-like querying methods: `getElementById`, `getElementsByType`, `query`, and `queryAll`. Use them to reach elements deep in the tree without keeping a reference to every one.
 
 :::tabs
 == Code
@@ -427,7 +429,7 @@ async function animate() {
 
 Now that you understand the basics, explore the rest of the documentation:
 
-- **[Essentials](/docs/core/essentials/context)**: a deep dive into each core concept
+- **[Essentials](/docs/core/essentials/context)**: reference for each core concept
 - **[Elements](/docs/core/elements/arc)**: reference for all built-in elements
 - **[Advanced](/docs/core/advanced/events)**: events, animations, gradients, and custom elements
 

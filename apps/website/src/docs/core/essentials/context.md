@@ -1,4 +1,6 @@
 ---
+title: Context
+description: "Context is Ripl's rendering abstraction: the drawing state stack, transforms, path creation, fill and stroke, hit testing and resize events, for Canvas or SVG."
 outline: "deep"
 ---
 

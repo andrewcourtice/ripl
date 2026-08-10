@@ -1,4 +1,6 @@
 ---
+title: Devtools
+description: "Inspect live Ripl scenes in the browser with the @ripl/devtools bridge and Chrome extension: element tree, live properties, debug overlays and event timeline."
 outline: "deep"
 ---
 

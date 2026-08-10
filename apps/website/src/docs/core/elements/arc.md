@@ -1,10 +1,12 @@
 ---
+title: Arc
+description: "Draw circular and annular arc segments with innerRadius, padAngle, padWidth and borderRadius, plus getCentroid() for placing labels on pie and donut slices."
 outline: "deep"
 ---
 
 # Arc
 
-An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` and `padWidth` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, making it easy to position labels on pie or donut slices.
+An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` and `padWidth` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, which is where a pie or donut slice label belongs.
 
 `padAngle` insets both ends by a fixed **angle**, so the resulting gap is a wedge — narrow at the inner radius and wide at the outer. `padWidth` insets each radius by `asin(padWidth / 2r)` instead, so the gap keeps a constant width in **pixels**. On an annular sector (one with an `innerRadius`) that makes neighbouring segments face each other with parallel edges; an **open** arc has no inner edge to inset, so `padWidth` degenerates to a single trim at the outer radius and adjacent edges converge to nothing at the centre. `padWidth` wins wherever it is **provided** — including `padWidth: 0`, which means *no padding* rather than *fall back to `padAngle`*, so animating `padWidth` up from `0` is continuous.
 

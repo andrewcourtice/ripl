@@ -1,4 +1,6 @@
 ---
+title: Polygon
+description: "Draw a regular polygon from a center point, circumradius and side count: triangles, pentagons and hexagons for badges, icons and radar chart backgrounds."
 outline: "deep"
 ---
 

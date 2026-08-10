@@ -1,10 +1,14 @@
 ---
+title: Terminal
+description: "Render Ripl scenes to a terminal as Unicode braille art with ANSI truecolor, affine transforms, clipping, hit testing and path rasterization for TUI dashboards."
 outline: "deep"
 ---
 
 # Terminal Context
 
-The **Terminal context** renders elements to a character-based terminal using Unicode braille patterns (U+2800–U+28FF). Each terminal cell encodes a 2×4 grid of sub-pixel dots, giving 8× the resolution of plain text. It supports ANSI truecolor for full-color output, honors affine transforms and clipping, and composites overlapping shapes in an RGBA framebuffer.
+The **Terminal context** is a full Ripl rendering backend whose surface is a character grid. It rasterizes elements into Unicode braille patterns (U+2800–U+28FF), where each cell encodes a 2×4 grid of sub-pixel dots for 8× the resolution of plain text, and paints them with ANSI truecolor escape sequences.
+
+It is a rasterizer, not a text formatter. `@ripl/terminal` implements Bresenham line drawing, midpoint circles, adaptive Bézier and arc/ellipse flattening, scanline polygon fill, round-brush stroke thickening and dash patterns, so every built-in element — arcs, paths, polylines, rects, text — draws to a TUI unchanged. Affine transforms are honored through the full matrix, clip paths become raster stencils, overlapping shapes composite in an RGBA framebuffer, and `isPointInPath`/`isPointInStroke` hit testing runs against the same contours, so a host with a pointer (xterm.js, say) gets the same interaction model as the browser. Rotated text is the one approximation: a glyph fills a whole cell, so a rotated run advances along the nearest of eight compass directions.
 
 ## Demo
 
@@ -82,11 +86,12 @@ const context = new TerminalContext(output, {
 The terminal context:
 
 1. Records drawing commands (lines, arcs, curves, rects) from elements
-2. Rasterizes them onto a sub-pixel grid using algorithms like Bresenham's line, midpoint circle, and adaptive Bézier subdivision
-3. Applies scanline fill for filled shapes
-4. Maps CSS colors to ANSI truecolor escape sequences
-5. Encodes each 2×4 cell into a Unicode braille character
-6. Flushes the serialized output to the `TerminalOutput` adapter
+2. Maps each command through the current transform onto the sub-pixel grid, rasterizing with Bresenham's line, midpoint circle, and adaptive Bézier subdivision
+3. Applies scanline fill for filled shapes, and a round-brush stamp with optional dashing for strokes
+4. Masks every plotted pixel against the active clip stencil
+5. Maps CSS colors to ANSI truecolor escape sequences, compositing alpha into the RGBA framebuffer
+6. Encodes each 2×4 cell into a Unicode braille character
+7. Flushes the serialized output to the `TerminalOutput` adapter
 
 ## Logical Sizing
 

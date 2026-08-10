@@ -1,4 +1,6 @@
 ---
+title: Gradients
+description: "Use CSS linear, radial and conic gradient strings in fill and stroke; Ripl parses them at render time into a native CanvasGradient or an SVG gradient element."
 outline: "deep"
 ---
 

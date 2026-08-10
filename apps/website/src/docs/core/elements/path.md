@@ -1,4 +1,6 @@
 ---
+title: Path
+description: "Draw arbitrary geometry from a pathRenderer callback that issues moveTo, lineTo, bezier and arc commands onto a ContextPath, for custom icons and outlines."
 outline: "deep"
 ---
 
