@@ -45,8 +45,11 @@ import {
 import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 
 import {
+    createAmbientLight,
     createCamera,
     createContext,
+    createDirectionalLight,
+    createPointLight,
 } from '@ripl/3d';
 
 import {
@@ -315,7 +318,31 @@ onMounted(() => {
         },
     });
 
-    context.lightDirection = [-0.5, -0.8, -1];
+    // A three-point rig of coloured lights, replacing the single white default: a warm key, a cool
+    // fill and a point light picking out the metal edges.
+    context.lights.clear();
+    context.lights.add(
+        createAmbientLight({
+            color: '#334455',
+            intensity: 0.28,
+        }),
+        createDirectionalLight({
+            direction: [-0.5, -0.8, -1],
+            color: '#fff0dc',
+            intensity: 0.72,
+        }),
+        createDirectionalLight({
+            direction: [0.8, -0.2, 0.5],
+            color: '#6f9ad0',
+            intensity: 0.3,
+        }),
+        createPointLight({
+            position: [0, 4, 6],
+            color: '#ffd6a5',
+            intensity: 30,
+            distance: 24,
+        })
+    );
 
     const parts = createParts();
     partEntries.push(...parts);

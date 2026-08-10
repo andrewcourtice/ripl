@@ -18,6 +18,7 @@ import type {
 import {
     degreesToRadians,
     Disposer,
+    getEuclideanDistance,
     resolveInteraction,
 } from '@ripl/core';
 
@@ -402,10 +403,10 @@ export class Camera extends Disposer {
         };
 
         const getPinchDistance = (touches: TouchList) => {
-            const dx = touches[1].clientX - touches[0].clientX;
-            const dy = touches[1].clientY - touches[0].clientY;
-
-            return Math.sqrt(dx * dx + dy * dy);
+            return getEuclideanDistance(
+                touches[1].clientX - touches[0].clientX,
+                touches[1].clientY - touches[0].clientY
+            );
         };
 
         // A one-finger gesture orbits, a two-finger gesture pans and pinches; only claim the

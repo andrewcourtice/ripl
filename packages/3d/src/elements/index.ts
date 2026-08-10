@@ -4,3 +4,6 @@ export * from './cylinder';
 export * from './cone';
 export * from './plane';
 export * from './torus';
+export * from './mesh';
+export * from './parametric';
+export * from './bezier-surface';

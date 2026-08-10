@@ -2,6 +2,7 @@ export {
     mockCanvasContext,
     mockCanvasState,
     mockTextMetrics,
+    polyfillImageData,
     polyfillPath2D,
 } from './canvas';
 

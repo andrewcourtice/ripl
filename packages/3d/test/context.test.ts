@@ -10,7 +10,9 @@ import {
 import {
     createCamera,
     createContext,
+    LIGHT_DIRECTION,
     mat4Identity,
+    vec3Length,
 } from '../src';
 
 import {
@@ -37,7 +39,8 @@ describe('Context3D', () => {
 
         expect(ctx.viewMatrix).toEqual(mat4Identity());
         expect(ctx.viewProjectionMatrix).toBeDefined();
-        expect(ctx.lightDirection).toEqual([-0.577, -0.577, -0.577]);
+        expect(ctx.lightDirection).toEqual([...LIGHT_DIRECTION.topLeftFront]);
+        expect(vec3Length(ctx.lightDirection)).toBeCloseTo(1, 12);
     });
 
     test('setCamera updates viewMatrix', () => {

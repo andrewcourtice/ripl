@@ -9,14 +9,15 @@ import {
 
 import type {
     MockCanvasMatrix,
+    MockCanvasPattern,
 } from '@ripl/test-utils';
 
 /** A single paint operation recorded off the canvas stub, with the state in force when it ran. */
 export interface PaintRecord {
     /** Which native call produced the record. A 3D face fills with no path argument; a 2D element passes its `Path2D`. */
     op: 'face-fill' | 'face-stroke' | 'path-fill' | 'path-stroke' | 'text-fill' | 'image';
-    /** The `fillStyle` in force. */
-    fillStyle: string;
+    /** The `fillStyle` in force — a colour string, or the pattern a textured face was tiled with. */
+    fillStyle: string | MockCanvasPattern;
     /** The `strokeStyle` in force. */
     strokeStyle: string;
     /** The `globalAlpha` in force. */

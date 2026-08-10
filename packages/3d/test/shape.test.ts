@@ -20,6 +20,8 @@ import type {
 import {
     createContext,
     createCube,
+    createPlane,
+    createTorus,
 } from '../src';
 
 import type {
@@ -27,12 +29,9 @@ import type {
 } from '../src';
 
 import {
+    createGroup,
     createScene,
     factory,
-} from '@ripl/core';
-
-import type {
-    ContextPath,
 } from '@ripl/core';
 
 import {
@@ -274,57 +273,6 @@ describe('Shape3D', () => {
 
     describe('Hit testing', () => {
 
-        type Polygon = [number, number][];
-
-        function isPointInPolygon(polygon: Polygon, x: number, y: number): boolean {
-            let inside = false;
-            let previous = polygon.length - 1;
-
-            for (let idx = 0; idx < polygon.length; idx++) {
-                const [xi, yi] = polygon[idx];
-                const [xj, yj] = polygon[previous];
-
-                if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) {
-                    inside = !inside;
-                }
-
-                previous = idx;
-            }
-
-            return inside;
-        }
-
-        // jsdom's Path2D records nothing, so the traced faces are captured and tested here instead.
-        function mockPolygonHitTesting(context: CanvasContext3D) {
-            const traces = new WeakMap<ContextPath, Polygon[]>();
-            const createPath = context.createPath.bind(context);
-
-            const spy = vi.spyOn(context, 'createPath').mockImplementation(id => {
-                const path = createPath(id);
-                const polygons: Polygon[] = [];
-
-                traces.set(path, polygons);
-
-                path.moveTo = (px, py) => {
-                    polygons.push([[px, py]]);
-                };
-
-                path.lineTo = (px, py) => {
-                    polygons[polygons.length - 1].push([px, py]);
-                };
-
-                return path;
-            });
-
-            vi.spyOn(context, 'isPointInPath').mockImplementation((path, px, py) => {
-                return (traces.get(path) ?? []).some(polygon => isPointInPolygon(polygon, px, py));
-            });
-
-            vi.spyOn(context, 'isPointInStroke').mockImplementation(() => false);
-
-            return spy;
-        }
-
         function firstFaceCentroid(): [number, number] {
             const { points } = faceFills()[0];
 
@@ -334,132 +282,90 @@ describe('Shape3D', () => {
             ];
         }
 
-        function hitPathCalls(spy: ReturnType<typeof mockPolygonHitTesting>, id: string): number {
-            return spy.mock.calls.filter(([pathId]) => pathId === `${id}:hit`).length;
+        function renderCube(context: CanvasContext3D, options?: Parameters<typeof createCube>[0]) {
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+                ...options,
+            });
+
+            createScene(context, {
+                children: [cube],
+            }).render();
+
+            return cube;
         }
 
-        // The trace cost ~5 native calls per face per frame and was thrown away whenever, as here,
-        // nothing hit-tested the shape.
-        test('Should not build a hit path while rendering', () => {
+        // Hit testing costs nothing until something asks: the render only retains the world-space
+        // vertices it already computed, and the ray is not built until a pointer position arrives.
+        test('Should cast no ray while rendering', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
+            const raycast = vi.spyOn(context, 'raycast');
 
-            const createPath = vi.spyOn(context, 'createPath');
+            renderCube(context);
 
-            createScene(context, {
-                children: [cube],
-            }).render();
-
-            expect(createPath).not.toHaveBeenCalledWith(`${cube.id}:hit`);
+            expect(raycast).not.toHaveBeenCalled();
         });
 
-        test('Should hit a point inside a projected face', () => {
+        test('Should hit a point over the shape', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            mockPolygonHitTesting(context);
-            createScene(context, {
-                children: [cube],
-            }).render();
-
+            const cube = renderCube(context);
             const [x, y] = firstFaceCentroid();
 
             expect(cube.intersectsWith(x, y)).toBe(true);
         });
 
-        test('Should miss a point outside every projected face', () => {
+        test('Should miss a point clear of the shape', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            mockPolygonHitTesting(context);
-            createScene(context, {
-                children: [cube],
-            }).render();
+            const cube = renderCube(context);
 
             expect(cube.intersectsWith(-1000, -1000)).toBe(false);
         });
 
-        test('Should hit a point inside a projected face under a pointer test', () => {
+        test('Should hit a point over the shape under a pointer test', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            mockPolygonHitTesting(context);
-            createScene(context, {
-                children: [cube],
-            }).render();
-
+            const cube = renderCube(context);
             const [x, y] = firstFaceCentroid();
 
             expect(cube.intersectsWith(x, y, { isPointer: true })).toBe(true);
         });
 
-        test('Should miss a point outside every projected face under a pointer test', () => {
+        test('Should miss a point clear of the shape under a pointer test', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            mockPolygonHitTesting(context);
-            createScene(context, {
-                children: [cube],
-            }).render();
+            const cube = renderCube(context);
 
             expect(cube.intersectsWith(-1000, -1000, { isPointer: true })).toBe(false);
         });
 
-        test('Should build the hit path once however many times a frame is tested', () => {
+        test('Should cast one ray however many times a frame is tested at the same point', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            const createPath = mockPolygonHitTesting(context);
-
-            createScene(context, {
-                children: [cube],
-            }).render();
-
+            const cube = renderCube(context);
+            const raycast = vi.spyOn(context, 'raycast');
             const [x, y] = firstFaceCentroid();
 
             cube.intersectsWith(x, y);
             cube.intersectsWith(x, y);
-            cube.intersectsWith(-1000, -1000, { isPointer: true });
             cube.intersectsWith(x, y, { isPointer: true });
+            cube.raycastDistance(x, y);
 
-            expect(hitPathCalls(createPath, cube.id)).toBe(1);
+            expect(raycast).toHaveBeenCalledTimes(1);
         });
 
-        // The pointer pipeline mapped logical onto surface before hit testing, but a 3D hit path is
-        // traced from `project`, which is already logical — so on retina every hit missed by the ratio.
+        // The pointer pipeline mapped logical onto surface before hit testing, but a 3D ray is cast
+        // through `project`, which is already logical — so on retina every hit missed by the ratio.
         test('Should hit a projected face at the logical pointer position on a device-scaled surface', () => {
             factory.set({
                 devicePixelRatio: 2,
             });
 
             const context = createFixture();
+            const clicked = vi.fn();
             const cube = createCube({
                 size: 1,
                 fill: '#ff0000',
             });
 
-            const clicked = vi.fn();
-
             cube.on('click', clicked);
-            mockPolygonHitTesting(context);
 
             createScene(context, {
                 children: [cube],
@@ -475,14 +381,12 @@ describe('Shape3D', () => {
             expect(clicked).toHaveBeenCalled();
         });
 
-        test('Should rebuild the hit path after the next render', () => {
+        test('Should re-cast against the new geometry after the next render', () => {
             const context = createFixture();
             const cube = createCube({
                 size: 1,
                 fill: '#ff0000',
             });
-
-            const createPath = mockPolygonHitTesting(context);
             const scene = createScene(context, {
                 children: [cube],
             });
@@ -497,24 +401,15 @@ describe('Shape3D', () => {
             scene.render();
 
             expect(cube.intersectsWith(x, y)).toBe(false);
-            expect(hitPathCalls(createPath, cube.id)).toBe(2);
         });
 
         // `Element.intersectsWith` ignores `options`, so a fallback under `isPointer` would make a
         // shape opted out of pointer events more hittable, not less.
         test('Should refuse a pointer test on a shape with pointerEvents none', () => {
             const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
+            const cube = renderCube(context, {
                 pointerEvents: 'none',
             });
-
-            mockPolygonHitTesting(context);
-            createScene(context, {
-                children: [cube],
-            }).render();
-
             const [x, y] = firstFaceCentroid();
 
             expect(cube.intersectsWith(x, y, { isPointer: true })).toBe(false);
@@ -528,7 +423,6 @@ describe('Shape3D', () => {
                 fill: '#ff0000',
             });
 
-            mockPolygonHitTesting(context);
             createScene(context, {
                 children: [cube],
             });
@@ -536,105 +430,97 @@ describe('Shape3D', () => {
             expect(cube.intersectsWith(200, 150)).toBe(false);
         });
 
-    });
+        /*
+         * 3D-H1: the hit test flattened a shape to the union of its projected face outlines, which
+         * reports a hit anywhere inside the silhouette — through the hole of a torus, between the
+         * blades of a fan, across the bore of a casing.
+         */
+        test('Should miss the hole of a torus while hitting its ring', () => {
+            const context = createContext(host);
 
-    describe('Geometry transitions', () => {
+            context.setCamera([0, 8, 0], [0, 0, 0], [0, 0, 1]);
 
-        function paintedSpan(): number {
-            const xs = faceFills().flatMap(record => record.points.map(point => point[0]));
+            const torus = createTorus({
+                radius: 2,
+                tube: 0.4,
+                radialSegments: 16,
+                tubularSegments: 32,
+                fill: '#ff0000',
+            });
 
-            return Math.max(...xs) - Math.min(...xs);
-        }
+            createScene(context, {
+                children: [torus],
+            }).render();
 
-        // 3D-4: the interpolate tick writes `state[key]` directly, bypassing the `setStateValue`
-        // override that is the face cache's only invalidation path.
-        test('Should grow the rendered mesh as a size transition ticks', () => {
+            const centre = context.project([0, 0, 0]);
+            const ring = context.project([2, 0, 0]);
+
+            expect(torus.intersectsWith(centre[0], centre[1])).toBe(false);
+            expect(torus.intersectsWith(ring[0], ring[1])).toBe(true);
+        });
+
+        // A culled face is not painted, so it must not be hit either — the pointer would otherwise
+        // resolve to a side of the mesh that is not on screen.
+        test('Should miss a single-sided plane seen from behind', () => {
+            const context = createFixture();
+            const plane = createPlane({
+                width: 4,
+                height: 4,
+                rotationY: Math.PI,
+                fill: '#ff0000',
+                material: {
+                    side: 'front',
+                },
+            });
+
+            createScene(context, {
+                children: [plane],
+            }).render();
+
+            expect(plane.intersectsWith(200, 150)).toBe(false);
+        });
+
+        test('Should hit a single-sided plane seen from the front', () => {
+            const context = createFixture();
+            const plane = createPlane({
+                width: 4,
+                height: 4,
+                fill: '#ff0000',
+                material: {
+                    side: 'front',
+                },
+            });
+
+            createScene(context, {
+                children: [plane],
+            }).render();
+
+            expect(plane.intersectsWith(200, 150)).toBe(true);
+        });
+
+        // The painter applies the element's 2D world transform on top of the projection, and the
+        // hit test never un-applied it — so a shape under a 2D group was hit where it was not drawn.
+        test('Should hit a shape under a 2D group transform where it is painted', () => {
             const context = createFixture();
             const cube = createCube({
                 size: 1,
                 fill: '#ff0000',
             });
 
-            const scene = createScene(context, {
-                children: [cube],
-            });
-
-            scene.render();
-
-            const before = paintedSpan();
-
-            paint.records.length = 0;
-            cube.interpolate({
-                size: 3,
-            })(1);
-            scene.render();
-
-            expect(paintedSpan()).toBeGreaterThan(before * 2);
-        });
-
-        // A completed transition leaves `state.size === 3`, so the setter short-circuits and cannot
-        // recover the stale cache. Only a cube authored at 3 gives an independent reference span.
-        test('Should match a natively sized shape after a completed size transition', () => {
-            const grown = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            const grownScene = createScene(grown, {
-                children: [cube],
-            });
-
-            // Warm the face cache at the start value; a cold cache hides the defect entirely.
-            grownScene.render();
-
-            paint.records.length = 0;
-            cube.interpolate({
-                size: 3,
-            })(1);
-            grownScene.render();
-
-            const grownSpan = paintedSpan();
-
-            paint.records.length = 0;
-
-            const reference = createFixture();
-            const referenceScene = createScene(reference, {
+            createScene(context, {
                 children: [
-                    createCube({
-                        size: 3,
-                        fill: '#ff0000',
+                    createGroup({
+                        translateX: 60,
+                        children: [cube],
                     }),
                 ],
-            });
+            }).render();
 
-            referenceScene.render();
+            // The recorded points are pre-CTM, so the shape is painted 60 logical pixels to the right.
+            const [x, y] = firstFaceCentroid();
 
-            expect(grownSpan).toBeCloseTo(paintedSpan());
-        });
-
-        test('Should refresh the bounding box after a size transition', () => {
-            const context = createFixture();
-            const cube = createCube({
-                size: 1,
-                fill: '#ff0000',
-            });
-
-            const scene = createScene(context, {
-                children: [cube],
-            });
-
-            scene.render();
-
-            const before = cube.getBoundingBox().width;
-
-            cube.interpolate({
-                size: 3,
-            })(1);
-
-            scene.render();
-
-            expect(cube.getBoundingBox().width).toBeGreaterThan(before * 2);
+            expect(cube.intersectsWith(x + 60, y)).toBe(true);
+            expect(cube.intersectsWith(x, y)).toBe(false);
         });
 
     });

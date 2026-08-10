@@ -70,6 +70,8 @@ const cube = createCube({
 - **`size`**: side length of the cube
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 - **`fill`**: base fill color (shading is applied per-face)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
 
 ## Type Guard
 

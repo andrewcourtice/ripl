@@ -44,8 +44,10 @@ import {
 import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 
 import {
+    createAmbientLight,
     createCamera,
     createContext,
+    createDirectionalLight,
 } from '@ripl/3d';
 
 import {
@@ -205,7 +207,23 @@ onMounted(() => {
         },
     });
 
-    context.lightDirection = [-0.5, -0.8, -1];
+    context.lights.clear();
+    context.lights.add(
+        createAmbientLight({
+            color: '#2f3a48',
+            intensity: 0.3,
+        }),
+        createDirectionalLight({
+            direction: [-0.5, -0.8, -1],
+            color: '#fff4e4',
+            intensity: 0.7,
+        }),
+        createDirectionalLight({
+            direction: [0.7, -0.3, 0.6],
+            color: '#7aa5d8',
+            intensity: 0.32,
+        })
+    );
 
     const initial = solveKinematics(crankAngle);
 

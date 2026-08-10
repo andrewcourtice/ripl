@@ -28,6 +28,14 @@ import solarSystemCode from './solar-system.js?raw';
 
 import waveGridCode from './wave-grid.js?raw';
 
+import lightingRigCode from './lighting-rig.js?raw';
+
+import materialShowcaseCode from './material-showcase.js?raw';
+
+import texturedGlobeCode from './textured-globe.js?raw';
+
+import teapotCode from './teapot.js?raw';
+
 export interface PlaygroundExample {
     label: string;
     mode: '2d' | '3d';
@@ -109,5 +117,25 @@ export const EXAMPLES: PlaygroundExample[] = [
         label: 'Wave Grid',
         mode: '3d',
         code: waveGridCode,
+    },
+    {
+        label: 'Lighting Rig',
+        mode: '3d',
+        code: lightingRigCode,
+    },
+    {
+        label: 'Material Showcase',
+        mode: '3d',
+        code: materialShowcaseCode,
+    },
+    {
+        label: 'Textured Globe',
+        mode: '3d',
+        code: texturedGlobeCode,
+    },
+    {
+        label: 'Teapot',
+        mode: '3d',
+        code: teapotCode,
     },
 ];

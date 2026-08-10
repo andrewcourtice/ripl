@@ -46,6 +46,11 @@ export const demos: DemoMeta[] = [
         description: 'An animated single-cylinder slider-crank built with @ripl/3d, showing a crankshaft, connecting rod, and piston head in mechanical motion.',
     },
     {
+        text: 'Teapot 3D',
+        link: '/demos/teapot/',
+        description: 'A teapot modelled entirely from parametric surfaces — surfaces of revolution for the body, lid and knob, swept tubes for the spout and handle — lit by a three-point rig of coloured lights, with switchable materials, textures and wireframe.',
+    },
+    {
         text: 'Interactive Terminal',
         link: '/demos/terminal/',
         description: 'An interactive terminal running on @ripl/terminal with a menu-driven interface: basic shapes, animations, or line, bar, stock and Gantt charts rendered in Unicode braille.',

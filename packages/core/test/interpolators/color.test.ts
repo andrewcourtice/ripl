@@ -6,6 +6,7 @@ import {
 
 import {
     interpolateColor,
+    parseColor,
 } from '../../src';
 
 describe('Interpolators', () => {
@@ -38,24 +39,14 @@ describe('Interpolators', () => {
 
         test('Should interpolate to midpoint', () => {
             const interpolator = interpolateColor('#000000', '#ffffff');
-            const result = interpolator(0.5);
-            // serializeRGBA does not round, so values like 127.5 are expected
-            expect(result).toMatch(/^rgba\([\d.]+, [\d.]+, [\d.]+, [\d.]+\)$/);
-            const match = result.match(/rgba\(([\d.]+), ([\d.]+), ([\d.]+)/);
-            expect(match).toBeTruthy();
-            const r = parseFloat(match![1]);
-            expect(r).toBeCloseTo(127.5, 1);
+
+            expect(interpolator(0.5)).toBe('rgba(128, 128, 128, 1)');
         });
 
         test('Should interpolate between rgb colors', () => {
             const interpolator = interpolateColor('rgb(255, 0, 0)', 'rgb(0, 0, 255)');
-            const result = interpolator(0.5);
-            const match = result.match(/rgba\(([\d.]+), ([\d.]+), ([\d.]+)/);
-            expect(match).toBeTruthy();
-            const r = parseFloat(match![1]);
-            const b = parseFloat(match![3]);
-            expect(r).toBeCloseTo(127.5, 1);
-            expect(b).toBeCloseTo(127.5, 1);
+
+            expect(interpolator(0.5)).toBe('rgba(128, 0, 128, 1)');
         });
 
         // Named colors had no parser, so the factory fell back to a hard step at the halfway point.
@@ -63,7 +54,17 @@ describe('Interpolators', () => {
             const interpolator = interpolateColor('red', 'blue');
             const result = interpolator(0.5);
 
-            expect(result).toBe('rgba(127.5, 0, 127.5, 1)');
+            expect(result).toBe('rgba(128, 0, 128, 1)');
+        });
+
+        // 3D-C1: fractional channels serialized straight back out, so nothing downstream could
+        // read an interpolated colour — a shaded surface fell back to its material grey.
+        test('Should emit a colour it can parse back', () => {
+            const interpolator = interpolateColor('#ff0000', '#0000ff');
+
+            for (let position = 0; position <= 1; position += 0.01) {
+                expect(parseColor(interpolator(position))).toBeDefined();
+            }
         });
 
         test('Should preserve alpha interpolation', () => {

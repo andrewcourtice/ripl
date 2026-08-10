@@ -522,6 +522,22 @@ export default defineConfig({
                             text: 'Shading',
                             link: '/docs/3d/essentials/shading',
                         },
+                        {
+                            text: 'Lighting',
+                            link: '/docs/3d/essentials/lighting',
+                        },
+                        {
+                            text: 'Materials',
+                            link: '/docs/3d/essentials/materials',
+                        },
+                        {
+                            text: 'Textures',
+                            link: '/docs/3d/essentials/textures',
+                        },
+                        {
+                            text: 'Raycasting',
+                            link: '/docs/3d/essentials/raycasting',
+                        },
                     ],
                 },
                 {
@@ -563,6 +579,18 @@ export default defineConfig({
                         {
                             text: 'Torus',
                             link: '/docs/3d/shapes/torus',
+                        },
+                        {
+                            text: 'Mesh',
+                            link: '/docs/3d/shapes/mesh',
+                        },
+                        {
+                            text: 'Parametric',
+                            link: '/docs/3d/shapes/parametric',
+                        },
+                        {
+                            text: 'Bezier Surface',
+                            link: '/docs/3d/shapes/bezier-surface',
                         },
                     ],
                 },
