@@ -1,6 +1,11 @@
+---
+title: Treemap Chart
+description: Break a total into nested rectangles whose area encodes value, with a configurable cell gap, corner radius, colorBy grouping, automatic labels and tooltips.
+---
+
 # Treemap Chart
 
-The **Treemap Chart** displays hierarchical data as nested rectangles, where each rectangle's area is proportional to its value. It's great for visualizing how a total breaks down into parts, such as market share, disk usage, or budget allocation. Cells are labeled, automatically colored, and animate smoothly on data changes. Configurable gaps and rounded corners keep the layout clean.
+The **Treemap Chart** tiles a rectangle with smaller rectangles whose areas are proportional to their values. Reach for it when a total breaks down into many parts and every part has to stay on screen — market share, disk usage, budget allocation — where a pie chart would collapse the small slices into slivers. `key`, `value` and `label` bind the cells, `colorBy` groups their colors, and `gap`, `borderRadius` and `format` set the finish. Cells are labeled and colored automatically, and the layout re-tiles with an animation when the data changes. Point it at a Canvas, SVG or [terminal context](/charts/advanced/rendering-targets) and nothing else changes.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

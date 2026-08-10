@@ -24,6 +24,7 @@ import {
 } from './data/demos';
 
 import {
+    apiPageDescription,
     canonicalUrl,
     HOSTNAME,
 } from './seo';
@@ -154,6 +155,10 @@ export default defineConfig({
             content: `${HOSTNAME}/og-image.png`,
         }],
     ],
+
+    transformPageData(pageData) {
+        pageData.description ||= apiPageDescription(pageData.relativePath) ?? '';
+    },
 
     // The canonical, og:title/url/description and twitter:* tags are per-page: a site-wide canonical
     // told Google every page was a duplicate of the home page, which de-indexed the whole site.

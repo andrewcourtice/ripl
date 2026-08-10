@@ -1,6 +1,11 @@
+---
+title: Area Chart
+description: Fill the band beneath one or more line series, stacked or overlaid, with per-series fill opacity and interpolation, plus crosshair, grid, tooltips and a legend.
+---
+
 # Area Chart
 
-The **Area Chart** renders filled areas beneath lines, making it easy to compare cumulative totals or show how individual series contribute to a whole. It supports stacked mode (areas stacked on top of each other), per-series opacity and line interpolation, and includes crosshair, grid, tooltips, and a legend. When areas overlap (unstacked), they are painted largest-first so a smaller area is never hidden behind a larger one. On entry the area is revealed left-to-right as the line draws on, and it transitions smoothly between data states on update.
+The **Area Chart** fills the band between each line series and the baseline, so a total reads as area rather than as height. Use it when the composition of a total over time is the point: `stacked: true` stacks the series into that whole, `stacked: 'percent'` normalizes each category to 100%, and leaving it off overlays them. Each series carries its own `fillOpacity`, `lineType` and `markers`, and the chart draws a crosshair, grid, tooltips and a legend. Overlaid areas are painted largest-first so a smaller area is never hidden behind a larger one. On entry the area is revealed left-to-right as the line draws on, and it transitions between data states on update. It renders to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets) from the same options.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

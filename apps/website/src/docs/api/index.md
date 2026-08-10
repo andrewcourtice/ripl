@@ -1,17 +1,12 @@
----
-title: API Reference
-description: "TypeScript API reference for Ripl: elements, the scene graph, renderer, animation, 14 scale types and 25 chart types across Canvas, SVG, terminal and WebGPU."
----
-
 <div align="center">
   <img src="_media/Ripl 512.svg" width="120" alt="Ripl logo"/>
 </div>
 
 <h1 align="center">Ripl</h1>
 
-Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes a 3D rendering package.
+Ripl (pronounced "ripple") is a zero-dependency TypeScript **charting, drawing and animation library** built on a **unified API for 2D graphics rendering**. Write a scene once and render it to **Canvas**, **SVG**, a **terminal** (as braille and ANSI colour), or a **Node** process, with **3D** on Canvas and WebGPU alongside.
 
-The canvas API is imperative and low-level; SVG gives you a retained tree but pays for it in node count. The two differ enough that a project usually commits to one at the outset. Ripl puts one element model over both and mimics the DOM/CSSOM where it can — grouping, property inheritance, event bubbling, CSS-like querying — so moving between Canvas and SVG is a single import change.
+The Canvas API is low-level: it has no concept of objects, hierarchy, or events. SVG is easier to reason about but carries its own performance limits and API differences. The two diverge enough that projects usually commit to one at the outset. Ripl removes that decision by exposing one API over both, modelled on the DOM and CSSOM, so switching contexts is a one-line change.
 
 <div align="center">
   <table>
@@ -47,7 +42,7 @@ The canvas API is imperative and low-level; SVG gives you a retained tree but pa
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, patterns, paths, strings, and rotation values
 - **High performance animation**: cancelable `Task`-based transitions with CSS-like keyframe support and custom interpolators
 - **14 scale types** inspired by D3 (continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time), plus `scaleLog`/`scaleSqrt` shortcuts
-- **25 pre-built chart types** via `@ripl/charts`
+- **25 pre-built chart types** via `@ripl/charts`: line, bar, area, trend, scatter, histogram, box plot, stock (candlestick/OHLC), realtime, pie/donut, polar area, polar scatter, radial bar, radar, gauge, heatmap, treemap, sunburst, packed circle, sankey, chord, arc diagram, force-directed, funnel and gantt
 - **Built-in shape primitives**: arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives**: cube, sphere, cylinder, cone, plane, torus
 - **Easing library** covering linear, quad, cubic, quart, quint, sine, exponential, circular, back, elastic, and bounce (in/out/inOut variants)
@@ -128,7 +123,7 @@ Built-in 2D shape primitives: `arc`, `circle`, `rect`, `line`, `polyline`, `poly
 
 ### Modify Element Properties
 
-Set any property on the element and re-render it.
+To modify an element, change any of its properties and re-render.
 
 ```typescript
 circle.fill = '#FF0000';
@@ -376,7 +371,7 @@ window.open(chart.export().toURL(), '_blank');
 
 ## Charts
 
-`@ripl/charts` provides 25 animated chart types. Each one supports tooltips, legends, crosshairs, grids, axes, and animated data updates.
+`@ripl/charts` provides 25 ready-to-use chart types. Every chart animates its data transitions and supports tooltips, legends, crosshairs, grids and axes, on Canvas or SVG.
 
 | Chart | Factory |
 |-------|---------|

@@ -1,6 +1,11 @@
+---
+title: Gantt Chart
+description: Schedule tasks as bars on a time axis with progress overlays, finish-to-start dependency connectors, a today marker, grid lines and hover tooltips.
+---
+
 # Gantt Chart
 
-The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. Curved dependency connectors can be drawn between dependent tasks (finish-to-start). It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
+The **Gantt Chart** places each task as a bar between its `start` and `end` on a time axis, with task names down the y-axis. It is the schedule view when duration and overlap are the story: project plans, release trains, resource bookings. `progress` draws a completion overlay inside each bar, `dependencies` connects finish-to-start pairs with curved connectors, `showToday` and `todayColor` mark the current date, and `colorBy` groups the bars. Tasks animate when they are added, removed or rescheduled, and tooltips and grid lines are built in. Point it at a Canvas, SVG or [terminal context](/charts/advanced/rendering-targets) and nothing else changes.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

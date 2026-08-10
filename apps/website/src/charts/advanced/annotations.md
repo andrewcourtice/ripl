@@ -1,4 +1,6 @@
 ---
+title: Annotations
+description: Add reference lines, shaded bands and point markers to any cartesian chart, positioned through the axis scales so they track data updates, panning and zooming.
 outline: "deep"
 ---
 

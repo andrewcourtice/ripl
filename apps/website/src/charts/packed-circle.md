@@ -1,6 +1,11 @@
+---
+title: Packed Circle Chart
+description: Encode each value as a circle area and pack the circles tightly inside one containing circle, with automatic labels on larger nodes and animated repacking.
+---
+
 # Packed Circle Chart
 
-The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole: proportions read at a glance without a rigid grid. Larger circles are labeled automatically.
+The **Packed Circle Chart** gives each datum a circle whose **area** encodes its value and packs those circles tightly, without overlap, inside one containing circle. Prefer it to a [treemap](/charts/treemap) when the parts of a whole are many and unordered, and a rigid grid of rectangles would imply structure the data does not have. `key`, `value` and `label` bind the circles, `colorBy` groups their colors, and `format` sets how values read; larger circles are labeled automatically and the pack re-solves with an animation when the data changes. The [target](/charts/advanced/rendering-targets) can be a Canvas, an SVG context or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

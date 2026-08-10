@@ -1,6 +1,11 @@
+---
+title: Arc Diagram
+description: Lay out graph nodes along one horizontal or vertical axis joined by semicircular arcs whose thickness encodes link weight, with nodes sized by connection count.
+---
+
 # Arc Diagram
 
-The **Arc Diagram** is a cartesian axis whose points are nodes, connected by semicircular arcs whose thickness encodes the strength of each relationship. Keeping nodes on one axis makes it easy to spot clusters and bridges, which makes this a clean way to show connections in an ordered set (character co-occurrence, module dependencies, adjacency). The axis can run horizontally or vertically, and nodes can be sized by their connection count. Arcs are hit-tested on their stroke, so a small link nested under a large one is still hoverable.
+The **Arc Diagram** lays nodes out along a single axis and joins them with semicircular arcs whose thickness encodes each link's weight. Reach for it when the order of the nodes carries meaning and you want clusters and bridging links to stand out — character co-occurrence, module dependencies, an adjacency matrix you would rather not read as a grid. `orientation` runs the axis horizontally or vertically, `sizeByConnections` scales each node by its degree, and `nodeRadius` sets the base size. Arcs are hit-tested on their stroke, so a small link nested under a large one is still hoverable. The same options render to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

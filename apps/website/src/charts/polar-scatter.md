@@ -1,6 +1,11 @@
+---
+title: Polar Scatter Chart
+description: Plot points on a circular grid where angle and radius each encode a variable and a third can drive marker size, over configurable level rings and spokes.
+---
+
 # Polar Scatter Chart
 
-The **Polar Scatter Chart** plots points on a circular grid, where each point's **angle** encodes one variable and its **distance from the center** another; an optional third variable can drive marker size. It suits directional data (wind, radar returns, cyclical measurements) where a cartesian scatter would misrepresent the wrap-around nature of the angle.
+The **Polar Scatter Chart** plots points on a circular grid where each point's **angle** encodes one variable and its **distance from the center** another; a third can drive marker size. It suits directional and cyclical data — wind, radar returns, hourly measurements — where a cartesian scatter would break the wrap-around at the edge of the axis. `levels` sets the value rings, `sectors` the angular spokes, `max` pins the outer ring, and each series binds `angleBy`, `radiusBy` and optionally `sizeBy` between `minRadius` and `maxRadius`, with `labels`, `legend` and `format` for the annotation. Point it at a Canvas, SVG or [terminal context](/charts/advanced/rendering-targets) and nothing else changes.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

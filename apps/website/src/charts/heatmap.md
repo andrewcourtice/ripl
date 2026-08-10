@@ -1,6 +1,11 @@
+---
+title: Heatmap Chart
+description: Plot one value across two categorical axes as a grid of colored cells, with a configurable gradient, continuous color legend, corner radius and cell labels.
+---
+
 # Heatmap Chart
 
-The **Heatmap Chart** displays data as a matrix of colored cells, where color intensity encodes each cell's value. It's ideal for spotting patterns across two categorical dimensions, such as time-of-day against day-of-week. Cells animate smoothly between values on update, and the color range is configurable via a `[low, high]` color tuple.
+The **Heatmap Chart** lays one value out across two categorical axes as a grid of cells, coloring each cell by its magnitude. Reach for it when the pattern across a pair of dimensions matters more than any single reading — time-of-day against day-of-week, cohort against week, sensor against hour. `keyX`, `keyY` and `value` bind the cells, `xCategories` and `yCategories` fix the axis order (a missing pair leaves a gap), and `gradient` takes a `[low, high]` color tuple that also drives the continuous [color legend](/charts/advanced/color-legend). `borderRadius`, `labels` and `format` handle the finish, and cells tween between colors on update. Canvas by default, SVG or a terminal by [passing a context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -182,7 +187,7 @@ const chart = createHeatmapChart('#container', {
 
 Each item is one cell, identified by its x and y category and carrying the value that drives its
 color. `xCategories` and `yCategories` fix the axis order (and which cells exist), so a missing
-combination simply renders no cell:
+combination renders no cell:
 
 ```ts
 const data = [

@@ -1,16 +1,20 @@
 ---
 title: Charts
-description: "25 animated, interactive chart types from @ripl/charts for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, histogram, box plot, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
+description: "Browse the 25 chart types in @ripl/charts: bar, line, area, pie, scatter, candlestick, heatmap, radar, sankey, treemap and more, on Canvas, SVG or a terminal."
 ---
 
 # Charts
 
-The `@ripl/charts` package provides a comprehensive set of chart types for data visualization. Every chart is built on the Ripl core rendering engine, so they inherit animated transitions, pointer-event interactivity, responsive sizing, and context-agnostic rendering (Canvas or SVG) out of the box. Charts are created with a simple `createXxxChart(target, options)` factory and updated reactively via `chart.update(options)`.
+`@ripl/charts` is the chart library built on Ripl's core rendering engine: 25 chart types in strict TypeScript, with no third-party runtime dependencies. Every chart animates its data transitions, responds to pointer events, resizes with its container, and draws through the same `Context` — so the same chart code renders to Canvas, SVG or a [terminal](/charts/advanced/rendering-targets), in the browser or [server-side in Node](/charts/advanced/server-side-rendering). Each one is created with a `createXxxChart(target, options)` factory and updated through `chart.update(options)`.
 
 > [!NOTE]
 > For the full Charts API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Available Charts
+
+Twenty-five chart types ship in five families. **Cartesian**: line, bar, area, trend (mixed line/bar/area), scatter, stock (OHLC candlestick), histogram and box plot. **Radial & polar**: pie and donut, polar area, polar scatter, radial bar, radar and gauge. **Hierarchical**: treemap, packed circle and sunburst. **Network & flow**: sankey, chord, force-directed network, arc diagram and funnel. **Specialized**: heatmap, gantt and realtime streaming.
+
+All of them share the same [options](/charts/shared-options) for padding, titles, legends, tooltips, theming and animation; the cartesian ones add axes, grids, crosshairs, [annotations](/charts/advanced/annotations) and [panning and zooming](/charts/advanced/panning-and-zooming).
 
 <template v-for="category in chartCategories" :key="category">
     <h3>{{ category }}</h3>

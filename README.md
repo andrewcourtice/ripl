@@ -19,7 +19,7 @@ The Canvas API is low-level: it has no concept of objects, hierarchy, or events.
     <tr>
       <td align="center"><b>Bubble Scatter</b><br><img src="./assets/scatter-chart.png" width="300" alt="Scatter Plot"/></td>
       <td align="center"><b>Candlestick Chart</b><br><img src="./assets/stock-chart.png" width="300" alt="Stock Market Chart"/></td>
-      <td align="center"><b>Jet Engine Model</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
+      <td align="center"><b>3D Jet Engine</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
     </tr>
   </table>
 </div>

@@ -1,6 +1,11 @@
+---
+title: Pie Chart
+description: Show proportions as slices of a circle or donut, with an innerRadius for the hole, a constant-width padWidth gap, slice labels, tooltips and hover dimming.
+---
+
 # Pie Chart
 
-The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Slices are filled with a translucent tint of their series color and separated by a constant-width gap (`padWidth`) that holds its width right to the center. Hover any slice to see a tooltip and dim the rest, and adjust the inner radius in the demo below.
+The **Pie Chart** splits a circle into slices whose angles are each category's share of the total. Use it when the parts sum to a meaningful whole and there are few enough of them to tell apart — a handful of categories, not thirty. `innerRadius` turns it into a donut, `padWidth` sets a constant-width gap that holds its width right to the center, and `labels`, `colorBy` and `format` handle the rest. Slices are filled with a translucent tint of their series color; hover one for a tooltip and the others dim. Entry, exit and reorder are all animated. Canvas is the default target; pass an SVG or [terminal context](/charts/advanced/rendering-targets) to draw the same chart elsewhere.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

@@ -1,4 +1,6 @@
 ---
+title: Rendering Targets
+description: Point a chart factory at a CSS selector, an HTMLElement or a Ripl Context to render identical chart code to Canvas, SVG or a terminal, and swap targets live.
 outline: "deep"
 ---
 

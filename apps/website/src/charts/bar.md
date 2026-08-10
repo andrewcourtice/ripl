@@ -1,6 +1,11 @@
+---
+title: Bar Chart
+description: Compare categories with grouped, stacked or 100% stacked bars in vertical or horizontal orientation, with rounded corners, value labels, tooltips and a legend.
+---
+
 # Bar Chart
 
-The **Bar Chart** is one of the most versatile chart types in Ripl. It supports grouped and stacked modes, vertical and horizontal orientations, and handles animated entry, exit, and update transitions automatically when data changes. Tooltips on hover, a configurable legend, grid lines, and axis labels are all built in and enabled by default, so you get a polished result with minimal configuration.
+The **Bar Chart** compares one or more values across a categorical axis, drawing a bar per series per category. It is the right chart whenever the categories are discrete and the comparison is between magnitudes rather than a trend. `stacked` switches between grouped bars, a single stacked bar per category, and `'percent'` for a 100%-stacked view; `orientation` flips the bars horizontal for long category names; `borderRadius` and `labels` handle the finish. Tooltips, grid lines and axis labels are on by default, a legend appears once there is more than one series, and bars animate on entry, update and exit. It draws to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets) without changing the options.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

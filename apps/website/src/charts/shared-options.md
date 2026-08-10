@@ -1,10 +1,12 @@
 ---
+title: Shared Options
+description: "Configure what every Ripl chart shares: padding, title, axes, grid, legend, tooltip, crosshair, annotations, pan-zoom, theme, accessibility and animation."
 outline: "deep"
 ---
 
 # Shared Options
 
-All Ripl charts extend `BaseChartOptions` and support a common set of feature options for axes, grids, legends, tooltips, crosshairs, and animation. Each option follows the same pattern: pass `true`/`false` to toggle with defaults, or pass a partial options object to customize.
+All Ripl charts extend `BaseChartOptions`, so padding, title, legend, tooltip, theme and animation are configured the same way everywhere; the cartesian charts extend `CartesianChartOptions` on top of it for axes, grid, crosshair, annotations and pan/zoom. Each feature option takes the same shorthand: `true`/`false` to toggle it with its defaults, or a partial object to override individual fields.
 
 > [!NOTE]
 > For the full API, see the [Chart Base & Options API Reference](/docs/api/@ripl/charts/).

@@ -1,6 +1,11 @@
+---
+title: Radial Bar Chart
+description: Encode each category as a concentric ring whose arc sweeps to its value, with configurable inner radius, angular range, ring gap and rounded arc caps.
+---
+
 # Radial Bar Chart
 
-The **Radial Bar Chart** lays each category out as a concentric ring whose arc length encodes its value. This circular take on the bar chart reads well for a handful of comparable metrics or progress-style values. Each ring has a faint track behind a colored value arc that sweeps clockwise from the top. Value arcs are hit-tested on their stroke, so every ring is hoverable rather than only the outermost.
+The **Radial Bar Chart** gives each category a concentric ring and sweeps its arc clockwise from the top in proportion to its value. Use it for a handful of progress-style metrics against a shared `max`, where a stack of straight bars would waste the space a dashboard tile gives you. `innerRadius` and `range` set the hole and the angular span, `gap` spaces the rings, `trackColor` paints the faint track behind each value arc, and `rounded`, `labels`, `legend` and `format` finish it. Value arcs are hit-tested on their stroke, so every ring is hoverable rather than only the outermost. Canvas by default, SVG or a terminal by [passing a context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
