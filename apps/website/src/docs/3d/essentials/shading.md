@@ -111,7 +111,7 @@ const color = shadeFaceColor('rgb(200, 100, 50)', 0.5);
 
 ## Automatic Shading
 
-`Shape3D` elements automatically apply flat shading during rendering. The light direction is read from `context.lightDirection` (defaults to `LIGHT_DIRECTION.topLeftFront`, `[-0.577, -0.577, -0.577]`).
+`Shape3D` elements automatically apply flat shading during rendering. The light direction is read from `context.lightDirection` (defaults to `LIGHT_DIRECTION.topLeftFront`, the normalized `[-1, -1, -1]`).
 
 ```ts
 context.lightDirection = [1, -1, -1]; // top-right light

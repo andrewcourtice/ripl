@@ -1,39 +1,53 @@
+import {
+    vec3Normalize,
+} from '../math/vector';
+
+import {
+    objectFreeze,
+} from '@ripl/utilities';
+
 import type {
     Vector3,
 } from '../math/vector';
 
-/** Pre-normalized light direction vectors for common light positions. */
-export const LIGHT_DIRECTION = {
+/**
+ * Pre-normalized light direction vectors for common light positions.
+ *
+ * Each entry is normalized at module load from its exact axis combination, so a diagonal is a true
+ * unit vector rather than a rounded decimal — {@link Context3D.getLightDirectionForRender} and the
+ * WGSL shader both assume unit length and a truncated one biases every diagonal light slightly dim.
+ */
+export const LIGHT_DIRECTION = objectFreeze({
     /** Light shining straight down from above. */
-    top: [0, -1, 0],
+    top: vec3Normalize([0, -1, 0]),
     /** Light shining straight up from below. */
-    bottom: [0, 1, 0],
+    bottom: vec3Normalize([0, 1, 0]),
     /** Light shining from the left. */
-    left: [-1, 0, 0],
+    left: vec3Normalize([-1, 0, 0]),
     /** Light shining from the right. */
-    right: [1, 0, 0],
+    right: vec3Normalize([1, 0, 0]),
     /** Light shining from the front (towards the viewer). */
-    front: [0, 0, -1],
+    front: vec3Normalize([0, 0, -1]),
     /** Light shining from behind the scene. */
-    back: [0, 0, 1],
+    back: vec3Normalize([0, 0, 1]),
     /** Light shining from the upper-left. */
-    topLeft: [-0.707, -0.707, 0],
+    topLeft: vec3Normalize([-1, -1, 0]),
     /** Light shining from the upper-right. */
-    topRight: [0.707, -0.707, 0],
+    topRight: vec3Normalize([1, -1, 0]),
     /** Light shining from above and in front. */
-    topFront: [0, -0.707, -0.707],
+    topFront: vec3Normalize([0, -1, -1]),
     /** Light shining from above and behind. */
-    topBack: [0, -0.707, 0.707],
+    topBack: vec3Normalize([0, -1, 1]),
     /** Light shining from the upper-left and in front. */
-    topLeftFront: [-0.577, -0.577, -0.577],
+    topLeftFront: vec3Normalize([-1, -1, -1]),
     /** Light shining from the upper-right and in front. */
-    topRightFront: [0.577, -0.577, -0.577],
+    topRightFront: vec3Normalize([1, -1, -1]),
     /** Light shining from the upper-left and behind. */
-    topLeftBehind: [-0.577, -0.577, 0.577],
+    topLeftBehind: vec3Normalize([-1, -1, 1]),
     /** Light shining from the upper-right and behind. */
-    topRightBehind: [0.577, -0.577, 0.577],
+    topRightBehind: vec3Normalize([1, -1, 1]),
     /** Light shining from the lower-left. */
-    bottomLeft: [-0.707, 0.707, 0],
+    bottomLeft: vec3Normalize([-1, 1, 0]),
     /** Light shining from the lower-right. */
-    bottomRight: [0.707, 0.707, 0],
-} as const satisfies Record<string, Vector3>;
+    bottomRight: vec3Normalize([1, 1, 0]),
+}) satisfies Record<string, Vector3>;

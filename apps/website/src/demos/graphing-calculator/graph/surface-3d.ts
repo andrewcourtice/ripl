@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Material,
     Shape3DOptions,
     Shape3DState,
     Vector3,
@@ -14,24 +15,15 @@ import {
     scaleSequential,
 } from '@ripl/core';
 
-import {
-    numberClamp,
-} from '@ripl/utilities';
-
 import type {
     SurfaceDomain,
     SurfaceField,
 } from '../types';
 
-/**
- * The number of height bands a surface colormap is split across.
- *
- * The base class carries a single fill per element, so a colormap has to come from several
- * elements. Within one band only lambert shading varies, and a quad straddling a boundary belongs
- * wholly to one band, so the transition is a staircase along quad edges: at this count that reads
- * as a contour map rather than as an artifact.
- */
-export const SURFACE_BAND_COUNT = 14;
+/** The material every surface is drawn with, colouring each vertex from the height colormap. */
+const SURFACE_MATERIAL: Material = {
+    vertexColors: true,
+};
 
 /** The default half-extent of the surface's world box along the X and Z axes, in world units. */
 export const SURFACE_EXTENT = 1;
@@ -67,31 +59,25 @@ export interface SurfaceBounds {
     heightExtent: number;
 }
 
-/** Options for building the banded mesh of a height field. */
+/** Options for building the mesh of a height field. */
 export interface SurfaceMeshOptions extends SurfaceBoundsOptions {
-    /** The number of height bands to split the surface across. Defaults to {@link SURFACE_BAND_COUNT}. */
-    bandCount?: number;
     /** The stroke drawn along each quad's edges. Omit for an unstroked surface. */
     stroke?: string;
     /** The width of the quad edge stroke, in pixels. */
     lineWidth?: number;
 }
 
-/** State for a single height band of a surface mesh. */
-export interface SurfaceBandState extends Shape3DState {
-    /** The index of the band this element draws, from `0` to `bandCount - 1`. */
-    band: number;
-    /** The number of bands the surface is split across. */
-    bandCount: number;
+/** State for a surface mesh. */
+export interface SurfaceState extends Shape3DState {
     /** The number of vertices along each side of the grid the mesh is built from. */
     segments: number;
     /** A counter bumped whenever the shared height field is replaced, invalidating the cached mesh. */
     revision: number;
 }
 
-/** Options for constructing a {@link SurfaceBand}. */
-export interface SurfaceBandOptions extends Shape3DOptions<SurfaceBandState> {
-    /** The height field the band reads its vertices from; held outside the element and never copied. */
+/** Options for constructing a {@link Surface}. */
+export interface SurfaceOptions extends Shape3DOptions<SurfaceState> {
+    /** The height field the surface reads its vertices from; held outside the element and never copied. */
     field: SurfaceField;
     /** The world box the height field is mapped into. */
     bounds: SurfaceBounds;
@@ -112,7 +98,7 @@ function finiteOr(value: number, fallback: number): number {
  *
  * @param field - The evaluated height field.
  * @param options - Overrides for the box's extents.
- * @returns The bounds every mapping helper and mesh band shares.
+ * @returns The bounds every mapping helper and the mesh share.
  */
 export function createSurfaceBounds(field: SurfaceField, options?: SurfaceBoundsOptions): SurfaceBounds {
     const zMin = finiteOr(field.zMin, 0);
@@ -160,80 +146,35 @@ export function surfaceWorldPoint(bounds: SurfaceBounds, x: number, y: number, h
 }
 
 /**
- * Resolves which band a height belongs to. Deterministic, so every quad lands in exactly one band
- * and the bands together cover `[zMin, zMax]`.
+ * Builds the viridis colormap for a height range.
  *
- * @param height - The height in data units.
- * @param zMin - The lowest height in the field.
- * @param zMax - The highest height in the field.
- * @param bandCount - The number of bands the range is split across.
- * @returns The band index, from `0` to `bandCount - 1`.
- */
-export function surfaceBandIndex(height: number, zMin: number, zMax: number, bandCount: number = SURFACE_BAND_COUNT): number {
-    const bands = Math.max(1, Math.trunc(bandCount));
-    const range = zMax - zMin;
-
-    if (range <= 0 || !Number.isFinite(range) || !Number.isFinite(height)) {
-        return 0;
-    }
-
-    return numberClamp(Math.floor((height - zMin) / range * bands), 0, bands - 1);
-}
-
-/**
- * Samples the viridis scheme at the center of each height band.
+ * Returns a function rather than a fixed set of samples because every vertex is coloured
+ * individually — the colormap is continuous across the surface rather than quantised into bands.
  *
  * @param zMin - The lowest height in the field.
  * @param zMax - The highest height in the field.
- * @param bandCount - The number of bands the range is split across.
- * @returns One CSS color per band, ordered from the lowest band upwards.
+ * @returns A function mapping a height in data units to a CSS colour.
  */
-export function surfaceBandColors(zMin: number, zMax: number, bandCount: number = SURFACE_BAND_COUNT): string[] {
-    const bands = Math.max(1, Math.trunc(bandCount));
+export function surfaceColorScale(zMin: number, zMax: number): (height: number) => string {
     const range = zMax - zMin;
     const usable = Number.isFinite(range) && range > 0;
     const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, usable ? [zMin, zMax] : [0, 1]);
-    const colors: string[] = [];
+    const midpoint = scale(usable ? (zMin + zMax) / 2 : 0.5);
 
-    for (let i = 0; i < bands; i++) {
-        const position = (i + 0.5) / bands;
-
-        colors.push(scale(usable ? zMin + position * range : position));
-    }
-
-    return colors;
+    return height => Number.isFinite(height) ? scale(usable ? height : 0.5) : midpoint;
 }
 
 /**
- * One height band of a `z = f(x, y)` surface, drawn as the quads of the grid whose mean corner
- * height falls in this band.
+ * A `z = f(x, y)` surface, drawn as one quad per grid cell with each vertex coloured by its height.
  *
  * The height field lives outside the element and is only read here, because `computeFaces` fires on
  * every cache invalidation: every `setStateValue` and every `interpolate` tick. Evaluating the
  * expression from inside it would put mathjs on that path.
  */
-export class SurfaceBand extends Shape3D<SurfaceBandState> {
+export class Surface extends Shape3D<SurfaceState> {
 
     private _field: SurfaceField;
     private _bounds: SurfaceBounds;
-
-    /** The index of the band this element draws, from `0` to `bandCount - 1`. */
-    public get band() {
-        return this.getStateValue('band');
-    }
-
-    public set band(value) {
-        this.setStateValue('band', value);
-    }
-
-    /** The number of bands the surface is split across. */
-    public get bandCount() {
-        return this.getStateValue('bandCount');
-    }
-
-    public set bandCount(value) {
-        this.setStateValue('bandCount', value);
-    }
 
     /** The number of vertices along each side of the grid the mesh is built from. */
     public get segments() {
@@ -245,7 +186,7 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
         return this.getStateValue('revision');
     }
 
-    /** The height field this band reads its vertices from. */
+    /** The height field this surface reads its vertices from. */
     public get field() {
         return this._field;
     }
@@ -255,18 +196,17 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
         return this._bounds;
     }
 
-    constructor(options: SurfaceBandOptions) {
+    constructor(options: SurfaceOptions) {
         const {
             field,
             bounds,
             ...state
         } = options;
 
-        super('surface-band', {
-            band: 0,
-            bandCount: SURFACE_BAND_COUNT,
+        super('surface', {
             segments: field.resolution,
             revision: 0,
+            material: SURFACE_MATERIAL,
             ...state,
         });
 
@@ -275,7 +215,7 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
     }
 
     /**
-     * Points the band at a freshly evaluated height field, invalidating the cached mesh.
+     * Points the surface at a freshly evaluated height field, invalidating the cached mesh.
      *
      * @param field - The new height field, typically at a different grid resolution.
      * @param bounds - The world box the new field is fitted into.
@@ -299,9 +239,8 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
             return faces;
         }
 
-        const band = this.band;
-        const bandCount = this.bandCount;
         const axis = new Float64Array(resolution);
+        const color = surfaceColorScale(bounds.zMin, bounds.zMax);
 
         for (let i = 0; i < resolution; i++) {
             axis[i] = (i / (resolution - 1) * 2 - 1) * bounds.extent;
@@ -316,10 +255,10 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
                 const h10 = values[index + 1];
                 const h01 = values[index + resolution];
                 const h11 = values[index + resolution + 1];
-                const mean = (h00 + h10 + h01 + h11) / 4;
 
-                // A NaN corner poisons the mean, which drops the whole cell rather than emitting a hole edge.
-                if (!Number.isFinite(mean) || surfaceBandIndex(mean, bounds.zMin, bounds.zMax, bandCount) !== band) {
+                // A NaN corner has no height to place or colour, which drops the whole cell rather
+                // than emitting a hole edge.
+                if (!Number.isFinite(h00 + h10 + h01 + h11)) {
                     continue;
                 }
 
@@ -330,6 +269,12 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
                         [axis[i + 1], surfaceWorldHeight(bounds, h11), axis[j + 1]],
                         [axis[i + 1], surfaceWorldHeight(bounds, h10), axis[j]],
                     ],
+                    colors: [
+                        color(h00),
+                        color(h01),
+                        color(h11),
+                        color(h10),
+                    ],
                 });
             }
         }
@@ -339,57 +284,42 @@ export class SurfaceBand extends Shape3D<SurfaceBandState> {
 
 }
 
-/** Creates a {@link SurfaceBand} element. */
-export function createSurfaceBand(...options: ConstructorParameters<typeof SurfaceBand>) {
-    return new SurfaceBand(...options);
+/** Creates a {@link Surface} element. */
+export function createSurface(...options: ConstructorParameters<typeof Surface>) {
+    return new Surface(...options);
 }
 
-/** Type guard for {@link SurfaceBand} elements. */
-export function elementIsSurfaceBand(value: unknown): value is SurfaceBand {
-    return value instanceof SurfaceBand;
+/** Type guard for {@link Surface} elements. */
+export function elementIsSurface(value: unknown): value is Surface {
+    return value instanceof Surface;
 }
 
 /**
- * Splits a height field into one {@link SurfaceBand} element per color band.
- *
- * Every band shares the one field and the one set of bounds, so a rebuild is a single evaluation
- * pass no matter how many bands there are.
+ * Builds the {@link Surface} element for a height field.
  *
  * @param field - The evaluated height field.
- * @param options - Band count, box extents and edge stroke.
- * @returns One element per band, ordered from the lowest band upwards.
+ * @param options - Box extents and edge stroke.
+ * @returns The surface element.
  */
-export function buildSurfaceBands(field: SurfaceField, options?: SurfaceMeshOptions): SurfaceBand[] {
-    const bandCount = Math.max(1, Math.trunc(options?.bandCount ?? SURFACE_BAND_COUNT));
-    const bounds = createSurfaceBounds(field, options);
-
-    return surfaceBandColors(bounds.zMin, bounds.zMax, bandCount).map((fill, band) => createSurfaceBand({
+export function buildSurface(field: SurfaceField, options?: SurfaceMeshOptions): Surface {
+    return createSurface({
         field,
-        bounds,
-        band,
-        bandCount,
-        fill,
+        bounds: createSurfaceBounds(field, options),
         stroke: options?.stroke,
         lineWidth: options?.lineWidth,
-    }));
+    });
 }
 
 /**
- * Re-points existing bands at a freshly evaluated height field, re-fitting the box and the colormap.
+ * Re-points an existing surface at a freshly evaluated height field, re-fitting the box.
  *
- * Reusing the elements keeps the scene graph stable across a resolution swap; adding and removing
- * them would fire a full instruction rebuild instead.
+ * Reusing the element keeps the scene graph stable across a resolution swap; replacing it would
+ * fire a full instruction rebuild instead.
  *
- * @param bands - The elements returned by {@link buildSurfaceBands}.
+ * @param surface - The element returned by {@link buildSurface}.
  * @param field - The new height field.
- * @param options - The same options the bands were built with.
+ * @param options - The same options the surface was built with.
  */
-export function updateSurfaceBands(bands: SurfaceBand[], field: SurfaceField, options?: SurfaceMeshOptions): void {
-    const bounds = createSurfaceBounds(field, options);
-    const colors = surfaceBandColors(bounds.zMin, bounds.zMax, bands.length);
-
-    bands.forEach((element, band) => {
-        element.fill = colors[band];
-        element.setField(field, bounds);
-    });
+export function updateSurface(surface: Surface, field: SurfaceField, options?: SurfaceMeshOptions): void {
+    surface.setField(field, createSurfaceBounds(field, options));
 }

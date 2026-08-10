@@ -3,14 +3,20 @@ import {
     VERTEX_SHADER,
 } from './shaders';
 
-/** Byte stride for a single vertex: position(3) + normal(3) + color(4) = 10 floats × 4 bytes. */
-export const VERTEX_STRIDE = 10 * 4;
+import {
+    MODEL_UNIFORM_BYTES,
+    SCENE_UNIFORM_BYTES,
+    VERTEX_FLOATS,
+} from '@ripl/3d';
 
-/** Size in bytes of the scene uniform buffer: mat4(64) + vec3(12) + f32(4) = 80 bytes, aligned to 16 = 80. */
-export const SCENE_UNIFORM_SIZE = 80;
+/** Byte stride for a single vertex, derived from the interleaved layout in `@ripl/3d`. */
+export const VERTEX_STRIDE = VERTEX_FLOATS * 4;
 
-/** Size in bytes of the model uniform buffer: mat4(64) + mat4(64) = 128 bytes. */
-export const MODEL_UNIFORM_SIZE = 128;
+/** Size in bytes of the scene uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
+export const SCENE_UNIFORM_SIZE = SCENE_UNIFORM_BYTES;
+
+/** Size in bytes of the model uniform buffer, derived from the layout descriptor in `@ripl/3d`. */
+export const MODEL_UNIFORM_SIZE = MODEL_UNIFORM_BYTES;
 
 /** Vertex buffer layout describing position, normal, and color attributes. */
 export const VERTEX_BUFFER_LAYOUT: GPUVertexBufferLayout = {
@@ -34,6 +40,12 @@ export const VERTEX_BUFFER_LAYOUT: GPUVertexBufferLayout = {
             offset: 24,
             format: 'float32x4',
         },
+        {
+            // uv: vec2f
+            shaderLocation: 3,
+            offset: 40,
+            format: 'float32x2',
+        },
     ],
 };
 
@@ -52,9 +64,28 @@ export const SCENE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
 export const MODEL_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
     {
         binding: 0,
-        visibility: 0x1, // GPUShaderStage.VERTEX
+        // The fragment stage reads the material terms the model uniform now carries.
+        visibility: 0x3, // GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
         buffer: {
             type: 'uniform',
+        },
+    },
+];
+
+/** Bind group layout entries for the material texture and its sampler (group 2). */
+export const TEXTURE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
+    {
+        binding: 0,
+        visibility: 0x2, // GPUShaderStage.FRAGMENT
+        texture: {
+            sampleType: 'float',
+        },
+    },
+    {
+        binding: 1,
+        visibility: 0x2, // GPUShaderStage.FRAGMENT
+        sampler: {
+            type: 'filtering',
         },
     },
 ];
@@ -69,6 +100,8 @@ export interface PipelineState {
     sceneBindGroupLayout: GPUBindGroupLayout;
     /** Bind group layout for per-model uniforms (group 1). */
     modelBindGroupLayout: GPUBindGroupLayout;
+    /** Bind group layout for the material texture and sampler (group 2). */
+    textureBindGroupLayout: GPUBindGroupLayout;
     /** Texture format used for the depth buffer. */
     depthFormat: GPUTextureFormat;
     /** Texture format of the canvas presentation surface. */
@@ -96,8 +129,12 @@ export function createPipeline(device: GPUDevice, format: GPUTextureFormat, opti
         entries: MODEL_BIND_GROUP_LAYOUT_ENTRIES,
     });
 
+    const textureBindGroupLayout = device.createBindGroupLayout({
+        entries: TEXTURE_BIND_GROUP_LAYOUT_ENTRIES,
+    });
+
     const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [sceneBindGroupLayout, modelBindGroupLayout],
+        bindGroupLayouts: [sceneBindGroupLayout, modelBindGroupLayout, textureBindGroupLayout],
     });
 
     const vertexModule = device.createShaderModule({
@@ -156,6 +193,7 @@ export function createPipeline(device: GPUDevice, format: GPUTextureFormat, opti
         pipeline,
         sceneBindGroupLayout,
         modelBindGroupLayout,
+        textureBindGroupLayout,
         depthFormat,
         presentationFormat: format,
         sampleCount,

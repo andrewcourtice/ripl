@@ -12,33 +12,15 @@ import {
     scaleSequential,
 } from '../../src';
 
-/**
- * Extracts the rounded RGB channels of a color string for comparison, ignoring the serialized
- * format. Falls back to a numeric scan for interpolated `rgba()` strings with fractional channels,
- * which the library's integer-only `parseColor` does not match.
- */
+/** Extracts the RGB channels of a color string for comparison, ignoring the serialized format. */
 function rgb(color: string): [number, number, number] {
     const parsed = parseColor(color);
 
-    if (parsed) {
-        return [
-            Math.round(parsed[0]),
-            Math.round(parsed[1]),
-            Math.round(parsed[2]),
-        ];
+    if (!parsed) {
+        throw new Error(`${color} did not round trip through parseColor`);
     }
 
-    const [
-        red,
-        green,
-        blue,
-    ] = (color.match(/[\d.]+/g) ?? []).map(Number);
-
-    return [
-        Math.round(red),
-        Math.round(green),
-        Math.round(blue),
-    ];
+    return [parsed[0], parsed[1], parsed[2]];
 }
 
 describe('interpolateColors', () => {
@@ -96,6 +78,26 @@ describe('scaleSequential', () => {
 
         expect(ticks[0]).toBe(0);
         expect(ticks[ticks.length - 1]).toBe(100);
+    });
+
+    /*
+     * 3D-C1: only values landing exactly on a scheme stop serialized to integer channels, so 999
+     * of these 1,001 samples parsed as `undefined` and every consumer reading a colour back — the
+     * 3D shading path among them — silently fell through to its default.
+     */
+    test('Should emit colours it can parse back across the whole domain', () => {
+        const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 1]);
+        const unparseable: string[] = [];
+
+        for (let position = 0; position <= 1000; position++) {
+            const color = scale(position / 1000);
+
+            if (!parseColor(color)) {
+                unparseable.push(color);
+            }
+        }
+
+        expect(unparseable).toEqual([]);
     });
 
 });

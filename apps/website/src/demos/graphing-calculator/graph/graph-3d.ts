@@ -28,13 +28,12 @@ import type {
 } from '@ripl/web';
 
 import {
-    buildSurfaceBands,
+    buildSurface,
     surfaceWorldPoint,
-    updateSurfaceBands,
+    updateSurface,
 } from './surface-3d';
 
 import type {
-    SurfaceBand,
     SurfaceBounds,
     SurfaceMeshOptions,
 } from './surface-3d';
@@ -130,7 +129,7 @@ export interface Graph3DOptions {
 export interface Graph3D {
     /** The 3D rendering context the view paints into. */
     readonly context: CanvasContext3D;
-    /** The scene holding the surface bands, the axis frame and the 2D label overlay. */
+    /** The scene holding the surface, the axis frame and the 2D label overlay. */
     readonly scene: Scene;
     /** The renderer driving the frame loop. */
     readonly renderer: Renderer;
@@ -183,7 +182,7 @@ const TICK_LENGTH = 0.05;
 const LABEL_GAP = 0.13;
 const AXIS_WIDTH = 1;
 
-// The overlay must paint after every band: a 2D fill between two bands splits the global face sort.
+// The overlay must paint after the surface: a 2D fill among its faces splits the global face sort.
 const OVERLAY_Z_INDEX = 10;
 
 const SETTLE_DELAY = 150;
@@ -343,12 +342,10 @@ function buildAxisFrame(bounds: SurfaceBounds): AxisFrame {
 /**
  * Creates the orbitable 3D surface view.
  *
- * The surface is split into height bands, one element per band, because the base 3D shape carries a
- * single fill. That is safe only while nothing 2D paints between them: a fill, stroke, image or clip
- * flushes the face buffer, which splits the global back-to-front sort and produces occlusion errors
- * that are intermittent and orientation-dependent. The bands therefore live alone in one group and
- * every 2D overlay sits above them on `zIndex`. Nothing may depend on the bands' draw order either:
- * a 3D shape's `zIndex` comes from projected depth and is only re-sorted on a graph rebuild.
+ * The surface is one element whose vertices carry the colormap. Nothing 2D may paint between its
+ * faces: a fill, stroke, image or clip flushes the face buffer, which splits the global
+ * back-to-front sort and produces occlusion errors that are intermittent and orientation-dependent.
+ * The surface therefore lives alone in one group and every 2D overlay sits above it on `zIndex`.
  *
  * @param options - The host element, field provider, theme and detail preset.
  * @returns The view handle, which owns everything it created.
@@ -385,7 +382,7 @@ export function createGraph3D(options: Graph3DOptions): Graph3D {
     context.lightDirection = [...LIGHT_DIRECTION] as Vector3;
 
     const meshOptions: SurfaceMeshOptions = {};
-    const bands: SurfaceBand[] = buildSurfaceBands(emptyField(), meshOptions);
+    const surface = buildSurface(emptyField(), meshOptions);
     const frame = new Wireframe({
         lineWidth: AXIS_WIDTH,
     });
@@ -404,9 +401,9 @@ export function createGraph3D(options: Graph3DOptions): Graph3D {
         }));
     }
 
-    // One group per layer: a 2D element among the bands flushes the face buffer and splits the depth sort.
+    // One group per layer: a 2D element among the faces flushes the face buffer and splits the depth sort.
     const bandGroup = createGroup({
-        children: bands,
+        children: [surface],
     });
 
     const axisGroup = createGroup({
@@ -483,8 +480,8 @@ export function createGraph3D(options: Graph3DOptions): Graph3D {
     function rebuild(resolution: number): void {
         const field = provideField(resolution) ?? emptyField();
 
-        updateSurfaceBands(bands, field, meshOptions);
-        rebuildAxes(bands[0].bounds, field.resolution > 1);
+        updateSurface(surface, field, meshOptions);
+        rebuildAxes(surface.bounds, field.resolution > 1);
         scene.invalidate();
     }
 

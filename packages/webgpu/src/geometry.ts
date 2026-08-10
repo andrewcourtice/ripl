@@ -1,16 +1,11 @@
 import {
-    vec3TriangleNormal,
+    materialSideCode,
+    packModelUniform,
 } from '@ripl/3d';
 
 import type {
-    Face3D,
-    Matrix4,
     MeshSubmission,
 } from '@ripl/3d';
-
-import type {
-    ColorRGBA,
-} from '@ripl/core';
 
 import {
     numberNextPowerOfN,
@@ -24,6 +19,10 @@ import {
 import type {
     PipelineState,
 } from './pipeline';
+
+import type {
+    TextureManager,
+} from './texture';
 
 const FLOATS_PER_VERTEX = VERTEX_STRIDE / 4;
 
@@ -50,10 +49,17 @@ export class GeometryManager {
     private _modelUniformData = new Float32Array(MODEL_UNIFORM_SIZE / 4);
     private _poolIndex = 0;
     private _destroyed = false;
+    private _textureManager: TextureManager | null;
 
-    constructor(device: GPUDevice, pipelineState: PipelineState) {
+    /**
+     * @param device - The device to allocate buffers on.
+     * @param pipelineState - The pipeline the buffers are laid out for.
+     * @param textureManager - Uploads and binds material textures. Omit to skip texture binding.
+     */
+    constructor(device: GPUDevice, pipelineState: PipelineState, textureManager?: TextureManager) {
         this._device = device;
         this._pipelineState = pipelineState;
+        this._textureManager = textureManager ?? null;
     }
 
     /** Resets per-frame state for a new render pass. */
@@ -104,7 +110,13 @@ export class GeometryManager {
 
         const draws: DrawCommand[] = [];
 
-        for (const sub of this._submissions) {
+        // Sorted by texture so a scene sharing one image issues one setBindGroup rather than one
+        // per mesh. Depth is resolved by the depth buffer, so reordering draws is safe here.
+        const submissions = this._textureManager
+            ? [...this._submissions].sort((left, right) => textureKey(left).localeCompare(textureKey(right)))
+            : this._submissions;
+
+        for (const sub of submissions) {
             const vertCount = sub.vertices.length / FLOATS_PER_VERTEX;
 
             vertexData.set(sub.vertices, vertexOffset * FLOATS_PER_VERTEX);
@@ -113,12 +125,13 @@ export class GeometryManager {
                 indexData[indexOffset + i] = sub.indices[i] + baseVertex;
             }
 
-            const modelBindGroup = this._getModelBindGroup(sub.modelMatrix, sub.normalMatrix);
+            const modelBindGroup = this._getModelBindGroup(sub);
 
             draws.push({
                 indexCount: sub.indices.length,
                 indexOffset,
                 modelBindGroup,
+                textureBindGroup: this._textureManager?.getBindGroup(sub.material.map),
             });
 
             vertexOffset += vertCount;
@@ -193,7 +206,7 @@ export class GeometryManager {
         });
     }
 
-    private _getModelBindGroup(modelMatrix: Matrix4, normalMatrix: Matrix4): GPUBindGroup {
+    private _getModelBindGroup(submission: MeshSubmission): GPUBindGroup {
         if (this._poolIndex >= this._modelUniformBuffers.length) {
             const buffer = this._device.createBuffer({
                 size: MODEL_UNIFORM_SIZE,
@@ -217,13 +230,21 @@ export class GeometryManager {
         }
 
         const buffer = this._modelUniformBuffers[this._poolIndex];
-        const data = this._modelUniformData;
+        const material = submission.material;
 
-        data.set(modelMatrix, 0);
-        data.set(normalMatrix, 16);
+        packModelUniform(this._modelUniformData, {
+            modelMatrix: submission.modelMatrix,
+            normalMatrix: submission.normalMatrix,
+            specular: material.surface.specular,
+            shininess: material.surface.shininess,
+            emissive: material.surface.emissive,
+            side: materialSideCode(material.side),
+            mapRepeat: material.map?.repeat ?? [1, 1],
+            mapOffset: material.map?.offset ?? [0, 0],
+        });
 
         // writeBuffer copies the data at call time, so the scratch array is safe to reuse.
-        this._device.queue.writeBuffer(buffer, 0, data);
+        this._device.queue.writeBuffer(buffer, 0, this._modelUniformData);
 
         const bindGroup = this._modelBindGroups[this._poolIndex];
         this._poolIndex++;
@@ -241,6 +262,12 @@ export interface DrawCommand {
     indexOffset: number;
     /** Bind group holding this mesh's model and normal matrices. */
     modelBindGroup: GPUBindGroup;
+    /** Bind group holding this mesh's texture and sampler, when the backend manages textures. */
+    textureBindGroup?: GPUBindGroup;
+}
+
+function textureKey(submission: MeshSubmission): string {
+    return submission.material.map?.id ?? '';
 }
 
 /** Result of flushing all queued meshes: buffers and per-mesh draw commands. */
@@ -255,69 +282,4 @@ export interface FlushResult {
     indexCount: number;
     /** Per-mesh draw commands into the shared vertex and index buffers. */
     draws: DrawCommand[];
-}
-
-/** Triangulates a list of Face3D into interleaved vertex data and index arrays. */
-export function triangulatefaces(
-    faces: Face3D[],
-    modelMatrix: Matrix4,
-    color: ColorRGBA
-): {
-    /** Interleaved vertex data (positions, normals, colors) for all triangles. */
-    vertices: Float32Array;
-    /** Triangle vertex indices into {@link vertices}. */
-    indices: Uint32Array;
-} {
-    let vertexCount = 0;
-    let indexCount = 0;
-
-    for (const face of faces) {
-        const nv = face.vertices.length;
-        vertexCount += nv;
-        indexCount += (nv - 2) * 3;
-    }
-
-    const vertices = new Float32Array(vertexCount * 10);
-    const indices = new Uint32Array(indexCount);
-
-    const cr = color[0] / 255;
-    const cg = color[1] / 255;
-    const cb = color[2] / 255;
-    const ca = color[3];
-
-    let vi = 0;
-    let ii = 0;
-    let baseIndex = 0;
-
-    for (const face of faces) {
-        const faceVerts = face.vertices;
-        const normal = face.normal ?? vec3TriangleNormal(faceVerts[0], faceVerts[1], faceVerts[2]);
-
-        for (const vertex of faceVerts) {
-            vertices[vi++] = vertex[0];
-            vertices[vi++] = vertex[1];
-            vertices[vi++] = vertex[2];
-            vertices[vi++] = normal[0];
-            vertices[vi++] = normal[1];
-            vertices[vi++] = normal[2];
-            vertices[vi++] = cr;
-            vertices[vi++] = cg;
-            vertices[vi++] = cb;
-            vertices[vi++] = ca;
-        }
-
-        // Fan triangulation for convex polygons
-        for (let t = 0; t < faceVerts.length - 2; t++) {
-            indices[ii++] = baseIndex;
-            indices[ii++] = baseIndex + t + 1;
-            indices[ii++] = baseIndex + t + 2;
-        }
-
-        baseIndex += faceVerts.length;
-    }
-
-    return {
-        vertices,
-        indices,
-    };
 }

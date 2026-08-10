@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    TAU,
+} from '@ripl/core';
+
 import type {
     Vector3,
 } from '../math/vector';
@@ -79,12 +83,12 @@ export class Torus extends Shape3D<TorusState> {
         const tube = this.tube;
 
         for (let ti = 0; ti < tubSegs; ti++) {
-            const u1 = (ti / tubSegs) * Math.PI * 2;
-            const u2 = ((ti + 1) / tubSegs) * Math.PI * 2;
+            const u1 = (ti / tubSegs) * TAU;
+            const u2 = ((ti + 1) / tubSegs) * TAU;
 
             for (let ri = 0; ri < radSegs; ri++) {
-                const v1 = (ri / radSegs) * Math.PI * 2;
-                const v2 = ((ri + 1) / radSegs) * Math.PI * 2;
+                const v1 = (ri / radSegs) * TAU;
+                const v2 = ((ri + 1) / radSegs) * TAU;
 
                 faces.push({
                     vertices: [
@@ -92,6 +96,18 @@ export class Torus extends Shape3D<TorusState> {
                         torusVertex(radius, tube, u2, v1),
                         torusVertex(radius, tube, u2, v2),
                         torusVertex(radius, tube, u1, v2),
+                    ],
+                    normals: [
+                        torusNormal(u1, v1),
+                        torusNormal(u2, v1),
+                        torusNormal(u2, v2),
+                        torusNormal(u1, v2),
+                    ],
+                    uvs: [
+                        [ti / tubSegs, ri / radSegs],
+                        [(ti + 1) / tubSegs, ri / radSegs],
+                        [(ti + 1) / tubSegs, (ri + 1) / radSegs],
+                        [ti / tubSegs, (ri + 1) / radSegs],
                     ],
                 });
             }
@@ -102,7 +118,16 @@ export class Torus extends Shape3D<TorusState> {
 
 }
 
-// eslint-disable-next-line id-length
+// The outward normal at a point on the tube is the unit vector from the tube's centre circle,
+// which is the same expression as the vertex with the major radius dropped.
+function torusNormal(u: number, v: number): Vector3 {
+    return [
+        Math.cos(v) * Math.cos(u),
+        Math.sin(v),
+        Math.cos(v) * Math.sin(u),
+    ];
+}
+
 function torusVertex(radius: number, tube: number, u: number, v: number): Vector3 {
     return [
         (radius + tube * Math.cos(v)) * Math.cos(u),

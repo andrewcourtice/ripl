@@ -9,6 +9,14 @@
         "collapsed": true,
         "items": [
           {
+            "text": "AmbientLight",
+            "link": "/docs/api/@ripl/3d/classes/AmbientLight.md"
+          },
+          {
+            "text": "BezierSurface",
+            "link": "/docs/api/@ripl/3d/classes/BezierSurface.md"
+          },
+          {
             "text": "Camera",
             "link": "/docs/api/@ripl/3d/classes/Camera.md"
           },
@@ -33,8 +41,44 @@
             "link": "/docs/api/@ripl/3d/classes/Cylinder.md"
           },
           {
+            "text": "DirectionalLight",
+            "link": "/docs/api/@ripl/3d/classes/DirectionalLight.md"
+          },
+          {
+            "text": "Group3D",
+            "link": "/docs/api/@ripl/3d/classes/Group3D.md"
+          },
+          {
+            "text": "HemisphereLight",
+            "link": "/docs/api/@ripl/3d/classes/HemisphereLight.md"
+          },
+          {
+            "text": "Light",
+            "link": "/docs/api/@ripl/3d/classes/Light.md"
+          },
+          {
+            "text": "LightList",
+            "link": "/docs/api/@ripl/3d/classes/LightList.md"
+          },
+          {
+            "text": "Mesh",
+            "link": "/docs/api/@ripl/3d/classes/Mesh.md"
+          },
+          {
+            "text": "Parametric",
+            "link": "/docs/api/@ripl/3d/classes/Parametric.md"
+          },
+          {
             "text": "Plane",
             "link": "/docs/api/@ripl/3d/classes/Plane.md"
+          },
+          {
+            "text": "PointLight",
+            "link": "/docs/api/@ripl/3d/classes/PointLight.md"
+          },
+          {
+            "text": "PositionalLight",
+            "link": "/docs/api/@ripl/3d/classes/PositionalLight.md"
           },
           {
             "text": "Shape3D",
@@ -43,6 +87,14 @@
           {
             "text": "Sphere",
             "link": "/docs/api/@ripl/3d/classes/Sphere.md"
+          },
+          {
+            "text": "SpotLight",
+            "link": "/docs/api/@ripl/3d/classes/SpotLight.md"
+          },
+          {
+            "text": "Texture",
+            "link": "/docs/api/@ripl/3d/classes/Texture.md"
           },
           {
             "text": "Torus",
@@ -54,6 +106,14 @@
         "text": "Interfaces",
         "collapsed": true,
         "items": [
+          {
+            "text": "BezierSurfaceOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/BezierSurfaceOptions.md"
+          },
+          {
+            "text": "BezierSurfaceState",
+            "link": "/docs/api/@ripl/3d/interfaces/BezierSurfaceState.md"
+          },
           {
             "text": "CameraInteractionConfig",
             "link": "/docs/api/@ripl/3d/interfaces/CameraInteractionConfig.md"
@@ -87,16 +147,68 @@
             "link": "/docs/api/@ripl/3d/interfaces/CylinderState.md"
           },
           {
+            "text": "DirectedLightOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/DirectedLightOptions.md"
+          },
+          {
             "text": "Face3D",
             "link": "/docs/api/@ripl/3d/interfaces/Face3D.md"
+          },
+          {
+            "text": "Fog",
+            "link": "/docs/api/@ripl/3d/interfaces/Fog.md"
+          },
+          {
+            "text": "Group3DOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/Group3DOptions.md"
+          },
+          {
+            "text": "HemisphereLightOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/HemisphereLightOptions.md"
+          },
+          {
+            "text": "Intersection3D",
+            "link": "/docs/api/@ripl/3d/interfaces/Intersection3D.md"
+          },
+          {
+            "text": "LightOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/LightOptions.md"
+          },
+          {
+            "text": "Material",
+            "link": "/docs/api/@ripl/3d/interfaces/Material.md"
+          },
+          {
+            "text": "MeshOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/MeshOptions.md"
+          },
+          {
+            "text": "MeshState",
+            "link": "/docs/api/@ripl/3d/interfaces/MeshState.md"
           },
           {
             "text": "MeshSubmission",
             "link": "/docs/api/@ripl/3d/interfaces/MeshSubmission.md"
           },
           {
+            "text": "ModelUniformInput",
+            "link": "/docs/api/@ripl/3d/interfaces/ModelUniformInput.md"
+          },
+          {
+            "text": "ParametricOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/ParametricOptions.md"
+          },
+          {
+            "text": "ParametricState",
+            "link": "/docs/api/@ripl/3d/interfaces/ParametricState.md"
+          },
+          {
             "text": "PlaneState",
             "link": "/docs/api/@ripl/3d/interfaces/PlaneState.md"
+          },
+          {
+            "text": "PositionalLightOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/PositionalLightOptions.md"
           },
           {
             "text": "ProjectedFace3D",
@@ -107,6 +219,38 @@
             "link": "/docs/api/@ripl/3d/interfaces/ProjectedFaceState3D.md"
           },
           {
+            "text": "Ray",
+            "link": "/docs/api/@ripl/3d/interfaces/Ray.md"
+          },
+          {
+            "text": "Raycast3DOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/Raycast3DOptions.md"
+          },
+          {
+            "text": "RayTriangleHit",
+            "link": "/docs/api/@ripl/3d/interfaces/RayTriangleHit.md"
+          },
+          {
+            "text": "ResolvedFog",
+            "link": "/docs/api/@ripl/3d/interfaces/ResolvedFog.md"
+          },
+          {
+            "text": "ResolvedLight",
+            "link": "/docs/api/@ripl/3d/interfaces/ResolvedLight.md"
+          },
+          {
+            "text": "ResolvedMaterial",
+            "link": "/docs/api/@ripl/3d/interfaces/ResolvedMaterial.md"
+          },
+          {
+            "text": "ResolvedSurface",
+            "link": "/docs/api/@ripl/3d/interfaces/ResolvedSurface.md"
+          },
+          {
+            "text": "SceneUniformInput",
+            "link": "/docs/api/@ripl/3d/interfaces/SceneUniformInput.md"
+          },
+          {
             "text": "Shape3DState",
             "link": "/docs/api/@ripl/3d/interfaces/Shape3DState.md"
           },
@@ -115,8 +259,28 @@
             "link": "/docs/api/@ripl/3d/interfaces/SphereState.md"
           },
           {
+            "text": "SpotLightOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/SpotLightOptions.md"
+          },
+          {
+            "text": "SurfaceIllumination",
+            "link": "/docs/api/@ripl/3d/interfaces/SurfaceIllumination.md"
+          },
+          {
+            "text": "TextureOptions",
+            "link": "/docs/api/@ripl/3d/interfaces/TextureOptions.md"
+          },
+          {
+            "text": "TexturePattern",
+            "link": "/docs/api/@ripl/3d/interfaces/TexturePattern.md"
+          },
+          {
             "text": "TorusState",
             "link": "/docs/api/@ripl/3d/interfaces/TorusState.md"
+          },
+          {
+            "text": "UniformField",
+            "link": "/docs/api/@ripl/3d/interfaces/UniformField.md"
           },
           {
             "text": "Viewport",
@@ -129,16 +293,60 @@
         "collapsed": true,
         "items": [
           {
+            "text": "AmbientLightOptions",
+            "link": "/docs/api/@ripl/3d/type-aliases/AmbientLightOptions.md"
+          },
+          {
+            "text": "BezierPatch",
+            "link": "/docs/api/@ripl/3d/type-aliases/BezierPatch.md"
+          },
+          {
             "text": "CameraInteractionOption",
             "link": "/docs/api/@ripl/3d/type-aliases/CameraInteractionOption.md"
+          },
+          {
+            "text": "ColorUnitRGB",
+            "link": "/docs/api/@ripl/3d/type-aliases/ColorUnitRGB.md"
+          },
+          {
+            "text": "ColorUnitRGBA",
+            "link": "/docs/api/@ripl/3d/type-aliases/ColorUnitRGBA.md"
+          },
+          {
+            "text": "DirectionalLightOptions",
+            "link": "/docs/api/@ripl/3d/type-aliases/DirectionalLightOptions.md"
+          },
+          {
+            "text": "FogMode",
+            "link": "/docs/api/@ripl/3d/type-aliases/FogMode.md"
           },
           {
             "text": "LightMode",
             "link": "/docs/api/@ripl/3d/type-aliases/LightMode.md"
           },
           {
+            "text": "LightSpace",
+            "link": "/docs/api/@ripl/3d/type-aliases/LightSpace.md"
+          },
+          {
+            "text": "LightType",
+            "link": "/docs/api/@ripl/3d/type-aliases/LightType.md"
+          },
+          {
+            "text": "MaterialSide",
+            "link": "/docs/api/@ripl/3d/type-aliases/MaterialSide.md"
+          },
+          {
             "text": "Matrix4",
             "link": "/docs/api/@ripl/3d/type-aliases/Matrix4.md"
+          },
+          {
+            "text": "ParametricSurface",
+            "link": "/docs/api/@ripl/3d/type-aliases/ParametricSurface.md"
+          },
+          {
+            "text": "PointLightOptions",
+            "link": "/docs/api/@ripl/3d/type-aliases/PointLightOptions.md"
           },
           {
             "text": "ProjectedPoint",
@@ -153,6 +361,26 @@
             "link": "/docs/api/@ripl/3d/type-aliases/Shape3DOptions.md"
           },
           {
+            "text": "TextureFilter",
+            "link": "/docs/api/@ripl/3d/type-aliases/TextureFilter.md"
+          },
+          {
+            "text": "TexturePatternRepetition",
+            "link": "/docs/api/@ripl/3d/type-aliases/TexturePatternRepetition.md"
+          },
+          {
+            "text": "TextureSource",
+            "link": "/docs/api/@ripl/3d/type-aliases/TextureSource.md"
+          },
+          {
+            "text": "TextureWrap",
+            "link": "/docs/api/@ripl/3d/type-aliases/TextureWrap.md"
+          },
+          {
+            "text": "Vector2",
+            "link": "/docs/api/@ripl/3d/type-aliases/Vector2.md"
+          },
+          {
             "text": "Vector3",
             "link": "/docs/api/@ripl/3d/type-aliases/Vector3.md"
           }
@@ -163,12 +391,100 @@
         "collapsed": true,
         "items": [
           {
+            "text": "DEFAULT_SURFACE_COLOR",
+            "link": "/docs/api/@ripl/3d/variables/DEFAULT_SURFACE_COLOR.md"
+          },
+          {
+            "text": "FOG_MODE_CODE",
+            "link": "/docs/api/@ripl/3d/variables/FOG_MODE_CODE.md"
+          },
+          {
             "text": "interpolateVector3",
             "link": "/docs/api/@ripl/3d/variables/interpolateVector3.md"
           },
           {
             "text": "LIGHT_DIRECTION",
             "link": "/docs/api/@ripl/3d/variables/LIGHT_DIRECTION.md"
+          },
+          {
+            "text": "LIGHT_STRUCT_SIZE",
+            "link": "/docs/api/@ripl/3d/variables/LIGHT_STRUCT_SIZE.md"
+          },
+          {
+            "text": "LIGHT_TYPE_CODE",
+            "link": "/docs/api/@ripl/3d/variables/LIGHT_TYPE_CODE.md"
+          },
+          {
+            "text": "LIGHT_UNIFORM_FIELDS",
+            "link": "/docs/api/@ripl/3d/variables/LIGHT_UNIFORM_FIELDS.md"
+          },
+          {
+            "text": "MATERIAL_SIDE_CODE",
+            "link": "/docs/api/@ripl/3d/variables/MATERIAL_SIDE_CODE.md"
+          },
+          {
+            "text": "MAX_LIGHTS",
+            "link": "/docs/api/@ripl/3d/variables/MAX_LIGHTS.md"
+          },
+          {
+            "text": "MODEL_UNIFORM_BYTES",
+            "link": "/docs/api/@ripl/3d/variables/MODEL_UNIFORM_BYTES.md"
+          },
+          {
+            "text": "MODEL_UNIFORM_FIELDS",
+            "link": "/docs/api/@ripl/3d/variables/MODEL_UNIFORM_FIELDS.md"
+          },
+          {
+            "text": "MODEL_UNIFORM_FLOATS",
+            "link": "/docs/api/@ripl/3d/variables/MODEL_UNIFORM_FLOATS.md"
+          },
+          {
+            "text": "MODEL_UNIFORM_WGSL",
+            "link": "/docs/api/@ripl/3d/variables/MODEL_UNIFORM_WGSL.md"
+          },
+          {
+            "text": "PLAIN_SURFACE",
+            "link": "/docs/api/@ripl/3d/variables/PLAIN_SURFACE.md"
+          },
+          {
+            "text": "SCENE_CAMERA_POSITION_OFFSET",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_CAMERA_POSITION_OFFSET.md"
+          },
+          {
+            "text": "SCENE_FOG_COLOR_OFFSET",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_FOG_COLOR_OFFSET.md"
+          },
+          {
+            "text": "SCENE_FOG_PARAMS_OFFSET",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_FOG_PARAMS_OFFSET.md"
+          },
+          {
+            "text": "SCENE_LIGHT_COUNT_OFFSET",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_LIGHT_COUNT_OFFSET.md"
+          },
+          {
+            "text": "SCENE_LIGHTS_OFFSET",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_LIGHTS_OFFSET.md"
+          },
+          {
+            "text": "SCENE_UNIFORM_BYTES",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_UNIFORM_BYTES.md"
+          },
+          {
+            "text": "SCENE_UNIFORM_FIELDS",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_UNIFORM_FIELDS.md"
+          },
+          {
+            "text": "SCENE_UNIFORM_FLOATS",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_UNIFORM_FLOATS.md"
+          },
+          {
+            "text": "SCENE_UNIFORM_WGSL",
+            "link": "/docs/api/@ripl/3d/variables/SCENE_UNIFORM_WGSL.md"
+          },
+          {
+            "text": "VERTEX_FLOATS",
+            "link": "/docs/api/@ripl/3d/variables/VERTEX_FLOATS.md"
           }
         ]
       },
@@ -176,6 +492,18 @@
         "text": "Functions",
         "collapsed": true,
         "items": [
+          {
+            "text": "bernstein3",
+            "link": "/docs/api/@ripl/3d/functions/bernstein3.md"
+          },
+          {
+            "text": "composeSurfaceColor",
+            "link": "/docs/api/@ripl/3d/functions/composeSurfaceColor.md"
+          },
+          {
+            "text": "computeDistanceAttenuation",
+            "link": "/docs/api/@ripl/3d/functions/computeDistanceAttenuation.md"
+          },
           {
             "text": "computeFaceBrightness",
             "link": "/docs/api/@ripl/3d/functions/computeFaceBrightness.md"
@@ -185,8 +513,24 @@
             "link": "/docs/api/@ripl/3d/functions/computeFaceNormal.md"
           },
           {
+            "text": "computeFogFactor",
+            "link": "/docs/api/@ripl/3d/functions/computeFogFactor.md"
+          },
+          {
+            "text": "computeSpotAttenuation",
+            "link": "/docs/api/@ripl/3d/functions/computeSpotAttenuation.md"
+          },
+          {
             "text": "contextIsContext3D",
             "link": "/docs/api/@ripl/3d/functions/contextIsContext3D.md"
+          },
+          {
+            "text": "createAmbientLight",
+            "link": "/docs/api/@ripl/3d/functions/createAmbientLight.md"
+          },
+          {
+            "text": "createBezierSurface",
+            "link": "/docs/api/@ripl/3d/functions/createBezierSurface.md"
           },
           {
             "text": "createCamera",
@@ -209,8 +553,40 @@
             "link": "/docs/api/@ripl/3d/functions/createCylinder.md"
           },
           {
+            "text": "createDirectionalLight",
+            "link": "/docs/api/@ripl/3d/functions/createDirectionalLight.md"
+          },
+          {
+            "text": "createGroup3D",
+            "link": "/docs/api/@ripl/3d/functions/createGroup3D.md"
+          },
+          {
+            "text": "createHemisphereLight",
+            "link": "/docs/api/@ripl/3d/functions/createHemisphereLight.md"
+          },
+          {
+            "text": "createMaterial",
+            "link": "/docs/api/@ripl/3d/functions/createMaterial.md"
+          },
+          {
+            "text": "createMesh",
+            "link": "/docs/api/@ripl/3d/functions/createMesh.md"
+          },
+          {
+            "text": "createParametric",
+            "link": "/docs/api/@ripl/3d/functions/createParametric.md"
+          },
+          {
             "text": "createPlane",
             "link": "/docs/api/@ripl/3d/functions/createPlane.md"
+          },
+          {
+            "text": "createPointLight",
+            "link": "/docs/api/@ripl/3d/functions/createPointLight.md"
+          },
+          {
+            "text": "createRay",
+            "link": "/docs/api/@ripl/3d/functions/createRay.md"
           },
           {
             "text": "createShape3D",
@@ -221,8 +597,24 @@
             "link": "/docs/api/@ripl/3d/functions/createSphere.md"
           },
           {
+            "text": "createSpotLight",
+            "link": "/docs/api/@ripl/3d/functions/createSpotLight.md"
+          },
+          {
+            "text": "createSurfaceIllumination",
+            "link": "/docs/api/@ripl/3d/functions/createSurfaceIllumination.md"
+          },
+          {
+            "text": "createTexture",
+            "link": "/docs/api/@ripl/3d/functions/createTexture.md"
+          },
+          {
             "text": "createTorus",
             "link": "/docs/api/@ripl/3d/functions/createTorus.md"
+          },
+          {
+            "text": "elementIsBezierSurface",
+            "link": "/docs/api/@ripl/3d/functions/elementIsBezierSurface.md"
           },
           {
             "text": "elementIsCone",
@@ -235,6 +627,18 @@
           {
             "text": "elementIsCylinder",
             "link": "/docs/api/@ripl/3d/functions/elementIsCylinder.md"
+          },
+          {
+            "text": "elementIsGroup3D",
+            "link": "/docs/api/@ripl/3d/functions/elementIsGroup3D.md"
+          },
+          {
+            "text": "elementIsMesh",
+            "link": "/docs/api/@ripl/3d/functions/elementIsMesh.md"
+          },
+          {
+            "text": "elementIsParametric",
+            "link": "/docs/api/@ripl/3d/functions/elementIsParametric.md"
           },
           {
             "text": "elementIsPlane",
@@ -253,8 +657,48 @@
             "link": "/docs/api/@ripl/3d/functions/elementIsTorus.md"
           },
           {
+            "text": "evaluateBezierPatch",
+            "link": "/docs/api/@ripl/3d/functions/evaluateBezierPatch.md"
+          },
+          {
+            "text": "lightIsAmbient",
+            "link": "/docs/api/@ripl/3d/functions/lightIsAmbient.md"
+          },
+          {
+            "text": "lightIsCameraSpace",
+            "link": "/docs/api/@ripl/3d/functions/lightIsCameraSpace.md"
+          },
+          {
+            "text": "lightIsDirectional",
+            "link": "/docs/api/@ripl/3d/functions/lightIsDirectional.md"
+          },
+          {
+            "text": "lightIsHemisphere",
+            "link": "/docs/api/@ripl/3d/functions/lightIsHemisphere.md"
+          },
+          {
+            "text": "lightIsPoint",
+            "link": "/docs/api/@ripl/3d/functions/lightIsPoint.md"
+          },
+          {
+            "text": "lightIsPositional",
+            "link": "/docs/api/@ripl/3d/functions/lightIsPositional.md"
+          },
+          {
+            "text": "lightIsSpot",
+            "link": "/docs/api/@ripl/3d/functions/lightIsSpot.md"
+          },
+          {
+            "text": "loadTexture",
+            "link": "/docs/api/@ripl/3d/functions/loadTexture.md"
+          },
+          {
             "text": "mat4Clone",
             "link": "/docs/api/@ripl/3d/functions/mat4Clone.md"
+          },
+          {
+            "text": "mat4Compose",
+            "link": "/docs/api/@ripl/3d/functions/mat4Compose.md"
           },
           {
             "text": "mat4Create",
@@ -265,12 +709,20 @@
             "link": "/docs/api/@ripl/3d/functions/mat4Identity.md"
           },
           {
+            "text": "mat4Invert",
+            "link": "/docs/api/@ripl/3d/functions/mat4Invert.md"
+          },
+          {
             "text": "mat4LookAt",
             "link": "/docs/api/@ripl/3d/functions/mat4LookAt.md"
           },
           {
             "text": "mat4Multiply",
             "link": "/docs/api/@ripl/3d/functions/mat4Multiply.md"
+          },
+          {
+            "text": "mat4NormalMatrix",
+            "link": "/docs/api/@ripl/3d/functions/mat4NormalMatrix.md"
           },
           {
             "text": "mat4Orthographic",
@@ -313,16 +765,192 @@
             "link": "/docs/api/@ripl/3d/functions/mat4Translate.md"
           },
           {
+            "text": "mat4Transpose",
+            "link": "/docs/api/@ripl/3d/functions/mat4Transpose.md"
+          },
+          {
+            "text": "materialDrawsFace",
+            "link": "/docs/api/@ripl/3d/functions/materialDrawsFace.md"
+          },
+          {
+            "text": "materialSideCode",
+            "link": "/docs/api/@ripl/3d/functions/materialSideCode.md"
+          },
+          {
+            "text": "packModelUniform",
+            "link": "/docs/api/@ripl/3d/functions/packModelUniform.md"
+          },
+          {
+            "text": "packSceneUniform",
+            "link": "/docs/api/@ripl/3d/functions/packSceneUniform.md"
+          },
+          {
+            "text": "parametricNormal",
+            "link": "/docs/api/@ripl/3d/functions/parametricNormal.md"
+          },
+          {
             "text": "projectPoint",
             "link": "/docs/api/@ripl/3d/functions/projectPoint.md"
+          },
+          {
+            "text": "rayAt",
+            "link": "/docs/api/@ripl/3d/functions/rayAt.md"
+          },
+          {
+            "text": "rayFromScreen",
+            "link": "/docs/api/@ripl/3d/functions/rayFromScreen.md"
+          },
+          {
+            "text": "rayHitBarycentric",
+            "link": "/docs/api/@ripl/3d/functions/rayHitBarycentric.md"
+          },
+          {
+            "text": "rayIntersectsBox",
+            "link": "/docs/api/@ripl/3d/functions/rayIntersectsBox.md"
+          },
+          {
+            "text": "rayIntersectTriangle",
+            "link": "/docs/api/@ripl/3d/functions/rayIntersectTriangle.md"
+          },
+          {
+            "text": "rayIntersectTriangleBuffer",
+            "link": "/docs/api/@ripl/3d/functions/rayIntersectTriangleBuffer.md"
+          },
+          {
+            "text": "releaseTexturePatternCache",
+            "link": "/docs/api/@ripl/3d/functions/releaseTexturePatternCache.md"
+          },
+          {
+            "text": "resolveColor",
+            "link": "/docs/api/@ripl/3d/functions/resolveColor.md"
+          },
+          {
+            "text": "resolveColorUnitRGB",
+            "link": "/docs/api/@ripl/3d/functions/resolveColorUnitRGB.md"
+          },
+          {
+            "text": "resolveFog",
+            "link": "/docs/api/@ripl/3d/functions/resolveFog.md"
+          },
+          {
+            "text": "resolveLight",
+            "link": "/docs/api/@ripl/3d/functions/resolveLight.md"
+          },
+          {
+            "text": "resolveLightColor",
+            "link": "/docs/api/@ripl/3d/functions/resolveLightColor.md"
+          },
+          {
+            "text": "resolveMaterial",
+            "link": "/docs/api/@ripl/3d/functions/resolveMaterial.md"
+          },
+          {
+            "text": "resolveTexturePattern",
+            "link": "/docs/api/@ripl/3d/functions/resolveTexturePattern.md"
+          },
+          {
+            "text": "rgbaToUnit",
+            "link": "/docs/api/@ripl/3d/functions/rgbaToUnit.md"
+          },
+          {
+            "text": "rgbToUnit",
+            "link": "/docs/api/@ripl/3d/functions/rgbToUnit.md"
+          },
+          {
+            "text": "sampleTexture",
+            "link": "/docs/api/@ripl/3d/functions/sampleTexture.md"
           },
           {
             "text": "shadeFaceColor",
             "link": "/docs/api/@ripl/3d/functions/shadeFaceColor.md"
           },
           {
+            "text": "shadeSurface",
+            "link": "/docs/api/@ripl/3d/functions/shadeSurface.md"
+          },
+          {
+            "text": "tessellateParametric",
+            "link": "/docs/api/@ripl/3d/functions/tessellateParametric.md"
+          },
+          {
+            "text": "texturePatternRepetition",
+            "link": "/docs/api/@ripl/3d/functions/texturePatternRepetition.md"
+          },
+          {
+            "text": "textureSourceHeight",
+            "link": "/docs/api/@ripl/3d/functions/textureSourceHeight.md"
+          },
+          {
+            "text": "textureSourceWidth",
+            "link": "/docs/api/@ripl/3d/functions/textureSourceWidth.md"
+          },
+          {
+            "text": "textureTransformUV",
+            "link": "/docs/api/@ripl/3d/functions/textureTransformUV.md"
+          },
+          {
+            "text": "textureWrapCoordinate",
+            "link": "/docs/api/@ripl/3d/functions/textureWrapCoordinate.md"
+          },
+          {
+            "text": "triangulateFacesFlat",
+            "link": "/docs/api/@ripl/3d/functions/triangulateFacesFlat.md"
+          },
+          {
+            "text": "triangulateFacesIndices",
+            "link": "/docs/api/@ripl/3d/functions/triangulateFacesIndices.md"
+          },
+          {
+            "text": "typeIsLight",
+            "link": "/docs/api/@ripl/3d/functions/typeIsLight.md"
+          },
+          {
+            "text": "typeIsTexture",
+            "link": "/docs/api/@ripl/3d/functions/typeIsTexture.md"
+          },
+          {
+            "text": "typeIsVector2",
+            "link": "/docs/api/@ripl/3d/functions/typeIsVector2.md"
+          },
+          {
             "text": "typeIsVector3",
             "link": "/docs/api/@ripl/3d/functions/typeIsVector3.md"
+          },
+          {
+            "text": "unprojectPoint",
+            "link": "/docs/api/@ripl/3d/functions/unprojectPoint.md"
+          },
+          {
+            "text": "vec2Add",
+            "link": "/docs/api/@ripl/3d/functions/vec2Add.md"
+          },
+          {
+            "text": "vec2Dot",
+            "link": "/docs/api/@ripl/3d/functions/vec2Dot.md"
+          },
+          {
+            "text": "vec2Length",
+            "link": "/docs/api/@ripl/3d/functions/vec2Length.md"
+          },
+          {
+            "text": "vec2Lerp",
+            "link": "/docs/api/@ripl/3d/functions/vec2Lerp.md"
+          },
+          {
+            "text": "vec2Multiply",
+            "link": "/docs/api/@ripl/3d/functions/vec2Multiply.md"
+          },
+          {
+            "text": "vec2Normalize",
+            "link": "/docs/api/@ripl/3d/functions/vec2Normalize.md"
+          },
+          {
+            "text": "vec2Scale",
+            "link": "/docs/api/@ripl/3d/functions/vec2Scale.md"
+          },
+          {
+            "text": "vec2Sub",
+            "link": "/docs/api/@ripl/3d/functions/vec2Sub.md"
           },
           {
             "text": "vec3Add",
@@ -3334,6 +3962,10 @@
             "link": "/docs/api/@ripl/core/functions/radiansToDegrees.md"
           },
           {
+            "text": "registerInterpolator",
+            "link": "/docs/api/@ripl/core/functions/registerInterpolator.md"
+          },
+          {
             "text": "rescaleDomain",
             "link": "/docs/api/@ripl/core/functions/rescaleDomain.md"
           },
@@ -4181,6 +4813,10 @@
             "link": "/docs/api/@ripl/webgpu/classes/GeometryManager.md"
           },
           {
+            "text": "TextureManager",
+            "link": "/docs/api/@ripl/webgpu/classes/TextureManager.md"
+          },
+          {
             "text": "WebGPUContext3D",
             "link": "/docs/api/@ripl/webgpu/classes/WebGPUContext3D.md"
           }
@@ -4237,6 +4873,10 @@
             "link": "/docs/api/@ripl/webgpu/variables/SCENE_UNIFORM_SIZE.md"
           },
           {
+            "text": "TEXTURE_BIND_GROUP_LAYOUT_ENTRIES",
+            "link": "/docs/api/@ripl/webgpu/variables/TEXTURE_BIND_GROUP_LAYOUT_ENTRIES.md"
+          },
+          {
             "text": "VERTEX_BUFFER_LAYOUT",
             "link": "/docs/api/@ripl/webgpu/variables/VERTEX_BUFFER_LAYOUT.md"
           },
@@ -4265,10 +4905,6 @@
           {
             "text": "requestDevice",
             "link": "/docs/api/@ripl/webgpu/functions/requestDevice.md"
-          },
-          {
-            "text": "triangulatefaces",
-            "link": "/docs/api/@ripl/webgpu/functions/triangulatefaces.md"
           }
         ]
       }

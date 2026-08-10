@@ -72,6 +72,10 @@ describe('Color Serializers', () => {
             expect(serializeRGB(300, -10, 128, 1)).toBe('rgb(255, 0, 128)');
         });
 
+        test('Should round fractional channels', () => {
+            expect(serializeRGB(1.5, 2.4, 3.6, 1)).toBe('rgb(2, 2, 4)');
+        });
+
     });
 
     // ── serializeRGBA ────────────────────────────────────────────
@@ -89,6 +93,13 @@ describe('Color Serializers', () => {
 
         test('Should clamp channel values', () => {
             expect(serializeRGBA(300, -10, 128, 0.8)).toBe('rgba(255, 0, 128, 0.8)');
+        });
+
+        // 3D-C1: an 8-bit channel has no fractional part, and an unrounded one is a colour
+        // `parseColor` used to reject — so nothing could read an interpolated colour back.
+        test('Should round fractional channels', () => {
+            expect(serializeRGBA(1.5, 2.5, 3.5, 1)).toBe('rgba(2, 3, 4, 1)');
+            expect(serializeRGBA(49.038999999999994, 103.91000000000001, 141.985, 1)).toBe('rgba(49, 104, 142, 1)');
         });
 
     });

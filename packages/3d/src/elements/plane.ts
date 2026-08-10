@@ -54,6 +54,12 @@ export class Plane extends Shape3D<PlaneState> {
                     [-hw, hh, 0],
                 ],
                 normal: [0, 0, 1],
+                uvs: [
+                    [0, 1],
+                    [1, 1],
+                    [1, 0],
+                    [0, 0],
+                ],
             },
         ];
     }

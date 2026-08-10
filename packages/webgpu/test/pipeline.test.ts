@@ -13,18 +13,26 @@ import {
     VERTEX_STRIDE,
 } from '../src/pipeline';
 
+import {
+    MODEL_UNIFORM_BYTES,
+    SCENE_UNIFORM_BYTES,
+    VERTEX_FLOATS,
+} from '@ripl/3d';
+
 describe('Pipeline constants', () => {
 
-    test('VERTEX_STRIDE is 40 bytes (10 floats × 4)', () => {
-        expect(VERTEX_STRIDE).toBe(10 * 4);
+    test('VERTEX_STRIDE matches the interleaved layout in @ripl/3d', () => {
+        expect(VERTEX_STRIDE).toBe(VERTEX_FLOATS * 4);
     });
 
-    test('SCENE_UNIFORM_SIZE is 80 bytes (mat4 + vec3 + f32, aligned)', () => {
-        expect(SCENE_UNIFORM_SIZE).toBe(80);
+    test('SCENE_UNIFORM_SIZE matches the shared layout descriptor', () => {
+        expect(SCENE_UNIFORM_SIZE).toBe(SCENE_UNIFORM_BYTES);
+        expect(SCENE_UNIFORM_SIZE % 16).toBe(0);
     });
 
-    test('MODEL_UNIFORM_SIZE is 128 bytes (2 × mat4)', () => {
-        expect(MODEL_UNIFORM_SIZE).toBe(128);
+    test('MODEL_UNIFORM_SIZE matches the shared layout descriptor', () => {
+        expect(MODEL_UNIFORM_SIZE).toBe(MODEL_UNIFORM_BYTES);
+        expect(MODEL_UNIFORM_SIZE % 16).toBe(0);
     });
 
 });
@@ -35,8 +43,29 @@ describe('VERTEX_BUFFER_LAYOUT', () => {
         expect(VERTEX_BUFFER_LAYOUT.arrayStride).toBe(VERTEX_STRIDE);
     });
 
-    test('has 3 attributes', () => {
-        expect(VERTEX_BUFFER_LAYOUT.attributes).toHaveLength(3);
+    test('has one attribute per interleaved channel', () => {
+        expect(VERTEX_BUFFER_LAYOUT.attributes).toHaveLength(4);
+    });
+
+    // The attributes must together account for exactly the stride, or the GPU reads a vertex the
+    // CPU-side writer never wrote.
+    test('covers the whole stride with no gaps', () => {
+        const attributes = [...VERTEX_BUFFER_LAYOUT.attributes as GPUVertexAttribute[]]
+            .sort((left, right) => left.offset - right.offset);
+        const sizes: Record<string, number> = {
+            float32x2: 8,
+            float32x3: 12,
+            float32x4: 16,
+        };
+
+        let cursor = 0;
+
+        for (const attribute of attributes) {
+            expect(attribute.offset).toBe(cursor);
+            cursor += sizes[attribute.format];
+        }
+
+        expect(cursor).toBe(VERTEX_STRIDE);
     });
 
     test('position attribute at location 0, offset 0, float32x3', () => {
@@ -79,10 +108,12 @@ describe('Bind group layout entries', () => {
         expect(MODEL_BIND_GROUP_LAYOUT_ENTRIES).toHaveLength(1);
     });
 
-    test('model entry is at binding 0 with vertex-only visibility', () => {
+    // The fragment stage reads the material terms the model uniform carries, so it is no longer
+    // vertex-only.
+    test('model entry is at binding 0 and visible to both stages', () => {
         const entry = MODEL_BIND_GROUP_LAYOUT_ENTRIES[0];
         expect(entry.binding).toBe(0);
-        expect(entry.visibility).toBe(0x1);
+        expect(entry.visibility).toBe(0x3);
         expect(entry.buffer?.type).toBe('uniform');
     });
 
