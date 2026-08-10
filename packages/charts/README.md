@@ -1,89 +1,115 @@
 # @ripl/charts
 
-Pre-built, animated chart components for [Ripl](https://www.ripl.run): a unified API for 2D graphics rendering in the browser.
+[![npm](https://img.shields.io/npm/v/@ripl/charts)](https://www.npmjs.com/package/@ripl/charts)
+[![license](https://img.shields.io/npm/l/@ripl/charts)](https://github.com/andrewcourtice/ripl/blob/main/LICENSE)
+[![size](https://img.shields.io/bundlephobia/minzip/@ripl/charts)](https://bundlephobia.com/package/@ripl/charts)
+
+> 25 animated, interactive chart types for [Ripl](https://www.ripl.run), rendering to Canvas, SVG, the terminal or a server from one chart definition.
+
+## Features
+
+- **25 chart types**, each behind a `createXChart` factory taking a CSS selector, an `HTMLElement` or a Ripl `Context`.
+- **Animated data joins** — `chart.update(options)` diffs the new data against the drawn elements and animates entries, updates and exits separately, at every level of a multi-series chart. Axes and legends transition rather than redraw.
+- **Interaction** — tooltips, crosshairs, hover highlighting, legend toggling, a windowing navigator strip for pan and zoom, and typed pointer events per chart (`barenter`, `barleave`, `barclick`, and their equivalents).
+- **Shared components** — axes, grids, legends, tooltips, crosshairs, titles and a navigator strip are configured through the same options on every chart that has them, so a dashboard stays consistent without per-chart wiring.
+- **Same chart, several targets** — Canvas or SVG in the browser, and braille text or raw `ImageData` from a headless Node script via [`@ripl/node`](https://www.npmjs.com/package/@ripl/node).
+- **Three built-in themes** — `lightTheme`, `darkTheme` and `colorBlindTheme`, with `registerTheme` for your own and per-chart or per-series overrides.
+- **Tree-shakable** — importing one factory ships one chart type.
+- **No third-party runtime dependencies** — the only dependencies are four sibling packages in this repository (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`).
+
+## Chart types
+
+| Category | Charts |
+| --- | --- |
+| **Cartesian** | [Bar](https://www.ripl.run/charts/bar), [Line](https://www.ripl.run/charts/line), [Area](https://www.ripl.run/charts/area), [Scatter](https://www.ripl.run/charts/scatter), [Histogram](https://www.ripl.run/charts/histogram), [Box Plot](https://www.ripl.run/charts/box-plot), [Trend](https://www.ripl.run/charts/trend), [Stock](https://www.ripl.run/charts/stock) |
+| **Radial & polar** | [Pie/Donut](https://www.ripl.run/charts/pie), [Polar Area](https://www.ripl.run/charts/polar-area), [Polar Scatter](https://www.ripl.run/charts/polar-scatter), [Radial Bar](https://www.ripl.run/charts/radial-bar), [Radar](https://www.ripl.run/charts/radar), [Gauge](https://www.ripl.run/charts/gauge) |
+| **Hierarchical** | [Sunburst](https://www.ripl.run/charts/sunburst), [Treemap](https://www.ripl.run/charts/treemap), [Packed Circle](https://www.ripl.run/charts/packed-circle) |
+| **Network & flow** | [Sankey](https://www.ripl.run/charts/sankey), [Chord](https://www.ripl.run/charts/chord), [Arc Diagram](https://www.ripl.run/charts/arc-diagram), [Force-Directed](https://www.ripl.run/charts/force-directed), [Funnel](https://www.ripl.run/charts/funnel) |
+| **Specialized** | [Heatmap](https://www.ripl.run/charts/heatmap), [Gantt](https://www.ripl.run/charts/gantt), [Realtime](https://www.ripl.run/charts/realtime) |
 
 ## Installation
 
 ```bash
+# npm
 npm install @ripl/charts
+
+# yarn
+yarn add @ripl/charts
+
+# pnpm
+pnpm add @ripl/charts
 ```
 
-## Chart Types
+Pair it with [`@ripl/web`](https://www.npmjs.com/package/@ripl/web) when the same page also draws its own graphics; charts alone need nothing else.
 
-25 chart types, each created with a `createXChart` factory:
-
-| Category | Charts |
-|----------|--------|
-| **Cartesian** | Bar, Line, Area, Scatter, Histogram, Box Plot, Trend (mixed bar/line/area), Stock |
-| **Radial & Polar** | Pie/Donut, Polar Area, Polar Scatter, Radial Bar, Radar, Gauge |
-| **Hierarchical** | Sunburst, Treemap, Packed Circle |
-| **Network & Flow** | Sankey, Chord, Arc Diagram, Force-Directed, Funnel |
-| **Specialized** | Heatmap, Gantt, Realtime |
-
-## Usage
-
-Create a chart by passing a target (CSS selector, `HTMLElement`, or Ripl `Context`) and an options object to the chart's factory function:
+## Quick start
 
 ```typescript
 import {
     createBarChart,
 } from '@ripl/charts';
 
-const chart = createBarChart('#chart', {
+const chart = createBarChart('#chart-container', {
     data: [
         {
-            label: 'A',
-            value: 10,
+            month: 'Jan',
+            sales: 120,
+            costs: 80,
         },
         {
-            label: 'B',
-            value: 25,
+            month: 'Feb',
+            sales: 200,
+            costs: 110,
         },
         {
-            label: 'C',
-            value: 15,
+            month: 'Mar',
+            sales: 150,
+            costs: 90,
         },
     ],
-    key: 'label',
+    key: 'month',
     series: [
         {
-            id: 'values',
-            label: 'Values',
-            value: 'value',
+            id: 'sales',
+            value: 'sales',
+            label: 'Sales',
+        },
+        {
+            id: 'costs',
+            value: 'costs',
+            label: 'Costs',
         },
     ],
 });
 
-// Merge new options/data and re-render with animated transitions
 chart.update({
-    data: [
-        {
-            label: 'A',
-            value: 30,
-        },
-        {
-            label: 'B',
-            value: 5,
-        },
-        {
-            label: 'C',
-            value: 20,
-        },
-    ],
+    stacked: true,
 });
 ```
 
-## Features
+`chart.update()` takes any partial option, not only `data` — the change animates from whatever is currently drawn.
 
-- **Animated transitions**: Smooth entry, update, and exit animations out of the box
-- **Interactive**: Tooltips, crosshairs, hover effects, and click events
-- **Configurable**: Axes, legends, grids, colors, padding, and more
-- **Canvas & SVG**: Renders to either context via Ripl's unified API
-- **Tree-shakable**: Import only the chart types you need
+## Key API
+
+| Export | What it does |
+| --- | --- |
+| [`createBarChart` … `createGanttChart`](https://www.ripl.run/charts/) | The 25 chart factories |
+| [`Chart`](https://www.ripl.run/charts/advanced/custom-charts) | Base class to extend for a custom chart type |
+| [`createChartAnnotations`](https://www.ripl.run/charts/advanced/annotations) | Reference lines, bands and point callouts |
+| [`createColorLegend`](https://www.ripl.run/charts/advanced/color-legend) | Legend for a continuous colour scale |
+| [`createSymbol`](https://www.ripl.run/charts/scatter) | The scatter/legend symbol set |
+| [`registerTheme` / `setDefaultTheme`](https://www.ripl.run/charts/advanced/theming) | Light, dark and colour-blind themes, and your own |
+
+## Related packages
+
+- [`@ripl/web`](https://www.npmjs.com/package/@ripl/web) — the browser entry point, for drawing alongside a chart
+- [`@ripl/svg`](https://www.npmjs.com/package/@ripl/svg) — render any chart as SVG instead of Canvas
+- [`@ripl/node`](https://www.npmjs.com/package/@ripl/node) — the same charts from a headless script, drawn through [`@ripl/terminal`](https://www.npmjs.com/package/@ripl/terminal)
+- [`@ripl/core`](https://www.npmjs.com/package/@ripl/core) — the elements, scales and animation the charts are built from
 
 ## Documentation
 
-Full documentation, options reference, and interactive demos are available at [ripl.run](https://www.ripl.run).
+Guides, an options reference and a live demo per chart type are at [ripl.run/charts](https://www.ripl.run/charts/).
 
 ## License
 

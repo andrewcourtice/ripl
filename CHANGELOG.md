@@ -41,6 +41,21 @@ reporting distance, world point, face, normal and texture coordinate. Unlike the
 hit test, which flattens a shape to its silhouette, a ray passes cleanly through the hole
 of a torus.
 
+### Terminal rasterizer interface
+
+`@ripl/terminal`'s `Rasterizer` interface changed so pixels can be composited rather than
+overwritten. A custom implementation needs three changes:
+
+- `setPixel(x, y, color)` and `setChar(col, row, char, color)` now take a `TerminalColor` —
+  an `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground — instead of
+  a pre-baked ANSI escape string. Alpha is no longer folded into the colour before it
+  arrives.
+- Add `cellWidth` and `cellHeight`. Text placement and teardown read them instead of
+  assuming braille's 2×4 cell, so a rasterizer with different cell geometry now positions
+  text correctly.
+- A cell can only emit one colour; deriving it from the pixels it covers is the
+  implementation's job. `BrailleRasterizer` uses the alpha-weighted mean of its lit dots.
+
 **Fog.** `context.fog` blends distant geometry towards a colour, linearly or
 exponentially, resolved identically by both backends.
 

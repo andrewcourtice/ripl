@@ -1,18 +1,74 @@
 # @ripl/terminal
 
-Terminal rendering context for [Ripl](https://www.ripl.run): draw the same 2D graphics and charts to a terminal as braille-character output with ANSI truecolor.
+[![npm](https://img.shields.io/npm/v/@ripl/terminal)](https://www.npmjs.com/package/@ripl/terminal)
+[![license](https://img.shields.io/npm/l/@ripl/terminal)](https://github.com/andrewcourtice/ripl/blob/main/LICENSE)
+[![size](https://img.shields.io/bundlephobia/minzip/@ripl/terminal)](https://bundlephobia.com/package/@ripl/terminal)
+
+> A terminal rendering context for [Ripl](https://www.ripl.run): draws the same 2D graphics and charts as Unicode braille characters with ANSI truecolor, without a DOM.
+
+## Features
+
+- **No DOM** — implements Ripl's `Context` abstraction directly, so a scene written for [Canvas](https://www.npmjs.com/package/@ripl/canvas) or [SVG](https://www.npmjs.com/package/@ripl/svg) renders unchanged in a terminal.
+- **Braille sub-pixels** — each character cell packs a 2×4 dot grid (U+2800–U+28FF), quadrupling the vertical resolution a text grid would otherwise give.
+- **Source-over compositing** — pixels are held as an RGBA framebuffer at dot resolution, so overlapping translucent shapes blend rather than the later one claiming the whole cell. A cell emits the alpha-weighted mean of its lit dots.
+- **Logical coordinates** — optional `logicalWidth`/`logicalHeight` let you author in CSS pixels; the context uniformly scales and letterboxes that space into the character grid, so a canvas-sized scene renders proportionally at any terminal size.
+- **Transforms, clipping and hit testing** are all honored — geometry maps through the full affine matrix, nested clips intersect rather than replace, and `isPointInPath`/`isPointInStroke` test the flattened contours in logical space under both fill rules.
+- **Runtime-agnostic output** — writes to any `TerminalOutput` (`write`, `columns`, `rows`, optional `onResize`): `process.stdout` via [`@ripl/node`](https://www.npmjs.com/package/@ripl/node), or an [xterm.js](https://xtermjs.org/) instance in a browser.
+- **Pluggable rasterizer** — `BrailleRasterizer` is the default; the `Rasterizer` interface takes any cell geometry via `cellWidth`/`cellHeight`.
+- **Snapshot export** — braille text, `ImageData`, or a PNG object URL.
 
 ## Installation
 
 ```bash
-npm install @ripl/terminal
+# npm
+npm install @ripl/terminal @ripl/node
+
+# yarn
+yarn add @ripl/terminal @ripl/node
+
+# pnpm
+pnpm add @ripl/terminal @ripl/node
 ```
 
-## Overview
+[`@ripl/node`](https://www.npmjs.com/package/@ripl/node) supplies the `process.stdout`-backed output adapter and the headless platform bindings. In a browser driving xterm.js, install `@ripl/terminal` alone.
 
-`@ripl/terminal` implements Ripl's `Context` abstraction without any DOM. It rasterizes elements into a grid of Unicode braille dots (each character cell packs a 2×4 sub-pixel grid) and writes them to a runtime-agnostic `TerminalOutput` adapter: `process.stdout` in Node, or an [xterm.js](https://xtermjs.org/) instance in the browser. Because every Ripl element renders through the shared `Context` API, scenes written for [Canvas](https://www.npmjs.com/package/@ripl/canvas) or [SVG](https://www.npmjs.com/package/@ripl/svg) render unchanged in the terminal.
+## Quick start
 
-Optional `logicalWidth`/`logicalHeight` options let you author a scene in CSS-pixel coordinates; the context uniformly scales and letterboxes that space into the character grid so it renders proportionally in any terminal size.
+```typescript
+import {
+    createContext,
+} from '@ripl/terminal';
+
+import {
+    createCircle,
+} from '@ripl/core';
+
+import {
+    createTerminalOutput,
+} from '@ripl/node';
+
+const context = createContext(createTerminalOutput(), {
+    logicalWidth: 800,
+    logicalHeight: 600,
+});
+
+createCircle({
+    stroke: '#38bdf8',
+    lineWidth: 3,
+    cx: 400,
+    cy: 300,
+    radius: 150,
+}).render(context);
+```
+
+## Key API
+
+| Export | What it does |
+| --- | --- |
+| [`createContext`](https://www.ripl.run/docs/core/contexts/terminal) | Binds a `TerminalContext` to a `TerminalOutput` |
+| [`TerminalOutput`](https://www.ripl.run/docs/core/contexts/terminal) | The `write`/`columns`/`rows` adapter interface |
+| [`BrailleRasterizer`](https://www.ripl.run/docs/core/contexts/terminal) | The default 2×4 braille rasterizer |
+| [`Rasterizer`](https://www.ripl.run/docs/core/contexts/terminal) | The interface to implement for other cell geometry |
 
 ## Limitations
 
@@ -34,45 +90,6 @@ The terminal context is a rasterizer onto a character grid, so parts of the canv
 | **Stroke geometry** | `lineWidth` **is** honored, by stamping a round brush along the path. The brush centres on a dot, so thickness quantises to an odd number of dots — widths of 1, 2, 3, 4 and 5 give strokes 1, 3, 3, 5 and 5 dots across. `lineCap`, `lineJoin` and `miterLimit` are ignored: the brush makes every cap and join round. `lineDash`/`lineDashOffset` **are** honored, with arc length measured along the centreline and approximated by plotted-pixel count. |
 | **Shadows, filters, compositing** | Ignored. `globalCompositeOperation: 'destination-out'` warns: canvas *erases* where the terminal *draws*, so that geometry renders inverted rather than merely degraded. |
 
-## Migrating a custom rasterizer
-
-The `Rasterizer` interface changed so that pixels can be composited rather than overwritten. A custom implementation needs three changes:
-
-- `setPixel(x, y, color)` and `setChar(col, row, char, color)` now take a `TerminalColor` — an
-  `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground — instead of a pre-baked
-  ANSI escape string. Alpha is no longer folded into the color before it arrives.
-- Add `cellWidth` and `cellHeight`. Text placement and teardown read them instead of assuming
-  braille's 2×4 cell, so a rasterizer with different cell geometry now positions text correctly.
-- A cell can only emit one color; deriving it from the pixels it covers is the implementation's job.
-  `BrailleRasterizer` uses the alpha-weighted mean of its lit dots.
-
-## Usage
-
-```typescript
-import {
-    createContext,
-} from '@ripl/terminal';
-
-import {
-    createCircle,
-} from '@ripl/core';
-
-// `output` implements { write, columns, rows, onResize? }
-const context = createContext(output, {
-    logicalWidth: 800,
-    logicalHeight: 600,
-});
-
-createCircle({
-    stroke: '#38bdf8',
-    cx: 400,
-    cy: 300,
-    radius: 150,
-}).render(context);
-```
-
-In Node, use [`@ripl/node`](https://www.npmjs.com/package/@ripl/node) to obtain a stdout-backed output adapter.
-
 ## Exporting
 
 ```typescript
@@ -87,9 +104,15 @@ snapshot.release(); // revokes the object URL
 
 A glyph occupies a whole cell, which is only 2×4 pixels in the exported image — too small for a letterform — so text rasterizes as a filled block rather than being dropped from the image.
 
+## Related packages
+
+- [`@ripl/node`](https://www.npmjs.com/package/@ripl/node) — stdout adapter and headless platform bindings
+- [`@ripl/core`](https://www.npmjs.com/package/@ripl/core) — the elements and scene graph this context draws
+- [`@ripl/charts`](https://www.npmjs.com/package/@ripl/charts) — the same 25 chart types, in a terminal
+
 ## Documentation
 
-Full documentation and interactive demos are available at [ripl.run](https://www.ripl.run).
+Guides, a live demo and the full API reference are at [ripl.run/docs/core/contexts/terminal](https://www.ripl.run/docs/core/contexts/terminal). That page also covers implementing a custom `Rasterizer`.
 
 ## License
 

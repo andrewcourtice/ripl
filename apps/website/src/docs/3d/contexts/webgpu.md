@@ -6,7 +6,7 @@ outline: "deep"
 
 # WebGPU (WebGPUContext3D)
 
-The **WebGPU context** provides GPU-accelerated 3D rendering for Ripl, replacing the Canvas 2D painter's algorithm in `@ripl/3d` with a true WebGPU rasterization pipeline. It features hardware depth testing, WGSL shaders with Lambertian diffuse lighting, and 4× MSAA anti-aliasing. All existing `Shape3D` elements work without modification because the rendering path is selected automatically based on the context type.
+The **WebGPU context** provides GPU-accelerated 3D rendering for Ripl, replacing the Canvas 2D painter's algorithm in `@ripl/3d` with a true WebGPU rasterization pipeline. It features hardware depth testing, 4× MSAA anti-aliasing, and WGSL shaders that mirror the Canvas backend's shading model term for term: all five light types, Blinn-Phong specular, emissive, textures and fog. All existing `Shape3D` elements work without modification because the rendering path is selected automatically based on the context type.
 
 > [!NOTE]
 > WebGPU requires a compatible browser (Chrome 113+, Edge 113+, Firefox Nightly). The existing Canvas `Context3D` remains available as a fallback.
@@ -206,7 +206,7 @@ const context = await createContext('#app');
 |--------|----------------------|-----------------|
 | Depth sorting | CPU painter's algorithm | Hardware depth buffer |
 | Rasterization | Canvas 2D fill/stroke | GPU fragment shader |
-| Shading | CPU per-face color | GPU per-fragment Lambertian |
+| Shading | CPU per-face color | GPU per-fragment Blinn-Phong |
 | Anti-aliasing | None (canvas default) | 4× MSAA |
 | Intersecting geometry | May render incorrectly | Correct via depth test |
 
