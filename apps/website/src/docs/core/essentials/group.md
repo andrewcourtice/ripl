@@ -1,10 +1,12 @@
 ---
+title: Group
+description: "Group nests elements into Ripl's scene graph, cascading style properties to children and offering DOM-like lookup with query, queryAll and getElementById."
 outline: "deep"
 ---
 
 # Group
 
-A **Group** is a container for organizing elements into a hierarchy, much like a `<div>` in HTML. Groups support property inheritance, child management, and powerful querying capabilities inspired by the DOM.
+A **Group** is a container for organizing elements into a hierarchy, much like a `<div>` in HTML. Groups cascade style properties to their children, manage that child list, and answer CSS-like selectors through `query` and `queryAll`.
 
 Groups are the backbone of Ripl's scene graph. By nesting elements inside groups, you can apply shared styles (which cascade to children like CSS), manage collections of elements as a unit, and use CSS-like selectors to find elements deep in the tree. Groups themselves don't draw anything; they orchestrate their children.
 
@@ -279,7 +281,7 @@ Call `render(context)` to draw all children in order:
 group.render(context);
 ```
 
-Groups themselves are **abstract** and don't draw anything directly. They simply iterate over their children and render each one.
+Groups themselves are **abstract** and don't draw anything directly. They iterate over their children and render each one.
 
 > [!NOTE]
 > For the full list of Group properties and methods, see the [Group API Reference](/docs/api/@ripl/core/).

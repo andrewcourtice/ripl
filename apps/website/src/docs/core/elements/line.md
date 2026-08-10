@@ -1,4 +1,6 @@
 ---
+title: Line
+description: "Draw a straight stroked line between two points: the primitive behind axis rules, connectors, separators and wireframe construction in a Ripl scene graph."
 outline: "deep"
 ---
 

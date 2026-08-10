@@ -1,10 +1,12 @@
 ---
+title: Canvas
+description: "The Canvas 2D drawing context rasterizes Ripl elements to an HTML canvas, handling device pixel ratio scaling, CSS gradient parsing and native path hit testing."
 outline: "deep"
 ---
 
 # Canvas Context
 
-The **Canvas context** is the default rendering backend in Ripl. It renders elements to an HTML `<canvas>` element using the Canvas 2D API, handling DPR (device pixel ratio) scaling automatically so your content looks crisp on Retina displays. It also parses CSS gradient strings directly in `fill` and `stroke` properties, converting them to native `CanvasGradient` objects behind the scenes.
+The **Canvas context** is Ripl's default rendering backend and the one most consumers ship. It rasterizes the scene graph to an HTML `<canvas>` through the Canvas 2D API, scaling the backing store by the device pixel ratio while keeping every coordinate you author in CSS pixels. CSS gradient and pattern strings in `fill` and `stroke` are parsed and cached into native `CanvasGradient` and `CanvasPattern` objects, and hit testing runs against the browser's own `isPointInPath`/`isPointInStroke`.
 
 ## Demo
 

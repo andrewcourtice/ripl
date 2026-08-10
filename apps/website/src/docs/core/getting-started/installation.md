@@ -1,6 +1,11 @@
+---
+title: Installation
+description: "Install Ripl's 2D graphics packages via npm, yarn, pnpm or CDN: the browser entry point, Canvas and SVG contexts, charts, 3D, terminal and Node bindings."
+---
+
 # Installation
 
-Ripl is a modular library split into focused packages so you only ship what you need. Whether you're drawing custom shapes on a canvas, building interactive charts, or experimenting with 3D, you install only the packages your project requires. All packages are written in TypeScript with zero runtime dependencies.
+Ripl is split into focused packages so you only ship what you need. Drawing shapes on a canvas needs one package; charts, SVG, 3D, terminal output and Node bindings are each additive. Every package is written in TypeScript with zero runtime dependencies.
 
 ## Packages
 
@@ -126,7 +131,7 @@ import { createContext } from 'https://esm.sh/@ripl/svg';
 
 ## TypeScript
 
-Ripl is written in TypeScript and ships with full type definitions out of the box. No additional `@types` packages are needed. The library targets ES2023 and uses strict mode throughout.
+Ripl is written in TypeScript and ships its own type definitions, so no `@types` packages are needed. The library targets ES2023 and uses strict mode throughout.
 
 ## Next Steps
 

@@ -1,4 +1,6 @@
 ---
+title: Custom Charts
+description: Build a chart type of your own on the exported Chart base class, reusing the same layout pass, data join, colors and transition lifecycle the built-ins use.
 outline: "deep"
 ---
 

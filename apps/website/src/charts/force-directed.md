@@ -1,6 +1,11 @@
+---
+title: Force-Directed Network
+description: Lay out a node-link graph with a deterministic physics simulation, tuning charge, linkDistance, linkStrength, centerStrength and the iteration count.
+---
+
 # Force-Directed Network
 
-The **Force-Directed Network** lays out a graph of nodes and links using a physics simulation: repulsion pushes nodes apart, link springs pull connected nodes together, and a gentle centering force keeps the whole thing on screen. It works well for relationship data like social graphs, dependency trees, topic maps. The layout is deterministic, so the same data always settles the same way. On entry the graph springs out from its root node in cascading waves, and reweighting relaxes the simulation from its current positions so nodes glide smoothly to their new places.
+The **Force-Directed Network** lays out a graph of `nodes` and `links` with a physics simulation: repulsion pushes nodes apart, link springs pull connected nodes together, and a centering force keeps the whole thing on screen. Use it when the shape of a relationship graph is what you want to read — social graphs, dependency trees, topic maps — and no fixed ordering exists to lay it out by. `charge`, `linkDistance`, `linkStrength`, `centerStrength` and `iterations` tune the simulation, and `root` picks the node the entry animation springs from. The layout is deterministic, so the same data always settles the same way; reweighting relaxes the simulation from its current positions rather than restarting it. Canvas is the default target; pass an SVG or [terminal context](/charts/advanced/rendering-targets) to draw the same graph elsewhere.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

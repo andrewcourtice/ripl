@@ -1,5 +1,6 @@
 ---
 title: Raycasting
+description: Cast a ray into a 3D scene and read back the shape it meets, the exact hit point, the face, its normal and its texture coordinate, on Canvas or WebGPU.
 ---
 
 # Raycasting

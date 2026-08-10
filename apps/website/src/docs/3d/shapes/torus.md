@@ -1,10 +1,11 @@
 ---
 title: Torus
+description: "The Torus 3D primitive: a ring sized by major radius and tube radius, with radial and tubular segment counts, x/y/z placement, rotation and flat shading."
 ---
 
 # Torus
 
-The **Torus** is a donut-shaped 3D primitive with configurable major radius, tube radius, and segment counts for both the ring and cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Torus** is a ring-shaped 3D primitive: `radius` is the distance out to the tube's centre, `tube` its thickness, and `radialSegments` (default `12`) and `tubularSegments` (default `24`) its resolution.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).

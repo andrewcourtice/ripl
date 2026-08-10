@@ -1,10 +1,12 @@
 ---
+title: Getting Started with Charts
+description: Install @ripl/charts, build your first chart from a factory call, then update its data, switch it to SVG, listen for events and destroy it when done.
 outline: "deep"
 ---
 
 # Getting Started with Charts
 
-The `@ripl/charts` package provides pre-built, interactive chart components on top of the Ripl core rendering engine. Every chart inherits animated transitions, pointer events, responsive sizing, and context-agnostic rendering (Canvas or SVG) out of the box.
+`@ripl/charts` is a set of interactive chart types built on the Ripl core rendering engine. Every chart animates its data transitions, emits pointer events, resizes with its container, and draws through the same `Context`, so one chart definition renders to Canvas or SVG.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -80,7 +82,7 @@ That's all it takes to get a fully interactive bar chart, complete with animated
 
 ## Updating Data
 
-Call `chart.update()` with partial options to reactively update the chart. Changes animate smoothly: new data points enter, removed points exit, and existing points transition to their new positions.
+Call `chart.update()` with partial options to update the chart in place. Changes animate: new data points enter, removed points exit, and existing points transition to their new positions.
 
 ```ts
 chart.update({
@@ -205,7 +207,7 @@ import {
 ## Next Steps
 
 - **[Shared Options](/charts/shared-options)**: the full reference for axis, legend, tooltip, grid, and crosshair configuration
-- **[Bar Chart](/charts/bar)**: start with the most versatile chart type
+- **[Bar Chart](/charts/bar)**: grouped, stacked and horizontal bars, with every shared option in play
 - **[Theming](/charts/advanced/theming)**: light/dark/colorblind themes and custom palettes
 - **[Annotations](/charts/advanced/annotations)**: reference lines, bands, and point markers
 - **[Panning & Zooming](/charts/advanced/panning-and-zooming)**: interactive navigation and the overview strip

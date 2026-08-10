@@ -1,10 +1,12 @@
 ---
+title: SVG
+description: "The SVG rendering context draws Ripl elements into a live SVG DOM tree, reconciling a virtual tree against real nodes each pass so the markup stays inspectable."
 outline: "deep"
 ---
 
 # SVG Context
 
-The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically; just change the import. Under the hood, it maintains a virtual tree and reconciles it against the real SVG DOM on each render pass, minimizing mutations for better performance.
+The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically; just change the import. Each render pass reconciles a virtual tree against the real SVG DOM, touching only the nodes that changed, and the result is inspectable, styleable markup you can export or hand to a print pipeline.
 
 ## Demo
 
@@ -84,7 +86,7 @@ That's it. The same element code renders to SVG with no other changes.
 
 ## How It Works
 
-Under the hood, the SVG context:
+The SVG context:
 
 1. Creates an `<svg>` element inside your container
 2. Maintains a **virtual tree** of SVG element definitions

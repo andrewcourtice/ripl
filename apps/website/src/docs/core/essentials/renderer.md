@@ -1,4 +1,6 @@
 ---
+title: Renderer
+description: "Renderer drives a requestAnimationFrame loop over a scene and animates element properties through transition(), with easing, staggering and auto start/stop."
 outline: "deep"
 ---
 
@@ -129,7 +131,7 @@ const renderer = createRenderer(scene, {
 
 When `fps` or `elementCount` is enabled, a semi-transparent overlay badge appears in the top-left corner of the scene.
 
-`boundingBoxes` draws as a post-pass over the whole scene buffer, in world space, so each outline follows the element's rendered position — including its own `translate`, `rotate` and `scale` and every ancestor group's transform. A rotated element yields a conservative axis-aligned box that encloses the rotated content, matching what [`getBoundingBox()`](/docs/core/essentials/elements) reports. Only leaf elements are outlined; groups are not.
+`boundingBoxes` draws as a post-pass over the whole scene buffer, in world space, so each outline follows the element's rendered position — including its own `translate`, `rotate` and `scale` and every ancestor group's transform. A rotated element yields a conservative axis-aligned box that encloses the rotated content, matching what [`getBoundingBox()`](/docs/core/essentials/element) reports. Only leaf elements are outlined; groups are not.
 
 ### Demo
 

@@ -2,6 +2,23 @@
     "name": "@ripl/charts",
     "version": "1.2.0",
     "description": "Pre-built chart components for Ripl",
+    "keywords": [
+        "ripl",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "zero-dependency",
+        "charts",
+        "charting-library",
+        "chart",
+        "graph",
+        "plot",
+        "dashboard",
+        "candlestick",
+        "sankey",
+        "heatmap"
+    ],
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -24,8 +41,10 @@
     "sideEffects": false,
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andrewcourtice/ripl.git"
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "packages/charts"
     },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",

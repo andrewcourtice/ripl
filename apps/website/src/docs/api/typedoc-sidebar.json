@@ -4339,12 +4339,40 @@
         "collapsed": true,
         "items": [
           {
+            "text": "BrailleRasterizerOptions",
+            "link": "/docs/api/@ripl/terminal/interfaces/BrailleRasterizerOptions.md"
+          },
+          {
+            "text": "ClipMask",
+            "link": "/docs/api/@ripl/terminal/interfaces/ClipMask.md"
+          },
+          {
+            "text": "ContourContext",
+            "link": "/docs/api/@ripl/terminal/interfaces/ContourContext.md"
+          },
+          {
+            "text": "GlyphRun",
+            "link": "/docs/api/@ripl/terminal/interfaces/GlyphRun.md"
+          },
+          {
+            "text": "GlyphRunOptions",
+            "link": "/docs/api/@ripl/terminal/interfaces/GlyphRunOptions.md"
+          },
+          {
+            "text": "RasterContext",
+            "link": "/docs/api/@ripl/terminal/interfaces/RasterContext.md"
+          },
+          {
             "text": "Rasterizer",
             "link": "/docs/api/@ripl/terminal/interfaces/Rasterizer.md"
           },
           {
             "text": "SerializeOptions",
             "link": "/docs/api/@ripl/terminal/interfaces/SerializeOptions.md"
+          },
+          {
+            "text": "TerminalCommandHandler",
+            "link": "/docs/api/@ripl/terminal/interfaces/TerminalCommandHandler.md"
           },
           {
             "text": "TerminalContextOptions",
@@ -4359,6 +4387,10 @@
             "link": "/docs/api/@ripl/terminal/interfaces/TerminalPathCommand.md"
           },
           {
+            "text": "TerminalTransform",
+            "link": "/docs/api/@ripl/terminal/interfaces/TerminalTransform.md"
+          },
+          {
             "text": "Vertex",
             "link": "/docs/api/@ripl/terminal/interfaces/Vertex.md"
           }
@@ -4371,6 +4403,10 @@
           {
             "text": "PixelCallback",
             "link": "/docs/api/@ripl/terminal/type-aliases/PixelCallback.md"
+          },
+          {
+            "text": "TerminalColor",
+            "link": "/docs/api/@ripl/terminal/type-aliases/TerminalColor.md"
           },
           {
             "text": "TerminalPathCommandType",
@@ -4393,6 +4429,10 @@
           {
             "text": "BRAILLE_CELL_WIDTH",
             "link": "/docs/api/@ripl/terminal/variables/BRAILLE_CELL_WIDTH.md"
+          },
+          {
+            "text": "TERMINAL_COMMAND_HANDLERS",
+            "link": "/docs/api/@ripl/terminal/variables/TERMINAL_COMMAND_HANDLERS.md"
           }
         ]
       },
@@ -4400,6 +4440,10 @@
         "text": "Functions",
         "collapsed": true,
         "items": [
+          {
+            "text": "clipPixels",
+            "link": "/docs/api/@ripl/terminal/functions/clipPixels.md"
+          },
           {
             "text": "colorToAnsiBg",
             "link": "/docs/api/@ripl/terminal/functions/colorToAnsiBg.md"
@@ -4409,12 +4453,28 @@
             "link": "/docs/api/@ripl/terminal/functions/colorToAnsiFg.md"
           },
           {
+            "text": "createClipMask",
+            "link": "/docs/api/@ripl/terminal/functions/createClipMask.md"
+          },
+          {
             "text": "createContext",
             "link": "/docs/api/@ripl/terminal/functions/createContext.md"
           },
           {
+            "text": "createTerminalTransform",
+            "link": "/docs/api/@ripl/terminal/functions/createTerminalTransform.md"
+          },
+          {
             "text": "dashPixels",
             "link": "/docs/api/@ripl/terminal/functions/dashPixels.md"
+          },
+          {
+            "text": "estimateArcSteps",
+            "link": "/docs/api/@ripl/terminal/functions/estimateArcSteps.md"
+          },
+          {
+            "text": "estimateEllipseSteps",
+            "link": "/docs/api/@ripl/terminal/functions/estimateEllipseSteps.md"
           },
           {
             "text": "fillPolygon",
@@ -4437,6 +4497,30 @@
             "link": "/docs/api/@ripl/terminal/functions/flattenQuadBezier.md"
           },
           {
+            "text": "isPointInContours",
+            "link": "/docs/api/@ripl/terminal/functions/isPointInContours.md"
+          },
+          {
+            "text": "isPointOnContours",
+            "link": "/docs/api/@ripl/terminal/functions/isPointOnContours.md"
+          },
+          {
+            "text": "layoutGlyphRun",
+            "link": "/docs/api/@ripl/terminal/functions/layoutGlyphRun.md"
+          },
+          {
+            "text": "letterboxMatrix",
+            "link": "/docs/api/@ripl/terminal/functions/letterboxMatrix.md"
+          },
+          {
+            "text": "normalizeArcSweep",
+            "link": "/docs/api/@ripl/terminal/functions/normalizeArcSweep.md"
+          },
+          {
+            "text": "normalizeEllipseSweep",
+            "link": "/docs/api/@ripl/terminal/functions/normalizeEllipseSweep.md"
+          },
+          {
             "text": "rasterizeArc",
             "link": "/docs/api/@ripl/terminal/functions/rasterizeArc.md"
           },
@@ -4457,12 +4541,24 @@
             "link": "/docs/api/@ripl/terminal/functions/rasterizeLine.md"
           },
           {
+            "text": "rasterizePolygon",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizePolygon.md"
+          },
+          {
+            "text": "rasterizePolyline",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizePolyline.md"
+          },
+          {
             "text": "rasterizeQuadBezier",
             "link": "/docs/api/@ripl/terminal/functions/rasterizeQuadBezier.md"
           },
           {
             "text": "rasterizeRect",
             "link": "/docs/api/@ripl/terminal/functions/rasterizeRect.md"
+          },
+          {
+            "text": "resolveTerminalPaint",
+            "link": "/docs/api/@ripl/terminal/functions/resolveTerminalPaint.md"
           },
           {
             "text": "thickenPixels",

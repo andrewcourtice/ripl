@@ -1,10 +1,12 @@
 ---
+title: Performance
+description: "Tune Ripl's rendering pipeline: scene hoisting into a flat render buffer, persistent path keys for SVG diffing, renderer autoStop, and buffered SVG rendering."
 outline: "deep"
 ---
 
 # Performance
 
-Ripl is designed to be performant out of the box, but understanding how the rendering pipeline works will help you get the best results. This page covers the key performance concepts and optimization tips.
+Ripl's defaults are already tuned, but knowing how the rendering pipeline works is what gets the last order of magnitude. This page covers scene hoisting, renderer auto start/stop, persistent path keys, and the Canvas/SVG trade-off.
 
 ## Scene Hoisting
 

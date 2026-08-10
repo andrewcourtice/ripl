@@ -1,4 +1,6 @@
 ---
+title: Transforms
+description: "Translate, scale and rotate a Ripl element or group through translateX, transformScaleX, rotation and transformOrigin properties, animatable on Canvas and SVG."
 outline: "deep"
 ---
 

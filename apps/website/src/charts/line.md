@@ -1,6 +1,11 @@
+---
+title: Line Chart
+description: Plot one or more series as lines with 13 interpolation modes per series, optional markers, dashed styles, dual y-axes, crosshair tracking, grid and legend.
+---
+
 # Line Chart
 
-The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly: points enter, exit, and reposition with configurable transitions.
+The **Line Chart** connects each series' points in order along a shared x axis, so the reading is the trend between points rather than the points themselves. It fits anything ordered — time series, sequences, sweeps — and comparing several such series against one another. Each series picks its own `lineType` from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more), plus `lineWidth`, `lineStyle`, `markers` and a `yAxis` to bind to when the series need separate scales. Crosshair tracking, grid lines, a legend and tooltips are built in, and points enter, exit and reposition under configurable transitions. Renders to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

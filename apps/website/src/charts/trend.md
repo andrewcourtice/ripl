@@ -1,6 +1,11 @@
+---
+title: Trend Chart
+description: Mix line, bar and area series on shared axes with per-type stacking, back-to-front painting order and an overview strip for windowing the visible x-range.
+---
+
 # Trend Chart
 
-The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and area series on shared axes. Each series declares its `type` (`'line'`, `'bar'`, or `'area'`) plus the options specific to that type, and the chart reuses the same renderers as the standalone line, bar, and area charts. Series paint back-to-front as **area → bar → line** so lines never hide behind fills or bars, and overlaid areas are drawn largest-first so smaller areas stay visible. Same-type series can be stacked, and an optional **navigator** strip beneath the plot lets you window the visible x-range (with wheel/drag pan-zoom on the plot itself).
+The **Trend Chart** puts line, bar and area series on the same axes. It earns its place when one picture has to carry measures that want different marks — volume as bars under a rate as a line, actuals as an area behind a forecast line. Each series declares its `type` (`'line'`, `'bar'` or `'area'`) plus that type's own options, and the chart reuses the same renderers as the standalone [line](/charts/line), [bar](/charts/bar) and [area](/charts/area) charts. Series paint back-to-front as **area → bar → line** so lines never hide behind fills or bars, and overlaid areas are drawn largest-first so smaller areas stay visible. `stacked` stacks same-type series, and an `overview` strip beneath the plot windows the visible x-range while `navigator` adds wheel and drag [pan-zoom](/charts/advanced/panning-and-zooming) on the plot itself. It works against any Ripl [rendering target](/charts/advanced/rendering-targets): Canvas, SVG or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

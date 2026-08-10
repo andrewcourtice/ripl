@@ -1,4 +1,6 @@
 ---
+title: Shape
+description: "Shape extends Element with path-based drawing: automatic fill and stroke, persistent path keys for SVG diffs, and pixel-accurate hit testing on path geometry."
 outline: "deep"
 ---
 
@@ -71,7 +73,7 @@ createCircle({
 
 ## Shape Options
 
-In addition to all [Element options](/docs/core/essentials/element#common-options), shapes accept:
+In addition to all [Element options](/docs/core/essentials/element#creating-elements), shapes accept:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |

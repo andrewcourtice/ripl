@@ -1,6 +1,11 @@
+---
+title: Box Plot Chart
+description: Compare distributions per category with interquartile boxes, median lines, 1.5x IQR whiskers and outlier points from the shared boxplotStats transform.
+---
+
 # Box Plot Chart
 
-The **Box Plot Chart** summarizes the distribution of a numeric field per category using the shared `boxplotStats` transform: a box spanning the interquartile range (Q1–Q3), a median line, whiskers to the 1.5×IQR fences, and outlier points. It's the standard view for comparing spread and skew across groups.
+The **Box Plot Chart** summarizes the distribution of a numeric field per category using the shared `boxplotStats` transform: a box spanning the interquartile range (Q1–Q3), a median line, whiskers to the 1.5×IQR fences, and outlier points. It answers how spread out and how skewed, where a bar per category would show only the average. `key` and `value` pick the grouping and the measure, `categoryOrder` fixes the order along the axis, and `color` paints the boxes. Being a cartesian chart it also takes a crosshair, grid, tooltips and [annotations](/charts/advanced/annotations), and renders to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

@@ -1,4 +1,6 @@
 ---
+title: Theming
+description: "Restyle a chart or every chart with the theme option: light, dark and colorblind palettes ship built in, auto follows prefers-color-scheme, or supply a Theme."
 outline: "deep"
 ---
 

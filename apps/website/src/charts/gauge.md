@@ -1,6 +1,11 @@
+---
+title: Gauge Chart
+description: Render a single KPI value on a semi-circular gauge with configurable ticks, tick labels, a custom value formatter and animated transitions, on Canvas or SVG.
+---
+
 # Gauge Chart
 
-The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KPIs, progress indicators, and dashboard metrics. It supports configurable tick marks along the arc with optional labels, a custom value formatter, and smooth animated transitions when the value changes. The track and fill colors are fully customizable.
+The **Gauge Chart** puts one number on a semi-circular arc, filled from `min` to `max` in proportion to `value`. Use it when a dashboard tile needs one reading against a known range — utilization, progress to target, a health score. `ticks` and `tickLabels` place graduations around the arc, `format` and `tickFormat` control how the number and the graduations read, and `color`, `trackColor` and `label` set the rest. The arc sweeps to its new position whenever the value changes. It works against any Ripl [rendering target](/charts/advanced/rendering-targets): Canvas, SVG or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

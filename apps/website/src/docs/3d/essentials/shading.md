@@ -1,10 +1,15 @@
 ---
 title: Shading
+description: "How @ripl/3d turns light into pixel colour: the default light rig, the lightDirection shorthand, and the helpers that compute normals and brightness by hand."
 ---
 
 # Shading
 
-The `@ripl/3d` package includes flat shading utilities that compute face brightness based on surface normals and a light direction vector. Built-in 3D shapes apply shading automatically during rendering: you just set `context.lightDirection` and each face is colored based on its angle to the light. For custom geometry, three helper functions let you compute normals, brightness, and shaded colors directly.
+Every 3D context starts with a default rig: one ambient light and one directional light. `context.lightDirection` and `context.lightMode` steer that directional light, which is why a scene shades sensibly before you configure anything.
+
+That rig is a starting point, not the whole model. Passing [`lights`](/docs/3d/essentials/lighting) replaces it, and the two shorthands go inert once it does — set the light's own `direction` and `space` instead. How a surface responds to the result is a property of its [material](/docs/3d/essentials/materials): shading is smooth by default, and `flatShading: true` opts a surface into per-face normals.
+
+The helpers below compute normals, brightness and shaded colours directly, for custom geometry that shades itself.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).

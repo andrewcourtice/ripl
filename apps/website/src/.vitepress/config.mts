@@ -6,6 +6,10 @@ import {
     defineConfig,
 } from 'vitepress';
 
+import type {
+    HeadConfig,
+} from 'vitepress';
+
 import {
     tabsMarkdownPlugin,
 } from 'vitepress-plugin-tabs';
@@ -19,16 +23,89 @@ import {
     demos,
 } from './data/demos';
 
+import {
+    apiPageDescription,
+    canonicalUrl,
+    HOSTNAME,
+} from './seo';
+
 import typedocSidebar from '../docs/api/typedoc-sidebar.json';
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../../packages/core/package.json'), 'utf-8'));
+
+const SOFTWARE_SOURCE_CODE = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    'name': 'Ripl',
+    'description': 'A unified, zero-dependency TypeScript library for drawing and animating 2D graphics, charts and data visualisations across Canvas, SVG, Terminal and WebGPU 3D.',
+    'url': `${HOSTNAME}/`,
+    'codeRepository': 'https://github.com/andrewcourtice/ripl',
+    'programmingLanguage': 'TypeScript',
+    'runtimePlatform': 'Node.js',
+    'license': 'https://opensource.org/licenses/MIT',
+    'author': {
+        '@type': 'Person',
+        'name': 'Andrew Courtice',
+    },
+    'keywords': [
+        'charting library',
+        'chart library',
+        'data visualization',
+        'drawing library',
+        'animation library',
+        '2D graphics',
+        'canvas',
+        'SVG',
+        'terminal rendering',
+        'WebGPU',
+        '3D rendering',
+        'TypeScript',
+    ],
+};
+
+const SECTION_HUBS = new Set([
+    'charts/',
+    'demos/',
+    'docs/core/',
+    'docs/3d/',
+    'playground',
+]);
+
+/** Ranks the hand-written pages above the generated API reference, which is reference rather than entry material. */
+function sitemapPriority(url: string): number {
+    if (!url) {
+        return 1;
+    }
+
+    if (url.startsWith('docs/api/')) {
+        return 0.3;
+    }
+
+    return SECTION_HUBS.has(url) ? 0.9 : 0.8;
+}
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../dist',
     title: 'Ripl',
     description: 'One unified, high-performance, zero-dependency TypeScript API for drawing 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU.',
-    ignoreDeadLinks: true,
+
+    // TypeDoc links each package's bundled LICENSE and README, which are not published pages; every
+    // other dead link is a build error, so a broken internal link cannot reach production again.
+    ignoreDeadLinks: [
+        /(^|\/)_media\//,
+        /(^|\/)LICENSE$/,
+    ],
+
+    cleanUrls: true,
+
+    sitemap: {
+        hostname: `${HOSTNAME}/`,
+        transformItems: items => items.map(item => ({
+            ...item,
+            priority: sitemapPriority(item.url),
+        })),
+    },
 
     head: [
         ['link', {
@@ -66,42 +143,63 @@ export default defineConfig({
             content: 'Ripl',
         }],
         ['meta', {
-            property: 'og:title',
-            content: 'Ripl: one API for drawing in any context',
-        }],
-        ['meta', {
-            property: 'og:description',
-            content: 'A unified, high-performance TypeScript API for drawing and animating 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU 3D. Write once, render in any context.',
-        }],
-        ['meta', {
             property: 'og:image',
-            content: 'https://www.ripl.run/og-image.png',
-        }],
-        ['meta', {
-            property: 'og:url',
-            content: 'https://www.ripl.run/',
+            content: `${HOSTNAME}/og-image.png`,
         }],
         ['meta', {
             name: 'twitter:card',
             content: 'summary_large_image',
         }],
         ['meta', {
-            name: 'twitter:title',
-            content: 'Ripl: one API for drawing in any context',
-        }],
-        ['meta', {
-            name: 'twitter:description',
-            content: 'A unified, high-performance TypeScript API for 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU.',
-        }],
-        ['meta', {
             name: 'twitter:image',
-            content: 'https://www.ripl.run/og-image.png',
-        }],
-        ['link', {
-            rel: 'canonical',
-            href: 'https://www.ripl.run/',
+            content: `${HOSTNAME}/og-image.png`,
         }],
     ],
+
+    transformPageData(pageData) {
+        pageData.description ||= apiPageDescription(pageData.relativePath) ?? '';
+    },
+
+    // The canonical, og:title/url/description and twitter:* tags are per-page: a site-wide canonical
+    // told Google every page was a duplicate of the home page, which de-indexed the whole site.
+    transformHead({ pageData, title, description }) {
+        const canonical = canonicalUrl(pageData.relativePath);
+
+        const head: HeadConfig[] = [
+            ['link', {
+                rel: 'canonical',
+                href: canonical,
+            }],
+            ['meta', {
+                property: 'og:url',
+                content: canonical,
+            }],
+            ['meta', {
+                property: 'og:title',
+                content: title,
+            }],
+            ['meta', {
+                property: 'og:description',
+                content: description,
+            }],
+            ['meta', {
+                name: 'twitter:title',
+                content: title,
+            }],
+            ['meta', {
+                name: 'twitter:description',
+                content: description,
+            }],
+        ];
+
+        if (pageData.relativePath === 'index.md') {
+            head.push(['script', {
+                type: 'application/ld+json',
+            }, JSON.stringify(SOFTWARE_SOURCE_CODE)]);
+        }
+
+        return head;
+    },
 
     vite: {
         envDir: '../',

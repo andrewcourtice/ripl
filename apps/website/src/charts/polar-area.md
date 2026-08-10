@@ -1,6 +1,11 @@
+---
+title: Polar Area Chart
+description: Draw equal-angle segments whose radius encodes value, with configurable innerRadius, max radius ratio, level rings, padWidth gaps, labels and a legend.
+---
+
 # Polar Area Chart
 
-The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle; only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default). Segments are filled with a translucent tint of their series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
+The **Polar Area Chart** gives every category the same angle and varies only the radius, so magnitude is read as how far a segment reaches rather than how wide it is. Prefer it to a [pie chart](/charts/pie) when the categories are a fixed cycle — months, compass sectors, hours — and the values need not sum to anything. `levels` sets the value rings, `innerRadius` and `maxRadiusRatio` size the plot, `padAngle` and `padWidth` space the segments, and `labels`, `legend` and `format` label them. Segments are filled with a translucent tint of their series color; hovering one dims the rest. Canvas, SVG and [terminal contexts](/charts/advanced/rendering-targets) all draw it from the same options.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

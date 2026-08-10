@@ -1,6 +1,11 @@
+---
+title: Histogram Chart
+description: Bin a numeric field and draw its distribution as bars over a continuous value axis, using nice uniform bins or explicit thresholds, animated as bins change.
+---
+
 # Histogram Chart
 
-The **Histogram Chart** bins a numeric field and draws each bin as a bar on a continuous value axis against a frequency axis, the go-to view for the shape of a distribution. Binning uses the shared `bin` transform (nice uniform bins by default, or explicit `thresholds`), and bars animate on entry, update, and exit.
+The **Histogram Chart** bins a numeric field and draws each bin as a bar on a continuous value axis against a frequency axis. Its job is the shape of a distribution — where the mass sits, how long the tail runs, whether it is one peak or two — not a comparison of named categories. Binning uses the shared `bin` transform: `bins` asks for a bin count and gets nice round boundaries, or `thresholds` sets the cut points exactly. `borderRadius`, `color` and `format` handle the finish, and bars animate on entry, update and exit as the binning changes. Being a cartesian chart it also takes a crosshair, grid and [annotations](/charts/advanced/annotations), on a Canvas, SVG or [terminal target](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

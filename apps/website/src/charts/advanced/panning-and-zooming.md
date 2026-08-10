@@ -1,4 +1,6 @@
 ---
+title: Panning & Zooming
+description: Turn on wheel zoom, drag pan and rectangular brushing for cartesian charts with the navigator option, or add an overview strip to select the visible range.
 outline: "deep"
 ---
 

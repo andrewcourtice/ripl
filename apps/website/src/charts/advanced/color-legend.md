@@ -1,4 +1,6 @@
 ---
+title: Color Legend
+description: "Add a continuous color legend: a gradient bar with formatted value labels driven by a ColorScale, built into the heatmap or mounted standalone on any chart."
 outline: "deep"
 ---
 

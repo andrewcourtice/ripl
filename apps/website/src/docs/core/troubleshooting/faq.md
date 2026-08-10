@@ -1,4 +1,6 @@
 ---
+title: FAQ
+description: "Answers to recurring Ripl questions: Element versus Shape, when a Scene or Renderer earns its place, Canvas against SVG, and why an element renders invisible."
 outline: "deep"
 ---
 

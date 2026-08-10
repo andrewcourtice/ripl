@@ -1,6 +1,11 @@
+---
+title: Sunburst Chart
+description: Show a tree as concentric rings where each ring is a depth level and arc width encodes value, with a constant-width padWidth gap and hover dimming.
+---
+
 # Sunburst Chart
 
-The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update. Segments are filled with a translucent tint of their series color and separated by a constant-width gap (`padWidth`); hovering one dims the rest.
+The **Sunburst Chart** draws a tree as concentric rings: each ring is one level of depth, and each arc's angular width is its share of its parent. It shows both the shape of a hierarchy and the proportions within it — org charts, file systems, nested category breakdowns. Nodes nest through `children`, `padWidth` sets a constant-width gap between segments, and `format` sets how values read. Segments are filled with a translucent tint of their color; hovering one dims the rest, and arcs animate on entry and update. Canvas, SVG and [terminal contexts](/charts/advanced/rendering-targets) all draw it from the same options.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

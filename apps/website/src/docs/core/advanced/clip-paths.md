@@ -1,4 +1,6 @@
 ---
+title: Clip Paths
+description: "Turn any Ripl shape into a clipping mask so later siblings in the same group draw only inside its region, with clipping honored on Canvas, SVG and the terminal."
 outline: "deep"
 ---
 

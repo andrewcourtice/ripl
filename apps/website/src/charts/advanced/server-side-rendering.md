@@ -1,4 +1,6 @@
 ---
+title: Server-Side Rendering
+description: Render charts headlessly in Node with @ripl/node, drawing to a terminal context of braille characters and ANSI truecolor, then export text or raw ImageData.
 outline: "deep"
 ---
 
@@ -117,4 +119,4 @@ const text = chart.export().toString();
 
 ## What About Headless Canvas or SVG?
 
-`@ripl/node` deliberately ships no DOM emulation: its factory stubs return inert elements, so the Canvas (`@ripl/canvas`) and SVG (`@ripl/svg`) contexts are not supported out of the box in Node. If you need raster or vector output server-side, render to the terminal context and encode `toImage()` yourself, or run the browser contexts in an environment that provides a real DOM and canvas implementation.
+`@ripl/node` deliberately ships no DOM emulation: its factory stubs return inert elements, so the Canvas (`@ripl/canvas`) and SVG (`@ripl/svg`) contexts do not run under Node. If you need raster or vector output server-side, render to the terminal context and encode `toImage()` yourself, or run the browser contexts in an environment that provides a real DOM and canvas implementation.

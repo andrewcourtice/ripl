@@ -1,137 +1,81 @@
 # @ripl/utilities
 
-Shared typed utility functions for [Ripl](https://www.ripl.run): a unified API for 2D graphics rendering in the browser.
+[![npm](https://img.shields.io/npm/v/@ripl/utilities)](https://www.npmjs.com/package/@ripl/utilities)
+[![license](https://img.shields.io/npm/l/@ripl/utilities)](https://github.com/andrewcourtice/ripl/blob/main/LICENSE)
+[![size](https://img.shields.io/bundlephobia/minzip/@ripl/utilities)](https://bundlephobia.com/package/@ripl/utilities)
+
+> The typed helper functions every [Ripl](https://www.ripl.run) package is built from: type guards, numeric helpers, collection joins, comparators, caches and shared types.
+
+**This is an internal dependency.** Every other `@ripl/*` package installs it, so you already have it transitively. Install it directly only if you want these helpers in your own code.
+
+## Features
+
+- **Category-prefixed names** — every runtime export starts with its category (`type*`, `number*`, `array*`, `object*`, `set*`, `string*`, `function*`, `comparitor*`, `predicate*`, `value*`, `time*`), so related helpers group together in autocomplete.
+- **`arrayJoin`** — the left/inner/right join Ripl's charts diff data with. A `keyof` predicate takes a `Map`-backed path, so a keyed join is linear rather than quadratic.
+- **Numeric helpers for axes and scales** — `numberExtent`, `numberNice` (rounds to a 1/2/5/10 × power of ten), `numberRoundTo`, `numberClamp`, `numberFormat`.
+- **Eight type guards** — `typeIsArray`, `typeIsBoolean`, `typeIsDate`, `typeIsFunction`, `typeIsNil`, `typeIsNumber`, `typeIsObject`, `typeIsString`.
+- **`createLRUCache`** — a bounded `Map` subclass that evicts the least recently used entry when full. Iteration is least-recently-used first and does not itself affect recency.
+- **Function helpers** — `functionCache` (holds a result until invalidated), `functionMemoize` (keyed by a resolver, first argument by default), `functionProduce`, `functionIdentity`, `functionNoop`.
+- **Shared types** — `OneOrMore<T>`, `AnyFunction`, `AnyObject`, `Disposable`, `Predicate<L, R>`, `Indexer<T>`, `Merge<A, B>`, plus `GetReadonlyKeys`/`GetMutableKeys`.
+- **Zero dependencies, tree-shakable** — no runtime dependencies at all, and each helper is a separate export.
+
+> Native array methods (`forEach`, `map`, `filter`, `reduce`, `find`, `flatMap`) and `Math.min`/`Math.max` are faster than wrappers, so this package has none. It ships only helpers that do something the platform does not.
 
 ## Installation
 
 ```bash
+# npm
 npm install @ripl/utilities
+
+# yarn
+yarn add @ripl/utilities
+
+# pnpm
+pnpm add @ripl/utilities
 ```
 
-## Overview
-
-A collection of strictly-typed utility functions used across the Ripl ecosystem. Zero dependencies, fully tree-shakable. Every runtime export is prefixed by its category (`type*`, `number*`, `array*`, `object*`, `set*`, `string*`, `function*`, `comparitor*`, `predicate*`, `value*`, `time*`) so related helpers group together in autocomplete.
-
-## API
-
-### Type Guards
+## Quick start
 
 ```typescript
-typeIsArray(value); // value is unknown[]
-typeIsBoolean(value); // value is boolean
-typeIsDate(value); // value is Date
-typeIsFunction(value); // value is AnyFunction
-typeIsNil(value); // value is null | undefined
-typeIsNumber(value); // value is number
-typeIsObject(value); // value is object
-typeIsString(value); // value is string
+import {
+    arrayJoin,
+    numberExtent,
+    numberNice,
+} from '@ripl/utilities';
+
+const {
+    left: entries,
+    inner: updates,
+    right: exits,
+} = arrayJoin(data, elements, (datum, element) => datum.id === element.data);
+
+exits.forEach(element => element.destroy());
+
+const [min, max] = numberExtent(data, datum => datum.value);
+const axisMax = numberNice(max, true);
 ```
 
-### Number Helpers
+## Key API
 
-```typescript
-numberClamp(value, lower, upper); // constrain a value to an inclusive range
-numberMinOf(values, accessor); // minimum extracted from an array via an accessor
-numberMaxOf(values, accessor); // maximum extracted from an array via an accessor
-numberExtent(values, accessor); // [min, max] extent via an accessor
-numberSum(values, iteratee); // sum of an array, optionally mapped through an iteratee
-numberFractional(value); // fractional part of a number (numberFractional(3.7) === 0.7)
-numberRoundTo(value, precision); // round to N decimals, returning a number (trailing zeros stripped)
-numberNice(value, round); // round to a "nice" 1/2/5/10 × power-of-ten value
-numberFormat(value, options); // locale-aware Intl.NumberFormat string
-```
+| Export | What it does |
+| --- | --- |
+| [`arrayJoin`](https://www.ripl.run/docs/api/@ripl/utilities/functions/arrayJoin) | Left/inner/right join for diffing data against drawn elements |
+| [`arrayGroup` / `arrayDedupe` / `arrayIntersection` / `arrayDifference`](https://www.ripl.run/docs/api/@ripl/utilities/functions/arrayGroup) | Grouping and set operations over arrays |
+| [`numberExtent` / `numberNice` / `numberClamp` / `numberFormat`](https://www.ripl.run/docs/api/@ripl/utilities/functions/numberNice) | The numeric helpers behind axes and scales |
+| [`typeIsArray` … `typeIsString`](https://www.ripl.run/docs/api/@ripl/utilities/functions/typeIsArray) | The eight type guards |
+| [`createLRUCache`](https://www.ripl.run/docs/api/@ripl/utilities/functions/createLRUCache) | Bounded, recency-ordered `Map` subclass |
+| [`functionCache` / `functionMemoize`](https://www.ripl.run/docs/api/@ripl/utilities/functions/functionMemoize) | Result caching and keyed memoization |
+| [`stringUniqueId`](https://www.ripl.run/docs/api/@ripl/utilities/functions/stringUniqueId) | Cryptographically random hex id, 8 characters by default |
 
-> **Note:** The plain variadic `min`/`max` wrappers have been removed in favour of the native `Math.min`/`Math.max` for better performance.
+## Related packages
 
-### Collection Helpers
-
-```typescript
-arrayMapRange(length, iteratee); // build an array by mapping each index
-arrayJoin(left, right, predicate); // left/inner/right join for data diffing (Map-optimized for key predicates)
-arrayGroup(array, identity); // group items by key or function into a keyed record
-arrayIntersection(left, right, predicate); // items in left that match something in right
-arrayDifference(left, right, predicate); // items in left with no match in right
-arrayDedupe(array); // remove duplicates, preserving insertion order
-
-objectForEach(object, iteratee); // iterate enumerable (key, value) pairs
-objectMap(object, iteratee); // map enumerable properties into a new object
-objectReduce(object, reducer, seed); // reduce enumerable properties to a single value
-objectFreeze(object); // shallow frozen copy
-
-setForEach(set, iteratee); // iterate a Set with a running index
-setMap(set, iteratee); // map a Set into a new Set
-setFilter(set, predicate); // filter a Set into a new Set
-setFind(set, predicate); // first Set value matching a predicate
-setFlatMap(set, iteratee); // flat-map a Set into a new Set
-```
-
-> **Note:** Generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`) have been removed in favour of native array methods for better performance.
-
-### Comparators
-
-```typescript
-comparitorNumeric(a, b); // ascending numeric sort
-comparitorDate(a, b); // ascending chronological sort
-comparitorString(a, b); // locale-aware alphabetical sort
-```
-
-### Function Helpers
-
-```typescript
-functionNoop(); // a do-nothing function
-functionIdentity(value); // returns its argument unchanged
-functionProduce(valueOrFactory); // normalize a value-or-factory into a factory
-functionCache(fn); // cache a fn's result until invalidate() is called
-functionMemoize(fn, resolver); // memoize a fn keyed by a resolver (defaults to the first argument)
-```
-
-### Cache Helpers
-
-```typescript
-createLRUCache(limit); // bounded Map subclass that evicts the least recently used entry when full
-cache.maxSize; // the entry limit the cache was created with (clamped to at least 1)
-[...cache.keys()]; // iterates least recently used first; iterating does not affect recency
-```
-
-### String Helpers
-
-```typescript
-stringUniqueId(length); // cryptographically random hex id (default 8 chars)
-stringEquals(a, b); // case-insensitive equality
-```
-
-### Predicates
-
-```typescript
-predicateIdentity(a, b); // strict reference equality (===)
-predicateKey(key); // whether two objects share the same value at a key
-```
-
-### Value Helpers
-
-```typescript
-valueOneOrMore(value); // normalize OneOrMore<T> into a guaranteed T[]
-```
-
-### Time Helpers
-
-```typescript
-timeFormat(value, options); // locale-aware Intl.DateTimeFormat string for a Date or epoch
-```
-
-### Common Types
-
-```typescript
-OneOrMore<T>; // T | T[]
-AnyFunction; // (...args: any[]) => any
-AnyObject; // { [key: PropertyKey]: unknown }
-Disposable; // { dispose: () => void }
-Predicate<L, R>; // (left: L, right: R) => boolean
-```
+- [`@ripl/core`](https://www.npmjs.com/package/@ripl/core) — the rendering core, this package's only direct consumer of note
+- [`@ripl/web`](https://www.npmjs.com/package/@ripl/web) — the browser entry point, and what most projects should install
+- [`@ripl/charts`](https://www.npmjs.com/package/@ripl/charts) — where `arrayJoin` does its data diffing
 
 ## Documentation
 
-Full documentation is available at [ripl.run](https://www.ripl.run).
+The full API reference is at [ripl.run/docs/api/@ripl/utilities](https://www.ripl.run/docs/api/@ripl/utilities/).
 
 ## License
 

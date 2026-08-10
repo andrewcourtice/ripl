@@ -1,5 +1,6 @@
 ---
 title: Materials
+description: "Control how a 3D surface responds to light: base colour, specular highlight, emissive output, which faces are drawn, and smooth or faceted shading."
 outline: "deep"
 ---
 

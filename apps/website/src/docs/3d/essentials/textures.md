@@ -1,5 +1,6 @@
 ---
 title: Textures
+description: Map images across 3D surfaces with configurable wrapping, filtering and UV transforms, sampled identically by the Canvas and WebGPU backends.
 outline: "deep"
 ---
 
@@ -93,7 +94,7 @@ The WebGPU backend samples the texture per pixel, with hardware filtering and wr
 
 The Canvas backend maps each triangle with an affine transform — the one carrying its UV corners onto its screen corners. That is not perspective-correct: a large face seen at a steep angle shows a seam along the diagonal it was split on. Subdividing the geometry removes it, and for the segment counts a curved primitive already uses it is not visible.
 
-Tiling is a repeating `CanvasPattern`, so `'repeat'` and `'mirror'` behave the same on both backends. `'clamp'` does not: a GPU sampler extends the edge texel outwards, whereas the Canvas pattern simply stops. Beyond the first tile the shaded fill shows through untextured rather than smeared, which is usually what you want from a clamped texture but is worth knowing before you compare the two side by side.
+Tiling is a repeating `CanvasPattern`, so `'repeat'` and `'mirror'` behave the same on both backends. `'clamp'` does not: a GPU sampler extends the edge texel outwards, whereas the Canvas pattern stops. Beyond the first tile the shaded fill shows through untextured rather than smeared, which is usually what you want from a clamped texture but is worth knowing before you compare the two side by side.
 
 > [!TIP]
 > If a textured plane looks creased, raise its subdivision or switch the demo to WebGPU.
