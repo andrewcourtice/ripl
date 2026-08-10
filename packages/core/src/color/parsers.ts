@@ -35,7 +35,7 @@ function parsePercentage(value: string) {
 
 function parseRGBChannel(value: string): number {
     if (!value.endsWith('%')) {
-        return numberClamp(parseInt(value, 10), 0, 255);
+        return Math.round(numberClamp(parseFloat(value), 0, 255));
     }
 
     return scaleRGB(parsePercentage(value));

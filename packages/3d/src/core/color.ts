@@ -19,8 +19,9 @@ export type ColorUnitRGBA = [r: number, g: number, b: number, a: number];
 /** The colour used when an element has no `fill` and no material colour. */
 export const DEFAULT_SURFACE_COLOR = '#888888';
 
-// Bounded rather than unbounded: a demo animating a colour mints a new string every frame.
-const COLOR_CACHE_SIZE = 256;
+// Bounded rather than unbounded: a demo animating a colour mints a new string every frame. Sized so
+// a colormapped mesh fits — at 256 a per-vertex colour scale evicted on every lookup.
+const COLOR_CACHE_SIZE = 1024;
 
 const colorCache = createLRUCache<string, ColorRGBA | undefined>(COLOR_CACHE_SIZE);
 

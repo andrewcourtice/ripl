@@ -14,6 +14,10 @@ import {
     updateSurface,
 } from './surface-3d';
 
+import {
+    parseColor,
+} from '@ripl/core';
+
 import type {
     Face3D,
 } from '@ripl/3d';
@@ -103,11 +107,24 @@ describe('surfaceColorScale', () => {
     });
 
     test('Should return a colour for a flat field', () => {
-        expect(surfaceColorScale(3, 3)(3)).toMatch(/^(#|rgb)/);
+        expect(parseColor(surfaceColorScale(3, 3)(3))).toBeDefined();
     });
 
     test('Should return a colour for a non-finite height', () => {
-        expect(surfaceColorScale(-1, 1)(NaN)).toMatch(/^(#|rgb)/);
+        expect(parseColor(surfaceColorScale(-1, 1)(NaN))).toBeDefined();
+    });
+
+    /*
+     * 3D-C1: the scale emitted fractional channels the library's own parser rejected, so the
+     * shading path resolved every vertex to the material's default grey. `toMatch(/^(#|rgb)/)`
+     * passed throughout, because the strings looked like colours — they just could not be read.
+     */
+    test('Should emit colours the shading path can resolve', () => {
+        const scale = surfaceColorScale(-1, 1);
+
+        for (let i = 0; i <= 200; i++) {
+            expect(parseColor(scale(-1 + i / 100))).toBeDefined();
+        }
     });
 
 });

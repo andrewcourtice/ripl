@@ -20,6 +20,7 @@ import {
     createContext,
     createCube,
     createMaterial,
+    createMesh,
     createSphere,
     DEFAULT_SURFACE_COLOR,
     MATERIAL_SIDE_CODE,
@@ -28,8 +29,15 @@ import {
     resolveMaterial,
 } from '../../src';
 
+import type {
+    Face3D,
+    Shape3D,
+} from '../../src';
+
 import {
+    COLOR_SCHEME_VIRIDIS,
     createScene,
+    scaleSequential,
 } from '@ripl/core';
 
 import {
@@ -140,7 +148,7 @@ describe('Material', () => {
 
         // Off axis so three faces of a cube are genuinely camera facing; straight on, perspective
         // leaves exactly one, which would not distinguish culling from a coincidence.
-        function render(element: ReturnType<typeof createCube> | ReturnType<typeof createSphere>) {
+        function render(element: Shape3D) {
             const context = createContext(host);
 
             context.setCamera([4, 3, 5], [0, 0, 0], [0, 1, 0]);
@@ -258,16 +266,38 @@ describe('Material', () => {
             expect(emissive).not.toEqual(plain);
         });
 
+        /*
+         * 3D-C1: this asserted a face count, which a cube carrying no vertex colours at all
+         * satisfies — so it stayed green while every face resolved to the material's default grey.
+         * Colours come from a scale here because a scale is what emits the fractional channels
+         * `resolveColor` used to reject.
+         */
         test('Should shade from a face vertex colours when the material enables them', () => {
-            const withColors = render(createCube({
-                size: 1,
+            const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 8]);
+            const strip = Array.from({ length: 8 }, (_, index) => ({
+                vertices: [
+                    [index - 4, 0, 0],
+                    [index - 3, 0, 0],
+                    [index - 3, 1, 0],
+                    [index - 4, 1, 0],
+                ],
+                colors: [
+                    scale(index + 0.3),
+                    scale(index + 0.3),
+                    scale(index + 0.7),
+                    scale(index + 0.7),
+                ],
+            })) as Face3D[];
+
+            const fills = new Set(render(createMesh({
+                faces: strip,
                 fill: '#ffffff',
                 material: {
                     vertexColors: true,
                 },
-            }));
+            })).map(record => record.fillStyle));
 
-            expect(withColors).toHaveLength(6);
+            expect(fills.size).toBe(8);
         });
 
     });
