@@ -6,7 +6,7 @@ version, so an entry covers all of them and names the package each change lands 
 Released builds and their auto-generated commit lists live on
 [GitHub Releases](https://github.com/andrewcourtice/ripl/releases).
 
-## Unreleased
+## v1.3.0 — 2026-08-10
 
 ### 3D lighting, materials and textures
 
