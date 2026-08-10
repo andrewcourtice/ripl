@@ -1,5 +1,6 @@
 ---
 title: Bezier Surface
+description: Tessellate a 3D surface from bicubic Bézier patches of sixteen control points, shaping geometry by moving points rather than writing a formula.
 ---
 
 # Bezier Surface

@@ -1,5 +1,6 @@
 ---
 title: Lighting
+description: Light a 3D scene with ambient, hemisphere, directional, point and spot lights, each with colour, intensity, falloff and cone, on both Canvas and WebGPU.
 outline: "deep"
 ---
 

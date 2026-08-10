@@ -1,5 +1,6 @@
 ---
 title: Parametric
+description: Tessellate a 3D surface from a function of two parameters, with normals from analytic partial derivatives and the parameters as texture coordinates.
 ---
 
 # Parametric

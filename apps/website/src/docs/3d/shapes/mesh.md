@@ -1,5 +1,6 @@
 ---
 title: Mesh
+description: Build 3D geometry from an explicit face list, for imported models, procedurally generated surfaces and hand-built assemblies no primitive covers.
 ---
 
 # Mesh
