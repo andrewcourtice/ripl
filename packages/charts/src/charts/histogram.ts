@@ -11,6 +11,10 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+} from '../core/chart';
+
+import type {
     ValueFormatInput,
 } from '../core/options';
 
@@ -57,6 +61,7 @@ import {
 
 import {
     arrayJoin,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 /** The opacity applied to a bin's fill at rest (full opacity on hover). */
@@ -127,6 +132,29 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
         });
 
         this.init();
+    }
+
+    /**
+     * Highlights a bin bar, dimming the rest of the chart exactly as hovering it does. Bins are
+     * derived from the data rather than carrying a key of their own, so they are addressed by
+     * position: `0` is the leftmost bin and the index counts up across the value axis, in the same
+     * order the bars are drawn. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}) or the next pointer hover restores the chart, and it emits no bin events.
+     *
+     * @param selector - The bin's index, or an accessor over the chart's data returning one.
+     * @param options - What to show alongside the bar's highlight state; `crosshair` places the crosshair on it.
+     * @returns `true` when a live bin matched, `false` when the index falls outside the histogram.
+     *
+     * @example
+     * ```ts
+     * chart.highlightBin(0, { tooltip: true, crosshair: true });
+     * chart.highlightBin(data => data.length - 1);
+     * ```
+     */
+    public highlightBin(selector: number | ((data: TData[]) => number), options?: HighlightOptions): boolean {
+        const index = typeIsFunction(selector) ? selector(this.options.data) : selector;
+
+        return this.replayMark('bin', String(index), options);
     }
 
     /** Wires hover highlight + tooltip + interaction events onto a bin bar. */
@@ -264,6 +292,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
         const items = histogram.map((current, index) => ({
             id: `bin-${index}`,
+            index,
             bin: current,
         }));
 
@@ -295,6 +324,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             });
 
             this._attachBinHover(rect, item.bin);
+            this.registerMark('bin', String(item.index), rect);
             this.addPlotContent(rect);
 
             return rect;
@@ -302,6 +332,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
         updates.forEach(([item, rect]) => {
             rect.data = targetState(item.bin);
+            this.registerMark('bin', String(item.index), rect);
         });
 
         this._bars = [

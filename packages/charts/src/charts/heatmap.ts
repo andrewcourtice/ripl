@@ -4,6 +4,9 @@ import type {
 
 import type {
     BaseChartOptions,
+    CellRef,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -85,6 +88,7 @@ import {
     typeIsArray,
     typeIsFunction,
     typeIsObject,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link HeatmapChart}. */
@@ -194,6 +198,31 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         this._yAxis = axes.yAxis;
 
         this.init();
+    }
+
+    /**
+     * Highlights one or more cells, dimming the rest of the grid exactly as hovering a cell does. A
+     * `{ x, y }` ref names the single cell at that pair of axis labels — the pair the chart reports
+     * as `xLabel`/`yLabel` on its cell events — while a bare label matches either axis, lighting that
+     * whole row or column. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}) or the next pointer hover restores the chart, and it emits no cell events.
+     *
+     * @param selector - A `{ x, y }` ref naming one cell, a bare axis label selecting its row or column, or an accessor over the chart's data returning either.
+     * @param options - What to show alongside the cell's highlight state. Several matched cells share one tooltip, their contents joined a line apart.
+     * @returns `true` when at least one live cell matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightCell({ x: '9', y: 'Mon' }, { tooltip: true });
+     * chart.highlightCell('Mon');
+     * chart.highlightCell(data => ({ x: data[0].hour, y: data[0].day }));
+     * ```
+     */
+    public highlightCell(selector: MarkSelector<TData, CellRef>, options?: HighlightOptions): boolean {
+        const ref = this.resolveMarkSelector(selector, this.options.data);
+        const key = typeIsString(ref) ? ref : `${ref.x} ${ref.y}`;
+
+        return this.replayMark('cell', key, options);
     }
 
     public async render() {
@@ -570,6 +599,15 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             onLeave: point => this.emit('cellleave', payload(point)),
             onClick: point => this.emit('cellclick', payload(point)),
         });
+
+        // Joined with a space rather than a hyphen: the cell ids above already collide for hyphenated labels.
+        this.registerMark('cell', `${cell.xLabel} ${cell.yLabel}`, rect);
+        this.registerMark('cell', cell.xLabel, rect);
+
+        // A matrix sharing its categories across both axes would otherwise register its diagonal twice.
+        if (cell.yLabel !== cell.xLabel) {
+            this.registerMark('cell', cell.yLabel, rect);
+        }
     }
 
 }

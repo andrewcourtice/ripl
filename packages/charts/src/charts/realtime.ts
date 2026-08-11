@@ -406,6 +406,8 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             ...updatedGroups,
         ];
 
+        this.registerHighlightGroups(this._seriesGroups);
+
         // Transition all groups (only polylines with ≥2 points)
         const transitions = this._seriesGroups.map(group => {
             const polylines = group.getElementsByType('polyline') as Polyline[];

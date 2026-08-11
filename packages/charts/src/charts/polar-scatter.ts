@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -142,6 +144,8 @@ export interface PolarScatterMarkerEvent {
     sizeValue: number;
     /** The id of the series the marker belongs to. */
     seriesId: string;
+    /** The index of the marker's item in the chart's data, which is how {@link PolarScatterChart.highlightMarker} addresses it. */
+    index: number;
 }
 
 /** Events emitted by a {@link PolarScatterChart} that consumers can subscribe to via `chart.on(...)`. */
@@ -378,6 +382,31 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             onLeave: point => this.emit('markerleave', payload(point)),
             onClick: point => this.emit('markerclick', payload(point)),
         });
+
+        this.registerMark('marker', String(values.index), marker, values.seriesId);
+    }
+
+    /**
+     * Highlights the marker(s) at a data index, dimming the rest of the chart exactly as hovering one
+     * does. The chart has no key accessor — every series plots the whole dataset — so markers are
+     * addressed by the item's position in `data`, as a string, which is the `index` its marker events
+     * report. A bare index lights that item in every series; narrow it with `{ key, series }`. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no marker events.
+     *
+     * @param selector - The item's index as a string, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the marker's highlight state.
+     * @returns `true` when at least one live marker matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightMarker('2', { tooltip: true });
+     * chart.highlightMarker(data => String(data.findIndex(item => item.bearing === 120)));
+     * chart.highlightMarker({ key: '2', series: 'readings' });
+     * ```
+     */
+    public highlightMarker(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('marker', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {
@@ -474,6 +503,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                         radiusValue,
                         sizeValue,
                         seriesId: srs.id,
+                        index,
                     } as PolarScatterMarkerEvent,
                     state: {
                         cx: px,
