@@ -1,10 +1,12 @@
 ---
+title: Node
+description: "The @ripl/node package supplies Node.js platform bindings for server-side rendering, re-exporting core and terminal so a headless script needs a single import."
 outline: "deep"
 ---
 
 # Node Runtime
 
-The `@ripl/node` package provides Node.js runtime bindings for Ripl. It configures the global factory with Node-compatible implementations and re-exports everything from `@ripl/core` and `@ripl/terminal`, so you only need a single import to get started.
+The `@ripl/node` package is Ripl's server-side rendering entry point. It swaps the platform factory over to Node-compatible implementations — `setTimeout` for the animation frame, `performance.now()` for the clock, a monospace text metric, a `process.stdout` context — and re-exports everything from `@ripl/core` and `@ripl/terminal`, so a headless script builds scenes, runs a renderer and draws charts from a single import, with no DOM and no browser.
 
 ## Installation
 

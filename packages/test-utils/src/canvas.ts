@@ -23,6 +23,42 @@ export function polyfillPath2D() {
     }
 }
 
+/**
+ * Installs a minimal `ImageData` polyfill on `globalThis` if not already present.
+ *
+ * jsdom ships a canvas API but no `ImageData` constructor, which anything sampling pixel data needs
+ * in order to build a fixture image.
+ */
+export function polyfillImageData() {
+    if (typeof globalThis.ImageData !== 'undefined') {
+        return;
+    }
+
+
+    (globalThis as any).ImageData = class ImageData {
+
+        public readonly data: Uint8ClampedArray;
+        public readonly width: number;
+        public readonly height: number;
+        public readonly colorSpace = 'srgb';
+
+        constructor(dataOrWidth: Uint8ClampedArray | number, widthOrHeight: number, height?: number) {
+            if (typeof dataOrWidth === 'number') {
+                this.width = dataOrWidth;
+                this.height = widthOrHeight;
+                this.data = new Uint8ClampedArray(this.width * this.height * 4);
+
+                return;
+            }
+
+            this.data = dataOrWidth;
+            this.width = widthOrHeight;
+            this.height = height ?? dataOrWidth.length / 4 / widthOrHeight;
+        }
+
+    };
+}
+
 /** Per-character and vertical metrics the fake text measurer reports. */
 export interface MockTextMetricsOptions {
     /** Advance width, in pixels, of a single character. Defaults to `7`. */
@@ -95,6 +131,44 @@ export function mockTextMetrics<TStub extends {
     return stub;
 }
 
+/**
+ * A recorded stand-in for a `CanvasPattern`, returned by the {@link mockCanvasContext} stub.
+ *
+ * A bare object is not enough: anything tiling an image sets a transform on the pattern it fills
+ * with, and the transform — along with the repetition the pattern was created with — is the only
+ * observable evidence of where the tiles actually landed.
+ */
+export interface MockCanvasPattern {
+    /** The image the pattern was created from. */
+    source: unknown;
+    /** The repetition mode passed to `createPattern`. */
+    repetition: string | null;
+    /** Every transform set on the pattern, in call order, as `[a, b, c, d, e, f]`. */
+    transforms: MockCanvasMatrix[];
+    /** Records a transform, the way a real `CanvasPattern` accepts one. */
+    setTransform(transform?: DOMMatrix2DInit): void;
+}
+
+function mockCanvasPattern(source: unknown, repetition: string | null): MockCanvasPattern {
+    const transforms: MockCanvasMatrix[] = [];
+
+    return {
+        source,
+        repetition,
+        transforms,
+        setTransform(transform?: DOMMatrix2DInit) {
+            transforms.push([
+                transform?.a ?? 1,
+                transform?.b ?? 0,
+                transform?.c ?? 0,
+                transform?.d ?? 1,
+                transform?.e ?? 0,
+                transform?.f ?? 0,
+            ]);
+        },
+    };
+}
+
 /** Creates a stub `CanvasRenderingContext2D` and spies on `HTMLCanvasElement.prototype.getContext` to return it. */
 export function mockCanvasContext() {
     const stub = {
@@ -125,7 +199,7 @@ export function mockCanvasContext() {
             actualBoundingBoxLeft: 0,
             actualBoundingBoxRight: 0,
         })),
-        createPattern: vi.fn(() => ({})),
+        createPattern: vi.fn((source: unknown, repetition: string | null) => mockCanvasPattern(source, repetition)),
         createLinearGradient: vi.fn(() => ({
             addColorStop: vi.fn(),
         })),

@@ -1,7 +1,20 @@
 {
     "name": "@ripl/utilities",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Shared typed utility functions for Ripl",
+    "keywords": [
+        "ripl",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "zero-dependency",
+        "utilities",
+        "type-guards",
+        "helpers",
+        "collection-helpers",
+        "array-utils"
+    ],
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -24,8 +37,10 @@
     "sideEffects": false,
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andrewcourtice/ripl.git"
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "packages/utilities"
     },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",

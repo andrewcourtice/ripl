@@ -1,12 +1,18 @@
 import {
     ContextPath,
     getThetaPoint,
+    HALF_PI,
+    normalizeBorderRadius,
     TAU,
 } from '@ripl/core';
 
 import type {
     BorderRadius,
 } from '@ripl/core';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 /** Types of drawing commands recorded by a terminal path. */
 export type TerminalPathCommandType =
@@ -206,11 +212,34 @@ export class TerminalPath extends ContextPath {
         this._cursorY = y;
     }
 
-    /** Records a rounded rectangle, approximated as a plain rectangle for terminal rendering. */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    /** Records a rounded rectangle, tracing each corner as a quarter arc between the straight edges. */
     public roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
-        // Approximate as a plain rect for terminal rendering
-        this.rect(x, y, width, height);
+        if (!radii) {
+            this.rect(x, y, width, height);
+            return;
+        }
+
+        const limit = Math.min(Math.abs(width), Math.abs(height)) / 2;
+        const [topLeft, topRight, bottomRight, bottomLeft] = normalizeBorderRadius(radii).map(radius => numberClamp(radius, 0, limit));
+
+        if (!topLeft && !topRight && !bottomRight && !bottomLeft) {
+            this.rect(x, y, width, height);
+            return;
+        }
+
+        const right = x + width;
+        const bottom = y + height;
+
+        this.moveTo(x + topLeft, y);
+        this.lineTo(right - topRight, y);
+        this.arc(right - topRight, y + topRight, topRight, -HALF_PI, 0);
+        this.lineTo(right, bottom - bottomRight);
+        this.arc(right - bottomRight, bottom - bottomRight, bottomRight, 0, HALF_PI);
+        this.lineTo(x + bottomLeft, bottom);
+        this.arc(x + bottomLeft, bottom - bottomLeft, bottomLeft, HALF_PI, Math.PI);
+        this.lineTo(x, y + topLeft);
+        this.arc(x + topLeft, y + topLeft, topLeft, Math.PI, Math.PI + HALF_PI);
+        this.closePath();
     }
 
     /**

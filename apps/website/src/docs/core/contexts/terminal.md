@@ -1,10 +1,14 @@
 ---
+title: Terminal
+description: "Render Ripl scenes to a terminal as Unicode braille art with ANSI truecolor, affine transforms, clipping, hit testing and path rasterization for TUI dashboards."
 outline: "deep"
 ---
 
 # Terminal Context
 
-The **Terminal context** renders elements to a character-based terminal using Unicode braille patterns (U+2800–U+28FF). Each terminal cell encodes a 2×4 grid of sub-pixel dots, giving 8× the resolution of plain text. It supports ANSI truecolor for full-color output.
+The **Terminal context** is a full Ripl rendering backend whose surface is a character grid. It rasterizes elements into Unicode braille patterns (U+2800–U+28FF), where each cell encodes a 2×4 grid of sub-pixel dots for 8× the resolution of plain text, and paints them with ANSI truecolor escape sequences.
+
+It is a rasterizer, not a text formatter. `@ripl/terminal` implements Bresenham line drawing, midpoint circles, adaptive Bézier and arc/ellipse flattening, scanline polygon fill, round-brush stroke thickening and dash patterns, so every built-in element — arcs, paths, polylines, rects, text — draws to a TUI unchanged. Affine transforms are honored through the full matrix, clip paths become raster stencils, overlapping shapes composite in an RGBA framebuffer, and `isPointInPath`/`isPointInStroke` hit testing runs against the same contours, so a host with a pointer (xterm.js, say) gets the same interaction model as the browser. Rotated text is the one approximation: a glyph fills a whole cell, so a rotated run advances along the nearest of eight compass directions.
 
 ## Demo
 
@@ -82,11 +86,12 @@ const context = new TerminalContext(output, {
 The terminal context:
 
 1. Records drawing commands (lines, arcs, curves, rects) from elements
-2. Rasterizes them onto a sub-pixel grid using algorithms like Bresenham's line, midpoint circle, and adaptive Bézier subdivision
-3. Applies scanline fill for filled shapes
-4. Maps CSS colors to ANSI truecolor escape sequences
-5. Encodes each 2×4 cell into a Unicode braille character
-6. Flushes the serialized output to the `TerminalOutput` adapter
+2. Maps each command through the current transform onto the sub-pixel grid, rasterizing with Bresenham's line, midpoint circle, and adaptive Bézier subdivision
+3. Applies scanline fill for filled shapes, and a round-brush stamp with optional dashing for strokes
+4. Masks every plotted pixel against the active clip stencil
+5. Maps CSS colors to ANSI truecolor escape sequences, compositing alpha into the RGBA framebuffer
+6. Encodes each 2×4 cell into a Unicode braille character
+7. Flushes the serialized output to the `TerminalOutput` adapter
 
 ## Logical Sizing
 
@@ -121,23 +126,40 @@ The default `BrailleRasterizer` can be swapped for alternative character sets by
 interface Rasterizer {
     readonly pixelWidth: number;
     readonly pixelHeight: number;
+    readonly cellWidth: number;
+    readonly cellHeight: number;
     resize(cols: number, rows: number): void;
-    setPixel(x: number, y: number, color: string): void;
-    setChar(col: number, row: number, char: string, color: string): void;
+    setPixel(x: number, y: number, color: TerminalColor): void;
+    setChar(col: number, row: number, char: string, color: TerminalColor): void;
     clear(): void;
     serialize(): string;
+    toImageData(): ImageData;
 }
 ```
 
+A `TerminalColor` is an `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground.
+`cellWidth`/`cellHeight` describe the rasterizer's cell geometry; text placement reads them, so a
+non-braille cell size positions text correctly.
+
 Pass a custom rasterizer via the `rasterizer` option when creating a context.
+
+## Transforms
+
+Element and group transforms are honored. Geometry is mapped through the full affine matrix, so a
+rotated marker draws rotated and a translated group draws where the transform puts it.
+
+Text is the one place a terminal cannot follow exactly: a glyph fills a whole cell and cannot itself
+be rotated. A rotated run instead advances along whichever of eight compass directions the transform
+is nearest, so a quarter-turn axis title reads down the side of a chart rather than across it.
 
 ## Limitations
 
-- **No interaction**: terminal contexts do not support pointer events or hit testing
-- **No gradients**: CSS gradient strings are not supported; use solid colors
+- **No gradients**: a cell cannot interpolate, so a gradient or pattern paints as its first
+  non-transparent color
 - **No image drawing**: `drawImage` is a no-op
 - **Monospace text**: text is placed at character-grid positions; font metrics are approximate
-- **No transforms**: `rotate`, `scale`, `translate` are currently no-ops
+- **No pointer source**: hit testing works, but `@ripl/terminal` has no pointer input of its own — a
+  host that has one (xterm.js in a browser) drives `Context.hitTest` itself
 - **Resolution**: limited by braille dot density (2×4 per cell)
 
 ## When to Use Terminal

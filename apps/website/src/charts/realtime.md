@@ -1,6 +1,11 @@
+---
+title: Realtime Chart
+description: Stream values into a sliding window that scrolls as you push(), with a configurable window size, y bounds, per-series area fills, crosshair, grid and legend.
+---
+
 # Realtime Chart
 
-The **Realtime Chart** smoothly visualizes data streaming in over time. It maintains a sliding window of data points: while the window fills the line grows from the left, and once full it scrolls left with each new value entering from the right as you `push()`. Ideal for live dashboards, server monitoring, and any scenario where data arrives continuously. Each series can show an area fill with configurable opacity, and the chart includes crosshair, grid, legend, and tooltips.
+The **Realtime Chart** holds a sliding window of the most recent values and scrolls it as you `push()` new ones: while the window fills the line grows from the left, and once full each new value enters from the right and the oldest falls off. It fits live dashboards, server and device monitoring, and anything where data arrives continuously and only the recent past matters. `windowSize` sets how much history stays on screen, `yMin`/`yMax` pin the value axis instead of letting it track the data, `transitionDuration` sets how long each push's scroll takes, and each series takes `showArea` with its own `fillOpacity`. Crosshair, grid, legend and tooltips are built in. Canvas and SVG both draw it, as does a headless [terminal context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

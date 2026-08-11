@@ -72,10 +72,10 @@ describe('Terminal export', () => {
             expect(image.data.length).toBe(rasterizer.pixelWidth * rasterizer.pixelHeight * 4);
         });
 
-        test('Should render a set pixel with its parsed truecolor', () => {
+        test('Should render a set pixel with its own color', () => {
             const rasterizer = new BrailleRasterizer(10, 4);
 
-            rasterizer.setPixel(2, 3, '\x1b[38;2;10;20;30m');
+            rasterizer.setPixel(2, 3, [10, 20, 30, 1]);
 
             const image = rasterizer.toImageData();
             const offset = (3 * rasterizer.pixelWidth + 2) * 4;
@@ -98,7 +98,7 @@ describe('Terminal export', () => {
         test('Should render a character cell so glyphs survive the export', () => {
             const rasterizer = new BrailleRasterizer(4, 1);
 
-            rasterizer.setChar(0, 0, 'X', '\x1b[38;2;10;20;30m');
+            rasterizer.setChar(0, 0, 'X', [10, 20, 30, 1]);
 
             const image = rasterizer.toImageData();
 
@@ -111,7 +111,7 @@ describe('Terminal export', () => {
         test('Should fill the whole cell for a glyph', () => {
             const rasterizer = new BrailleRasterizer(4, 1);
 
-            rasterizer.setChar(0, 0, 'X', '\x1b[38;2;10;20;30m');
+            rasterizer.setChar(0, 0, 'X', [10, 20, 30, 1]);
 
             const image = rasterizer.toImageData();
             const alphas = [];

@@ -1,10 +1,12 @@
 ---
+title: Polyline
+description: "Draw connected segments through a point array using 13 built-in curve algorithms, from linear and step to cardinal, catmull-rom, basis and monotone splines."
 outline: "deep"
 ---
 
 # Polyline
 
-A **Polyline** draws a series of connected line segments through a set of `[x, y]` points. What makes Ripl's polyline powerful is its `renderer` property: choose from 13 built-in curve algorithms (spline, cardinal, catmull-rom, monotone, step, and more) or supply a custom render function. This makes it the go-to element for line charts, sparklines, data paths, and any visualization involving connected data points.
+A **Polyline** draws a series of connected line segments through a set of `[x, y]` points. The `renderer` property selects the curve algorithm the points are drawn with. Thirteen are built in — `linear`, `spline`, `basis`, `bumpX`, `bumpY`, `cardinal`, `catmullRom`, `monotoneX`, `monotoneY`, `natural`, `step`, `stepBefore` and `stepAfter` — and a custom render function can be passed in place of a name. Polylines back line charts, sparklines, area boundaries and any data path through connected points.
 
 ## Example
 

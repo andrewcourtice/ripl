@@ -1,10 +1,11 @@
 ---
 title: Torus
+description: "The Torus 3D primitive: a ring sized by major radius and tube radius, with radial and tubular segment counts, x/y/z placement, rotation and flat shading."
 ---
 
 # Torus
 
-The **Torus** is a donut-shaped 3D primitive with configurable major radius, tube radius, and segment counts for both the ring and cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Torus** is a ring-shaped 3D primitive: `radius` is the distance out to the tube's centre, `tube` its thickness, and `radialSegments` (default `12`) and `tubularSegments` (default `24`) its resolution.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -72,6 +73,20 @@ const torus = createTorus({
 - **`tubularSegments`**: number of segments around the torus ring (default `24`)
 - **`x`** / **`y`** / **`z`**: position in world space (default `0`)
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
+
+## Type Guard
+
+```ts
+import {
+    elementIsTorus,
+} from '@ripl/3d';
+
+if (elementIsTorus(element)) {
+    console.log(element.tube);
+}
+```
 
 <script lang="ts" setup>
 import {

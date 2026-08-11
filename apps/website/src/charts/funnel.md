@@ -1,6 +1,11 @@
+---
+title: Funnel Chart
+description: Chart stage-by-stage drop-off as progressively narrowing bars with configurable gap, corner radius, colorBy grouping and a value formatter, animated on update.
+---
+
 # Funnel Chart
 
-The **Funnel Chart** displays data as progressively narrowing horizontal bars, ideal for visualizing conversion pipelines, sales funnels, and drop-off rates. Each stage is labeled and colored automatically, with configurable gaps and rounded corners. Values animate smoothly when data changes.
+The **Funnel Chart** draws an ordered set of stages as progressively narrowing bars, so the drop-off between one stage and the next is the width you lose. It fits conversion pipelines, sales stages and any sequence where every item at step N came from step N−1. `key`, `value` and `label` bind the stages, `colorBy` groups their colors, and `gap`, `borderRadius` and `format` set the finish. Stages are labeled and colored automatically, and widths animate when the data changes. Canvas, SVG and [terminal contexts](/charts/advanced/rendering-targets) all draw it from the same options.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

@@ -1,5 +1,6 @@
 ---
 title: Canvas (Context3D)
+description: "Context3D extends the Ripl canvas context with view and projection matrices, perspective or orthographic setup, and projection of 3D world points to 2D."
 outline: "deep"
 ---
 
@@ -126,6 +127,25 @@ Canvas is the best choice when:
 - **Broad browser support**: works in all modern browsers without feature detection
 - **Simple scenes**: sufficient for scenes that don't require hardware depth testing
 - **Fallback**: use as a fallback for browsers without WebGPU support
+
+## What it approximates
+
+The Canvas backend paints flat polygons sorted back to front. It resolves the same lighting model
+as the WebGPU backend, but where the GPU shades per pixel it can only shade per face — so a few
+things are approximations rather than differences of degree.
+
+| Feature | WebGPU | Canvas |
+|---------|--------|--------|
+| Lighting model | Identical | Identical, evaluated at the face centroid |
+| Smooth shading | Vertex normals interpolated per pixel | Vertex normals averaged, one colour per face |
+| Per-vertex colours | Interpolated per pixel | Averaged, one colour per face |
+| Textures | Sampled per pixel | Affine per triangle, not perspective-correct |
+| Depth | Hardware depth buffer | Back-to-front sort, so intersecting geometry can flip |
+| Face culling | Fragment discard | Projected signed area |
+
+For a curved primitive at its default segment count, none of these are visible. They show up on
+large, sparsely subdivided faces — raising the subdivision is the fix in every case.
+
 
 <script lang="ts" setup>
 import {

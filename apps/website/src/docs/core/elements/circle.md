@@ -1,10 +1,12 @@
 ---
+title: Circle
+description: "Draw a filled or stroked circle from a center point and radius: the simplest shape in Ripl, and the primitive behind scatter markers, dots and node glyphs."
 outline: "deep"
 ---
 
 # Circle
 
-A **Circle** draws a filled and/or stroked circle defined by a center point (`cx`, `cy`) and `radius`. It's the simplest shape in Ripl and a great starting point for learning the element API. Circles are commonly used as data point markers, avatar placeholders, decorative elements, and building blocks for more complex visualizations.
+A **Circle** draws a filled and/or stroked circle defined by a center point (`cx`, `cy`) and `radius`. It is the smallest complete example of the element API — state, styling, transforms, events and hit testing all behave here exactly as they do on every other shape. Circles are the usual choice for scatter markers, data point dots, avatar placeholders and graph nodes.
 
 ## Example
 

@@ -1,4 +1,6 @@
 ---
+title: Ellipse
+description: "Draw ellipses with independent X and Y radii, an intrinsic rotation, and optional startAngle and endAngle for partial sweeps like orbit paths and oval gauges."
 outline: "deep"
 ---
 

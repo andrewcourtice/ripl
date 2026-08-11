@@ -1,4 +1,6 @@
 ---
+title: Rect
+description: "Draw rectangles from a position and size with uniform or per-corner borderRadius: the primitive behind bar chart segments, cards and layout backgrounds."
 outline: "deep"
 ---
 

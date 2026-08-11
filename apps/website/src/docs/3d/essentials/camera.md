@@ -1,5 +1,6 @@
 ---
 title: Camera
+description: "Orbit, pan, zoom and lookAt the 3D camera. View matrix updates batch through a microtask, and mouse and touch gestures bind with per-gesture sensitivity."
 ---
 
 # Camera

@@ -520,14 +520,14 @@ describe('TerminalContext paint resolution', () => {
         }).pixels).toHaveLength(0);
     });
 
-    test('Should attenuate the emitted color by opacity', () => {
+    test('Should carry opacity through as the paint alpha', () => {
         const { pixels } = fillRect(ctx => {
             ctx.fill = '#ff0000';
             ctx.opacity = 0.5;
         });
 
         expect(pixels.length).toBeGreaterThan(0);
-        expect(pixels[0][2]).toBe('\x1b[38;2;128;0;0m');
+        expect(pixels[0][2]).toEqual([255, 0, 0, 0.5]);
     });
 
     test('Should still draw at full opacity', () => {
@@ -536,25 +536,25 @@ describe('TerminalContext paint resolution', () => {
         });
 
         expect(pixels.length).toBeGreaterThan(0);
-        expect(pixels[0][2]).toBe('\x1b[38;2;255;0;0m');
+        expect(pixels[0][2]).toEqual([255, 0, 0, 1]);
     });
 
-    test('Should resolve a named fill to a truecolor escape', () => {
+    test('Should resolve a named fill to an RGBA color', () => {
         expect(fillRect(ctx => {
             ctx.fill = 'red';
-        }).pixels[0][2]).toBe('\x1b[38;2;255;0;0m');
+        }).pixels[0][2]).toEqual([255, 0, 0, 1]);
     });
 
-    test('Should resolve a shorthand hex fill to a truecolor escape', () => {
+    test('Should resolve a shorthand hex fill to an RGBA color', () => {
         expect(fillRect(ctx => {
             ctx.fill = '#f00';
-        }).pixels[0][2]).toBe('\x1b[38;2;255;0;0m');
+        }).pixels[0][2]).toEqual([255, 0, 0, 1]);
     });
 
     test('Should resolve a gradient fill to its first stop', () => {
         expect(fillRect(ctx => {
             ctx.fill = 'linear-gradient(90deg, #ff0000, #0000ff)';
-        }).pixels[0][2]).toBe('\x1b[38;2;255;0;0m');
+        }).pixels[0][2]).toEqual([255, 0, 0, 1]);
     });
 
     test('Should still draw an unresolvable fill, uncolored', () => {
@@ -563,7 +563,7 @@ describe('TerminalContext paint resolution', () => {
         });
 
         expect(pixels.length).toBeGreaterThan(0);
-        expect(pixels[0][2]).toBe('');
+        expect(pixels[0][2]).toBeNull();
     });
 
     // applyFill also ran the outline pass, painting a pixel beyond the even-odd interior in the
@@ -645,7 +645,7 @@ describe('TerminalContext stroked text', () => {
         }));
         ctx.markRenderEnd();
 
-        expect(rasterizer.chars[0][3]).toBe('\x1b[38;2;255;0;0m');
+        expect(rasterizer.chars[0][3]).toEqual([255, 0, 0, 1]);
     });
 
     test('Should draw nothing for text with a transparent stroke', () => {
@@ -1084,48 +1084,23 @@ describe('TerminalContext contract', () => {
         expect(createContext(createMockOutput()).supportsPathCaching).toBe(true);
     });
 
-    // The backend applies no transform, so a hit point is already in the space it drew in.
-    test('Should report that hit testing honors transforms', () => {
-        expect(createContext(createMockOutput()).hitTestHonorsTransform).toBe(true);
+    // A path records local-space commands and no transform is in force by hit-test time, so the
+    // point has to be mapped back through the element's world transform.
+    test('Should report that hit testing does not honor transforms', () => {
+        expect(createContext(createMockOutput()).hitTestHonorsTransform).toBe(false);
     });
 
-    test.todo('Should hit a translated element at its drawn, untranslated position once hit testing exists');
-
-    test('Should warn once when a transform is discarded', () => {
+    test('Should never warn about a transform', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const ctx = createContext(createMockOutput());
 
         ctx.translate(10, 20);
         ctx.rotate(Math.PI / 2);
         ctx.scale(2, 2);
-
-        expect(warn).toHaveBeenCalledOnce();
-
-        warn.mockRestore();
-    });
-
-    test('Should not warn for an identity transform', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const ctx = createContext(createMockOutput());
-
-        ctx.translate(0, 0);
-        ctx.rotate(0);
-        ctx.scale(1, 1);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.transform(1, 0, 0, 1, 0, 0);
-
-        expect(warn).not.toHaveBeenCalled();
-
-        warn.mockRestore();
-    });
-
-    test('Should warn for a non-identity matrix', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const ctx = createContext(createMockOutput());
-
         ctx.transform(1, 0, 0, 1, 30, 0);
 
-        expect(warn).toHaveBeenCalledOnce();
+        expect(warn).not.toHaveBeenCalled();
 
         warn.mockRestore();
     });

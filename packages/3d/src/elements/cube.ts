@@ -9,8 +9,19 @@ import type {
 } from '../core/shape';
 
 import type {
+    Vector2,
+} from '../math/vector2';
+
+import type {
     Vector3,
 } from '../math/vector';
+
+const FACE_UVS: Vector2[] = [
+    [0, 1],
+    [1, 1],
+    [1, 0],
+    [0, 0],
+];
 
 /** State interface for a cube, defining uniform edge size. */
 export interface CubeState extends Shape3DState {
@@ -50,30 +61,37 @@ export class Cube extends Shape3D<CubeState> {
             [-hs, hs, hs],
         ];
 
+        // Each face carries the whole texture, which is the convention a cube map asset assumes.
         return [
             {
                 vertices: [vertices[4], vertices[5], vertices[6], vertices[7]],
                 normal: [0, 0, 1],
+                uvs: FACE_UVS,
             },
             {
                 vertices: [vertices[1], vertices[0], vertices[3], vertices[2]],
                 normal: [0, 0, -1],
+                uvs: FACE_UVS,
             },
             {
                 vertices: [vertices[7], vertices[6], vertices[2], vertices[3]],
                 normal: [0, 1, 0],
+                uvs: FACE_UVS,
             },
             {
                 vertices: [vertices[0], vertices[1], vertices[5], vertices[4]],
                 normal: [0, -1, 0],
+                uvs: FACE_UVS,
             },
             {
                 vertices: [vertices[5], vertices[1], vertices[2], vertices[6]],
                 normal: [1, 0, 0],
+                uvs: FACE_UVS,
             },
             {
                 vertices: [vertices[0], vertices[4], vertices[7], vertices[3]],
                 normal: [-1, 0, 0],
+                uvs: FACE_UVS,
             },
         ];
     }

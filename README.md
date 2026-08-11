@@ -4,9 +4,9 @@
 
 <h1 align="center">Ripl</h1>
 
-Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes a 3D rendering package.
+Ripl (pronounced "ripple") is a zero-dependency TypeScript **charting, drawing and animation library** built on a **unified API for 2D graphics rendering**. Write a scene once and render it to **Canvas**, **SVG**, a **terminal** (as braille and ANSI colour), or a **Node** process, with **3D** on Canvas and WebGPU alongside.
 
-Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
+The Canvas API is low-level: it has no concept of objects, hierarchy, or events. SVG is easier to reason about but carries its own performance limits and API differences. The two diverge enough that projects usually commit to one at the outset. Ripl removes that decision by exposing one API over both, modelled on the DOM and CSSOM, so switching contexts is a one-line change.
 
 <div align="center">
   <table>
@@ -19,7 +19,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
     <tr>
       <td align="center"><b>Bubble Scatter</b><br><img src="./assets/scatter-chart.png" width="300" alt="Scatter Plot"/></td>
       <td align="center"><b>Candlestick Chart</b><br><img src="./assets/stock-chart.png" width="300" alt="Stock Market Chart"/></td>
-      <td align="center"><b>Jet Engine Model</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
+      <td align="center"><b>3D Jet Engine</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
     </tr>
   </table>
 </div>
@@ -42,9 +42,14 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, patterns, paths, strings, and rotation values
 - **High performance animation**: cancelable `Task`-based transitions with CSS-like keyframe support and custom interpolators
 - **14 scale types** inspired by D3 (continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time), plus `scaleLog`/`scaleSqrt` shortcuts
-- **25 pre-built chart types** via `@ripl/charts`
+- **25 pre-built chart types** via `@ripl/charts`: line, bar, area, trend, scatter, histogram, box plot, stock (candlestick/OHLC), realtime, pie/donut, polar area, polar scatter, radial bar, radar, gauge, heatmap, treemap, sunburst, packed circle, sankey, chord, arc diagram, force-directed, funnel and gantt
 - **Built-in shape primitives**: arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
-- **3D primitives**: cube, sphere, cylinder, cone, plane, torus
+- **9 3D shapes**: cube, sphere, cylinder, cone, plane, torus, mesh (an explicit face list), parametric (tessellated from a function of two parameters), and bezier-surface (bicubic Bézier patches)
+- **5 light types**: ambient, hemisphere, directional, point, and spot, each with a `create*Light` factory; directional and spot lights are either fixed in world space or carried by the camera
+- **3D materials**: `color`, `opacity`, `emissive`/`emissiveIntensity`, Blinn-Phong `specular`/`shininess`, `side` (`front`/`back`/`double`), `wireframe`, `flatShading`, `vertexColors`, and a texture `map`
+- **Textures** with `clamp`/`repeat`/`mirror` wrapping, `nearest`/`linear` filtering, and a repeat/offset UV transform, sampled the same way by the Canvas and WebGPU backends
+- **Triangle raycasting** reporting the shape, world-space point, face, normal, and texture coordinate of every hit
+- **Fog**, linear or exponential, resolved term for term by both 3D backends
 - **Easing library** covering linear, quad, cubic, quart, quint, sine, exponential, circular, back, elastic, and bounce (in/out/inOut variants)
 - **Color utilities** for parsing, serialization, and color scales
 - **Math & geometry** helpers: degree/radian conversion, point operations, border radius normalization, polygon extrapolation
@@ -123,7 +128,7 @@ Built-in 2D shape primitives: `arc`, `circle`, `rect`, `line`, `polyline`, `poly
 
 ### Modify Element Properties
 
-To modify an element simply change any of its properties and re-render it.
+To modify an element, change any of its properties and re-render.
 
 ```typescript
 circle.fill = '#FF0000';
@@ -371,7 +376,7 @@ window.open(chart.export().toURL(), '_blank');
 
 ## Charts
 
-`@ripl/charts` provides 25 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+`@ripl/charts` provides 25 ready-to-use chart types. Every chart animates its data transitions and supports tooltips, legends, crosshairs, grids and axes, on Canvas or SVG.
 
 | Chart | Factory |
 |-------|---------|
@@ -525,7 +530,7 @@ scale.bandwidth; // width of each band
 
 ## 3D Rendering
 
-`@ripl/3d` extends the Canvas context with perspective/orthographic projection, camera controls, and flat shading.
+`@ripl/3d` extends the Canvas context with perspective and orthographic projection, camera controls, lighting, materials, textures and fog.
 
 ```typescript
 import {
@@ -536,7 +541,9 @@ import {
 } from '@ripl/3d';
 ```
 
-Available 3D primitives: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`.
+Available 3D shapes: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`, `mesh` (an explicit face list), `parametric` (tessellated from a function of two parameters), and `bezier-surface` (bicubic Bézier patches). Every shape accepts a `Material` — color, opacity, emissive, Blinn-Phong specular, side, wireframe, flat shading, vertex colors and a texture map — and `Group3D` transforms a subtree as a unit.
+
+Scenes are lit by five light types (`createAmbientLight`, `createHemisphereLight`, `createDirectionalLight`, `createPointLight`, `createSpotLight`), with linear or exponential fog. `context.raycastAll(root, x, y)` casts a ray through a point on the surface and returns every hit nearest first, each carrying the shape, world-space point, face, normal and texture coordinate.
 
 Camera supports interactive zoom, pivot, and pan with configurable sensitivity. For hardware-accelerated rendering, `@ripl/webgpu` provides a drop-in WebGPU context with a real depth buffer, MSAA, and WGSL shaders; the same `Shape3D` elements work in both.
 

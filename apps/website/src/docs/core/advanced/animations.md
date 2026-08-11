@@ -1,10 +1,14 @@
 ---
+title: Animations
+description: "Animate Ripl elements with promise-based transitions: easing curves, keyframes, chaining, staggering, looping, reverse playback and abortable transitions."
 outline: "deep"
 ---
 
 # Animations
 
-Ripl provides two approaches to animation: **manual transitions** using the standalone `transition` function, and **renderer-based transitions** using `renderer.transition()`. Both are promise-based and support easing, keyframes, and custom interpolators.
+Ripl provides two approaches to animation: **manual transitions** using the standalone `transition` function, and **renderer-based transitions** using `renderer.transition()`.
+
+Both return a `Transition`, which is a `Promise` you can `await` and a cancelable task you can `abort()`, `pause()`, `play()` and `seek()`. Both take a `duration`, a `delay`, an `ease` (31 easing functions ship with the library, from `easeLinear` through the quad/cubic/quart/quint/sine/expo/circ families to back, bounce and elastic), a `direction` of `'forward'` or `'reverse'`, and a `loop` mode that either restarts or ping-pongs. `renderer.transition()` adds keyframes with implicit or explicit offsets, per-element callbacks for staggering, and custom interpolator functions per property.
 
 ## Demo
 

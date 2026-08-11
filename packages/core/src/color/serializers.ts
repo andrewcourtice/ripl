@@ -15,8 +15,10 @@ import {
     numberClamp,
 } from '@ripl/utilities';
 
+// Rounded, not just clamped: an interpolated channel is fractional, and `PATTERNS.rgb` — plus every
+// other consumer that reads a colour back — needs what we emit to be a colour we can parse.
 function clampRGBValue(value: number) {
-    return numberClamp(value, 0, 255);
+    return Math.round(numberClamp(value, 0, 255));
 }
 
 function clampPercentageValue(value: number) {

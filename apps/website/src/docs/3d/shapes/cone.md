@@ -1,10 +1,11 @@
 ---
 title: Cone
+description: "The Cone 3D primitive: a pointed apex over a circular base whose segment count sets its smoothness, with x/y/z placement, per-axis rotation and flat shading."
 ---
 
 # Cone
 
-The **Cone** is a 3D primitive with a pointed apex and circular base. Segment count controls the smoothness of the base circle. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Cone** is a 3D primitive with a pointed apex over a circular base. `segments` (default `16`) sets how many triangles wrap that base, and each face is flat shaded from its own normal.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -70,6 +71,20 @@ const cone = createCone({
 - **`segments`**: number of radial segments (default `16`)
 - **`x`** / **`y`** / **`z`**: position in world space (default `0`)
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
+
+## Type Guard
+
+```ts
+import {
+    elementIsCone,
+} from '@ripl/3d';
+
+if (elementIsCone(element)) {
+    console.log(element.height);
+}
+```
 
 <script lang="ts" setup>
 import {

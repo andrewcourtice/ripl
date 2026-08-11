@@ -6,6 +6,78 @@ version, so an entry covers all of them and names the package each change lands 
 Released builds and their auto-generated commit lists live on
 [GitHub Releases](https://github.com/andrewcourtice/ripl/releases).
 
+## v1.3.0 — 2026-08-10
+
+### 3D lighting, materials and textures
+
+`@ripl/3d` gains a full shading model. Everything below is additive: a scene that
+configures none of it renders as it did before.
+
+**Lighting.** A context now carries a list of lights rather than a single direction.
+Ambient, hemisphere, directional, point and spot lights are supported, each with a
+colour and intensity, and — where meaningful — distance falloff, decay, cone angle and
+penumbra. Falloff and cone attenuation follow the same conventions as three.js. A render
+pass carries up to eight lights.
+
+The default rig is an ambient light at `0.3` plus a directional at `0.7`, which resolves
+to exactly the flat shading model that came before, and `context.lightDirection` /
+`context.lightMode` remain as shorthands for that directional light.
+
+**Materials.** `Shape3D` accepts a `material` describing colour, opacity, specular
+highlights and shininess, emissive light, which side is drawn, wireframe, flat or smooth
+shading, and per-vertex colours. Every property is optional and defaults to the previous
+behaviour; the colour falls back through material, then `fill`, then a neutral grey.
+
+**Textures.** A material can carry an image `map`. `Texture` wraps any image a canvas can
+draw and a GPU can copy from, with wrap modes, filters, flip, repeat and offset. Every
+built-in primitive emits texture coordinates using three.js's conventions.
+
+**Geometry.** `Shape3D` gains per-axis `scale`. `Group3D` composes a transform into every
+shape beneath it. Three new primitives: `Mesh` from an explicit face list, `Parametric`
+from a function of two parameters, and `BezierSurface` from bicubic patches.
+
+**Raycasting.** `Context3D.raycast` and `Shape3D.raycast` walk the real triangles,
+reporting distance, world point, face, normal and texture coordinate. Unlike the pointer
+hit test, which flattens a shape to its silhouette, a ray passes cleanly through the hole
+of a torus.
+
+### Terminal rasterizer interface
+
+`@ripl/terminal`'s `Rasterizer` interface changed so pixels can be composited rather than
+overwritten. A custom implementation needs three changes:
+
+- `setPixel(x, y, color)` and `setChar(col, row, char, color)` now take a `TerminalColor` —
+  an `[r, g, b, a]` tuple, or `null` for the terminal's own default foreground — instead of
+  a pre-baked ANSI escape string. Alpha is no longer folded into the colour before it
+  arrives.
+- Add `cellWidth` and `cellHeight`. Text placement and teardown read them instead of
+  assuming braille's 2×4 cell, so a rasterizer with different cell geometry now positions
+  text correctly.
+- A cell can only emit one colour; deriving it from the pixels it covers is the
+  implementation's job. `BrailleRasterizer` uses the alpha-weighted mean of its lit dots.
+
+**Fog.** `context.fog` blends distant geometry towards a colour, linearly or
+exponentially, resolved identically by both backends.
+
+### Fixed
+
+- A degenerate face shaded black on the Canvas backend and as facing up on the WebGPU
+  backend. Both now agree.
+- `LIGHT_DIRECTION`'s diagonals were truncated decimals and so fractionally short of unit
+  length, biasing every diagonal light slightly dim. They are now normalized exactly.
+- `interpolateVector3` was exported but unreachable: `getInterpolator` chose from a closed
+  list, and `interpolateBorderRadius` — whose predicate matches any array of up to four
+  numbers — claimed a `Vector3` first. `@ripl/core` gains a `registerInterpolator` seam,
+  and `@ripl/3d` registers on load.
+- `Shape3D` passed its model matrix where a normal matrix was needed, which was only
+  correct under uniform scale.
+- `scale` worked as a setter but was silently ignored as a construction option.
+
+### Removed
+
+- `triangulatefaces` from `@ripl/webgpu`, an unused byte-for-byte duplicate of the
+  triangulation in `@ripl/3d`. Use `triangulateFacesFlat` and `triangulateFacesIndices`.
+
 ## v1.2.0 — 2026-08-06
 
 The first release after 1.0, and a large one: 293 commits across 69 pull requests, of which **29 are

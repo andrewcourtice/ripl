@@ -1,4 +1,6 @@
 ---
+title: Events
+description: "Ripl's DOM-modeled event system: pointer and custom events on elements, bubbling up the group hierarchy, stopPropagation, and disposable subscriptions via on()."
 outline: "deep"
 ---
 

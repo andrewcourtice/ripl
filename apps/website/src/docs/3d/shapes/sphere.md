@@ -1,10 +1,11 @@
 ---
 title: Sphere
+description: "The Sphere 3D primitive, tessellated from the segment and ring counts you set, with x/y/z world placement, per-axis rotation and automatic flat shading."
 ---
 
 # Sphere
 
-The **Sphere** is a 3D primitive generated from configurable ring and segment counts. Higher values produce smoother surfaces at the cost of more faces. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Sphere** is a 3D primitive tessellated from `rings` (default `12`) and `segments` (default `16`). Raising either smooths the surface and adds faces to sort and shade.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -69,6 +70,20 @@ const sphere = createSphere({
 - **`rings`**: number of vertical rings (default `12`)
 - **`x`** / **`y`** / **`z`**: position in world space (default `0`)
 - **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`scaleX`** / **`scaleY`** / **`scaleZ`**: scale along each axis (default `1`), or **`scale`** for all three
+- **`material`**: how the surface responds to light — see [Materials](/docs/3d/essentials/materials)
+
+## Type Guard
+
+```ts
+import {
+    elementIsSphere,
+} from '@ripl/3d';
+
+if (elementIsSphere(element)) {
+    console.log(element.radius);
+}
+```
 
 <script lang="ts" setup>
 import {

@@ -10,6 +10,8 @@ export * from './renderer';
 export * from './scene';
 export * from './shape';
 
+export { registerInterpolator } from './interpolation';
+
 export type { TransformTarget } from './transform';
 
 export { applyElementTransform } from './transform';

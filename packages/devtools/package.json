@@ -1,7 +1,20 @@
 {
     "name": "@ripl/devtools",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Runtime bridge connecting Ripl contexts, scenes, and renderers to the Ripl devtools browser extension",
+    "keywords": [
+        "ripl",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "zero-dependency",
+        "devtools",
+        "debugging",
+        "browser-extension",
+        "inspector",
+        "scene-graph"
+    ],
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -24,8 +37,10 @@
     "sideEffects": false,
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andrewcourtice/ripl.git"
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "packages/devtools"
     },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",

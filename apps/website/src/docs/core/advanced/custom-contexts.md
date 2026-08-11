@@ -1,4 +1,6 @@
 ---
+title: Custom Contexts
+description: "Implement the abstract Context class to render Ripl scenes to a new target — WebGL, PDF, terminal output — and every built-in element draws to it unchanged."
 outline: "deep"
 ---
 

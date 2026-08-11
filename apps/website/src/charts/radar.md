@@ -1,6 +1,11 @@
+---
+title: Radar Chart
+description: Compare series across shared categories as filled polygons on a radial grid, with a configurable level count, max value, markers, labels and a legend.
+---
+
 # Radar Chart
 
-The **Radar Chart** displays multivariate data on a radial grid, ideal for comparing strengths and weaknesses across multiple dimensions. Each axis radiates from a shared center, and data series form filled polygons whose shape reveals the profile at a glance. It supports multiple overlapping series, configurable grid levels, markers that animate in sync with the area polygon, and an optional legend.
+The **Radar Chart** gives each category its own spoke radiating from a shared center and joins one series' values into a filled polygon, so a series is read as a shape. Reach for it to compare a handful of subjects across the same fixed set of measures — skill profiles, product scorecards, survey dimensions. `categories` fixes the spokes, `levels` sets the grid rings, `max` pins the outer ring, and each series takes its own `value` accessor and `fillOpacity`. Markers animate in step with the polygon, and `labels`, `legend` and `format` handle the annotation. It works against any Ripl [rendering target](/charts/advanced/rendering-targets): Canvas, SVG or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

@@ -1,4 +1,6 @@
 ---
+title: Element
+description: "Element is the base class every Ripl drawable extends, with an id and classList, cascading style properties, event handling, interpolation and bounding boxes."
 outline: "deep"
 ---
 

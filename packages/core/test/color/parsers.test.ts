@@ -144,6 +144,13 @@ describe('Color', () => {
             expect(alpha).toBe(0.3);
         });
 
+        // 3D-C1: CSS permits fractional channels and an interpolator emits them, but the pattern
+        // matched integers only — so every interpolated colour parsed as `undefined`.
+        test('Should parse fractional channels', () => {
+            expect(parseColor('rgb(10.5, 20.5, 30.4)')).toEqual([11, 21, 30, 1]);
+            expect(parseColor('rgba(71.6, 36.1, 116.4, 1)')).toEqual([72, 36, 116, 1]);
+        });
+
     });
 
     describe('HSL Parsers', () => {

@@ -1,6 +1,11 @@
+---
+title: Stock Chart
+description: Draw OHLC candlesticks with a labeled volume sub-chart, distinct up and down colors, dual-axis crosshair, annotations and wheel-and-drag pan-zoom navigation.
+---
+
 # Stock Chart
 
-The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with an optional, labeled volume sub-chart beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes both-axis crosshair tracking, grid lines, tooltips, annotations, and pan/zoom navigation. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
+The **Stock Chart** draws OHLC (open, high, low, close) data as candlesticks, each one carrying a period's full range and direction in a single mark, with an optional labeled volume sub-chart beneath. It fits price history, and any other data where a period's extremes matter as much as its close. `open`, `high`, `low`, `close` and `volume` bind the accessors, `showVolume` toggles the sub-chart, and `upColor`/`downColor` separate bullish from bearish candles. Dual-axis crosshair tracking, grid lines, tooltips, [annotations](/charts/advanced/annotations) and [pan-zoom navigation](/charts/advanced/panning-and-zooming) are built in, and candles and volume bars animate on data changes. Canvas is the default target; pass an SVG or [terminal context](/charts/advanced/rendering-targets) to draw the same chart elsewhere.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

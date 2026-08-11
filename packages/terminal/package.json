@@ -1,7 +1,22 @@
 {
     "name": "@ripl/terminal",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Terminal rendering context for Ripl",
+    "keywords": [
+        "ripl",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "zero-dependency",
+        "terminal",
+        "terminal-graphics",
+        "tui",
+        "cli",
+        "ansi",
+        "braille",
+        "console"
+    ],
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -24,8 +39,10 @@
     "sideEffects": false,
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andrewcourtice/ripl.git"
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "packages/terminal"
     },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",

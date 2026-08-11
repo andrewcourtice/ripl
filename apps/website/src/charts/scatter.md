@@ -1,6 +1,11 @@
+---
+title: Scatter Chart
+description: Plot x/y points across multiple series with optional sizeBy bubbles, min and max radius, marker symbols, dual-axis crosshair, grid lines and pan-zoom.
+---
+
 # Scatter Chart
 
-The **Scatter Chart** (also known as a bubble chart when using variable sizes) plots data points on a two-dimensional plane, with optional size variation via `sizeBy` to represent a third dimension. It supports multiple series, crosshair tracking on both axes, a legend, grid lines, and configurable axis titles. Data points animate smoothly on entry, exit, and update.
+The **Scatter Chart** plots each datum at its own x and y, so the reading is the relationship between two continuous measures — correlation, clustering, outliers — rather than a trend along an ordered axis. Add `sizeBy` and it becomes a bubble chart, encoding a third measure as marker area between `minRadius` and `maxRadius`. Each series binds its own `xBy`, `yBy`, `marker` and `yAxis`, and dual-axis crosshair tracking, a legend, grid lines and axis titles are built in. Dense scatters take [panning and zooming](/charts/advanced/panning-and-zooming) via `navigator`, and points animate on entry, update and exit. The [target](/charts/advanced/rendering-targets) can be a Canvas, an SVG context or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

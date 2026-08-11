@@ -1,4 +1,6 @@
 ---
+title: Text
+description: "Render text strings with fill and stroke into a Ripl scene, and bend a label along an arbitrary SVG path with pathData for curved labels and circular badges."
 outline: "deep"
 ---
 

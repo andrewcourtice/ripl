@@ -1,6 +1,11 @@
+---
+title: Sankey Chart
+description: Route weighted flows between nodes as proportional links, with an iterative layout pass, configurable node width and padding, hover highlighting and a legend.
+---
+
 # Sankey Chart
 
-The **Sankey Chart** visualizes flow between nodes using weighted links. It's ideal for showing energy flows, budget allocations, process pipelines, or user journeys. Nodes are positioned automatically using a layout algorithm, and link widths are proportional to flow values. Hover any link to highlight it, and data transitions animate smoothly.
+The **Sankey Chart** routes weighted flows between `nodes` as links whose width is proportional to the value carried, so where a quantity splits and merges is visible without reading a single number. Reach for it for energy and material flows, budget allocation, process pipelines and user journeys. Nodes are placed automatically by a layered layout: `iterations` sets how many relaxation passes it makes, and `nodeWidth` and `nodePadding` size the columns. Hover a link to highlight it, and `legend` and `format` handle the annotation. Renders to Canvas, SVG or a [terminal context](/charts/advanced/rendering-targets).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

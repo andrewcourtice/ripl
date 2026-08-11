@@ -1,4 +1,6 @@
 ---
+title: Pattern Fills
+description: "Fill and stroke shapes with repeating tiles — diagonal lines, cross-hatching, dots — written as paint strings and converted to native Canvas or SVG patterns."
 outline: "deep"
 ---
 
@@ -111,7 +113,7 @@ const rect = createRect({
 
 Because chart options that select colors are ultimately applied as fills and strokes, pattern strings can be used there too, for example as a series color in `@ripl/charts`.
 
-Patterns tile in user space (aligned to the canvas, not to each shape), so adjacent shapes sharing the same pattern string line up seamlessly.
+Patterns tile in user space (aligned to the canvas, not to each shape), so adjacent shapes sharing the same pattern string keep their tiles in phase across the seam.
 
 ## How It Works
 

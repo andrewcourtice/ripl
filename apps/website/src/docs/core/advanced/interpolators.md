@@ -1,19 +1,23 @@
 ---
+title: Interpolators
+description: "Interpolators compute the in-between values a Ripl tween walks through: numbers, dates, colors, gradients, pattern paints, rotations and point arrays."
 outline: "deep"
 ---
 
 # Interpolators
 
-Interpolators are functions that compute intermediate values between two endpoints. They are the engine behind Ripl's animation system: when you transition an element's `radius` from 50 to 100, an interpolator generates all the in-between values.
+Interpolators are functions that compute intermediate values between two endpoints. They are the tweening engine behind Ripl's animation system: when you transition an element's `radius` from 50 to 100, an interpolator generates all the in-between values.
 
-Ripl automatically selects the right interpolator based on the value type, but you can also provide custom interpolators for specialized behavior.
+What can be tweened is not limited to numbers. Ripl interpolates dates, colors written as hex, `rgb()`, `hsl()`, `hsv()` or a CSS keyword, gradient strings, pattern paints, rotations in degrees or radians, border radii, and point arrays — the last of which morphs one polyline or polygon outline into another, optionally matching points by key so a curved renderer survives an add or remove. The interpolator is chosen from the value's type, and a custom one can be supplied per property.
 
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Built-in Interpolators
 
-Ripl ships with interpolators for common value types. They are tested in order, and the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolatePattern` (matching-type `pattern(...)` paints), `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (a fallback that snaps at t > 0.5).
+Ripl ships with interpolators for common value types. Automatic selection tests them in this order and takes the first whose `test` function returns `true`: `interpolateNumber`, `interpolateGradient`, `interpolatePattern` (matching-type `pattern(...)` paints), `interpolateColor` (hex, rgb, rgba, hsl, hsv and CSS keywords), `interpolateDate`, `interpolatePoints` (arrays of `[x, y]` tuples), and `interpolateBorderRadius`. `interpolateAny` is the fallback, snapping at t > 0.5.
+
+A further set is not auto-selected and is reached for by key or by hand: `interpolateRotation` and `interpolateTransformOrigin` are keyed to the `rotation` and `transformOrigin*` properties, and `interpolateString`, `interpolatePath`, `interpolateWaypoint`, `interpolatePolygonPoint` and `interpolateCirclePoint` are called directly.
 
 ## How Interpolators Work
 
@@ -56,7 +60,7 @@ interpolate(0.5); // 'rgba(157, 67, 162, 1)' (midpoint)
 interpolate(1); // 'rgba(255, 0, 110, 1)'
 ```
 
-Color interpolation works across different color formats, so you can interpolate from a hex color to an RGB color — or from a CSS named color such as `red` to either — seamlessly. Anything `parseColor` cannot resolve (`currentColor`, say) falls back to a hard step at the halfway point.
+Both endpoints are parsed before interpolating, so a hex color, an `rgb()` color and a CSS named color such as `red` mix freely in either position. Anything `parseColor` cannot resolve (`currentColor`, say) falls back to a hard step at the halfway point.
 
 ### Any Interpolation
 

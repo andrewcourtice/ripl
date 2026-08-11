@@ -1,4 +1,6 @@
 ---
+title: Navigator
+description: "Add pan, zoom and brush interaction to a Ripl scene through Navigator's affine view transform, commands such as fitBounds, and events you re-render against."
 outline: "deep"
 ---
 
@@ -315,7 +317,7 @@ navigator.on('change', transform => {
 });
 ```
 
-This keeps geometry crisp at any zoom level (no scaled stroke widths or blurred text) and is how the opt-in navigator support on the cartesian charts works under the hood.
+This keeps geometry crisp at any zoom level (no scaled stroke widths or blurred text), and is how the opt-in navigator support on the cartesian charts works.
 
 ## Programmatic use
 

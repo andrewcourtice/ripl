@@ -1,6 +1,11 @@
+---
+title: Chord Chart
+description: Show flows between groups as ribbons inside a ring of arcs, sized from a square matrix, with configurable padAngle, padWidth, palette and hover dimming.
+---
+
 # Chord Chart
 
-The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and arc gaps. Outer arcs are filled with a translucent tint of their group color and separated by a constant-width gap (`padWidth`); hovering one dims the other arcs and every ribbon it is not attached to.
+The **Chord Chart** draws a ring of arcs, one per group, and connects them with ribbons whose width encodes the flow between each pair. It suits a square `matrix` of group-to-group volumes where both directions of a relationship matter: migration between regions, trade between sectors, hand-offs between teams. `palette` sets the group colors, `padAngle` and `padWidth` control the gap between arcs, and `legend` and `format` handle the labelling. Arcs enter first, ribbons follow; hovering an arc dims the other arcs and every ribbon it is not attached to. The [target](/charts/advanced/rendering-targets) can be a Canvas, an SVG context or a terminal.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
