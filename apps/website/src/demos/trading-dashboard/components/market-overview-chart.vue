@@ -1,7 +1,7 @@
 <template>
     <dashboard-card :title="store.marketLabel() + ' Overview'" :loading="store.marketLoading">
         <template #actions>
-            <RiplSelect :modelValue="store.marketIndex" @update:modelValue="onMarketChange">
+            <RiplSelect :modelValue="store.marketIndex" @update:modelValue="onMarketChange" aria-label="Market index">
                 <option value="SPY">S&amp;P 500</option>
                 <option value="QQQ">NASDAQ</option>
                 <option value="DIA">Dow Jones</option>

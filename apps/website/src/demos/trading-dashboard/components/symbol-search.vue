@@ -8,6 +8,7 @@
             <input
                 type="text"
                 class="symbol-search__input ripl-select"
+                aria-label="Search symbol"
                 placeholder="Search symbol (e.g. AAPL, MSFT)..."
                 v-model="query"
                 @input="onInput"

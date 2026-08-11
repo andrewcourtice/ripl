@@ -1,7 +1,7 @@
 <template>
     <dashboard-card :title="store.commodityLabel()" :loading="store.commodityLoading">
         <template #actions>
-            <RiplSelect :modelValue="store.commodity" @update:modelValue="onCommodityChange">
+            <RiplSelect :modelValue="store.commodity" @update:modelValue="onCommodityChange" aria-label="Commodity">
                 <option value="GOLD">Gold</option>
                 <option value="SILVER">Silver</option>
                 <option value="WTI">Crude Oil (WTI)</option>

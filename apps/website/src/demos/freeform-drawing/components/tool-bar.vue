@@ -6,6 +6,7 @@
             class="freeform-toolbar__button"
             :class="{ 'freeform-toolbar__button--active': tool.id === activeTool }"
             :title="`${tool.label} (${tool.key})`"
+            :aria-label="`${tool.label} (${tool.key})`"
             @click="$emit('select', tool.id)"
         >
             <component :is="tool.icon" :size="18" />
