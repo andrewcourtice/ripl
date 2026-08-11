@@ -669,6 +669,8 @@ export class Chart<
             return false;
         }
 
+        this.legend?.setHighlight(id);
+
         const matched = id === null || this._highlightGroups.some(({ owners }) => highlightOwnersInclude(owners, id));
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
