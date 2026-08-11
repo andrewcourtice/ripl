@@ -10,6 +10,8 @@
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkRef,
 } from './chart';
 
 import {
@@ -294,6 +296,12 @@ export abstract class CartesianChart<
     protected crosshair?: Crosshair;
     private _annotations?: ChartAnnotations;
     private _setup: CartesianSetup = {};
+
+    // The live shared axis tooltip, so a programmatic highlight can replay the snapshot a hover would show.
+    private _axisTooltip?: {
+        plot: ChartArea;
+        resolve: (plotX: number, plotY: number) => AxisTooltipSnapshot | null;
+    };
 
     private _navigator?: DOMNavigator;
     private _navigatorConfigKey?: string;
@@ -1234,6 +1242,95 @@ export abstract class CartesianChart<
     }
 
     /**
+     * Places the crosshair at a chart position, exactly as moving the pointer there would (it hides
+     * itself outside the plot bounds it was set up with). Only the axes the crosshair was configured
+     * for are drawn, and it is a silent no-op on charts without one. The next pointer move reclaims
+     * it, so this is for a momentary programmatic placement rather than a persistent one.
+     *
+     * @param x - The x coordinate to place the crosshair at, in chart pixels.
+     * @param y - The y coordinate to place the crosshair at, in chart pixels.
+     */
+    protected showCrosshairAt(x: number, y: number): void {
+        if (!this.crosshair) {
+            return;
+        }
+
+        this.crosshair.show(x, y);
+        // The lines are written directly rather than transitioned, so an idle loop needs waking to paint them.
+        this.renderer.start();
+    }
+
+    /**
+     * Replays a mark's hover treatment (see {@link Chart.replayMark}) and, when asked, adds the
+     * furniture a hover would bring with it: the crosshair on the mark, and — in `trigger: 'axis'`
+     * mode, where the marks themselves are wired without tooltips — the shared multi-row axis tooltip
+     * resolved at the mark's anchor.
+     */
+    protected override replayMark(kind: string, selector: string | MarkRef, options?: HighlightOptions): boolean {
+        if (!super.replayMark(kind, selector, options)) {
+            return false;
+        }
+
+        const anchor = this.activeMarks[0]?.anchor();
+
+        if (!anchor) {
+            return true;
+        }
+
+        if (options?.crosshair) {
+            this.showCrosshairAt(anchor.x, anchor.y);
+        }
+
+        if (options?.tooltip) {
+            this._showAxisTooltipAt(anchor.x, anchor.y);
+        }
+
+        return true;
+    }
+
+    /**
+     * Restores everything a programmatic highlight changed (see {@link Chart.clearHighlight}), plus
+     * the crosshair and shared axis tooltip it placed. Pointer-driven furniture is left alone: the
+     * crosshair and axis tooltip both track the pointer, so a hover reclaims them on its own.
+     */
+    public override clearHighlight(): void {
+        if (this.activeMarks.length > 0) {
+            this.crosshair?.hide();
+            this.tooltip?.hide();
+        }
+
+        super.clearHighlight();
+    }
+
+    /** Shows the shared axis tooltip's snapshot at a plot position, returning whether there was one to show. */
+    private _showAxisTooltipAt(x: number, y: number): boolean {
+        const axisTooltip = this._axisTooltip;
+
+        if (!axisTooltip) {
+            return false;
+        }
+
+        const { plot } = axisTooltip;
+
+        if (x < plot.x || x > plot.x + plot.width || y < plot.y || y > plot.y + plot.height) {
+            return false;
+        }
+
+        const snapshot = axisTooltip.resolve(x, y);
+
+        if (!snapshot) {
+            return false;
+        }
+
+        this.tooltip?.show(snapshot.x, snapshot.y, [
+            snapshot.title,
+            ...snapshot.rows.map(row => `${row.label}: ${row.value}`),
+        ].join('\n'));
+
+        return true;
+    }
+
+    /**
      * Wires the shared axis tooltip (`tooltip.trigger: 'axis'`) for the current render: while the
      * pointer is inside the plot, the resolver maps its position to the hovered category and the
      * tooltip shows the title plus one row per active series, anchored at the snapshot point.
@@ -1245,37 +1342,23 @@ export abstract class CartesianChart<
      */
     protected setupAxisTooltip(plot: ChartArea, resolve: (plotX: number, plotY: number) => AxisTooltipSnapshot | null): void {
         this.dispose(AXIS_TOOLTIP_EVENTS_KEY);
+        this._axisTooltip = undefined;
 
         if (this.tooltipTrigger !== 'axis' || !this.tooltip) {
             return;
         }
 
-        const contains = (x: number, y: number) => x >= plot.x
-            && x <= plot.x + plot.width
-            && y >= plot.y
-            && y <= plot.y + plot.height;
+        this._axisTooltip = {
+            plot,
+            resolve,
+        };
 
         this.retain(this.scene.context.on('mousemove', event => {
             const { x, y } = event.data;
 
-            if (!contains(x, y)) {
+            if (!this._showAxisTooltipAt(x, y)) {
                 this.tooltip?.hide();
-                return;
             }
-
-            const snapshot = resolve(x, y);
-
-            if (!snapshot) {
-                this.tooltip?.hide();
-                return;
-            }
-
-            const content = [
-                snapshot.title,
-                ...snapshot.rows.map(row => `${row.label}: ${row.value}`),
-            ].join('\n');
-
-            this.tooltip?.show(snapshot.x, snapshot.y, content);
         }), AXIS_TOOLTIP_EVENTS_KEY);
 
         this.retain(this.scene.context.on('mouseleave', () => {

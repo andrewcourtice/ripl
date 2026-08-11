@@ -164,7 +164,7 @@ export abstract class SeriesRenderer<
         });
     }
 
-    /** Wires the shared hover highlight + tooltip + interaction events onto a point marker. */
+    /** Wires the shared hover highlight + tooltip + interaction events onto a point marker, and registers it as a replayable `'marker'`. */
     protected attachMarkerHover(marker: Circle, ctx: SeriesRenderContext<TData>, spec: {
         seriesId: string;
         key: string;
@@ -203,6 +203,8 @@ export abstract class SeriesRenderer<
             onLeave: point => ctx.emit('leave', payload(point)),
             onClick: point => ctx.emit('click', payload(point)),
         });
+
+        ctx.registerMark('marker', spec.key, marker, spec.seriesId);
     }
 
     /**

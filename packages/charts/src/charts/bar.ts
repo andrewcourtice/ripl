@@ -13,6 +13,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ChartDataLabelsInput,
     ValueFormatInput,
 } from '../core/options';
@@ -317,7 +322,28 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: this._isHorizontal ? 'right' : 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit: (phase, event) => this._emitBar(phase, event),
+            registerMark: (kind, key, element, series) => this.registerMark(kind, key, element, series),
         };
+    }
+
+    /**
+     * Highlights the bar(s) at a category key, dimming the rest of the chart exactly as hovering one
+     * does. The highlight is a one-shot command: the next render (a resize, an {@link Chart.update},
+     * a legend toggle) or the next pointer hover restores the chart, and it emits no bar events.
+     *
+     * @param selector - The bar's category key, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the bar's highlight state.
+     * @returns `true` when at least one live bar matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightBar('Jan', { tooltip: true });
+     * chart.highlightBar(data => data[2].month);
+     * chart.highlightBar({ key: 'Jan', series: 'sales' });
+     * ```
+     */
+    public highlightBar(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('bar', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {

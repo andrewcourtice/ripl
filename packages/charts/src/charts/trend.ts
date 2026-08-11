@@ -11,6 +11,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ChartDataLabelsInput,
     LineStyleInput,
     ValueFormatInput,
@@ -297,7 +302,50 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit,
+            registerMark: (kind, key, element, series) => this.registerMark(kind, key, element, series),
         };
+    }
+
+    /**
+     * Highlights the bar(s) at a category key, dimming the rest of the chart exactly as hovering one
+     * does. Only bar series are matched — use {@link TrendChart.highlightMarker} for the line and area
+     * points at the same key. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}, a legend toggle) or the next pointer hover restores the chart, and it
+     * emits no bar events.
+     *
+     * @param selector - The bar's category key, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the bar's highlight state.
+     * @returns `true` when at least one live bar matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightBar('Q3', { tooltip: true });
+     * chart.highlightBar({ key: 'Q3', series: 'revenue' });
+     * ```
+     */
+    public highlightBar(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('bar', this.resolveMarkSelector(selector, this.options.data), options);
+    }
+
+    /**
+     * Highlights the line/area marker(s) at a category key, dimming the rest of the chart exactly as
+     * hovering one does. Only line and area series are matched — use {@link TrendChart.highlightBar}
+     * for the bars at the same key. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}, a legend toggle) or the next pointer hover restores the chart, and it
+     * emits no marker events. Markers hidden with `markers: false` are not highlightable.
+     *
+     * @param selector - The marker's category key, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the marker's highlight state.
+     * @returns `true` when at least one live marker matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightMarker('Q3', { tooltip: true, crosshair: true });
+     * chart.highlightMarker({ key: 'Q3', series: 'margin' });
+     * ```
+     */
+    public highlightMarker(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('marker', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {
