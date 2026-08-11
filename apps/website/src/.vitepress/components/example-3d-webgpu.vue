@@ -1,11 +1,7 @@
 <template>
     <div class="ripl-example">
         <div class="ripl-example__header">
-            <div class="ripl-example__context-type-options" layout="row">
-                <label class="ripl-example__context-type-option" style="pointer-events: none;">
-                    WebGPU 3D
-                </label>
-            </div>
+            <span class="ripl-example__context-label">WebGPU 3D</span>
             <slot name="header"></slot>
         </div>
         <div class="ripl-example__root" self="size-x1" ref="root"></div>
