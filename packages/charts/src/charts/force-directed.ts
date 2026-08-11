@@ -1,5 +1,8 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    LinkRef,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -74,6 +77,7 @@ import {
     functionIdentity,
     numberExtent,
     numberMaxOf,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
@@ -244,6 +248,8 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
         });
+
+        this.registerMark('node', node.id, circle);
     }
 
     private _attachLinkHover(line: Line, link: ForceNetworkLink, content: string) {
@@ -272,6 +278,49 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             onLeave: point => this.emit('linkleave', payload(point)),
             onClick: point => this.emit('linkclick', payload(point)),
         });
+
+        this.registerMark('link', `${link.source}->${link.target}`, line);
+    }
+
+    /**
+     * Highlights a node, dimming the rest of the chart exactly as hovering it does. The highlight is
+     * a one-shot command: the next render (a resize, an {@link Chart.update}, a legend toggle) or the
+     * next pointer hover restores the chart, and it emits no node events.
+     *
+     * @param selector - The node's id, a `{ key }` ref, or an accessor over the chart's nodes.
+     * @param options - What to show alongside the node's highlight state.
+     * @returns `true` when a live node matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('hub', { tooltip: true });
+     * chart.highlightNode(nodes => nodes[0].id);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<ForceNetworkNode<TData>>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.nodes), options);
+    }
+
+    /**
+     * Highlights the link between two nodes, dimming the rest of the chart exactly as hovering it
+     * does. Links carry no id of their own, so they are addressed by the nodes they join, in the
+     * order the chart reports them in its link events.
+     *
+     * @param selector - A `{ source, target }` ref naming the nodes the link joins, the `"source->target"` string it flattens to, or an accessor over the chart's links.
+     * @param options - What to show alongside the link's highlight state.
+     * @returns `true` when a live link matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightLink({ source: 'a', target: 'b' }, { tooltip: true });
+     * chart.highlightLink(links => ({ source: links[0].source, target: links[0].target }));
+     * ```
+     */
+    public highlightLink(selector: MarkSelector<ForceNetworkLink, LinkRef>, options?: HighlightOptions): boolean {
+        const ref = this.resolveMarkSelector(selector, this.options.links);
+        const key = typeIsString(ref) ? ref : `${ref.source}->${ref.target}`;
+
+        return this.replayMark('link', key, options);
     }
 
     public async render() {

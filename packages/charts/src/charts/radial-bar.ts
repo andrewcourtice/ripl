@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -192,6 +194,27 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             onLeave: point => this.emit('barleave', payload(point)),
             onClick: point => this.emit('barclick', payload(point)),
         });
+
+        this.registerMark('bar', values.key, arc);
+    }
+
+    /**
+     * Highlights the ring at a key, lifting it out of its rest tint exactly as hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no bar events.
+     *
+     * @param selector - The ring's key, a `{ key }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the ring's highlight state.
+     * @returns `true` when a live ring matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightBar('Running', { tooltip: true });
+     * chart.highlightBar(data => data[0].activity);
+     * ```
+     */
+    public highlightBar(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('bar', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {

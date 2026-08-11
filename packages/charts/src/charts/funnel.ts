@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -142,6 +144,25 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
         });
 
         this.init();
+    }
+
+    /**
+     * Highlights the segment at a key, lifting it out of its rest tint exactly as hovering it does.
+     * The highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a
+     * legend toggle) or the next pointer hover restores the chart, and it emits no segment events.
+     *
+     * @param selector - The segment's key, a `{ key }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the segment's highlight state.
+     * @returns `true` when a live segment matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightSegment('Signed up', { tooltip: true });
+     * chart.highlightSegment(data => data[1].stage);
+     * ```
+     */
+    public highlightSegment(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('segment', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {
@@ -377,6 +398,8 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             onLeave: event => this.emit('segmentleave', event),
             onClick: event => this.emit('segmentclick', event),
         });
+
+        this.registerMark('segment', item.key, rect);
     }
 
 }

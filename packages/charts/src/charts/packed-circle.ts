@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -189,6 +191,27 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
         });
+
+        this.registerMark('node', node.key, circle);
+    }
+
+    /**
+     * Highlights the circle at a key, lifting it out of its rest tint exactly as hovering it does.
+     * The highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a
+     * legend toggle) or the next pointer hover restores the chart, and it emits no node events.
+     *
+     * @param selector - The circle's key, a `{ key }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the circle's highlight state.
+     * @returns `true` when a live circle matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('typescript', { tooltip: true });
+     * chart.highlightNode(data => data[0].language);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {

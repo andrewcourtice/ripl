@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -218,6 +220,25 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
         });
 
         this.init();
+    }
+
+    /**
+     * Highlights the cell at a key, lifting it out of its rest tint exactly as hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no node events.
+     *
+     * @param selector - The cell's key, a `{ key }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the cell's highlight state.
+     * @returns `true` when a live cell matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('Rent', { tooltip: true });
+     * chart.highlightNode(data => data[0].name);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {
@@ -468,6 +489,8 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
         });
+
+        this.registerMark('node', node.key, rect);
     }
 
 }

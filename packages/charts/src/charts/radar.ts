@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -691,6 +693,29 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         ].flat());
     }
 
+    /**
+     * Highlights the point marker(s) on an axis, growing them exactly as hovering one does. Markers
+     * are keyed by their axis label — the same `axisLabel` the chart reports in its marker events —
+     * so a bare label lights that axis in every series; narrow it with `{ key, series }` to light one
+     * series' point. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}, a legend toggle) or the next pointer hover restores the chart, and it
+     * emits no marker events.
+     *
+     * @param selector - The point's axis label, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the marker's highlight state.
+     * @returns `true` when at least one live marker matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightMarker('Speed', { tooltip: true });
+     * chart.highlightMarker({ key: 'Speed', series: 'model-a' });
+     * chart.highlightMarker(data => data[2].axis);
+     * ```
+     */
+    public highlightMarker(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('marker', this.resolveMarkSelector(selector, this.options.data), options);
+    }
+
     public async render() {
         return super.render(async () => {
             const {
@@ -776,6 +801,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             onLeave: point => this.emit('markerleave', payload(point)),
             onClick: point => this.emit('markerclick', payload(point)),
         });
+
+        this.registerMark('marker', pd.axisLabel, marker, seriesId);
     }
 
 }

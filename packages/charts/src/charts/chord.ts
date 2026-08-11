@@ -1,5 +1,8 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    LinkRef,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -68,6 +71,7 @@ import {
 
 import {
     arrayJoin,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** Fill opacity for a ribbon at rest. */
@@ -302,6 +306,47 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         });
 
         this.init();
+    }
+
+    /**
+     * Highlights a group's outer arc, dimming the rest of the chart exactly as hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no segment events.
+     *
+     * @param selector - The group's label, a `{ key }` ref, or an accessor over the chart's groups.
+     * @param options - What to show alongside the arc's highlight state.
+     * @returns `true` when a live arc matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightSegment('Europe', { tooltip: true });
+     * chart.highlightSegment(groups => groups[0]);
+     * ```
+     */
+    public highlightSegment(selector: MarkSelector<string>, options?: HighlightOptions): boolean {
+        return this.replayMark('segment', this.resolveMarkSelector(selector, this.options.groups), options);
+    }
+
+    /**
+     * Highlights the ribbon joining two groups, dimming the rest of the chart exactly as hovering it
+     * does. A ribbon is drawn once per pair, so the ref names the groups the way the chart reports
+     * them in its link events.
+     *
+     * @param selector - The ribbon's id, a `{ source, target }` ref naming the groups it joins, or an accessor over the chart's groups.
+     * @param options - What to show alongside the ribbon's highlight state.
+     * @returns `true` when a live ribbon matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightLink({ source: 'Europe', target: 'Asia' }, { tooltip: true });
+     * chart.highlightLink(groups => ({ source: groups[0], target: groups[1] }));
+     * ```
+     */
+    public highlightLink(selector: MarkSelector<string, LinkRef>, options?: HighlightOptions): boolean {
+        const ref = this.resolveMarkSelector(selector, this.options.groups);
+        const key = typeIsString(ref) ? ref : `${ref.source}->${ref.target}`;
+
+        return this.replayMark('link', key, options);
     }
 
     public async render() {
@@ -546,11 +591,13 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 label: arc.label,
                 value: arc.value,
             },
-            onHighlight: hovered => this.highlightSeries(hovered ? arc.id : null),
+            onHighlight: hovered => this.applySeriesHighlight(hovered ? arc.id : null),
             onEnter: event => this.emit('segmententer', event),
             onLeave: event => this.emit('segmentleave', event),
             onClick: event => this.emit('segmentclick', event),
         });
+
+        this.registerMark('segment', arc.label, segment);
     }
 
     private _attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
@@ -577,6 +624,9 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             onLeave: event => this.emit('linkleave', event),
             onClick: event => this.emit('linkclick', event),
         });
+
+        this.registerMark('link', ribbon.id, ribbonEl);
+        this.registerMark('link', `${ribbon.sourceLabel}->${ribbon.targetLabel}`, ribbonEl);
     }
 
 }

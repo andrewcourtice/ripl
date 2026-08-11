@@ -11,6 +11,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ValueFormatInput,
 } from '../core/options';
 
@@ -278,6 +283,27 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
                 fill: color,
             },
         });
+
+        this.registerMark('candle', values.key, body);
+    }
+
+    /**
+     * Highlights a candlestick, applying the same treatment hovering its body does. The highlight is
+     * a one-shot command: the next render (a resize, an {@link Chart.update}, a pan/zoom) or the next
+     * pointer hover restores the chart, and it emits no candle events.
+     *
+     * @param selector - The candle's key, as the chart reports it in its candle events, or an accessor over the chart's data returning one.
+     * @param options - What to show alongside the candle's highlight state.
+     * @returns `true` when a live candle matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightCandle('2026-01-03', { tooltip: true, crosshair: true });
+     * chart.highlightCandle(data => data[data.length - 1].date);
+     * ```
+     */
+    public highlightCandle(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('candle', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     private _getCandlestickValues(item: TData): CandlestickValues {

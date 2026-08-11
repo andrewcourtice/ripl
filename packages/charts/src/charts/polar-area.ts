@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -397,6 +399,25 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         }));
     }
 
+    /**
+     * Highlights the segment at a key, dimming every other segment exactly as hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no segment events.
+     *
+     * @param selector - The segment's key, a `{ key }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the segment's highlight state.
+     * @returns `true` when a live segment matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightSegment('Mon', { tooltip: true });
+     * chart.highlightSegment(data => data[0].day);
+     * ```
+     */
+    public highlightSegment(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('segment', this.resolveMarkSelector(selector, this.options.data), options);
+    }
+
     public async render() {
         return super.render((scene, renderer) => {
             const {
@@ -736,11 +757,14 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 label,
                 key,
             },
-            onHighlight: hovered => this.highlightSeries(hovered ? key : null),
+            onHighlight: hovered => this.applySeriesHighlight(hovered ? key : null),
             onEnter: event => this.emit('segmententer', event),
             onLeave: event => this.emit('segmentleave', event),
             onClick: event => this.emit('segmentclick', event),
         });
+
+        // The arc carries the hover treatment but no id of its own, so register it under its group's key.
+        this.registerMark('segment', key, arc);
     }
 }
 

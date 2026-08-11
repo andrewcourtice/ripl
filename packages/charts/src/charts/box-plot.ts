@@ -11,6 +11,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ValueFormatInput,
 } from '../core/options';
 
@@ -184,6 +189,27 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             onLeave: point => this.emit('boxleave', payload(point)),
             onClick: point => this.emit('boxclick', payload(point)),
         });
+
+        this.registerMark('box', category, rect);
+    }
+
+    /**
+     * Highlights the box summarizing a category, applying the same treatment hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}) or the
+     * next pointer hover restores the chart, and it emits no box events.
+     *
+     * @param selector - The box's category, or an accessor over the chart's data returning one.
+     * @param options - What to show alongside the box's highlight state.
+     * @returns `true` when a live box matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightBox('Team A', { tooltip: true, crosshair: true });
+     * chart.highlightBox(data => data[0].team);
+     * ```
+     */
+    public highlightBox(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('box', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     /** Computes the final geometry of every box element (the target the entry/update transitions animate to). */
