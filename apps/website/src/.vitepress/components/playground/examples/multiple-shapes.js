@@ -10,12 +10,12 @@ const cy = scene.context.height / 2;
 const group = createGroup({
     children: [
         createRect({
-            x: cx - 100,
+            x: cx - 140,
             y: cy - 40,
             width: 80,
             height: 80,
             fill: '#6366f1',
-            cornerRadius: 8,
+            borderRadius: 8,
         }),
         createCircle({
             cx: cx,
@@ -24,12 +24,12 @@ const group = createGroup({
             fill: '#f59e0b',
         }),
         createRect({
-            x: cx + 20,
+            x: cx + 60,
             y: cy - 40,
             width: 80,
             height: 80,
             fill: '#10b981',
-            cornerRadius: 8,
+            borderRadius: 8,
         }),
     ],
 });
