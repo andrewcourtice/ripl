@@ -23,10 +23,12 @@ import type {
 } from '../core/animation';
 
 import {
+    ANIMATION_REFERENCE,
     exitElement,
 } from '../core/animation';
 
 import type {
+    Element,
     Group,
     Rect,
     Text,
@@ -84,6 +86,8 @@ const DEFAULT_FONT_SIZE = 11;
 const DEFAULT_PADDING = SPACING.md;
 const INACTIVE_COLOR = '#cccccc';
 const INACTIVE_LABEL_COLOR = '#999999';
+const INACTIVE_OPACITY = 0.5;
+const HIGHLIGHT_DIM_OPACITY = 0.3;
 
 interface ItemPlacement {
     item: LegendItem;
@@ -115,6 +119,8 @@ export class Legend extends ChartComponent {
     private _onToggle?: (item: LegendItem, active: boolean) => void;
     private _onHighlight?: (id: string | null) => void;
     private _labelWidthCache = new Map<string, number>();
+    private _animation?: ResolvedAnimation;
+    private _highlightedId: string | null = null;
 
     constructor(options: LegendOptions) {
         super(options);
@@ -155,6 +161,67 @@ export class Legend extends ChartComponent {
     /** Updates the legend items, replacing the previous set. */
     public update(items: LegendItem[]) {
         this._items = items;
+    }
+
+    /**
+     * Dims every entry except the one at `id` — swatch and label alike — so a highlighted series
+     * reads in the legend as well as in the plot, or restores them all when `id` is `null`. The dim
+     * scales each entry's own rest opacity, so an entry toggled off stays visibly inactive
+     * underneath the highlight. No-ops when `id` is already the highlighted one, since the pointer
+     * events driving a legend hover repeat it.
+     *
+     * @param id - The {@link LegendItem.id} to isolate, or `null` to restore every entry.
+     */
+    public setHighlight(id: string | null): void {
+        if (id === this._highlightedId) {
+            return;
+        }
+
+        this._highlightedId = id;
+
+        const group = this._group;
+
+        if (!group) {
+            return;
+        }
+
+        const elements = this._items
+            .flatMap(item => [
+                group.getElementById(`legend-swatch-${item.id}`),
+                group.getElementById(`legend-label-${item.id}`),
+            ])
+            .filter((element): element is Element => !!element);
+
+        if (elements.length === 0) {
+            return;
+        }
+
+        const animation = this._animation;
+
+        if (!animation?.enabled) {
+            elements.forEach(element => {
+                element.opacity = this._highlightOpacity(element);
+            });
+
+            this.renderer.start();
+            return;
+        }
+
+        this.renderer.transition(elements, element => ({
+            duration: ANIMATION_REFERENCE.hover,
+            ease: animation.ease,
+            state: {
+                opacity: this._highlightOpacity(element),
+            },
+        }));
+    }
+
+    private _highlightOpacity(element: Element): number {
+        const item = element.data as LegendItem;
+        const dimmed = this._highlightedId !== null && item.id !== this._highlightedId;
+        const rest = element.type === 'rect' && item.active === false ? INACTIVE_OPACITY : 1;
+
+        return dimmed ? rest * HIGHLIGHT_DIM_OPACITY : rest;
     }
 
     private get _fontHeight(): number {
@@ -278,6 +345,11 @@ export class Legend extends ChartComponent {
     }
 
     private _draw(region: ChartArea, animation?: ResolvedAnimation) {
+        this._animation = animation;
+
+        // Every entry is settled at its rest opacity below, so any active dim is gone.
+        this._highlightedId = null;
+
         if (!this._group) {
             this._group = createGroup({
                 id: 'legend',
@@ -324,7 +396,7 @@ export class Legend extends ChartComponent {
         entries.forEach(placement => {
             const { item } = placement;
             const isActive = item.active !== false;
-            const restOpacity = isActive ? 1 : 0.5;
+            const restOpacity = isActive ? 1 : INACTIVE_OPACITY;
 
             const swatch = createRect({
                 id: `legend-swatch-${item.id}`,
@@ -371,7 +443,7 @@ export class Legend extends ChartComponent {
                 this.renderer.transition([swatch, label], element => ({
                     duration: animation.duration,
                     ease: animation.ease,
-                    state: { opacity: element.type === 'rect' && !isActive ? 0.5 : 1 },
+                    state: { opacity: element.type === 'rect' && !isActive ? INACTIVE_OPACITY : 1 },
                 }));
             }
         });
@@ -400,7 +472,7 @@ export class Legend extends ChartComponent {
                     state: {
                         x: target.swatchX,
                         y: target.swatchY,
-                        opacity: isActive ? 1 : 0.5,
+                        opacity: isActive ? 1 : INACTIVE_OPACITY,
                     },
                 });
 
@@ -418,7 +490,7 @@ export class Legend extends ChartComponent {
             } else {
                 swatch.x = target.swatchX;
                 swatch.y = target.swatchY;
-                swatch.opacity = isActive ? 1 : 0.5;
+                swatch.opacity = isActive ? 1 : INACTIVE_OPACITY;
 
                 if (label) {
                     label.x = target.labelX;
