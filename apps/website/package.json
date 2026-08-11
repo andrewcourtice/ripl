@@ -8,7 +8,8 @@
         "prepare-playground": "node scripts/prepare-playground.mjs",
         "start": "yarn generate-api && yarn prepare-playground && vitepress dev ./src",
         "check-config-coverage": "node scripts/check-config-coverage.mjs",
-        "build": "yarn check-chart-options && yarn check-config-coverage && yarn generate-api && yarn prepare-playground && vitepress build ./src",
+        "check-demo-controls": "node scripts/check-demo-controls.mjs",
+        "build": "yarn check-chart-options && yarn check-config-coverage && yarn check-demo-controls && yarn generate-api && yarn prepare-playground && vitepress build ./src",
         "preview": "vitepress preview ./src"
     },
     "dependencies": {
