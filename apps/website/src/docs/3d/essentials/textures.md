@@ -16,12 +16,13 @@ A **texture** maps an image across a surface. Every built-in shape emits the tex
 :::tabs
 == Demo
 <ripl-3d-example @context-changed="contextChanged">
-    <template #header>
+    <template #footer>
         <RiplControlGroup>
             <RiplSwitch v-model="textured" label="Texture" />
-            <label class="ripl-example__label">Repeat</label>
-            <RiplInputRange v-model="repeat" :min="1" :max="6" :step="1" />
         </RiplControlGroup>
+        <RiplField label="Repeat">
+            <RiplInputRange v-model="repeat" :min="1" :max="6" :step="1" />
+        </RiplField>
     </template>
 </ripl-3d-example>
 == Code

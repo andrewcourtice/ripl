@@ -17,12 +17,14 @@ The **Realtime Chart** holds a sliding window of the most recent values and scro
         <RiplControlGroup>
             <RiplButton @click="toggle">{{ streaming ? 'Stop' : 'Start' }}</RiplButton>
             <RiplButton @click="reset">Reset</RiplButton>
+        </RiplControlGroup>
+        <RiplField label="Speed">
             <RiplSelect v-model="speed" @change="startStreaming">
                 <option value="100">Fast (100ms)</option>
                 <option value="300">Normal (300ms)</option>
                 <option value="1000">Slow (1s)</option>
             </RiplSelect>
-        </RiplControlGroup>
+        </RiplField>
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Stream" :extras-reset="resetExtras">

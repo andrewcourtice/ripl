@@ -186,10 +186,9 @@ circle.radius = interp(t);
 == Demo
 <ripl-example @context-changed="numberCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="numberT" :min="0" :max="100" :step="1" @update:model-value="numberRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="numberT" :min="0" :max="100" :step="1" @update:model-value="numberRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -211,10 +210,9 @@ rect.fill = interp(t);
 == Demo
 <ripl-example @context-changed="colorCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="colorT" :min="0" :max="100" :step="1" @update:model-value="colorRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="colorT" :min="0" :max="100" :step="1" @update:model-value="colorRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -239,10 +237,9 @@ rect.fill = interp(t);
 == Demo
 <ripl-example @context-changed="gradientCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="gradientT" :min="0" :max="100" :step="1" @update:model-value="gradientRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="gradientT" :min="0" :max="100" :step="1" @update:model-value="gradientRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -267,10 +264,9 @@ rect.fill = interp(t);
 == Demo
 <ripl-example @context-changed="patternCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="patternT" :min="0" :max="100" :step="1" @update:model-value="patternRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="patternT" :min="0" :max="100" :step="1" @update:model-value="patternRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -292,10 +288,9 @@ rect.rotation = interp(t);
 == Demo
 <ripl-example @context-changed="rotationCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="rotationT" :min="0" :max="100" :step="1" @update:model-value="rotationRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="rotationT" :min="0" :max="100" :step="1" @update:model-value="rotationRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -318,10 +313,9 @@ polyline.points = interp(t);
 == Demo
 <ripl-example @context-changed="pathCtxChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>t</span>
-            <RiplInputRange v-model="pathT" :min="0" :max="100" :step="1" @update:model-value="pathRedraw" style="flex:1" />
-        </RiplControlGroup>
+        <RiplField label="t">
+            <RiplInputRange v-model="pathT" :min="0" :max="100" :step="1" @update:model-value="pathRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
@@ -346,7 +340,7 @@ polygon.points = interp(t); // smoothly morphs between shapes
 == Demo
 <ripl-example @context-changed="morphCtxChanged">
     <template #footer>
-        <RiplControlGroup>
+        <RiplField label="From">
             <RiplSelect v-model="morphFrom" @change="morphRedraw">
                 <option value="3">Triangle</option>
                 <option value="4">Square</option>
@@ -354,7 +348,8 @@ polygon.points = interp(t); // smoothly morphs between shapes
                 <option value="6">Hexagon</option>
                 <option value="8">Octagon</option>
             </RiplSelect>
-            <span>→</span>
+        </RiplField>
+        <RiplField label="To">
             <RiplSelect v-model="morphTo" @change="morphRedraw">
                 <option value="3">Triangle</option>
                 <option value="4">Square</option>
@@ -362,8 +357,10 @@ polygon.points = interp(t); // smoothly morphs between shapes
                 <option value="6">Hexagon</option>
                 <option value="8">Octagon</option>
             </RiplSelect>
-            <RiplInputRange v-model="morphT" :min="0" :max="100" :step="1" @update:model-value="morphRedraw" style="flex:1" />
-        </RiplControlGroup>
+        </RiplField>
+        <RiplField label="t">
+            <RiplInputRange v-model="morphT" :min="0" :max="100" :step="1" @update:model-value="morphRedraw" />
+        </RiplField>
     </template>
 </ripl-example>
 :::

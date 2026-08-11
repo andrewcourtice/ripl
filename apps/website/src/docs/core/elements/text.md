@@ -14,15 +14,16 @@ A **Text** element renders a text string at a given position. Unlike other built
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Font Size</span>
+        <RiplField label="Font Size">
             <RiplInputRange v-model="fontSize" :min="12" :max="48" :step="1" @update:model-value="redraw" />
+        </RiplField>
+        <RiplField label="Align">
             <RiplSelect v-model="textAlign" @change="redraw">
                 <option value="left">Left</option>
                 <option value="center">Center</option>
                 <option value="right">Right</option>
             </RiplSelect>
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

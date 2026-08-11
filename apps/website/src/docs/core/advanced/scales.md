@@ -23,16 +23,17 @@ Use the controls below to explore different scale types. The scale maps a domain
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
+        <RiplField label="Scale">
             <RiplSelect v-model="currentScale" @change="redraw">
                 <option value="continuous">Continuous</option>
                 <option value="logarithmic">Logarithmic</option>
                 <option value="power">Power (x²)</option>
                 <option value="sqrt">Square Root</option>
             </RiplSelect>
-            <span>Input</span>
+        </RiplField>
+        <RiplField label="Input">
             <RiplInputRange v-model="inputValue" :min="0" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

@@ -19,11 +19,12 @@ Type or pick a color to see it parsed into every supported color space in real t
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <input type="color" v-model="pickedColor" style="width: 40px; height: 32px; border: none; padding: 0; cursor: pointer;" />
-            <span>Alpha</span>
+        <RiplField label="Color">
+            <RiplColorInput v-model="pickedColor" />
+        </RiplField>
+        <RiplField label="Alpha">
             <RiplInputRange v-model="alpha" :min="0" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

@@ -16,11 +16,11 @@ The demo below shows the same set of points rendered with different renderer mod
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
+        <RiplField label="Renderer">
             <RiplSelect v-model="currentRenderer">
                 <option v-for="r in renderers" :key="r" :value="r">{{ r }}</option>
             </RiplSelect>
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

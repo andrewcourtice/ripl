@@ -14,12 +14,12 @@ A **Polygon** draws a regular polygon (triangle, pentagon, hexagon, etc.) define
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Sides</span>
+        <RiplField label="Sides">
             <RiplInputRange v-model="sides" :min="3" :max="12" :step="1" @update:model-value="redraw" />
-            <span>Radius</span>
+        </RiplField>
+        <RiplField label="Radius">
             <RiplInputRange v-model="radiusPct" :min="20" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

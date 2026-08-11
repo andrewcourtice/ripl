@@ -14,12 +14,12 @@ Ripl's built-in elements cover common shapes, but you can create your own custom
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Points</span>
+        <RiplField label="Points">
             <RiplInputRange v-model="starPoints" :min="3" :max="12" :step="1" @update:model-value="redraw" />
-            <span>Inner Radius %</span>
+        </RiplField>
+        <RiplField label="Inner Radius %">
             <RiplInputRange v-model="innerPct" :min="10" :max="90" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code
