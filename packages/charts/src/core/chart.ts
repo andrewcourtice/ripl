@@ -80,6 +80,14 @@ import {
     resolveAnimation,
 } from './animation';
 
+import type {
+    MarkInteraction,
+} from './interaction';
+
+import {
+    getMarkInteraction,
+} from './interaction';
+
 import {
     ChartTitle,
 } from '../components/title';
@@ -100,6 +108,7 @@ import {
     typeIsArray,
     typeIsFunction,
     typeIsNumber,
+    typeIsString,
 } from '@ripl/utilities';
 
 if (!factory.createContext) {
@@ -130,6 +139,48 @@ export interface BaseChartOptions {
     theme?: string | Theme;
     /** Accessible description announced by screen readers (sets the rendering element's ARIA label). Defaults to the title text. */
     description?: string;
+}
+
+/** Identifies a mark: its key — the same key the chart reports in its events — optionally narrowed to a series. */
+export interface MarkRef {
+    /** The mark's key, exactly as the chart reports it in the mark's interaction events. */
+    key: string;
+    /** The series the mark belongs to. Omit to select the mark at that key in every series. */
+    series?: string;
+}
+
+/** Identifies a link mark by the nodes it joins. */
+export interface LinkRef {
+    /** Id of the node the link leaves. */
+    source: string;
+    /** Id of the node the link enters. */
+    target: string;
+}
+
+/** Identifies a heatmap cell by its axis labels. */
+export interface CellRef {
+    /** The cell's x-axis label. */
+    x: string;
+    /** The cell's y-axis label. */
+    y: string;
+}
+
+/**
+ * Selects one or more marks: a key, the chart's ref shape narrowing it, or an accessor receiving the
+ * chart's dataset and returning either — so a mark can be addressed by position in the data
+ * (`data => data[2].id`) without the caller tracking keys itself.
+ *
+ * @typeParam TData - The chart's datum type, as passed to its `data` option.
+ * @typeParam TRef - The ref shape the chart's marks are addressed by. Defaults to {@link MarkRef}.
+ */
+export type MarkSelector<TData = unknown, TRef = MarkRef> = string | TRef | ((data: TData[]) => string | TRef);
+
+/** Controls what a programmatic highlight shows alongside the mark's own highlight state. */
+export interface HighlightOptions {
+    /** Also show the mark's tooltip, anchored where hovering it would. Defaults to `false`. */
+    tooltip?: boolean;
+    /** Also place the crosshair on the mark. Only the axes the crosshair was configured for are drawn; ignored on charts without one. Defaults to `false`. */
+    crosshair?: boolean;
 }
 
 /** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
@@ -212,6 +263,9 @@ export class Chart<
         owners: string | string[]; }> = [];
     private _highlightDisposers: Disposable[] = [];
     private _activeHighlight: string | null = null;
+    private _markRegistry: Map<string, Element[]> = new Map();
+    private _activeMarks: MarkInteraction[] = [];
+    private _programmaticSeries: boolean = false;
 
     /** The rendering context the chart's scene draws into. */
     public get context(): Context {
@@ -428,7 +482,7 @@ export class Chart<
                 itemPadding,
                 highlight: legendOpts.highlight,
                 onToggle: (item, active) => this.setItemActive(item.id, active),
-                onHighlight: id => this.highlightSeries(id),
+                onHighlight: id => this.applySeriesHighlight(id),
             });
         } else {
             this.legend.setOptions({
@@ -503,6 +557,10 @@ export class Chart<
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async render(callback?: (scene: Scene, renderer: Renderer) => Promise<any>) {
+        // A programmatic highlight is a one-shot command, so a render restores the chart before redrawing it.
+        this.clearHighlight();
+        this._markRegistry.clear();
+
         try {
             await callback?.(this.scene, this.renderer);
         } catch (error) {
@@ -549,7 +607,7 @@ export class Chart<
     }
 
     /**
-     * Registers the groups that {@link highlightSeries} dims when a legend entry is hovered. Charts
+     * Registers the groups that {@link Chart.highlightSeries} dims when a legend entry is hovered. Charts
      * call this each render. By default a group belongs to the legend item whose id equals its
      * `group.id` (one-to-one). Pass `resolveId` when a group belongs to a different legend item, or
      * to several, e.g. a cluster legend (many node groups per legend item) or a connector that is
@@ -585,13 +643,14 @@ export class Chart<
             return;
         }
 
-        this.highlightSeries(null);
+        this._programmaticSeries = false;
+        this.applySeriesHighlight(null);
     }
 
     /**
      * Highlights a single series/segment by id (dimming the others), or restores all when `null`.
-     * Wired to legend hover via {@link reserveLegend}. No-ops for charts that never registered
-     * highlight groups.
+     * Wired to legend hover via {@link reserveLegend}, and to {@link Chart.highlightSeries} for the
+     * public one-shot command. No-ops for charts that never registered highlight groups.
      *
      * Dims the leaf elements of each group rather than the group itself: a group's opacity does not
      * cascade multiplicatively, and the leaves carry no explicit `opacity` (so a group-level tween is
@@ -599,14 +658,18 @@ export class Chart<
      * on the element (via a Symbol slot, like `applyHoverHighlight`), tracking the target a render
      * stashed on `.data` where there is one, so hidden elements stay hidden, an element caught
      * mid-fade-in still restores to full, and restoring returns to the true value.
+     *
+     * @param id - The legend item id to isolate, or `null` to restore every group.
+     * @returns `true` when the id matched at least one registered group (always `true` for `null`).
      */
-    protected highlightSeries(id: string | null) {
+    protected applySeriesHighlight(id: string | null): boolean {
         this._activeHighlight = id;
 
         if (this._highlightGroups.length === 0) {
-            return;
+            return false;
         }
 
+        const matched = id === null || this._highlightGroups.some(({ owners }) => highlightOwnersInclude(owners, id));
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         this._highlightGroups.forEach(({ group, owners }) => {
@@ -636,6 +699,158 @@ export class Chart<
                 });
             });
         });
+
+        return matched;
+    }
+
+    /**
+     * Registers a rendered mark so {@link Chart.replayMark} can address it by key. Charts call this
+     * beside the `applyHoverHighlight` call that makes the mark interactive, keying it by the same
+     * value they report in the mark's interaction events. Passing `series` registers the mark twice:
+     * once under the bare key (which selects that key across every series) and once narrowed to the
+     * series. The registry is dropped at the top of every render.
+     *
+     * @param kind - The mark family, matching the chart's highlight method (e.g. `'bar'`, `'marker'`, `'node'`).
+     * @param key - The mark's key, exactly as the chart reports it in the mark's interaction events.
+     * @param element - The element carrying the mark's replayable hover treatment.
+     * @param series - The series the mark belongs to, for multi-series charts.
+     */
+    protected registerMark(kind: string, key: string, element: Element, series?: string): void {
+        this._addMark(`${kind}:${key}`, element);
+
+        if (series !== undefined) {
+            this._addMark(`${kind}:${series}:${key}`, element);
+        }
+    }
+
+    private _addMark(id: string, element: Element): void {
+        const elements = this._markRegistry.get(id);
+
+        if (elements) {
+            elements.push(element);
+            return;
+        }
+
+        this._markRegistry.set(id, [element]);
+    }
+
+    /**
+     * Replays the hover treatment of every mark matching a selector, as the chart's typed highlight
+     * methods do. Accessor selectors are resolved by those methods (with
+     * {@link Chart.resolveMarkSelector}) before they get here, so this stays free of the chart's
+     * datum type. Silent by design: the mark's highlight state, chart-wide dim and tooltip are
+     * applied, but no interaction event is emitted.
+     *
+     * @param kind - The mark family the selector addresses, as passed to {@link Chart.registerMark}.
+     * @param selector - A registered key, or a {@link MarkRef} narrowing it to one series.
+     * @param options - What to show alongside the mark's highlight state.
+     * @returns `true` when at least one live mark matched, `false` when nothing changed.
+     */
+    protected replayMark(kind: string, selector: string | MarkRef, options?: HighlightOptions): boolean {
+        const ref = typeIsString(selector) ? { key: selector } as MarkRef : selector;
+        const id = ref.series === undefined
+            ? `${kind}:${ref.key}`
+            : `${kind}:${ref.series}:${ref.key}`;
+
+        const marks = (this._markRegistry.get(id) ?? [])
+            // A mark mid-exit is detached; transitioning it would never complete and would pin the render loop.
+            .filter(element => !!element.parent)
+            .map(element => getMarkInteraction(element))
+            .filter((mark): mark is MarkInteraction => !!mark);
+
+        if (marks.length === 0) {
+            return false;
+        }
+
+        this.clearHighlight();
+
+        const showTooltip = options?.tooltip ?? false;
+        const content = showTooltip
+            ? marks.map(mark => mark.content()).filter(line => !!line).join('\n') || undefined
+            : undefined;
+
+        marks.forEach((mark, index) => mark.enter({
+            tooltip: showTooltip && index === 0,
+            content: index === 0 ? content : undefined,
+            onTakeover: () => this._releaseHighlight(),
+        }));
+
+        this._activeMarks = marks;
+
+        return true;
+    }
+
+    /**
+     * Resolves a selector's accessor form against the chart's data. Charts call this in their typed
+     * highlight methods, where the datum type is known, before handing the result to
+     * {@link Chart.replayMark}.
+     *
+     * @typeParam TData - The chart's datum type.
+     * @typeParam TRef - The ref shape the chart's marks are addressed by.
+     * @param selector - The selector the caller passed.
+     * @param data - The dataset an accessor selector is called with.
+     * @returns The key or ref the selector resolves to.
+     */
+    protected resolveMarkSelector<TData, TRef>(selector: MarkSelector<TData, TRef>, data: TData[]): string | TRef {
+        return typeIsFunction(selector)
+            ? (selector as (data: TData[]) => string | TRef)(data)
+            : selector as string | TRef;
+    }
+
+    /** The mark handles the active programmatic highlight is holding, in match order. Empty when none is active. */
+    protected get activeMarks(): readonly MarkInteraction[] {
+        return this._activeMarks;
+    }
+
+    /** Drops the bookkeeping for a highlight whose marks have already been restored (e.g. by a pointer taking over). */
+    private _releaseHighlight(): void {
+        this._activeMarks = [];
+
+        if (this._programmaticSeries) {
+            this._programmaticSeries = false;
+            this.applySeriesHighlight(null);
+        }
+    }
+
+    /**
+     * Highlights a series by id — dimming every other series, exactly as hovering its legend entry
+     * does — and returns whether the id matched. The highlight is a one-shot command: the next
+     * render (a resize, an {@link Chart.update}, a legend toggle) restores the chart, and it emits
+     * no interaction events.
+     *
+     * @param id - The series or segment id, as the chart reports it in its events and legend items.
+     * @returns `true` when the id matched a highlightable series, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightSeries('revenue');
+     * chart.clearHighlight();
+     * ```
+     */
+    public highlightSeries(id: string): boolean {
+        this.clearHighlight();
+
+        this._programmaticSeries = this.applySeriesHighlight(id);
+
+        return this._programmaticSeries;
+    }
+
+    /**
+     * Restores everything a programmatic highlight changed — the highlighted marks, the chart-wide
+     * dim and any tooltip it opened — synchronously, leaving no transition behind. Hover highlights
+     * are untouched, and calling it with nothing highlighted is a no-op.
+     */
+    public clearHighlight(): void {
+        const marks = this._activeMarks;
+
+        if (marks.length === 0 && !this._programmaticSeries) {
+            return;
+        }
+
+        this._activeMarks = [];
+        marks.forEach(mark => mark.leave({ duration: 0 }));
+
+        this._releaseHighlight();
     }
 
     /** Exports a snapshot of the chart's rendered context (image, url, or string). See {@link Context.export}. */
