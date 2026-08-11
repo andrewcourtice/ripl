@@ -14,14 +14,15 @@ A **Line** draws a straight line between two points (`x1`, `y1`) to (`x2`, `y2`)
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Line Width</span>
+        <RiplField label="Line Width">
             <RiplInputRange v-model="lineWidthVal" :min="1" :max="10" :step="1" @update:model-value="redraw" />
-            <span>Dash Gap</span>
+        </RiplField>
+        <RiplField label="Dash Gap">
             <RiplInputRange v-model="dashGap" :min="0" :max="20" :step="1" @update:model-value="redraw" />
-            <span>Angle</span>
+        </RiplField>
+        <RiplField label="Angle">
             <RiplInputRange v-model="angleDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

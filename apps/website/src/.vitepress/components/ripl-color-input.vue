@@ -4,20 +4,47 @@
             type="color"
             class="ripl-color-input__picker"
             :value="modelValue"
-            @change="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+            @input="onInput"
         >
-        <span class="ripl-color-input__value">{{ modelValue }}</span>
+        <span class="ripl-color-input__value" aria-hidden="true">{{ modelValue }}</span>
     </span>
 </template>
 
 <script lang="ts" setup>
+import {
+    createFrameBuffer,
+} from '@ripl/web';
+
+import {
+    onBeforeUnmount,
+} from 'vue';
+
 defineProps<{
     modelValue: string;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     'update:modelValue': [value: string];
 }>();
+
+// Live while dragging (`input`, not `change`), coalesced so a drag can't flood chart updates.
+const scheduleFlush = createFrameBuffer();
+
+let unmounted = false;
+
+function onInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+
+    scheduleFlush(() => {
+        if (!unmounted) {
+            emit('update:modelValue', value);
+        }
+    });
+}
+
+onBeforeUnmount(() => {
+    unmounted = true;
+});
 </script>
 
 <style scoped>

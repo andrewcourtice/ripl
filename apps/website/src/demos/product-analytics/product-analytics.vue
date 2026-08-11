@@ -5,15 +5,8 @@
                 <h1 class="analytics-dashboard__title">Product Analytics</h1>
                 <p class="analytics-dashboard__subtitle">Mock data dashboard showcasing Ripl Charts</p>
             </div>
-            <div class="analytics-dashboard__period-selector">
-                <label
-                    v-for="p in periods"
-                    :key="p.value"
-                    class="analytics-dashboard__period-option"
-                >
-                    <input type="radio" name="period" :value="p.value" v-model="store.period">
-                    {{ p.label }}
-                </label>
+            <div class="analytics-dashboard__period-selector" role="group" aria-label="Reporting period">
+                <RiplButtonGroup :modelValue="store.period" @update:modelValue="onPeriodChange" :options="periods" />
             </div>
         </div>
 
@@ -47,10 +40,15 @@ import {
     PERIODS,
 } from './data/mock';
 
+import type {
+    Period,
+} from './data/mock';
+
 import {
     useAnalyticsStore,
 } from './store/analytics';
 
+import RiplButtonGroup from '../../.vitepress/components/ripl-button-group.vue';
 import ActiveUsersChart from './components/active-users-chart.vue';
 import BrowserShareChart from './components/browser-share-chart.vue';
 import ConversionFunnel from './components/conversion-funnel.vue';
@@ -62,6 +60,10 @@ import UserJourneySankey from './components/user-journey-sankey.vue';
 
 const periods = PERIODS;
 const store = useAnalyticsStore();
+
+function onPeriodChange(value: string) {
+    store.period = value as Period;
+}
 </script>
 
 <style lang="scss">

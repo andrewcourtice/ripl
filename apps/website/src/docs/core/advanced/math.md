@@ -19,12 +19,12 @@ The demo below visualizes several geometry utilities: polygon vertex generation,
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Sides</span>
+        <RiplField label="Sides">
             <RiplInputRange v-model="sides" :min="3" :max="12" :step="1" @update:model-value="redraw" />
-            <span>Waypoint %</span>
+        </RiplField>
+        <RiplField label="Waypoint %">
             <RiplInputRange v-model="waypoint" :min="0" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

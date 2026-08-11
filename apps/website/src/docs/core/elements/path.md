@@ -17,16 +17,17 @@ The **Path** element is a general-purpose shape that delegates its geometry to a
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
+        <RiplField label="Shape">
             <RiplSelect v-model="currentShape" @change="redraw">
                 <option value="star">Star</option>
                 <option value="heart">Heart</option>
                 <option value="arrow">Arrow</option>
                 <option value="cross">Cross</option>
             </RiplSelect>
-            <span>Size</span>
+        </RiplField>
+        <RiplField label="Size">
             <RiplInputRange v-model="size" :min="40" :max="160" :step="4" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

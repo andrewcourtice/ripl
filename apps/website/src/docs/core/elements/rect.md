@@ -14,14 +14,15 @@ A **Rect** draws a rectangle defined by position (`x`, `y`) and dimensions (`wid
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Width</span>
+        <RiplField label="Width">
             <RiplInputRange v-model="widthPct" :min="20" :max="100" :step="1" @update:model-value="redraw" />
-            <span>Height</span>
+        </RiplField>
+        <RiplField label="Height">
             <RiplInputRange v-model="heightPct" :min="20" :max="100" :step="1" @update:model-value="redraw" />
-            <span>Border Radius</span>
+        </RiplField>
+        <RiplField label="Border Radius">
             <RiplInputRange v-model="borderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

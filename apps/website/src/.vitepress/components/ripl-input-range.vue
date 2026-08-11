@@ -9,7 +9,7 @@
             :step="step"
             @input="onInput"
         >
-        <span class="ripl-input-range__value">{{ display }}</span>
+        <span class="ripl-input-range__value" aria-hidden="true">{{ display }}</span>
     </span>
 </template>
 

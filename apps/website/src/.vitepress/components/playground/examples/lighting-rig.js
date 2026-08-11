@@ -43,7 +43,7 @@ scene.add([
         fill: '#e8e8e8',
     }),
     createTorus({
-        y: -1.2,
+        y: -0.95,
         radius: 1.8,
         tube: 0.14,
         radialSegments: 12,

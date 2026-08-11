@@ -9,6 +9,7 @@
                     class="freeform-style__swatch"
                     :class="{ 'freeform-style__swatch--active': color === style.stroke }"
                     :style="{ background: color }"
+                    :aria-label="`Color ${color}`"
                     @click="$emit('patch', { stroke: color })"
                 ></button>
             </div>
@@ -32,7 +33,7 @@
             />
         </div>
 
-        <div class="freeform-style__section">
+        <label class="freeform-style__section">
             <span class="freeform-style__label">Stroke width: {{ style.strokeWidth }}px</span>
             <RiplInputRange
                 :model-value="style.strokeWidth"
@@ -41,9 +42,9 @@
                 :step="1"
                 @update:model-value="$emit('patch', { strokeWidth: $event })"
             />
-        </div>
+        </label>
 
-        <div class="freeform-style__section">
+        <label class="freeform-style__section">
             <span class="freeform-style__label">Opacity: {{ Math.round(style.opacity * 100) }}%</span>
             <RiplInputRange
                 :model-value="style.opacity"
@@ -52,7 +53,7 @@
                 :step="0.05"
                 @update:model-value="$emit('patch', { opacity: $event })"
             />
-        </div>
+        </label>
 
         <div class="freeform-style__section freeform-style__section--row">
             <RiplSwitch

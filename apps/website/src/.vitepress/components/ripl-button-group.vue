@@ -5,6 +5,7 @@
             :key="option.value"
             class="ripl-button-group__item"
             :class="{ 'ripl-button-group__item--active': modelValue === option.value }"
+            :aria-pressed="modelValue === option.value"
             @click="$emit('update:modelValue', option.value)"
         >{{ option.label }}</button>
     </div>

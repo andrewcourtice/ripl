@@ -62,10 +62,9 @@ circle.render(context);
 == Demo
 <ripl-example @context-changed="changeContextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Radius</span>
-            <RiplInputRange v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
-        </RiplControlGroup>
+        <RiplField label="Radius">
+            <RiplInputRange v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" :step="1" />
+        </RiplField>
     </template>
 </ripl-example>
 :::
