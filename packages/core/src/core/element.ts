@@ -25,9 +25,10 @@ import type {
     Matrix,
 } from '../math';
 
-import type {
-    Interpolator,
-    InterpolatorFactory,
+import {
+    interpolateColor,
+    type Interpolator,
+    type InterpolatorFactory,
 } from '../interpolators';
 
 import type {
@@ -188,6 +189,8 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     data?: unknown;
     /** Which parts of the element respond to pointer hit testing. Defaults to `all`. */
     pointerEvents?: ElementPointerEvents;
+    /** Specific state value interpolator overrides */
+    interpolators?: Partial<ElementInterpolators<TState>>;
 } & TState;
 
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
@@ -250,20 +253,26 @@ export class Element<
 
     protected state: TState;
     protected context?: Context;
+    protected interpolators: Partial<ElementInterpolators<TState>>;
 
     /** Unique identifier for this element, defaulting to `type:uniqueId` when not supplied. */
     public id: string;
+
     /** The element type name (e.g. `circle`, `rect`, `group`). */
     public readonly type: string;
+
     /** Set of CSS-like class names used for querying and selection. */
     public readonly classList: Set<string>;
 
     /** When `true`, the element skips transform and drawing-state application during {@link Element.render}; used by containers such as {@link Group}. */
     public abstract: boolean = false;
+
     /** Controls which parts of the element respond to pointer hit testing. See {@link ElementPointerEvents}. */
     public pointerEvents: ElementPointerEvents = 'all';
+
     /** The parent {@link Group} this element is attached to, or `undefined` when detached. */
     public declare parent?: Group<TEventMap>;
+
     /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
     public data: unknown;
 
@@ -557,6 +566,7 @@ export class Element<
         class: classes = [],
         data,
         pointerEvents = 'all',
+        interpolators = {},
         ...state
     }: ElementOptions<TState>) {
         super();
@@ -571,6 +581,11 @@ export class Element<
             ...TRANSFORM_DEFAULTS,
             ...state,
         } as unknown as TState;
+
+        this.interpolators = {
+            fill: interpolateColor,
+            ...interpolators,
+        };
     }
 
     /**
@@ -853,7 +868,9 @@ export class Element<
                 return (output[key] = value, output);
             }
 
-            const interpolator = interpolators[key] || getInterpolator(currentValue, key as string);
+            const interpolator = interpolators[key]
+                ?? this.interpolators[key]
+                ?? getInterpolator(currentValue, key as string);
 
             if (isElementValueKeyFrame(value)) {
                 return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);
