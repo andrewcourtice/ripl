@@ -542,6 +542,15 @@ export default defineConfig({
                         },
                     ],
                 },
+                {
+                    text: 'Examples',
+                    items: [
+                        {
+                            text: 'Bar chart',
+                            link: '/docs/vue/examples/bar-chart',
+                        },
+                    ],
+                },
             ],
             '/docs/3d': [
                 {

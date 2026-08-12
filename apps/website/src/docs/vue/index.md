@@ -94,3 +94,4 @@ Add a scene once you need z-ordering or many elements, and a renderer once you n
 - [Transitions](/docs/vue/essentials/transitions) — animating enter, update and leave.
 - [Events](/docs/vue/essentials/events) — pointer and drag listeners.
 - [Compositions](/docs/vue/essentials/compositions) — reaching the underlying Ripl objects.
+- [Bar chart](/docs/vue/examples/bar-chart) — a live, interactive chart built from the elements above.

@@ -75,6 +75,11 @@ import ExampleTerminal from '../components/example-terminal.vue';
 import Example3DWebGPU from '../components/example-3d-webgpu.vue';
 
 import ExampleTerminalInteractive from '../components/example-terminal-interactive.vue';
+import ExampleVueBarChart from '../components/example-vue-bar-chart.vue';
+
+import {
+    createRipl,
+} from '@ripl/vue';
 
 import {
     enhanceAppWithTabs,
@@ -96,6 +101,7 @@ export default {
     },
     enhanceApp({ app }) {
         app.use(createPinia());
+        app.use(createRipl());
         app.component('ripl-example', Example);
         app.component('ripl-3d-example', Example3D);
         app.component('ripl-playground', RiplPlayground);
@@ -119,6 +125,7 @@ export default {
         app.component('example-terminal', ExampleTerminal);
         app.component('example-3d-webgpu', Example3DWebGPU);
         app.component('example-terminal-interactive', ExampleTerminalInteractive);
+        app.component('example-vue-bar-chart', ExampleVueBarChart);
 
         enhanceAppWithTabs(app);
 
