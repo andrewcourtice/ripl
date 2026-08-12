@@ -211,5 +211,6 @@ import {
 - **[Theming](/charts/advanced/theming)**: light/dark/colorblind themes and custom palettes
 - **[Annotations](/charts/advanced/annotations)**: reference lines, bands, and point markers
 - **[Panning & Zooming](/charts/advanced/panning-and-zooming)**: interactive navigation and the overview strip
+- **[Programmatic Interaction](/charts/advanced/programmatic-interaction)**: highlight a mark, a series or a row of cells from code, tooltip and all
 - **[Custom Charts](/charts/advanced/custom-charts)**: build your own chart type on the `Chart` base class
 - **[Charts API Reference](/docs/api/@ripl/charts/)**: full TypeScript API documentation

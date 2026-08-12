@@ -186,3 +186,27 @@ chart.on('nodeenter', event => console.log(event.data)); // event.data: TreemapC
 chart.on('nodeleave', event => console.log(event.data)); // event.data: TreemapChartNodeEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightNode` applies the treatment hovering a cell does — it lifts out of its rest tint and the
+rest of the chart dims — without waiting for a pointer. Pass the cell's key, the `{ key }` ref form,
+or an accessor over the chart's data returning either. `{ tooltip: true }` opens the cell's tooltip
+where hovering would; a treemap draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createTreemapChart('#container', { data, key: 'name', value: 'share', label: 'name' });
+
+// Light the Chrome cell and open its tooltip.
+chart.highlightNode('Chrome', { tooltip: true });
+
+// The first cell in the dataset, wherever the layout put it.
+chart.highlightNode(data => data[0].name);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `node*` events above. `clearHighlight()` restores it explicitly; `highlightNode`
+returns `false` when the selector matched no live cell.

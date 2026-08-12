@@ -209,3 +209,27 @@ chart.on('nodeenter', event => console.log(event.data)); // event.data: PackedCi
 chart.on('nodeleave', event => console.log(event.data)); // event.data: PackedCircleChartNodeEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightNode` applies the treatment hovering a circle does — it lifts out of its rest tint and the
+rest of the chart dims — without waiting for a pointer. Pass the circle's key, the `{ key }` ref form,
+or an accessor over the chart's data returning either. `{ tooltip: true }` opens the circle's tooltip
+where hovering would; a packed circle chart draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createPackedCircleChart('#container', { data, key: 'name', value: 'size', label: 'name' });
+
+// Light the Alpha circle and open its tooltip.
+chart.highlightNode('Alpha', { tooltip: true });
+
+// The first circle in the dataset.
+chart.highlightNode(data => data[0].name);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `node*` events above. `clearHighlight()` restores it explicitly; `highlightNode`
+returns `false` when the selector matched no live circle.

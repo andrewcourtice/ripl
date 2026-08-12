@@ -264,3 +264,30 @@ chart.on('cellenter', event => console.log(event.data)); // event.data: HeatmapC
 chart.on('cellleave', event => console.log(event.data)); // event.data: HeatmapChartCellEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightCell` applies the treatment hovering a cell does — it lifts and the rest of the grid dims —
+without waiting for a pointer. A `{ x, y }` ref names the single cell at that pair of axis labels, the
+pair reported as `xLabel`/`yLabel` on the events above; a bare label matches either axis instead, so
+it lights that whole row or column. An accessor over the chart's data can return either form.
+`{ tooltip: true }` opens a tooltip on the match — several cells share one, their contents joined a
+line apart — and a heatmap draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createHeatmapChart('#container', { data, keyX: 'hour', keyY: 'day', value: 'value' });
+
+// One cell, with its tooltip.
+chart.highlightCell({ x: '9am', y: 'Mon' }, { tooltip: true });
+
+// Every cell on the Monday row, then the cell the first row describes.
+chart.highlightCell('Mon');
+chart.highlightCell(data => ({ x: data[0].hour, y: data[0].day }));
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`) or the next pointer hover restores the grid, and it emits none of the
+`cell*` events above. `clearHighlight()` restores it explicitly; `highlightCell` returns `false` when
+no live cell matched.

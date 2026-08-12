@@ -231,3 +231,27 @@ chart.on('barenter', event => console.log(event.data)); // event.data: RadialBar
 chart.on('barleave', event => console.log(event.data)); // event.data: RadialBarChartBarEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightBar` applies the treatment hovering a ring does — it lifts out of its rest tint and the rest
+of the chart dims — without waiting for a pointer. Pass the ring's key, the `{ key }` ref form, or an
+accessor over the chart's data returning either. `{ tooltip: true }` opens the ring's tooltip where
+hovering would; a radial bar chart draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createRadialBarChart('#container', { data, key: 'language', value: 'share', max: 100 });
+
+// Light the Python ring and open its tooltip.
+chart.highlightBar('Python', { tooltip: true });
+
+// The outermost ring, whichever language leads.
+chart.highlightBar(data => data[0].language);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `bar*` events above. `clearHighlight()` restores it explicitly; `highlightBar`
+returns `false` when the selector matched no live ring.

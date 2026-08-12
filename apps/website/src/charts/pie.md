@@ -286,3 +286,27 @@ chart.on('segmententer', event => console.log(event.data)); // event.data: PieCh
 chart.on('segmentleave', event => console.log(event.data)); // event.data: PieChartSegmentEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightSegment` applies the treatment hovering a slice does — it lifts out of its rest tint and
+every other slice dims — without waiting for a pointer. Pass the segment's key, the `{ key }` ref
+form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens the segment's
+tooltip where hovering would; a pie draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createPieChart('#container', { data, key: 'id', value: 'value', label: 'label' });
+
+// Light the South Africa slice and open its tooltip.
+chart.highlightSegment('za', { tooltip: true });
+
+// The largest slice, whichever it is.
+chart.highlightSegment(data => data[0].id);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `segment*` events above. `clearHighlight()` restores it explicitly;
+`highlightSegment` returns `false` when the selector matched no live segment.

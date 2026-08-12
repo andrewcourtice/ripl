@@ -248,3 +248,36 @@ chart.on('candleenter', event => console.log(event.data)); // event.data: StockC
 chart.on('candleleave', event => console.log(event.data)); // event.data: StockChartCandleEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightCandle` applies the treatment hovering a candle's body does — it lifts and the rest of the
+chart dims — without waiting for a pointer. Pass the candle's key, exactly as the chart reports it in
+the events above, the `{ key }` ref form, or an accessor over the chart's data returning either.
+`{ tooltip: true }` opens the candle's tooltip where hovering would, and `{ crosshair: true }` places
+the crosshair on it.
+
+```ts
+const chart = createStockChart('#container', {
+    data,
+    key: 'date',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+});
+
+// Light one session, with its tooltip and the crosshair.
+chart.highlightCandle('2024-01-03', { tooltip: true, crosshair: true });
+
+// The most recent candle in the dataset.
+chart.highlightCandle(data => data[data.length - 1].date);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a pan or zoom) or the next pointer hover restores the chart, and it
+emits none of the `candle*` events above. `clearHighlight()` restores it explicitly;
+`highlightCandle` returns `false` when the selector matched no live candle, which includes a key
+scrolled outside the visible range.

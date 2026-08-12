@@ -188,3 +188,27 @@ chart.on('segmententer', event => console.log(event.data)); // event.data: Funne
 chart.on('segmentleave', event => console.log(event.data)); // event.data: FunnelChartSegmentEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightSegment` applies the treatment hovering a stage does — it lifts out of its rest tint and the
+rest of the funnel dims — without waiting for a pointer. Pass the segment's key, the `{ key }` ref
+form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens the segment's
+tooltip where hovering would; a funnel draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createFunnelChart('#container', { data, key: 'stage', value: 'count', label: 'label' });
+
+// Light the sign-up stage and open its tooltip.
+chart.highlightSegment('signed-up', { tooltip: true });
+
+// The stage the funnel ends on.
+chart.highlightSegment(data => data[data.length - 1].stage);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `segment*` events above. `clearHighlight()` restores it explicitly;
+`highlightSegment` returns `false` when the selector matched no live segment.

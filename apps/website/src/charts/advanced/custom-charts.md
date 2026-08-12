@@ -220,6 +220,37 @@ For legend-driven highlighting (hovering a legend item dims the other series), r
 this.registerHighlightGroups(this._groups);
 ```
 
+### Making Marks Addressable
+
+Registering a mark is what lets that same treatment be replayed from code, as every built-in chart's
+`highlightX` method does (see [Programmatic Interaction](/charts/advanced/programmatic-interaction)).
+Call `registerMark` beside the interaction wiring, once per mark per render:
+
+```ts
+this.registerMark('segment', key, mark, series.id);
+```
+
+- The first argument is the mark family — the name behind your public method: `'bar'`, `'segment'`, `'node'`, `'cell'`.
+- The key should be the key your events already report, so a caller can hand back what an event gave them.
+- The fourth argument is the series id, and is optional. Supply it on a multi-series chart and the mark becomes addressable both bare (every series at that key) and narrowed to `{ key, series }`.
+- Registering one element under several keys is fine, and is how a bare axis label lights a whole heatmap row: each cell is registered under `"<x> <y>"`, under `x`, and under `y`.
+- The registry is cleared at the top of every `render()`, so registration belongs in the render path, never the constructor.
+
+Then expose a typed method per mark family, resolving the accessor form of the selector where your
+datum type is known and delegating to `replayMark`:
+
+<!-- eslint-skip -->
+```ts
+public highlightSegment(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+    return this.replayMark('segment', this.resolveMarkSelector(selector, this.options.data), options);
+}
+```
+
+`replayMark` returns `false` — having changed nothing — when no live mark matches, and is silent by
+design: it emits no interaction events, so a chart highlighted from inside its own event handler
+cannot feed itself. Charts extending `CartesianChart` get the `crosshair` and axis-tooltip handling
+for free; if you override `replayMark` or `clearHighlight` there, call `super`.
+
 ## Checklist
 
 - Factory function exported; consumers never call `new`.
