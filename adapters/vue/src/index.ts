@@ -1,32 +1,22 @@
-import {
-    defineComponent,
-    shallowRef,
-} from 'vue';
+export * from './components/context';
+export * from './components/elements';
+export * from './components/renderer';
+export * from './components/scene';
+export * from './components/transition';
+export * from './compositions';
+export * from './plugin';
+export * from './types';
 
-import type {
-    InjectionKey,
-    ShallowRef,
-} from 'vue';
+export { defineRiplElement } from './core/define-element';
 
-import type {
-    Context,
-} from '@ripl/web';
+export type { RiplNodeDefinition } from './core/define-element';
 
-/** Injection key carrying the nearest ancestor {@link Context}. */
-export const RIPL_CONTEXT_KEY: InjectionKey<ShallowRef<Context | undefined>> = Symbol('ripl-context');
+export { RiplTransitionScope } from './core/transition';
 
-/** Temporary packaging probe; replaced by the real component surface. */
-export const RiplProbe = defineComponent({
-    name: 'RiplProbe',
-    props: {
-        label: {
-            type: String,
-            default: '',
-        },
-    },
-    setup(props) {
-        const context = shallowRef<Context>();
-
-        return () => `${props.label}${context.value ? '!' : ''}`;
-    },
-});
+export type {
+    RiplElementState,
+    RiplTransitionPhase,
+    RiplTransitionPhaseName,
+    RiplTransitionPhaseOptions,
+    RiplTransitionPhases,
+} from './core/transition';
