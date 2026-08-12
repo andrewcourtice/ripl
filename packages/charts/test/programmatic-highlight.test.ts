@@ -400,8 +400,8 @@ describe('heatmap cell selectors', () => {
 
         await vi.advanceTimersByTimeAsync(5000);
 
-        expect(elementById(chart, 'cell-9am-Mon').opacity).toBe(0.8);
-        expect(elementById(chart, 'cell-10am-Mon').opacity).not.toBe(0.8);
+        expect(elementById(chart, 'cell-9am-Mon-rect').opacity).toBe(0.8);
+        expect(elementById(chart, 'cell-10am-Mon-rect').opacity).not.toBe(0.8);
         expect(tooltipLines(chart)).toHaveLength(1);
 
         chart.destroy();
@@ -416,9 +416,9 @@ describe('heatmap cell selectors', () => {
         expect(chart.highlightCell('Mon', { tooltip: true })).toBe(true);
         await vi.advanceTimersByTimeAsync(5000);
 
-        expect(elementById(chart, 'cell-9am-Mon').opacity).toBe(0.8);
-        expect(elementById(chart, 'cell-10am-Mon').opacity).toBe(0.8);
-        expect(elementById(chart, 'cell-9am-Tue').opacity).not.toBe(0.8);
+        expect(elementById(chart, 'cell-9am-Mon-rect').opacity).toBe(0.8);
+        expect(elementById(chart, 'cell-10am-Mon-rect').opacity).toBe(0.8);
+        expect(elementById(chart, 'cell-9am-Tue-rect').opacity).not.toBe(0.8);
         expect(tooltipLines(chart)).toHaveLength(HOURS.length);
 
         chart.destroy();
