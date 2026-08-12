@@ -68,6 +68,7 @@ const SECTION_HUBS = new Set([
     'demos/',
     'docs/core/',
     'docs/3d/',
+    'docs/vue/',
     'playground',
 ]);
 
@@ -235,6 +236,7 @@ export default defineConfig({
                 '@ripl/webgpu': path.resolve(__dirname, '../../../../packages/webgpu/src/index.ts'),
                 '@ripl/terminal': path.resolve(__dirname, '../../../../packages/terminal/src/index.ts'),
                 '@ripl/node': path.resolve(__dirname, '../../../../packages/node/src/index.ts'),
+                '@ripl/vue': path.resolve(__dirname, '../../../../adapters/vue/src/index.ts'),
             },
         },
         css: {
@@ -284,6 +286,10 @@ export default defineConfig({
                             {
                                 text: '3D',
                                 link: '/docs/3d/',
+                            },
+                            {
+                                text: 'Vue',
+                                link: '/docs/vue/',
                             },
                         ],
                     },
@@ -501,6 +507,42 @@ export default defineConfig({
                 },
             ],
 
+            '/docs/vue': [
+                {
+                    text: 'Getting Started',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/',
+                        },
+                    ],
+                },
+                {
+                    text: 'Essentials',
+                    items: [
+                        {
+                            text: 'Rendering',
+                            link: '/docs/vue/essentials/rendering',
+                        },
+                        {
+                            text: 'Elements',
+                            link: '/docs/vue/essentials/elements',
+                        },
+                        {
+                            text: 'Transitions',
+                            link: '/docs/vue/essentials/transitions',
+                        },
+                        {
+                            text: 'Events',
+                            link: '/docs/vue/essentials/events',
+                        },
+                        {
+                            text: 'Compositions',
+                            link: '/docs/vue/essentials/compositions',
+                        },
+                    ],
+                },
+            ],
             '/docs/3d': [
                 {
                     text: 'Getting Started',

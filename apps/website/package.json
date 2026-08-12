@@ -21,6 +21,7 @@
         "@ripl/svg": "workspace:^",
         "@ripl/terminal": "workspace:^",
         "@ripl/utilities": "workspace:^",
+        "@ripl/vue": "workspace:^",
         "@ripl/web": "workspace:^",
         "@ripl/webgpu": "workspace:^",
         "@vercel/analytics": "^2.0.1",

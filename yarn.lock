@@ -2102,7 +2102,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/vue@workspace:adapters/vue":
+"@ripl/vue@workspace:^, @ripl/vue@workspace:adapters/vue":
   version: 0.0.0-use.local
   resolution: "@ripl/vue@workspace:adapters/vue"
   dependencies:
@@ -2152,6 +2152,7 @@ __metadata:
     "@ripl/svg": "workspace:^"
     "@ripl/terminal": "workspace:^"
     "@ripl/utilities": "workspace:^"
+    "@ripl/vue": "workspace:^"
     "@ripl/web": "workspace:^"
     "@ripl/webgpu": "workspace:^"
     "@vercel/analytics": "npm:^2.0.1"
