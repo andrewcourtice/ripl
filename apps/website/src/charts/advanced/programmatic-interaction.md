@@ -73,7 +73,9 @@ Each chart's page lists the events it emits and their payloads; the [Method Refe
 
 ## Selecting a Mark
 
-A selector takes three forms, and every chart accepts all three.
+A selector takes three forms. Most charts accept all three; the exceptions are noted below and in the
+[Method Reference](#method-reference) — `highlightBin` takes a bin index rather than a key, and
+`highlightValue` takes no selector at all, since a gauge draws a single mark.
 
 ### By Key
 
