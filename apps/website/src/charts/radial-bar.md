@@ -234,8 +234,8 @@ chart.on('barleave', event => console.log(event.data)); // event.data: RadialBar
 
 ## Programmatic Interaction
 
-`highlightBar` applies the treatment hovering a ring does — it lifts out of its rest tint and the rest
-of the chart dims — without waiting for a pointer. Pass the ring's key, the `{ key }` ref form, or an
+`highlightBar` puts a ring into the same hover state the pointer would — it lifts out of its rest
+tint to full color — without waiting for one. Pass the ring's key, the `{ key }` ref form, or an
 accessor over the chart's data returning either. `{ tooltip: true }` opens the ring's tooltip where
 hovering would; a radial bar chart draws no crosshair, so `crosshair` is ignored here.
 

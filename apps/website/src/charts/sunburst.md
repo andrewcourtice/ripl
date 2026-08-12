@@ -242,11 +242,11 @@ chart.on('nodeleave', event => console.log(event.data)); // event.data: Sunburst
 
 ## Programmatic Interaction
 
-`highlightNode` applies the treatment hovering an arc does — it lifts and every other arc dims —
-without waiting for a pointer. Pass the node's id, the `{ key }` ref form, or an accessor over the
-chart's root nodes returning either. Only that node lights, not its branch — widening the highlight to
-a whole subtree is what a legend hover does. `{ tooltip: true }` opens the arc's tooltip where
-hovering would; a sunburst draws no crosshair, so `crosshair` is ignored here.
+`highlightNode` puts an arc into the same hover state the pointer would — which reads as every other
+arc dimming — without waiting for one. Pass the node's id, the `{ key }` ref form, or an accessor
+over the chart's root nodes returning either. Only that node lights, not its branch — widening the
+highlight to a whole subtree is what a legend hover does. `{ tooltip: true }` opens the arc's
+tooltip where hovering would; a sunburst draws no crosshair, so `crosshair` is ignored here.
 
 ```ts
 const chart = createSunburstChart('#container', { data });
@@ -263,5 +263,4 @@ chart.clearHighlight();
 One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
 render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
 emits none of the `node*` events above. `clearHighlight()` restores it explicitly; `highlightNode`
-returns `false` when the selector matched no live arc, which includes a node outside the current
-`maxDepth`.
+returns `false` when the selector matched no live arc.

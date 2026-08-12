@@ -515,12 +515,12 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: Scatte
 
 ## Programmatic Interaction
 
-`highlightMarker` applies the treatment hovering a bubble does — that bubble grows and the rest of the
-chart dims — without waiting for a pointer. A bare key is the item's `key`, so it lights that item in
+`highlightMarker` puts a bubble into the same hover state the pointer would — it grows and takes its
+highlight color — without waiting for one. A bare key is the item's `key`, so it lights that item in
 every series at once; `{ key, series }` narrows it to one, and an accessor receives the chart's data
 when it is easier to address a bubble by position. `{ tooltip: true }` opens the tooltip where
-hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`), and `{ crosshair: true }`
-places the crosshair on the bubble.
+hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`), and `{ crosshair: true
+}` places the crosshair on the bubble.
 
 ```ts
 const chart = createScatterChart('#container', { data, key: 'id', series });

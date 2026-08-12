@@ -212,9 +212,9 @@ chart.on('nodeleave', event => console.log(event.data)); // event.data: PackedCi
 
 ## Programmatic Interaction
 
-`highlightNode` applies the treatment hovering a circle does — it lifts out of its rest tint and the
-rest of the chart dims — without waiting for a pointer. Pass the circle's key, the `{ key }` ref form,
-or an accessor over the chart's data returning either. `{ tooltip: true }` opens the circle's tooltip
+`highlightNode` puts a circle into the same hover state the pointer would — it lifts out of its rest
+tint to full color — without waiting for one. Pass the circle's key, the `{ key }` ref form, or an
+accessor over the chart's data returning either. `{ tooltip: true }` opens the circle's tooltip
 where hovering would; a packed circle chart draws no crosshair, so `crosshair` is ignored here.
 
 ```ts

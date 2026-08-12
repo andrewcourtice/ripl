@@ -728,13 +728,13 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: LineCh
 
 ## Programmatic Interaction
 
-`highlightMarker` applies the treatment hovering a point does — that marker grows and every other
-series dims — without waiting for a pointer. A bare key is the category the point sits on, so it
-lights that point in every series at once; `{ key, series }` narrows it to one, and an accessor
-receives the chart's data when it is easier to address a point by position. `{ tooltip: true }` opens
-the tooltip where hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`), and
-`{ crosshair: true }` places the crosshair on the marker. Series drawn with `markers: false` have
-nothing to highlight.
+`highlightMarker` puts a point into the same hover state the pointer would — the marker grows and
+takes its highlight color — without waiting for one. A bare key is the category the point sits on,
+so it lights that point in every series at once; `{ key, series }` narrows it to one, and an
+accessor receives the chart's data when it is easier to address a point by position. `{ tooltip:
+true }` opens the tooltip where hovering would (the shared axis tooltip when `tooltip.trigger` is
+`'axis'`), and `{ crosshair: true }` places the crosshair on the marker. Series drawn with `markers:
+false` have nothing to highlight.
 
 ```ts
 const chart = createLineChart('#container', { data, key: 'month', series });

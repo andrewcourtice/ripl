@@ -255,13 +255,13 @@ chart.on('linkleave', event => console.log(event.data)); // event.data: ArcDiagr
 
 ## Programmatic Interaction
 
-`highlightNode` and `highlightLink` apply the treatment hovering a mark does — it lifts and the rest
-of the diagram dims — without waiting for a pointer. A node takes its id or the `{ key }` ref form.
-Arcs carry no id of their own, so one takes a `{ source, target }` ref naming the nodes it joins — in
-the order the events above report them — or the `"source->target"` string that flattens to. Either
-method also accepts an accessor over the chart's `nodes` or `links`. `{ tooltip: true }` opens the
-mark's tooltip where hovering would; an arc diagram draws no crosshair, so `crosshair` is ignored
-here.
+`highlightNode` and `highlightLink` put a mark into the same hover state the pointer would — it
+brightens out of its rest tint — without waiting for one. A node takes its id or the `{ key }` ref
+form. Arcs carry no id of their own, so one takes a `{ source, target }` ref naming the nodes it
+joins — in the order the events above report them — or the `"source->target"` string that flattens
+to. Either method also accepts an accessor over the chart's `nodes` or `links`. `{ tooltip: true }`
+opens the mark's tooltip where hovering would; an arc diagram draws no crosshair, so `crosshair` is
+ignored here.
 
 ```ts
 const chart = createArcDiagramChart('#container', { nodes, links });
@@ -278,5 +278,5 @@ chart.clearHighlight();
 
 One highlight is active at a time — a matching call replaces the last, including across the two
 methods — and it is one-shot: the next render (a resize, an `update`, a legend toggle) or the next
-pointer hover restores the diagram, and it emits none of the events above. `clearHighlight()` restores
-it explicitly; both methods return `false` when the selector matched nothing live.
+pointer hover restores the diagram, and it emits none of the events above. `clearHighlight()`
+restores it explicitly; both methods return `false` when the selector matched nothing live.

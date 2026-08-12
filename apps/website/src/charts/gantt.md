@@ -291,11 +291,11 @@ chart.on('taskleave', event => console.log(event.data)); // event.data: GanttCha
 
 ## Programmatic Interaction
 
-`highlightTask` applies the treatment hovering a task bar does — it lifts and the rest of the chart
-dims — without waiting for a pointer. Pass the task's key, exactly as the chart reports it in the
-events above, the `{ key }` ref form, or an accessor over the chart's data returning either.
-`{ tooltip: true }` opens the task's tooltip where hovering would; a gantt chart draws no crosshair,
-so `crosshair` is ignored here.
+`highlightTask` puts a task bar into the same hover state the pointer would — it lifts out of its
+rest tint to full color — without waiting for one. Pass the task's key, exactly as the chart reports
+it in the events above, the `{ key }` ref form, or an accessor over the chart's data returning
+either. `{ tooltip: true }` opens the task's tooltip where hovering would; a gantt chart draws no
+crosshair, so `crosshair` is ignored here.
 
 ```ts
 const chart = createGanttChart('#container', {
@@ -316,6 +316,6 @@ chart.clearHighlight();
 ```
 
 One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
-render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of the
-`task*` events above. `clearHighlight()` restores it explicitly; `highlightTask` returns `false` when
-the selector matched no live task bar.
+render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of
+the `task*` events above. `clearHighlight()` restores it explicitly; `highlightTask` returns `false`
+when the selector matched no live task bar.

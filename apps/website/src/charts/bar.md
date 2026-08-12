@@ -503,8 +503,8 @@ chart.on('barleave', event => console.log(event.data)); // event.data: BarChartB
 
 ## Programmatic Interaction
 
-`highlightBar` applies the treatment hovering a bar does — that bar lifts and the rest of the chart
-dims — without waiting for a pointer. A bare key is the category the bar sits on, so it lights that
+`highlightBar` puts a bar into the same hover state the pointer would — its fill goes to full
+strength — without waiting for one. A bare key is the category the bar sits on, so it lights that
 category in every series at once; `{ key, series }` narrows it to one series' bar, and an accessor
 receives the chart's data when it is easier to address a bar by position. `{ tooltip: true }` opens
 the tooltip where hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`). A bar

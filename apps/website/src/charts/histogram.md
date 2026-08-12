@@ -188,11 +188,12 @@ chart.on('binleave', event => console.log(event.data)); // event.data: Histogram
 
 ## Programmatic Interaction
 
-`highlightBin` applies the treatment hovering a bin bar does — it lifts and the rest of the chart dims
-— without waiting for a pointer. Bins are derived from the data rather than carrying keys of their
-own, so a bin is addressed by index: `0` is the leftmost bar and the index counts up across the value
-axis. An accessor over the chart's data can compute that index instead. `{ tooltip: true }` opens the
-bin's tooltip where hovering would, and `{ crosshair: true }` places the crosshair on it.
+`highlightBin` puts a bin bar into the same hover state the pointer would — its fill goes to full
+strength — without waiting for one. Bins are derived from the data rather than carrying keys of
+their own, so a bin is addressed by index: `0` is the leftmost bar and the index counts up across
+the value axis. An accessor over the chart's data can compute that index instead. `{ tooltip: true
+}` opens the bin's tooltip where hovering would, and `{ crosshair: true }` places the crosshair on
+it.
 
 ```ts
 const chart = createHistogramChart('#container', { data, value: 'amount', bins: 12 });
@@ -207,6 +208,6 @@ chart.clearHighlight();
 ```
 
 One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
-render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of the
-`bin*` events above. `clearHighlight()` restores it explicitly; `highlightBin` returns `false` when
-the index falls outside the histogram, which it can after `bins` or the data changes.
+render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of
+the `bin*` events above. `clearHighlight()` restores it explicitly; `highlightBin` returns `false`
+when the index falls outside the histogram, which it can after `bins` or the data changes.

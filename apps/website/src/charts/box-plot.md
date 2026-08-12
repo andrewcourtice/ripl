@@ -171,11 +171,11 @@ chart.on('boxleave', event => console.log(event.data)); // event.data: BoxPlotBo
 
 ## Programmatic Interaction
 
-`highlightBox` applies the treatment hovering a box does — it lifts and the rest of the chart dims —
-without waiting for a pointer. A box summarizes a whole category, so the selector is that category:
-its key, the `{ key }` ref form, or an accessor over the chart's data returning either.
-`{ tooltip: true }` opens the box's five-number tooltip where hovering would, and
-`{ crosshair: true }` places the crosshair on it.
+`highlightBox` puts a box into the same hover state the pointer would — its fill softens — without
+waiting for one. A box summarizes a whole category, so the selector is that category: its key, the
+`{ key }` ref form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens
+the box's median/quartile tooltip where hovering would, and `{ crosshair: true }` places the
+crosshair on it.
 
 ```ts
 const chart = createBoxPlotChart('#container', { data, key: 'region', value: 'latency' });
@@ -190,6 +190,6 @@ chart.clearHighlight();
 ```
 
 One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
-render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of the
-`box*` events above. `clearHighlight()` restores it explicitly; `highlightBox` returns `false` when
-the selector matched no live box.
+render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of
+the `box*` events above. `clearHighlight()` restores it explicitly; `highlightBox` returns `false`
+when the selector matched no live box.

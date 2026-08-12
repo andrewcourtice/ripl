@@ -289,10 +289,11 @@ chart.on('segmentleave', event => console.log(event.data)); // event.data: PieCh
 
 ## Programmatic Interaction
 
-`highlightSegment` applies the treatment hovering a slice does — it lifts out of its rest tint and
-every other slice dims — without waiting for a pointer. Pass the segment's key, the `{ key }` ref
-form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens the segment's
-tooltip where hovering would; a pie draws no crosshair, so `crosshair` is ignored here.
+`highlightSegment` puts a slice into the same hover state the pointer would — every slice shares one
+rest tint, so it reads as the others dimming — without waiting for one. Pass the segment's key, the
+`{ key }` ref form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens
+the segment's tooltip where hovering would; a pie draws no crosshair, so `crosshair` is ignored
+here.
 
 ```ts
 const chart = createPieChart('#container', { data, key: 'id', value: 'value', label: 'label' });

@@ -315,13 +315,13 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: PolarS
 
 ## Programmatic Interaction
 
-`highlightMarker` applies the treatment hovering a marker does — it grows and every other series dims
-— without waiting for a pointer. The chart has no key accessor, since every series plots the whole
-dataset, so markers are addressed by the item's position in `data` as a string — the `index` the
-events above report. A bare index lights that item in every series; `{ key, series }` narrows it to
-one, and an accessor over the chart's data can find the index for you. `{ tooltip: true }` opens the
-marker's tooltip where hovering would; a polar scatter chart draws no crosshair, so `crosshair` is
-ignored here.
+`highlightMarker` puts a marker into the same hover state the pointer would — it grows and takes its
+highlight color — without waiting for one. The chart has no key accessor, since every series plots
+the whole dataset, so markers are addressed by the item's position in `data` as a string — the
+`index` the events above report. A bare index lights that item in every series; `{ key, series }`
+narrows it to one, and an accessor over the chart's data can find the index for you. `{ tooltip:
+true }` opens the marker's tooltip where hovering would; a polar scatter chart draws no crosshair,
+so `crosshair` is ignored here.
 
 ```ts
 const chart = createPolarScatterChart('#container', { data, series, max: 100 });

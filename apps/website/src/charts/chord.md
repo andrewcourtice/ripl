@@ -206,12 +206,12 @@ chart.on('linkleave',    event => console.log(event.data)); // event.data: Chord
 
 ## Programmatic Interaction
 
-`highlightSegment` and `highlightLink` apply the treatment hovering a mark does — it lifts and the
-rest of the chart dims — without waiting for a pointer. A group's outer arc takes its label or the
-`{ key }` ref form. A ribbon is drawn once per pair, so it takes its id or a `{ source, target }` ref
-naming the groups it joins, in the order the events above report them. Either method also accepts an
-accessor over the chart's `groups`. `{ tooltip: true }` opens the mark's tooltip where hovering would;
-a chord chart draws no crosshair, so `crosshair` is ignored here.
+`highlightSegment` and `highlightLink` put a mark into the same hover state the pointer would —
+which reads as everything else dimming — without waiting for one. A group's outer arc takes its
+label or the `{ key }` ref form. A ribbon is drawn once per pair, so it takes its id or a `{ source,
+target }` ref naming the groups it joins, in the order the events above report them. Either method
+also accepts an accessor over the chart's `groups`. `{ tooltip: true }` opens the mark's tooltip
+where hovering would; a chord chart draws no crosshair, so `crosshair` is ignored here.
 
 ```ts
 const chart = createChordChart('#container', { groups, matrix });

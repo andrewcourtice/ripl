@@ -506,12 +506,12 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: TrendC
 
 ## Programmatic Interaction
 
-`highlightBar` and `highlightMarker` apply the treatment hovering a mark does — it lifts and the rest
-of the chart dims — without waiting for a pointer. The two split the chart by series type: bars are
-matched by `highlightBar`, line and area points by `highlightMarker`, so a category with both can be
-lit either way. A bare key lights that category across every series of the relevant type;
-`{ key, series }` narrows it to one, and an accessor receives the chart's data. `{ tooltip: true }`
-opens the mark's tooltip and `{ crosshair: true }` places the crosshair on it.
+`highlightBar` and `highlightMarker` put a mark into the same hover state the pointer would — bars
+to a full-strength fill, points grown — without waiting for one. The two split the chart by series
+type: bars are matched by `highlightBar`, line and area points by `highlightMarker`, so a category
+with both can be lit either way. A bare key lights that category across every series of the relevant
+type; `{ key, series }` narrows it to one, and an accessor receives the chart's data. `{ tooltip:
+true }` opens the mark's tooltip and `{ crosshair: true }` places the crosshair on it.
 
 ```ts
 const chart = createTrendChart('#container', { data, key: 'month', series });
@@ -529,5 +529,5 @@ chart.clearHighlight();
 One highlight is active at a time — a matching call replaces the last, including across the two
 methods — and it is one-shot: the next render (a resize, an `update`, a legend toggle) or the next
 pointer hover restores the chart, and it emits none of the events above. `clearHighlight()` restores
-it explicitly, and `highlightSeries('orders')` dims every other series exactly as hovering its legend
-entry does. All three methods return `false` when nothing matched.
+it explicitly, and `highlightSeries('orders')` dims every other series exactly as hovering its
+legend entry does. All three methods return `false` when nothing matched.

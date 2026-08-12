@@ -191,9 +191,9 @@ chart.on('segmentleave', event => console.log(event.data)); // event.data: Funne
 
 ## Programmatic Interaction
 
-`highlightSegment` applies the treatment hovering a stage does — it lifts out of its rest tint and the
-rest of the funnel dims — without waiting for a pointer. Pass the segment's key, the `{ key }` ref
-form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens the segment's
+`highlightSegment` puts a stage into the same hover state the pointer would — it lifts out of its
+rest tint to full color — without waiting for one. Pass the segment's key, the `{ key }` ref form,
+or an accessor over the chart's data returning either. `{ tooltip: true }` opens the segment's
 tooltip where hovering would; a funnel draws no crosshair, so `crosshair` is ignored here.
 
 ```ts
