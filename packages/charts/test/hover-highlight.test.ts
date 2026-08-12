@@ -28,7 +28,7 @@ polyfillPath2D();
 
 interface ChartInternals {
     scene: Scene;
-    highlightSeries(id: string | null): void;
+    applySeriesHighlight(id: string | null): boolean;
 }
 
 function sceneOf(chart: unknown) {
@@ -263,7 +263,7 @@ describe('sunburst hover owners', () => {
     test('hovering a legend item lights the whole branch', async () => {
         const chart = await createSunburst();
 
-        (chart as unknown as ChartInternals).highlightSeries('T');
+        (chart as unknown as ChartInternals).applySeriesHighlight('T');
         await vi.advanceTimersByTimeAsync(5000);
 
         expect(litNodes(chart, ALL)).toEqual([
@@ -273,6 +273,88 @@ describe('sunburst hover owners', () => {
             'T1b',
             'T2',
         ]);
+
+        chart.destroy();
+    });
+
+    test('a node highlight isolates the node while a series highlight keeps the branch', async () => {
+        const chart = await createSunburst();
+
+        expect(chart.highlightNode('T1')).toBe(true);
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(litNodes(chart, ALL)).toEqual(['T1']);
+
+        expect(chart.highlightSeries('T')).toBe(true);
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(litNodes(chart, ALL)).toEqual([
+            'T',
+            'T1',
+            'T1a',
+            'T1b',
+            'T2',
+        ]);
+
+        chart.destroy();
+    });
+
+});
+
+describe('legend highlight', () => {
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
+
+    function legendEntry(chart: unknown, id: string) {
+        return elementById(chart, `legend-swatch-${id}`);
+    }
+
+    test('hovering a legend entry dims the entries it excludes', async () => {
+        const chart = createPie();
+
+        chart.render();
+        await vi.advanceTimersByTimeAsync(5000);
+
+        hover(legendEntry(chart, 'a'), 'mouseenter');
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(legendEntry(chart, 'a').opacity).toBe(1);
+        expect(legendEntry(chart, 'b').opacity).toBeCloseTo(0.3);
+        expect(elementById(chart, 'legend-label-b').opacity).toBeCloseTo(0.3);
+
+        hover(legendEntry(chart, 'a'), 'mouseleave');
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(legendEntry(chart, 'b').opacity).toBe(1);
+        expect(elementById(chart, 'legend-label-b').opacity).toBe(1);
+
+        chart.destroy();
+    });
+
+    test('a legend hover highlight survives a re-render', async () => {
+        const chart = createPie();
+
+        chart.render();
+        await vi.advanceTimersByTimeAsync(5000);
+
+        hover(legendEntry(chart, 'a'), 'mouseenter');
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(segmentArc(chart, 'b').opacity).toBeLessThan(1);
+
+        chart.render();
+        await vi.advanceTimersByTimeAsync(5000);
+
+        // Routing legend hover through the public one-shot would let render()'s clearHighlight drop it.
+        expect(segmentArc(chart, 'b').opacity).toBeLessThan(1);
 
         chart.destroy();
     });
