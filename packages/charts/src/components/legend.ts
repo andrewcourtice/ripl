@@ -28,6 +28,7 @@ import {
 } from '../core/animation';
 
 import type {
+    Ease,
     Element,
     Group,
     Rect,
@@ -44,6 +45,14 @@ import {
     arrayJoin,
     stringUniqueId,
 } from '@ripl/utilities';
+
+/** Timing for the legend's highlight dim, resolved by the host chart so it scales with the chart's animation options. */
+export interface LegendHighlightAnimation {
+    /** Duration of the dim, in milliseconds; a non-positive value settles the entries immediately. */
+    duration: number;
+    /** Easing applied to the dim. */
+    ease: Ease;
+}
 
 /** A single legend entry with id, label, color, and active state. */
 export interface LegendItem {
@@ -171,9 +180,12 @@ export class Legend extends ChartComponent {
      * events driving a legend hover repeat it.
      *
      * @param id - The {@link LegendItem.id} to isolate, or `null` to restore every entry.
+     * @param animation - Timing for the dim, resolved by the host so it scales with the chart's
+     * animation options; a non-positive duration settles the entries immediately.
      */
-    public setHighlight(id: string | null): void {
-        if (id === this._highlightedId) {
+    public setHighlight(id: string | null, animation?: LegendHighlightAnimation): void {
+        // An immediate call still settles: it exists to cut short a dim another call left in flight.
+        if (id === this._highlightedId && (animation?.duration ?? 1) > 0) {
             return;
         }
 
@@ -196,9 +208,14 @@ export class Legend extends ChartComponent {
             return;
         }
 
-        const animation = this._animation;
+        const timing = animation ?? (this._animation?.enabled
+            ? {
+                duration: ANIMATION_REFERENCE.hover,
+                ease: this._animation.ease,
+            }
+            : undefined);
 
-        if (!animation?.enabled) {
+        if (!timing || timing.duration <= 0) {
             elements.forEach(element => {
                 element.opacity = this._highlightOpacity(element);
             });
@@ -208,8 +225,8 @@ export class Legend extends ChartComponent {
         }
 
         this.renderer.transition(elements, element => ({
-            duration: ANIMATION_REFERENCE.hover,
-            ease: animation.ease,
+            duration: timing.duration,
+            ease: timing.ease,
             state: {
                 opacity: this._highlightOpacity(element),
             },

@@ -660,9 +660,11 @@ export class Chart<
      * mid-fade-in still restores to full, and restoring returns to the true value.
      *
      * @param id - The legend item id to isolate, or `null` to restore every group.
+     * @param immediate - Settle the groups and legend at their target opacity without transitioning,
+     * so a caller that exports straight afterwards captures the chart at rest.
      * @returns `true` when the id matched at least one registered group (always `true` for `null`).
      */
-    protected applySeriesHighlight(id: string | null): boolean {
+    protected applySeriesHighlight(id: string | null, immediate: boolean = false): boolean {
         if (this._highlightGroups.length === 0) {
             this._activeHighlight = id;
             return false;
@@ -673,10 +675,14 @@ export class Chart<
             return false;
         }
 
-        this._activeHighlight = id;
-        this.legend?.setHighlight(id);
-
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const timing = {
+            duration: immediate ? 0 : duration,
+            ease,
+        };
+
+        this._activeHighlight = id;
+        this.legend?.setHighlight(id, timing);
 
         this._highlightGroups.forEach(({ group, owners }) => {
             const active = id === null || highlightOwnersInclude(owners, id);
@@ -696,15 +702,26 @@ export class Chart<
                 // Seed a concrete opacity only where there is none, or a fade-in would snap to full.
                 element.opacity ??= rest;
 
+                const state = {
+                    opacity: active ? rest : rest * HIGHLIGHT_DIM_OPACITY,
+                };
+
+                if (immediate) {
+                    // A zero-duration transition lands a frame later, so write the state and paint it.
+                    element.interpolate(state)(1);
+                    return;
+                }
+
                 this.renderer.transition(element, {
-                    duration,
-                    ease,
-                    state: {
-                        opacity: active ? rest : rest * HIGHLIGHT_DIM_OPACITY,
-                    },
+                    ...timing,
+                    state,
                 });
             });
         });
+
+        if (immediate) {
+            this.renderer.start();
+        }
 
         return true;
     }
@@ -856,7 +873,9 @@ export class Chart<
         this._activeMarks = [];
         marks.forEach(mark => mark.leave({ duration: 0 }));
 
-        this._releaseHighlight();
+        // A mark's own chart-wide restore animates, so settle it too or the chart is still moving on return.
+        this._programmaticSeries = false;
+        this.applySeriesHighlight(null, true);
     }
 
     /** Exports a snapshot of the chart's rendered context (image, url, or string). See {@link Context.export}. */
