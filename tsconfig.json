@@ -36,6 +36,7 @@
             "@ripl/terminal": ["./packages/terminal/src/index.ts"],
             "@ripl/node": ["./packages/node/src/index.ts"],
             "@ripl/test-utils": ["./packages/test-utils/src/index.ts"],
+            "@ripl/vue": ["./adapters/vue/src/index.ts"],
         }
     },
     "files": [

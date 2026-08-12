@@ -2074,6 +2074,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/vue@workspace:adapters/vue":
+  version: 0.0.0-use.local
+  resolution: "@ripl/vue@workspace:adapters/vue"
+  dependencies:
+    "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+    "@ripl/web": "workspace:^"
+    vue: "npm:^3.5.40"
+  peerDependencies:
+    vue: ^3.5.0
+  languageName: unknown
+  linkType: soft
+
 "@ripl/web@workspace:^, @ripl/web@workspace:packages/web":
   version: 0.0.0-use.local
   resolution: "@ripl/web@workspace:packages/web"

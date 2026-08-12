@@ -1,0 +1,67 @@
+{
+    "name": "@ripl/vue",
+    "version": "1.3.0",
+    "description": "Declarative Vue 3 components and compositions for Ripl",
+    "keywords": [
+        "ripl",
+        "vue",
+        "vue3",
+        "typescript",
+        "graphics",
+        "2d",
+        "data-visualization",
+        "canvas",
+        "declarative",
+        "components",
+        "composables",
+        "adapter",
+        "animation"
+    ],
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.cts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/andrewcourtice/ripl.git",
+        "directory": "adapters/vue"
+    },
+    "bugs": "https://github.com/andrewcourtice/ripl/issues",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "homepage": "https://www.ripl.run",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "dependencies": {
+        "@ripl/core": "workspace:^",
+        "@ripl/dom": "workspace:^",
+        "@ripl/utilities": "workspace:^",
+        "@ripl/web": "workspace:^"
+    },
+    "peerDependencies": {
+        "vue": "^3.5.0"
+    },
+    "devDependencies": {
+        "vue": "^3.5.40"
+    }
+}
