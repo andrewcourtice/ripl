@@ -519,8 +519,8 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: Scatte
 highlight color — without waiting for one. A bare key is the item's `key`, so it lights that item in
 every series at once; `{ key, series }` narrows it to one, and an accessor receives the chart's data
 when it is easier to address a bubble by position. `{ tooltip: true }` opens the tooltip where
-hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`), and `{ crosshair: true
-}` places the crosshair on the bubble.
+hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`), and
+`{ crosshair: true }` places the crosshair on the bubble.
 
 ```ts
 const chart = createScatterChart('#container', { data, key: 'id', series });

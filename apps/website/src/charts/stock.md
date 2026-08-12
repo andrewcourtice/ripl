@@ -253,9 +253,9 @@ chart.on('candleleave', event => console.log(event.data)); // event.data: StockC
 
 `highlightCandle` puts a candle into the same hover state the pointer would — its body softens to
 the hover fill — without waiting for one. Pass the candle's key, exactly as the chart reports it in
-the events above, the `{ key }` ref form, or an accessor over the chart's data returning either. `{
-tooltip: true }` opens the candle's tooltip where hovering would, and `{ crosshair: true }` places
-the crosshair on it.
+the events above, the `{ key }` ref form, or an accessor over the chart's data returning either.
+`{ tooltip: true }` opens the candle's tooltip where hovering would, and `{ crosshair: true }`
+places the crosshair on it.
 
 ```ts
 const chart = createStockChart('#container', {

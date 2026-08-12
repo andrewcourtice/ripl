@@ -510,8 +510,8 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: TrendC
 to a full-strength fill, points grown — without waiting for one. The two split the chart by series
 type: bars are matched by `highlightBar`, line and area points by `highlightMarker`, so a category
 with both can be lit either way. A bare key lights that category across every series of the relevant
-type; `{ key, series }` narrows it to one, and an accessor receives the chart's data. `{ tooltip:
-true }` opens the mark's tooltip and `{ crosshair: true }` places the crosshair on it.
+type; `{ key, series }` narrows it to one, and an accessor receives the chart's data.
+`{ tooltip: true }` opens the mark's tooltip and `{ crosshair: true }` places the crosshair on it.
 
 ```ts
 const chart = createTrendChart('#container', { data, key: 'month', series });

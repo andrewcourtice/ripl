@@ -244,9 +244,9 @@ chart.on('nodeleave', event => console.log(event.data)); // event.data: Sunburst
 
 `highlightNode` puts an arc into the same hover state the pointer would — which reads as every other
 arc dimming — without waiting for one. Pass the node's id, the `{ key }` ref form, or an accessor
-over the chart's root nodes returning either. Only that node lights, not its branch — widening the
-highlight to a whole subtree is what a legend hover does. `{ tooltip: true }` opens the arc's
-tooltip where hovering would; a sunburst draws no crosshair, so `crosshair` is ignored here.
+over the chart's root nodes returning either. Only that node is picked out, not its branch —
+widening the highlight to a whole subtree is what a legend hover does. `{ tooltip: true }` opens the
+arc's tooltip where hovering would; a sunburst draws no crosshair, so `crosshair` is ignored here.
 
 ```ts
 const chart = createSunburstChart('#container', { data });

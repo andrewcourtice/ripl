@@ -191,9 +191,9 @@ chart.on('binleave', event => console.log(event.data)); // event.data: Histogram
 `highlightBin` puts a bin bar into the same hover state the pointer would — its fill goes to full
 strength — without waiting for one. Bins are derived from the data rather than carrying keys of
 their own, so a bin is addressed by index: `0` is the leftmost bar and the index counts up across
-the value axis. An accessor over the chart's data can compute that index instead. `{ tooltip: true
-}` opens the bin's tooltip where hovering would, and `{ crosshair: true }` places the crosshair on
-it.
+the value axis. An accessor over the chart's data can compute that index instead.
+`{ tooltip: true }` opens the bin's tooltip where hovering would, and `{ crosshair: true }` places
+the crosshair on it.
 
 ```ts
 const chart = createHistogramChart('#container', { data, value: 'amount', bins: 12 });

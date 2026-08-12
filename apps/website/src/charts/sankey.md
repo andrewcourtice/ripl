@@ -271,9 +271,9 @@ chart.on('linkleave', event => console.log(event.data)); // event.data: SankeyCh
 `highlightNode` and `highlightLink` put a mark into the same hover state the pointer would — it
 brightens out of its rest tint — without waiting for one. A node takes its id or the `{ key }` ref
 form; a flow takes its id (`"<source>-<target>"`) or a `{ source, target }` ref naming the nodes it
-joins. Either method also accepts an accessor over the chart's `nodes` or `links`. `{ tooltip: true
-}` opens the mark's tooltip where hovering would; a sankey diagram draws no crosshair, so
-`crosshair` is ignored here.
+joins. Either method also accepts an accessor over the chart's `nodes` or `links`.
+`{ tooltip: true }` opens the mark's tooltip where hovering would; a sankey diagram draws no
+crosshair, so `crosshair` is ignored here.
 
 ```ts
 const chart = createSankeyChart('#container', { nodes, links });
