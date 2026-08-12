@@ -55,9 +55,9 @@
                                 </ripl-transition>
 
                                 <ripl-transition
-                                    :enter="labelFade"
+                                    :enter="labelEnter"
                                     :update="barUpdate"
-                                    :leave="labelFade"
+                                    :leave="labelLeave"
                                 >
                                     <ripl-text
                                         v-for="bar in bars"
@@ -165,9 +165,11 @@ const AXIS_COLOR = 'rgba(140, 150, 165, 0.55)';
 const AXIS_FONT = '11px sans-serif';
 const VALUE_FONT = '600 11px sans-serif';
 
+// `narrowSymbol`, or a non-US reader gets `US$7.4k`: the default currency display is locale-derived.
 const COMPACT_CURRENCY = {
     style: 'currency',
     currency: 'USD',
+    currencyDisplay: 'narrowSymbol',
     notation: 'compact',
     maximumFractionDigits: 1,
 } as const;
@@ -175,8 +177,15 @@ const COMPACT_CURRENCY = {
 const FULL_CURRENCY = {
     style: 'currency',
     currency: 'USD',
+    currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: 0,
 } as const;
+
+// Mirrors ANIMATION_REFERENCE in @ripl/charts, so the adapter's demo moves like the rest of Ripl.
+const ENTER_DURATION = 1000;
+const UPDATE_DURATION = 1000;
+const EXIT_DURATION = 450;
+const AXIS_DURATION = 500;
 
 function randomValue(): number {
     return Math.round((2 + Math.random() * 14) * 1000);
@@ -270,8 +279,8 @@ const bars = computed(() => {
 
 const barEnter = computed(() => animate.value
     ? (element: unknown, index: number, length: number) => ({
-        duration: 700,
-        delay: (index / length) * 400,
+        duration: ENTER_DURATION,
+        delay: (index / length) * ENTER_DURATION,
         ease: easeOutCubic,
         state: {
             y: baseline.value,
@@ -282,14 +291,14 @@ const barEnter = computed(() => animate.value
 
 const barUpdate = computed(() => animate.value
     ? {
-        duration: 400,
+        duration: UPDATE_DURATION,
         ease: easeOutCubic,
     }
     : undefined);
 
 const barLeave = computed(() => animate.value
     ? {
-        duration: 300,
+        duration: EXIT_DURATION,
         ease: easeOutCubic,
         state: {
             y: baseline.value,
@@ -299,9 +308,19 @@ const barLeave = computed(() => animate.value
     }
     : undefined);
 
-const labelFade = computed(() => animate.value
+const labelEnter = computed(() => animate.value
     ? {
-        duration: 300,
+        duration: ENTER_DURATION,
+        ease: easeOutCubic,
+        state: {
+            opacity: 0,
+        },
+    }
+    : undefined);
+
+const labelLeave = computed(() => animate.value
+    ? {
+        duration: EXIT_DURATION,
         ease: easeOutCubic,
         state: {
             opacity: 0,
@@ -311,7 +330,7 @@ const labelFade = computed(() => animate.value
 
 const axisPhase = computed(() => animate.value
     ? {
-        duration: 400,
+        duration: AXIS_DURATION,
         ease: easeOutCubic,
     }
     : undefined);

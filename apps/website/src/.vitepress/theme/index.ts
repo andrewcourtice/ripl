@@ -77,6 +77,8 @@ import Example3DWebGPU from '../components/example-3d-webgpu.vue';
 import ExampleTerminalInteractive from '../components/example-terminal-interactive.vue';
 import ExampleVueBarChart from '../components/example-vue-bar-chart.vue';
 
+import ExampleVueQuickStart from '../components/example-vue-quick-start.vue';
+
 import {
     createRipl,
 } from '@ripl/vue';
@@ -126,6 +128,7 @@ export default {
         app.component('example-3d-webgpu', Example3DWebGPU);
         app.component('example-terminal-interactive', ExampleTerminalInteractive);
         app.component('example-vue-bar-chart', ExampleVueBarChart);
+        app.component('example-vue-quick-start', ExampleVueQuickStart);
 
         enhanceAppWithTabs(app);
 

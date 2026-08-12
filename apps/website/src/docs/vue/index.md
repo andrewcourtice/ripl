@@ -47,18 +47,38 @@ Then describe a scene. `<ripl-context>` renders a plain element that the canvas 
     <ripl-context style="width: 400px; height: 300px">
         <ripl-scene>
             <ripl-renderer>
-                <ripl-circle
-                    :cx="150"
-                    :cy="150"
-                    :radius="50"
-                    fill="#1e6978"
-                    @click="grow"
-                />
+                <ripl-transition :update="{ duration: 400, ease: easeOutCubic }">
+                    <ripl-circle
+                        :cx="200"
+                        :cy="150"
+                        :radius="grown ? 90 : 50"
+                        :fill="grown ? '#ff006e' : '#3a86ff'"
+                        @click="grown = !grown"
+                    />
+                </ripl-transition>
             </ripl-renderer>
         </ripl-scene>
     </ripl-context>
 </template>
+
+<script lang="ts" setup>
+import {
+    ref,
+} from 'vue';
+
+import {
+    easeOutCubic,
+} from '@ripl/web';
+
+const grown = ref(false);
+</script>
 ```
+
+Click the circle:
+
+<example-vue-quick-start />
+
+That is the whole thing: props drive the element's state, `@click` is an ordinary Vue listener, and wrapping the element in a `<ripl-transition>` animates every prop change through it.
 
 Both casings work: `<ripl-circle>` and `<RiplCircle>` resolve to the same component, exported as `RiplCircle`.
 

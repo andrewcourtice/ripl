@@ -287,6 +287,10 @@ export default defineConfig({
                                 text: '3D',
                                 link: '/docs/3d/',
                             },
+                        ],
+                    },
+                    {
+                        items: [
                             {
                                 text: 'Vue',
                                 link: '/docs/vue/',
