@@ -763,7 +763,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             onClick: event => this.emit('segmentclick', event),
         });
 
-        // The arc carries the hover treatment but no id of its own, so register it under its group's key.
         this.registerMark('segment', key, arc);
     }
 }

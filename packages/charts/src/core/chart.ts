@@ -663,15 +663,19 @@ export class Chart<
      * @returns `true` when the id matched at least one registered group (always `true` for `null`).
      */
     protected applySeriesHighlight(id: string | null): boolean {
-        this._activeHighlight = id;
-
         if (this._highlightGroups.length === 0) {
+            this._activeHighlight = id;
             return false;
         }
 
+        // Dimming for an id no group owns would leave the whole chart dimmed with nothing tracking the restore.
+        if (id !== null && !this._highlightGroups.some(({ owners }) => highlightOwnersInclude(owners, id))) {
+            return false;
+        }
+
+        this._activeHighlight = id;
         this.legend?.setHighlight(id);
 
-        const matched = id === null || this._highlightGroups.some(({ owners }) => highlightOwnersInclude(owners, id));
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         this._highlightGroups.forEach(({ group, owners }) => {
@@ -702,7 +706,7 @@ export class Chart<
             });
         });
 
-        return matched;
+        return true;
     }
 
     /**
