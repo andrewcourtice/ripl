@@ -46,6 +46,11 @@ A chart's highlight methods mirror its events. The mark family in the event name
 | `nodeenter` / … | `highlightNode` | Treemap, Sunburst, Packed Circle, Sankey, Arc Diagram, Force-Directed |
 | `linkenter` / … | `highlightLink` | Sankey, Chord, Arc Diagram, Force-Directed |
 | `cellenter` / … | `highlightCell` | Heatmap |
+| `boxenter` / … | `highlightBox` | Box Plot |
+| `binenter` / … | `highlightBin` | Histogram |
+| `candleenter` / … | `highlightCandle` | Stock |
+| `taskenter` / … | `highlightTask` | Gantt |
+| `valueenter` / … | `highlightValue` | Gauge |
 
 The pairing goes further than the name: **the key you pass is the key the event reports**. A bar event carries the category as `xValue`, and that is exactly what `highlightBar` takes, so a key read off an event can be handed straight back:
 
@@ -64,7 +69,7 @@ chart.on('barclick', event => {
 });
 ```
 
-Each chart's page lists its events and their payloads; the [Method Reference](#method-reference) below names the field that doubles as the selector for every chart.
+Each chart's page lists the events it emits and their payloads; the [Method Reference](#method-reference) below lists what every chart's methods select.
 
 ## Selecting a Mark
 
@@ -282,7 +287,7 @@ const chart = createLineChart('#container', {
 chart.highlightSeries('revenue');
 ```
 
-The id is whatever the chart puts in its legend: a series `id` on the multi-series charts, and the segment key on the charts whose legend lists segments (pie, polar area, funnel, treemap and friends), where it isolates that segment.
+The id is whatever the chart puts in its legend: a series `id` on the multi-series charts, and the segment key on the charts whose legend lists segments — pie, polar area, radial bar, funnel, treemap, packed circle, sunburst — where it isolates that segment.
 
 **The legend follows.** The matching legend entry stays lit while every other entry — swatch and label alike — dims with the plot, so a highlight driven from your own UI reads in the legend too. An entry toggled off stays visibly inactive underneath the dim.
 
@@ -377,6 +382,7 @@ The selector and option types are exported from `@ripl/charts` for typing your o
 <!-- eslint-skip -->
 ```ts
 import type {
+    BarChart,
     CellRef,
     HighlightOptions,
     LinkRef,
