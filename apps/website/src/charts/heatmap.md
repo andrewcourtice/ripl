@@ -275,7 +275,14 @@ it lights that whole row or column. An accessor over the chart's data can return
 line apart — and a heatmap draws no crosshair, so `crosshair` is ignored here.
 
 ```ts
-const chart = createHeatmapChart('#container', { data, keyX: 'hour', keyY: 'day', value: 'value' });
+const chart = createHeatmapChart('#container', {
+    data,
+    keyX: 'hour',
+    keyY: 'day',
+    value: 'value',
+    xCategories,
+    yCategories,
+});
 
 // One cell, with its tooltip.
 chart.highlightCell({ x: '9am', y: 'Mon' }, { tooltip: true });

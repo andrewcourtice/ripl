@@ -295,8 +295,8 @@ chart.on('markerleave', event => console.log(event.data)); // event.data: RadarC
 `highlightMarker` applies the treatment hovering a point does — that marker grows and every other
 series dims — without waiting for a pointer. Markers are keyed by their axis label, the same
 `axisLabel` the events above report, so a bare label lights that axis in every series;
-`{ key, series }` narrows it to one series' point, and an accessor receives the chart's data.
-`{ tooltip: true }` opens the point's tooltip where hovering would; a radar chart draws no crosshair,
+`{ key, series }` narrows it to one series' point, and an accessor can compute the label rather than
+name it. `{ tooltip: true }` opens the point's tooltip where hovering would; a radar draws no crosshair,
 so `crosshair` is ignored here.
 
 ```ts
@@ -305,9 +305,9 @@ const chart = createRadarChart('#container', { data, categories, series });
 // Light the Speed axis on every series, with its tooltip.
 chart.highlightMarker('Speed', { tooltip: true });
 
-// Only player 1's point, then the axis the third row describes.
+// Only player 1's point, then the last axis, whatever it is called.
 chart.highlightMarker({ key: 'Speed', series: 'player1' });
-chart.highlightMarker(data => data[2].axis);
+chart.highlightMarker(() => categories[categories.length - 1]);
 
 chart.clearHighlight();
 ```

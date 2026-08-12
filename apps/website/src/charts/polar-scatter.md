@@ -329,9 +329,9 @@ const chart = createPolarScatterChart('#container', { data, series, max: 100 });
 // Light the third reading in every series, with its tooltip.
 chart.highlightMarker('2', { tooltip: true });
 
-// Only the wind series' marker, then the first gust above 90.
+// Only the wind series' marker, then the most recent reading.
 chart.highlightMarker({ key: '2', series: 'wind' });
-chart.highlightMarker(data => String(data.findIndex(item => item.gust > 90)));
+chart.highlightMarker(data => String(data.length - 1));
 
 chart.clearHighlight();
 ```

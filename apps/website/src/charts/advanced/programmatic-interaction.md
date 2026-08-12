@@ -70,7 +70,7 @@ Each chart's page lists its events and their payloads; the [Method Reference](#m
 
 A selector takes three forms, and every chart accepts all three.
 
-### By key
+### By Key
 
 The bare key selects the mark at that key. On a multi-series chart it selects that key in *every* series, so one call lights the whole category:
 
@@ -88,7 +88,7 @@ const chart = createLineChart('#container', {
 chart.highlightMarker('mar');
 ```
 
-### Narrowed to a series
+### Narrowed to a Series
 
 Pass a `{ key, series }` ref to select one of them. The `series` is the series `id` — the same `seriesId` the mark's events report:
 
@@ -105,7 +105,7 @@ const chart = createLineChart('#container', {
 chart.highlightMarker({ key: 'mar', series: 'revenue' });
 ```
 
-### By position in the data
+### By Position in the Data
 
 An accessor receives the chart's own dataset and returns a key or a ref, so a mark can be addressed by where it sits in the data without tracking keys at all:
 
@@ -127,7 +127,7 @@ chart.highlightMarker(data => data[data.length - 1].month);
 
 The accessor is called with whichever array the chart's marks are built from: `data` on most charts, `nodes` or `links` on the network charts. It runs at call time, against the data the chart currently holds.
 
-### The other ref shapes
+### The Other Ref Shapes
 
 Marks that are not addressed by a single key take a ref shaped to what they are, and the same three forms apply to it:
 
@@ -147,7 +147,7 @@ chart.highlightLink(links => ({ source: links[0].source, target: links[0].target
 - **Histogram bins** are derived from the data rather than carrying a key, so `highlightBin` takes a numeric index (or an accessor returning one), counting up in the order the bars are drawn.
 - **The gauge** has a single arc, so `highlightValue` takes no selector — only options.
 
-### Matching more than one mark
+### Matching More Than One Mark
 
 Some selectors deliberately match several marks, and all of them light together:
 
@@ -157,6 +157,8 @@ const chart = createHeatmapChart('#container', {
     keyX: 'hour',
     keyY: 'day',
     value: 'value',
+    xCategories: ['9am', '10am', '11am'],
+    yCategories: ['Mon', 'Tue', 'Wed'],
 });
 
 // One cell.
