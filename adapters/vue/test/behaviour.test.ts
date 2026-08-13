@@ -735,4 +735,57 @@ describe('@ripl/vue behaviour', () => {
 
     });
 
+    describe('Construction-only props', () => {
+
+        test('Should hand interpolators to the element and leave them out of the sync path', async () => {
+            const interpolator = vi.fn(() => () => 5);
+            const cx = ref(1);
+            const circle = shallowRef<Circle>();
+
+            const Harness = defineComponent({
+                setup() {
+                    return () => h(RiplContext, null, {
+                        default: () => h(RiplScene, null, {
+                            default: () => h(RiplRenderer, {
+                                autoStop: false,
+                            }, {
+                                default: () => h(RiplTransition, {
+                                    update: {
+                                        duration: 40,
+                                    },
+                                }, {
+                                    default: () => h(RiplCircle, {
+                                        ref: circle,
+                                        id: 'a',
+                                        cy: 1,
+                                        radius: 1,
+                                        cx: cx.value,
+                                        interpolators: {
+                                            cx: interpolator,
+                                        },
+                                    }),
+                                }),
+                            }),
+                        }),
+                    });
+                },
+            });
+
+            const wrapper = mount(Harness);
+
+            cx.value = 2;
+            await nextTick();
+
+            await vi.waitFor(() => expect(interpolator).toHaveBeenCalled(), {
+                timeout: 3000,
+            });
+
+            // A protected field on the element, so a later change must never reach the write path.
+            expect(circle.value?.$state.interpolators).toBeUndefined();
+
+            wrapper.unmount();
+        });
+
+    });
+
 });

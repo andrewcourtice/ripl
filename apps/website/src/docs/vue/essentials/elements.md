@@ -31,6 +31,7 @@ On top of its own state, every element accepts the full base state — `fill`, `
 | `class` | Class names for querying, in any of Vue's class binding forms. |
 | `data` | Arbitrary user data, typically the datum backing the element. |
 | `pointerEvents` | Which parts respond to hit testing: `all`, `none`, `stroke` or `fill`. |
+| `interpolators` | Per-property interpolator overrides, layered over the element type's own. Read once, at construction. |
 | `autoFill`, `autoStroke`, `clip`, `cachePath` | Painting flags on path-backed shapes. |
 
 `class` binds to the element's class list, not to the marker node the component renders, so `scene.query('.segment')` finds it:

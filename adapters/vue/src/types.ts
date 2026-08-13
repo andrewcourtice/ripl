@@ -1,5 +1,6 @@
 import type {
     BaseElementState,
+    ElementInterpolators,
     ElementPointerEvents,
     Event,
     Group,
@@ -93,6 +94,11 @@ export interface RiplElementOptionProps {
     data?: unknown;
     /** Which parts of the element respond to pointer hit testing. Defaults to `all`. */
     pointerEvents?: ElementPointerEvents;
+    /**
+     * Interpolator overrides for individual state properties, layered over the defaults the element
+     * type declares. Read once, when the element is constructed.
+     */
+    interpolators?: ElementInterpolators<BaseElementState>;
 }
 
 /** Painting options accepted by every path-backed shape. */
