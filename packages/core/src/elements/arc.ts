@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -203,6 +204,20 @@ function traceRoundedWedge(path: ContextPath, cx: number, cy: number, radius: nu
     path.closePath();
 }
 
+const ARC_DEFAULTS: ElementDefaults<ArcState> = {
+    interpolators: {
+        borderRadius: interpolateNumber,
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        endAngle: interpolateNumber,
+        innerRadius: interpolateNumber,
+        padAngle: interpolateNumber,
+        padWidth: interpolateNumber,
+        radius: interpolateNumber,
+        startAngle: interpolateNumber,
+    },
+};
+
 /** An arc or annular sector shape supporting inner radius, angular or constant-width padding, and rounded corners. */
 export class Arc extends Shape2D<ArcState> {
 
@@ -288,26 +303,7 @@ export class Arc extends Shape2D<ArcState> {
     }
 
     constructor(options: Shape2DOptions<ArcState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('arc', {
-            ...rest,
-            interpolators: {
-                borderRadius: interpolateNumber,
-                cx: interpolateNumber,
-                cy: interpolateNumber,
-                endAngle: interpolateNumber,
-                innerRadius: interpolateNumber,
-                padAngle: interpolateNumber,
-                padWidth: interpolateNumber,
-                radius: interpolateNumber,
-                startAngle: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('arc', options, ARC_DEFAULTS);
     }
 
     /** Computes the centroid point of this arc, optionally with state overrides. */

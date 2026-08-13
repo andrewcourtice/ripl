@@ -22,6 +22,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
 import {
     interpolateNumber,
 } from '@ripl/core';
@@ -54,6 +58,17 @@ export interface ParametricOptions extends Shape3DOptions<ParametricState> {
 // Small enough to approximate the tangent, large enough that the difference does not vanish into
 // floating-point noise for a surface with modest curvature.
 const DERIVATIVE_STEP = 1e-4;
+
+const PARAMETRIC_DEFAULTS: Shape3DDefaults<ParametricState> = {
+    revision: 0,
+    uSegments: 24,
+    vSegments: 24,
+    interpolators: {
+        revision: interpolateNumber,
+        uSegments: interpolateNumber,
+        vSegments: interpolateNumber,
+    },
+};
 
 /**
  * A surface tessellated from a function of two parameters.
@@ -108,22 +123,10 @@ export class Parametric extends Shape3D<ParametricState> {
     constructor(options: ParametricOptions) {
         const {
             surface,
-            interpolators,
             ...state
         } = options;
 
-        super('parametric', {
-            uSegments: 24,
-            vSegments: 24,
-            revision: 0,
-            ...state,
-            interpolators: {
-                revision: interpolateNumber,
-                uSegments: interpolateNumber,
-                vSegments: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('parametric', state, PARAMETRIC_DEFAULTS);
 
         this._surface = surface;
     }

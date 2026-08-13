@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -288,6 +289,14 @@ class SegmentedPathTracer extends ContextPath {
 
 }
 
+const POLYLINE_DEFAULTS: ElementDefaults<PolylineState> = {
+    interpolators: {
+        points: interpolatePoints,
+        renderer: interpolateAny,
+        segments: interpolateAny,
+    },
+};
+
 /** A multi-point line shape supporting various curve interpolation algorithms. */
 export class Polyline extends Shape2D<PolylineState> {
 
@@ -322,20 +331,7 @@ export class Polyline extends Shape2D<PolylineState> {
     }
 
     constructor(options: Shape2DOptions<PolylineState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('polyline', {
-            ...rest,
-            interpolators: {
-                points: interpolatePoints,
-                renderer: interpolateAny,
-                segments: interpolateAny,
-                ...interpolators,
-            },
-        });
+        super('polyline', options, POLYLINE_DEFAULTS);
     }
 
     private _trace(context: Context, path: ContextPath, renderer: PolylineRenderFunc): void {

@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -34,6 +35,15 @@ export interface PathState extends BaseElementState {
 
 /** A callback that draws custom geometry onto a `ContextPath` using the element's state. */
 export type PathRenderer = (path: ContextPath, state: PathState) => void;
+
+const PATH_DEFAULTS: ElementDefaults<PathState> = {
+    interpolators: {
+        height: interpolateNumber,
+        width: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
+};
 
 /** A general-purpose shape rendered by a user-supplied path renderer callback. */
 export class Path extends Shape2D<PathState> {
@@ -79,20 +89,10 @@ export class Path extends Shape2D<PathState> {
     constructor(options: Shape2DOptions<PathState> & { pathRenderer?: PathRenderer }) {
         const {
             pathRenderer,
-            interpolators,
             ...shapeOptions
         } = options;
 
-        super('path', {
-            ...shapeOptions,
-            interpolators: {
-                height: interpolateNumber,
-                width: interpolateNumber,
-                x: interpolateNumber,
-                y: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('path', shapeOptions, PATH_DEFAULTS);
 
         this._pathRenderer = pathRenderer;
     }

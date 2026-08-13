@@ -16,6 +16,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
 import {
     interpolateNumber,
 } from '@ripl/core';
@@ -31,6 +35,17 @@ export interface TorusState extends Shape3DState {
     /** The number of segments around the major ring. Defaults to `24`. */
     tubularSegments: number;
 }
+
+const TORUS_DEFAULTS: Shape3DDefaults<TorusState> = {
+    radialSegments: 12,
+    tubularSegments: 24,
+    interpolators: {
+        radialSegments: interpolateNumber,
+        radius: interpolateNumber,
+        tube: interpolateNumber,
+        tubularSegments: interpolateNumber,
+    },
+};
 
 /** A 3D torus (donut) shape with configurable major radius, tube radius, and tessellation. */
 export class Torus extends Shape3D<TorusState> {
@@ -72,23 +87,7 @@ export class Torus extends Shape3D<TorusState> {
     }
 
     constructor(options: Shape3DOptions<TorusState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('torus', {
-            radialSegments: 12,
-            tubularSegments: 24,
-            ...rest,
-            interpolators: {
-                radialSegments: interpolateNumber,
-                radius: interpolateNumber,
-                tube: interpolateNumber,
-                tubularSegments: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('torus', options, TORUS_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

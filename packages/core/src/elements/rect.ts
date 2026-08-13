@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -38,6 +39,16 @@ export interface RectState extends BaseElementState {
     /** The corner radius of the rectangle, uniform or per-corner. */
     borderRadius?: number | BorderRadius;
 }
+
+const RECT_DEFAULTS: ElementDefaults<RectState> = {
+    interpolators: {
+        borderRadius: interpolateBorderRadius,
+        height: interpolateNumber,
+        width: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
+};
 
 /** A rectangle shape with optional rounded corners via border radius. */
 export class Rect extends Shape2D<RectState> {
@@ -88,22 +99,7 @@ export class Rect extends Shape2D<RectState> {
     }
 
     constructor(options: Shape2DOptions<RectState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('rect', {
-            ...rest,
-            interpolators: {
-                borderRadius: interpolateBorderRadius,
-                height: interpolateNumber,
-                width: interpolateNumber,
-                x: interpolateNumber,
-                y: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('rect', options, RECT_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the rectangle. */

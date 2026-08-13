@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
 import {
     interpolateNumber,
 } from '@ripl/core';
@@ -23,6 +27,13 @@ export interface MeshOptions extends Shape3DOptions<MeshState> {
     /** The faces the mesh is built from. Held by reference and never copied. */
     faces?: Face3D[];
 }
+
+const MESH_DEFAULTS: Shape3DDefaults<MeshState> = {
+    revision: 0,
+    interpolators: {
+        revision: interpolateNumber,
+    },
+};
 
 /**
  * A mesh built from an explicit list of faces.
@@ -54,18 +65,10 @@ export class Mesh extends Shape3D<MeshState> {
     constructor(options?: MeshOptions) {
         const {
             faces = [],
-            interpolators,
             ...state
         } = options ?? {};
 
-        super('mesh', {
-            revision: 0,
-            ...state,
-            interpolators: {
-                revision: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('mesh', state, MESH_DEFAULTS);
 
         this._faces = faces;
     }

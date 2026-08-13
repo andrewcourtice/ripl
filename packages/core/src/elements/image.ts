@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     ElementOptions,
 } from '../core';
 
@@ -120,6 +121,16 @@ export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA,
     };
 };
 
+const IMAGE_DEFAULTS: ElementDefaults<ImageState> = {
+    interpolators: {
+        height: interpolateNumber,
+        image: interpolateImage,
+        width: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
+};
+
 /** An image element that draws a `CanvasImageSource` at a given position and optional size. */
 export class ImageElement extends Element<ImageState> {
 
@@ -169,22 +180,7 @@ export class ImageElement extends Element<ImageState> {
     }
 
     constructor(options: ElementOptions<ImageState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('image', {
-            ...rest,
-            interpolators: {
-                height: interpolateNumber,
-                image: interpolateImage,
-                width: interpolateNumber,
-                x: interpolateNumber,
-                y: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('image', options, IMAGE_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the image. */

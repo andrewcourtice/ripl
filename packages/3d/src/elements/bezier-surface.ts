@@ -16,6 +16,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
 import {
     interpolateNumber,
 } from '@ripl/core';
@@ -94,6 +98,15 @@ export function evaluateBezierPatch(patch: BezierPatch, u: number, v: number): V
     return [px, py, pz];
 }
 
+const BEZIER_SURFACE_DEFAULTS: Shape3DDefaults<BezierSurfaceState> = {
+    revision: 0,
+    segments: 8,
+    interpolators: {
+        revision: interpolateNumber,
+        segments: interpolateNumber,
+    },
+};
+
 /**
  * A surface tessellated from one or more bicubic Bézier patches.
  *
@@ -133,20 +146,10 @@ export class BezierSurface extends Shape3D<BezierSurfaceState> {
     constructor(options: BezierSurfaceOptions) {
         const {
             patches,
-            interpolators,
             ...state
         } = options;
 
-        super('bezier-surface', {
-            segments: 8,
-            revision: 0,
-            ...state,
-            interpolators: {
-                revision: interpolateNumber,
-                segments: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('bezier-surface', state, BEZIER_SURFACE_DEFAULTS);
 
         this._patches = patches;
     }

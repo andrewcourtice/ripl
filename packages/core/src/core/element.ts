@@ -244,6 +244,16 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     interpolators?: ElementInterpolators<TState>;
 } & TState;
 
+/**
+ * Class-level defaults, applied beneath the options a caller passes.
+ *
+ * Mirrors {@link ElementOptions} so a layer writes its defaults exactly as a caller writes options,
+ * minus the identity properties, which mean nothing per class. Precedence runs built-in defaults,
+ * then these, then the caller's options.
+ */
+export type ElementDefaults<TState extends BaseElementState = BaseElementState> =
+    Partial<Omit<ElementOptions<TState>, 'id' | 'class' | 'data'>>;
+
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
 export type ElementInterpolationKeyFrame<TValue = number> = {
     /** Position of the keyframe along the transition, from 0 to 1; distributed evenly when omitted. */
@@ -622,14 +632,28 @@ export class Element<
         this.setStateValue('transformOriginY', value);
     }
 
-    constructor(type: string, {
-        id = `${type}:${stringUniqueId()}`,
-        class: classes = [],
-        data,
-        pointerEvents = 'all',
-        interpolators = {},
-        ...state
-    }: ElementOptions<TState>) {
+    /**
+     * @param type - The element type name, used for the generated id and for selector matching.
+     * @param options - The caller's options, which win over every default.
+     * @param defaults - Defaults this element type contributes, applied beneath `options`. Pass a
+     * module-level constant where the values are fixed, so instances share it.
+     */
+    constructor(type: string, options: ElementOptions<TState>, defaults?: ElementDefaults<TState>) {
+        const {
+            interpolators: defaultInterpolators,
+            pointerEvents: defaultPointerEvents,
+            ...defaultState
+        } = defaults ?? {};
+
+        const {
+            id = `${type}:${stringUniqueId()}`,
+            class: classes = [],
+            data,
+            pointerEvents = defaultPointerEvents ?? 'all',
+            interpolators,
+            ...state
+        } = options;
+
         super();
 
         this.type = type;
@@ -640,11 +664,13 @@ export class Element<
 
         this.state = {
             ...TRANSFORM_DEFAULTS,
+            ...defaultState,
             ...state,
         } as unknown as TState;
 
         this.interpolators = {
             ...ELEMENT_INTERPOLATORS,
+            ...defaultInterpolators,
             ...interpolators,
         } as ElementInterpolators<TState>;
     }

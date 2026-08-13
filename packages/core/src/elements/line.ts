@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -30,6 +31,15 @@ export interface LineState extends BaseElementState {
     /** The y-coordinate of the line's end point. */
     y2: number;
 }
+
+const LINE_DEFAULTS: ElementDefaults<LineState> = {
+    interpolators: {
+        x1: interpolateNumber,
+        x2: interpolateNumber,
+        y1: interpolateNumber,
+        y2: interpolateNumber,
+    },
+};
 
 /** A straight line segment between two points. */
 export class Line extends Shape2D<LineState> {
@@ -71,21 +81,7 @@ export class Line extends Shape2D<LineState> {
     }
 
     constructor(options: Shape2DOptions<LineState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('line', {
-            ...rest,
-            interpolators: {
-                x1: interpolateNumber,
-                x2: interpolateNumber,
-                y1: interpolateNumber,
-                y2: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('line', options, LINE_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the line. */

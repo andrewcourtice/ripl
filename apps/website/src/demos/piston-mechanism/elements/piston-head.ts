@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -25,6 +26,14 @@ export interface PistonHeadState extends Shape3DState {
     /** Number of segments used to tessellate the cylinders. */
     segments: number;
 }
+
+const PISTON_HEAD_DEFAULTS: Shape3DDefaults<PistonHeadState> = {
+    radius: 0.09,
+    height: 0.14,
+    pinRadius: 0.02,
+    pinLength: 0.22,
+    segments: 24,
+};
 
 /** A basic piston head: a capped cylinder body with a wrist pin through its lower half. */
 export class PistonHead extends Shape3D<PistonHeadState> {
@@ -70,14 +79,7 @@ export class PistonHead extends Shape3D<PistonHeadState> {
     }
 
     constructor(options?: Shape3DOptions<PistonHeadState>) {
-        super('piston-head', {
-            radius: 0.09,
-            height: 0.14,
-            pinRadius: 0.02,
-            pinLength: 0.22,
-            segments: 24,
-            ...options,
-        });
+        super('piston-head', options ?? {}, PISTON_HEAD_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

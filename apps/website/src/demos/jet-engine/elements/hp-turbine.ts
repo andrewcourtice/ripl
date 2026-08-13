@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -19,6 +20,14 @@ export interface HPTurbineState extends Shape3DState {
     bladeHeight: number;
     segments: number;
 }
+
+const HP_TURBINE_DEFAULTS: Shape3DDefaults<HPTurbineState> = {
+    radius: 0.35,
+    length: 0.2,
+    bladeCount: 16,
+    bladeHeight: 0.1,
+    segments: 32,
+};
 
 export class HPTurbine extends Shape3D<HPTurbineState> {
 
@@ -63,14 +72,7 @@ export class HPTurbine extends Shape3D<HPTurbineState> {
     }
 
     constructor(options: Shape3DOptions<HPTurbineState>) {
-        super('hp-turbine', {
-            radius: 0.35,
-            length: 0.2,
-            bladeCount: 16,
-            bladeHeight: 0.1,
-            segments: 32,
-            ...options,
-        });
+        super('hp-turbine', options, HP_TURBINE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -28,6 +29,14 @@ export interface CircleState extends BaseElementState {
     /** The radius of the circle. */
     radius: number;
 }
+
+const CIRCLE_DEFAULTS: ElementDefaults<CircleState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        radius: interpolateNumber,
+    },
+};
 
 /** A circle shape rendered at a center point with a given radius. */
 export class Circle extends Shape2D<CircleState> {
@@ -60,20 +69,7 @@ export class Circle extends Shape2D<CircleState> {
     }
 
     constructor(options: Shape2DOptions<CircleState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('circle', {
-            ...rest,
-            interpolators: {
-                cx: interpolateNumber,
-                cy: interpolateNumber,
-                radius: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('circle', options, CIRCLE_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the circle. */

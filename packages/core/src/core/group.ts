@@ -1,5 +1,6 @@
 import type {
     BaseElementState,
+    ElementDefaults,
     ElementEventMap,
     ElementOptions,
 } from './element';
@@ -75,8 +76,8 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     constructor({
         children = [],
         ...options
-    }: GroupOptions = {}) {
-        super('group', options);
+    }: GroupOptions = {}, defaults?: ElementDefaults) {
+        super('group', options, defaults);
 
         this.abstract = true;
         this.add(children);

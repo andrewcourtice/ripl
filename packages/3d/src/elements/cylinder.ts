@@ -24,6 +24,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
 import {
     interpolateNumber,
 } from '@ripl/core';
@@ -39,6 +43,16 @@ export interface CylinderState extends Shape3DState {
     /** The number of segments around the circumference. Defaults to `16`. */
     segments: number;
 }
+
+const CYLINDER_DEFAULTS: Shape3DDefaults<CylinderState> = {
+    segments: 16,
+    interpolators: {
+        height: interpolateNumber,
+        radiusBottom: interpolateNumber,
+        radiusTop: interpolateNumber,
+        segments: interpolateNumber,
+    },
+};
 
 /** A 3D cylinder shape with independent top and bottom radii for truncated cones. */
 export class Cylinder extends Shape3D<CylinderState> {
@@ -80,22 +94,7 @@ export class Cylinder extends Shape3D<CylinderState> {
     }
 
     constructor(options: Shape3DOptions<CylinderState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('cylinder', {
-            segments: 16,
-            ...rest,
-            interpolators: {
-                height: interpolateNumber,
-                radiusBottom: interpolateNumber,
-                radiusTop: interpolateNumber,
-                segments: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('cylinder', options, CYLINDER_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

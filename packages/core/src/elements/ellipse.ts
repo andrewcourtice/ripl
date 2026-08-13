@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -36,6 +37,17 @@ export interface EllipseState extends BaseElementState {
     /** The end angle of the ellipse's arc, in radians. */
     endAngle: number;
 }
+
+const ELLIPSE_DEFAULTS: ElementDefaults<EllipseState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        endAngle: interpolateNumber,
+        radiusX: interpolateNumber,
+        radiusY: interpolateNumber,
+        startAngle: interpolateNumber,
+    },
+};
 
 /** An ellipse shape rendered at a center point with separate x/y radii, rotation, and angle range. */
 export class Ellipse extends Shape2D<EllipseState> {
@@ -108,23 +120,7 @@ export class Ellipse extends Shape2D<EllipseState> {
     }
 
     constructor(options: Shape2DOptions<EllipseState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('ellipse', {
-            ...rest,
-            interpolators: {
-                cx: interpolateNumber,
-                cy: interpolateNumber,
-                endAngle: interpolateNumber,
-                radiusX: interpolateNumber,
-                radiusY: interpolateNumber,
-                startAngle: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('ellipse', options, ELLIPSE_DEFAULTS);
 
         // Ellipses rotate about their center by convention; a % origin keeps tracking `cx`/`cy`.
         if (options.transformOriginX === undefined && options.transformOriginY === undefined) {

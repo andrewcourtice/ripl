@@ -1,6 +1,7 @@
 import type {
     BaseElementState,
     Context,
+    Shape2DDefaults,
     Shape2DOptions,
 } from '@ripl/core';
 
@@ -31,6 +32,18 @@ export interface RibbonState extends BaseElementState {
     /** End angle of the target arc, in radians. */
     targetEnd: number;
 }
+
+const RIBBON_DEFAULTS: Shape2DDefaults<RibbonState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        radius: interpolateNumber,
+        sourceEnd: interpolateNumber,
+        sourceStart: interpolateNumber,
+        targetEnd: interpolateNumber,
+        targetStart: interpolateNumber,
+    },
+};
 
 /** A chord diagram ribbon connecting two arc segments with quadratic Bézier curves through the center. */
 export class Ribbon extends Shape2D<RibbonState> {
@@ -99,24 +112,7 @@ export class Ribbon extends Shape2D<RibbonState> {
     }
 
     constructor(options: Shape2DOptions<RibbonState>) {
-        const {
-            interpolators,
-            ...rest
-        } = options;
-
-        super('ribbon', {
-            ...rest,
-            interpolators: {
-                cx: interpolateNumber,
-                cy: interpolateNumber,
-                radius: interpolateNumber,
-                sourceEnd: interpolateNumber,
-                sourceStart: interpolateNumber,
-                targetEnd: interpolateNumber,
-                targetStart: interpolateNumber,
-                ...interpolators,
-            },
-        });
+        super('ribbon', options, RIBBON_DEFAULTS);
     }
 
     public _getLocalBoundingBox(): Box {
