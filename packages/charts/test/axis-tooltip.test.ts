@@ -177,6 +177,33 @@ describe('Shared axis tooltip', () => {
         expect(tooltipLines(chart)[0]).toBe('a');
     });
 
+    it('shows the shared snapshot for a programmatic highlight asking for the tooltip', async () => {
+        const chart = createChart({ trigger: 'axis' });
+
+        await chart.render();
+
+        expect(chart.highlightMarker('b', { tooltip: true })).toBe(true);
+
+        expect(tooltipLines(chart)).toEqual([
+            'b',
+            'One: 20',
+            'Two: 60',
+        ]);
+    });
+
+    it('shows the marks\' own contents for the same highlight with the item trigger', async () => {
+        const chart = createChart();
+
+        await chart.render();
+
+        expect(chart.highlightMarker('b', { tooltip: true })).toBe(true);
+
+        expect(tooltipLines(chart)).toEqual([
+            'One: 20',
+            'Two: 60',
+        ]);
+    });
+
 });
 
 interface BarAxisTooltipInternals {

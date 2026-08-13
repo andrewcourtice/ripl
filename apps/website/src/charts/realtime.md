@@ -390,3 +390,24 @@ pixels. `event.target` and `event.stopPropagation()` are also available.
 <!-- events:start -->
 This chart emits no events.
 <!-- events:end -->
+
+## Programmatic Interaction
+
+A realtime chart has no marks to address — its points enter and leave with the window — so the one
+programmatic control is `highlightSeries`, which dims every other series exactly as hovering its
+legend entry does. It takes a series id and no options: a series highlight has no anchor, so there
+is nothing for a tooltip or crosshair to attach to.
+
+```ts
+const chart = createRealtimeChart('#container', { series });
+
+// Dim everything but the CPU trace.
+chart.highlightSeries('cpu');
+
+chart.clearHighlight();
+```
+
+The highlight is one-shot and every `push` re-renders, so on a live feed it lasts only until the
+next sample arrives — stop pushing if it needs to hold. It emits no interaction events.
+`clearHighlight()` restores the chart explicitly, and `highlightSeries` returns `false` when the id
+matched no series.

@@ -1,5 +1,8 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    LinkRef,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -67,6 +70,7 @@ import {
     arrayJoin,
     functionIdentity,
     numberExtent,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
@@ -220,6 +224,8 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             onLeave: event => this.emit('nodeleave', event),
             onClick: event => this.emit('nodeclick', event),
         });
+
+        this.registerMark('node', node.id, circle);
     }
 
     private _attachLinkHover(arc: Polyline, link: ArcDiagramLink, content: string, color: string) {
@@ -247,6 +253,49 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             onLeave: event => this.emit('linkleave', event),
             onClick: event => this.emit('linkclick', event),
         });
+
+        this.registerMark('link', `${link.source}->${link.target}`, arc);
+    }
+
+    /**
+     * Highlights a node's dot, dimming the rest of the chart exactly as hovering it does. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no node events.
+     *
+     * @param selector - The node's id, a `{ key }` ref, or an accessor over the chart's nodes.
+     * @param options - What to show alongside the node's highlight state.
+     * @returns `true` when a live node matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('alice', { tooltip: true });
+     * chart.highlightNode(nodes => nodes[0].id);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<ArcDiagramNode<TData>>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.nodes), options);
+    }
+
+    /**
+     * Highlights the arc joining two nodes, dimming the rest of the chart exactly as hovering it
+     * does. Arcs carry no id of their own, so they are addressed by the nodes they join, in the order
+     * the chart reports them in its link events.
+     *
+     * @param selector - A `{ source, target }` ref naming the nodes the arc joins, the `"source->target"` string it flattens to, or an accessor over the chart's links.
+     * @param options - What to show alongside the arc's highlight state.
+     * @returns `true` when a live arc matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightLink({ source: 'alice', target: 'bob' }, { tooltip: true });
+     * chart.highlightLink(links => ({ source: links[0].source, target: links[0].target }));
+     * ```
+     */
+    public highlightLink(selector: MarkSelector<ArcDiagramLink, LinkRef>, options?: HighlightOptions): boolean {
+        const ref = this.resolveMarkSelector(selector, this.options.links);
+        const key = typeIsString(ref) ? ref : `${ref.source}->${ref.target}`;
+
+        return this.replayMark('link', key, options);
     }
 
     public async render() {

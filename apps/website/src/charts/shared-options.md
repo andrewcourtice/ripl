@@ -456,5 +456,11 @@ Shared by every chart, regardless of type:
 | --- | --- |
 | `update(options)` | Merges partial options over the current ones and re-renders (when `autoRender` is enabled) |
 | `render()` | Renders explicitly; resolves once entry/update transitions have settled |
+| `highlightSeries(id)` | Dims every series but one, as hovering its legend entry does; returns whether the id matched |
+| `clearHighlight()` | Restores whatever a programmatic highlight changed; a no-op when nothing is highlighted |
 | `export()` | Exports the rendered chart from its context |
 | `destroy()` | Tears the chart down and releases its scene, renderer and listeners |
+
+Each chart also exposes a `highlightX` method per mark family it draws, replaying a mark's hover
+treatment — highlight, dim, tooltip, crosshair — from code. See
+[Programmatic Interaction](/charts/advanced/programmatic-interaction).

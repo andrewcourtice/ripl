@@ -323,6 +323,8 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
             onLeave: point => ctx.emit('leave', payload(point)),
             onClick: point => ctx.emit('click', payload(point)),
         });
+
+        ctx.registerMark('bar', key, bar, series.id);
     }
 
     private _createBar(series: BarSeriesLike<TData>, item: TData, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): Rect {

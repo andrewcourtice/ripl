@@ -198,3 +198,23 @@ chart.on('valueenter', event => console.log(event.data)); // event.data: GaugeCh
 chart.on('valueleave', event => console.log(event.data)); // event.data: GaugeChartValueEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+A gauge draws a single value arc, so there is nothing to select: `highlightValue` puts that arc into
+the same hover state the pointer would — full color rather than its rest tint — and takes only the
+options. `{ tooltip: true }` opens the arc's tooltip where hovering would; a gauge draws no
+crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createGaugeChart('#container', { value: 72, min: 0, max: 100 });
+
+// Light the value arc and open its tooltip.
+chart.highlightValue({ tooltip: true });
+
+chart.clearHighlight();
+```
+
+The highlight is one-shot: the next render (a resize, an `update`) or the next pointer hover
+restores the gauge, and it emits none of the `value*` events above. `clearHighlight()` restores it
+explicitly; `highlightValue` returns `false` when there is no live arc to light.

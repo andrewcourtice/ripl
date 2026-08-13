@@ -500,3 +500,31 @@ chart.on('barenter', event => console.log(event.data)); // event.data: BarChartB
 chart.on('barleave', event => console.log(event.data)); // event.data: BarChartBarEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightBar` puts a bar into the same hover state the pointer would — its fill goes to full
+strength — without waiting for one. A bare key is the category the bar sits on, so it lights that
+category in every series at once; `{ key, series }` narrows it to one series' bar, and an accessor
+receives the chart's data when it is easier to address a bar by position. `{ tooltip: true }` opens
+the tooltip where hovering would (the shared axis tooltip when `tooltip.trigger` is `'axis'`). A bar
+chart draws no crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createBarChart('#container', { data, key: 'month', series });
+
+// Light every series' bar for February, and open its tooltip.
+chart.highlightBar('Feb', { tooltip: true });
+
+// Only the sales bar, then the same bar addressed by position.
+chart.highlightBar({ key: 'Feb', series: 'sales' });
+chart.highlightBar(data => data[1].month);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `bar*` events above. `clearHighlight()` restores it explicitly, and
+`highlightSeries('sales')` dims every other series exactly as hovering its legend entry does. Both
+methods return `false` when nothing matched.

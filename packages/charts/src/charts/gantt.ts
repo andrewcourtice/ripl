@@ -4,6 +4,8 @@ import type {
 
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -795,6 +797,27 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             onLeave: point => this.emit('taskleave', payload(point)),
             onClick: point => this.emit('taskclick', payload(point)),
         });
+
+        this.registerMark('task', task.id, bar);
+    }
+
+    /**
+     * Highlights a task's bar, applying the same treatment hovering it does. The highlight is a
+     * one-shot command: the next render (a resize, an {@link Chart.update}) or the next pointer
+     * hover restores the chart, and it emits no task events.
+     *
+     * @param selector - The task's key, as the chart reports it in its task events, or an accessor over the chart's data returning one.
+     * @param options - What to show alongside the task's highlight state.
+     * @returns `true` when a live task bar matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightTask('build', { tooltip: true });
+     * chart.highlightTask(data => data[0].id);
+     * ```
+     */
+    public highlightTask(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('task', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
 }

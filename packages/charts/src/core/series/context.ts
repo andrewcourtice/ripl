@@ -94,6 +94,13 @@ export interface SeriesRenderContext<TData> {
     dataLabels: ChartDataLabelsOptions;
     /** Adds entering marks to the chart's plot-clipped content container. */
     addContent: (elements: OneOrMore<Element>) => void;
+    /**
+     * Registers a rendered mark with the host chart so its programmatic highlight methods can replay
+     * the mark's hover treatment. Renderers call it beside the hover wiring with their own mark family
+     * (`'marker'` for line/area points, `'bar'` for bars), the mark's category key, and the series it
+     * belongs to — so both the bare key and the `{ key, series }` ref resolve to it.
+     */
+    registerMark: (kind: string, key: string, element: Element, series: string) => void;
     /** Emits a normalized interaction event, which the host maps to its typed event map. */
     emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void;
     /**

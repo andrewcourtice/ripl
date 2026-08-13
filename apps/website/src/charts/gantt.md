@@ -288,3 +288,34 @@ chart.on('taskenter', event => console.log(event.data)); // event.data: GanttCha
 chart.on('taskleave', event => console.log(event.data)); // event.data: GanttChartTaskEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightTask` puts a task bar into the same hover state the pointer would — it lifts out of its
+rest tint to full color — without waiting for one. Pass the task's key, exactly as the chart reports
+it in the events above, the `{ key }` ref form, or an accessor over the chart's data returning
+either. `{ tooltip: true }` opens the task's tooltip where hovering would; a gantt chart draws no
+crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createGanttChart('#container', {
+    data,
+    key: 'id',
+    label: 'name',
+    start: 'start',
+    end: 'end',
+});
+
+// Light the build task and open its tooltip.
+chart.highlightTask('build', { tooltip: true });
+
+// The first task in the dataset.
+chart.highlightTask(data => data[0].id);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of
+the `task*` events above. `clearHighlight()` restores it explicitly; `highlightTask` returns `false`
+when the selector matched no live task bar.

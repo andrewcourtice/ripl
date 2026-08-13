@@ -5,6 +5,10 @@
  * each registered a fresh `mouseleave` listener *inside* every `mouseenter` handler, a bug that
  * leaked and accumulated listeners on every re-render. This helper registers each listener once
  * and disposes any previous registration when re-applied to a persistent element.
+ *
+ * It also attaches a {@link MarkInteraction} handle to the element, built from the same closures the
+ * listeners use and read back with {@link getMarkInteraction}, so a chart's programmatic highlight
+ * replays exactly what a hover does instead of reimplementing it.
  */
 
 import type {
@@ -14,7 +18,12 @@ import type {
     Element,
     ElementInterpolationState,
     Renderer,
+    Transition,
 } from '@ripl/core';
+
+import {
+    functionNoop,
+} from '@ripl/utilities';
 
 /** Minimal tooltip surface required by the hover helper (decouples it from the Tooltip class). */
 export interface HoverTooltip {
@@ -60,12 +69,50 @@ export interface HoverHighlightOptions {
     };
     /** Resolves the tooltip content (called on enter). */
     content?: () => string;
+    /**
+     * Toggles the chart-wide highlight for this element, called with `true` when it is highlighted
+     * and `false` when it is restored. Unlike `onEnter`/`onLeave` it fires for a programmatic
+     * highlight too, so code-driven highlights dim the rest of the chart exactly as hover does.
+     */
+    onHighlight?: (highlighted: boolean) => void;
     /** Called when the pointer enters the element, with the current pointer position. */
     onEnter?: (point: InteractionPoint) => void;
     /** Called when the pointer leaves the element, with the last known pointer position. */
     onLeave?: (point: InteractionPoint) => void;
     /** Called when the element is clicked, with the pointer position. */
     onClick?: (point: InteractionPoint) => void;
+}
+
+/** Overrides for a single {@link MarkInteraction} enter or leave. */
+export interface MarkInteractionOptions {
+    /** Whether the mark's tooltip is shown (on enter) or hidden (on leave). Defaults to `true`, matching hover. */
+    tooltip?: boolean;
+    /** Tooltip content to show in place of the mark's own — e.g. the joined content of several matched marks. */
+    content?: string;
+    /** Transition duration in milliseconds, overriding the timing the chart's `animation` thunk resolves. `0` applies the state synchronously, scheduling no transition. */
+    duration?: number;
+    /** Called after a pointer has taken this highlight over and the mark has been restored, so the caller can drop its bookkeeping. Only meaningful on {@link MarkInteraction.enter}. */
+    onTakeover?: () => void;
+}
+
+/**
+ * The replayable face of a mark's hover treatment, attached by {@link applyHoverHighlight} and read
+ * back with {@link getMarkInteraction}. The element's own `mouseenter`/`mouseleave` handlers drive
+ * it too, so a programmatic highlight and a hover run the same code path.
+ */
+export interface MarkInteraction {
+    /**
+     * Applies the highlight state, fires the chart-wide highlight and, when asked, shows the mark's
+     * tooltip. Returns `false` — having mutated nothing — when the mark is no longer attached to the
+     * scene, since transitioning a detached element would never complete.
+     */
+    enter(options?: MarkInteractionOptions): boolean;
+    /** Restores the rest state, releases the chart-wide highlight and hides the tooltip. */
+    leave(options?: MarkInteractionOptions): void;
+    /** The mark's tooltip anchor, or `undefined` when it has none. */
+    anchor(): InteractionPoint | undefined;
+    /** The mark's tooltip content, or `undefined` when it has none. */
+    content(): string | undefined;
 }
 
 /**
@@ -87,15 +134,43 @@ export type HoverHighlightStates<TElement extends Element> = {
 };
 
 const HOVER_DISPOSERS = Symbol('hover-disposers');
+const MARK_INTERACTION = Symbol('mark-interaction');
 
 interface HoverHost {
     [HOVER_DISPOSERS]?: { dispose(): void }[];
+    [MARK_INTERACTION]?: MarkInteraction;
+}
+
+/** Programmatic highlights in flight, per renderer, so a pointer entering any mark can take them over. */
+const PROGRAMMATIC_HIGHLIGHTS = new WeakMap<Renderer, Set<() => void>>();
+
+function releaseProgrammaticHighlights(renderer: Renderer): void {
+    const active = PROGRAMMATIC_HIGHLIGHTS.get(renderer);
+
+    if (!active?.size) {
+        return;
+    }
+
+    PROGRAMMATIC_HIGHLIGHTS.delete(renderer);
+    Array.from(active).forEach(release => release());
 }
 
 /**
- * Wires consistent hover behavior (highlight transition + optional tooltip) onto an element.
- * Safe to call repeatedly on the same persistent element across renders; prior listeners are
- * disposed first so handlers never accumulate.
+ * Returns the replayable hover treatment {@link applyHoverHighlight} attached to an element, or
+ * `undefined` when the element has none (it was never made interactive, or its markers are off).
+ *
+ * @param element - The element to read the handle from.
+ * @returns The element's {@link MarkInteraction}, or `undefined`.
+ */
+export function getMarkInteraction(element: Element): MarkInteraction | undefined {
+    return (element as unknown as HoverHost)[MARK_INTERACTION];
+}
+
+/**
+ * Wires consistent hover behavior (highlight transition + optional tooltip) onto an element, and
+ * attaches the {@link MarkInteraction} handle that replays it on demand. Safe to call repeatedly on
+ * the same persistent element across renders; prior listeners are disposed and the previous handle
+ * replaced, so handlers never accumulate.
  */
 export function applyHoverHighlight<TElement extends Element>(
     element: TElement,
@@ -113,6 +188,7 @@ export function applyHoverHighlight<TElement extends Element>(
         tooltip,
         anchor,
         content,
+        onHighlight,
         onEnter,
         onLeave,
         onClick,
@@ -138,43 +214,110 @@ export function applyHoverHighlight<TElement extends Element>(
         }));
     }
 
-    disposers.push(element.on('mouseenter', () => {
-        if (tooltip && anchor && content) {
-            const { x, y } = anchor();
-            tooltip.show(x, y, content());
-        }
+    let activeTransition: Transition | undefined;
+    let release: (() => void) | undefined;
 
-        onEnter?.({ ...pointer });
+    const applyState = (state: StateOf<TElement>, overrides?: MarkInteractionOptions) => {
+        // Timing stays lazy: the thunk resolves per invocation, and only then does the caller override it.
+        const resolved = animation();
+        const duration = overrides?.duration ?? resolved.duration;
 
-        if (!highlight) {
+        activeTransition?.abort();
+        activeTransition = undefined;
+
+        if (duration > 0) {
+            activeTransition = renderer.transition(element, {
+                duration,
+                ease: resolved.ease,
+                state,
+            });
+
+            // Nothing awaits a hover, so swallow the rejection the next `abort()` raises.
+            activeTransition.catch(functionNoop);
+
             return;
         }
 
-        const { duration, ease } = animation();
+        // A zero-duration transition lands a frame later, so write the state and nudge the loop to paint it.
+        element.interpolate(state)(1);
+        renderer.start();
+    };
 
-        renderer.transition(element, {
-            duration,
-            ease,
-            state: highlight,
-        });
+    const detachProgrammatic = () => {
+        if (!release) {
+            return;
+        }
+
+        PROGRAMMATIC_HIGHLIGHTS.get(renderer)?.delete(release);
+        release = undefined;
+    };
+
+    const leaveMark = (overrides?: MarkInteractionOptions) => {
+        detachProgrammatic();
+
+        if (overrides?.tooltip !== false) {
+            tooltip?.hide();
+        }
+
+        onHighlight?.(false);
+
+        if (!restore || !element.parent) {
+            activeTransition?.abort();
+            activeTransition = undefined;
+            return;
+        }
+
+        applyState(restore, overrides);
+    };
+
+    const enterMark = (overrides: MarkInteractionOptions | undefined, programmatic: boolean): boolean => {
+        if (!element.parent) {
+            return false;
+        }
+
+        const text = overrides?.content ?? content?.();
+
+        if (tooltip && anchor && text !== undefined && overrides?.tooltip !== false) {
+            const { x, y } = anchor();
+            tooltip.show(x, y, text);
+        }
+
+        onHighlight?.(true);
+
+        if (highlight) {
+            applyState(highlight, overrides);
+        }
+
+        if (programmatic) {
+            const onTakeover = overrides?.onTakeover;
+
+            detachProgrammatic();
+            release = () => {
+                release = undefined;
+                leaveMark({ duration: 0 });
+                onTakeover?.();
+            };
+
+            const active = PROGRAMMATIC_HIGHLIGHTS.get(renderer) ?? new Set<() => void>();
+
+            active.add(release);
+            PROGRAMMATIC_HIGHLIGHTS.set(renderer, active);
+        }
+
+        return true;
+    };
+
+    disposers.push(element.on('mouseenter', () => {
+        // The pointer owns the chart the moment it reaches a mark, so a code-set highlight steps aside here.
+        releaseProgrammaticHighlights(renderer);
+
+        enterMark(undefined, false);
+        onEnter?.({ ...pointer });
     }));
 
     disposers.push(element.on('mouseleave', () => {
-        tooltip?.hide();
-
+        leaveMark();
         onLeave?.({ ...pointer });
-
-        if (!restore) {
-            return;
-        }
-
-        const { duration, ease } = animation();
-
-        renderer.transition(element, {
-            duration,
-            ease,
-            state: restore,
-        });
     }));
 
     if (onClick) {
@@ -188,6 +331,12 @@ export function applyHoverHighlight<TElement extends Element>(
     }
 
     host[HOVER_DISPOSERS] = disposers;
+    host[MARK_INTERACTION] = {
+        enter: options => enterMark(options, true),
+        leave: options => leaveMark(options),
+        anchor: () => anchor?.(),
+        content: () => content?.(),
+    };
 }
 
 /**
@@ -210,8 +359,9 @@ export function arcCentroidAnchor(arc: Arc): () => InteractionPoint {
 }
 
 /**
- * How a segment reports its hover to the chart around it: the typed event it emits and the
- * chart-wide highlight it drives.
+ * The typed events a segment reports to the chart around it. They stay bound to the pointer
+ * handlers: a programmatic highlight replays the segment's treatment through its
+ * {@link MarkInteraction} handle without emitting any of them.
  *
  * @typeParam TPayload - The chart's interaction event payload, which carries the pointer position.
  */
@@ -224,18 +374,12 @@ export interface SegmentInteractionOptions<TPayload extends InteractionPoint> {
     onLeave?: (event: TPayload) => void;
     /** Emits the chart's click event for the segment. */
     onClick?: (event: TPayload) => void;
-    /**
-     * Toggles the chart-wide highlight for the hovered segment, called with `true` on enter and
-     * `false` on leave. Charts whose segments are already solid at rest use it so the hover reads
-     * as the other segments dimming rather than this one lifting.
-     */
-    onHighlight?: (hovered: boolean) => void;
 }
 
 /**
- * Wires a chart segment's full hover treatment: the tooltip and highlight transition of
- * {@link applyHoverHighlight}, plus the typed enter/leave/click events and the chart-wide highlight
- * every segmented chart emits alongside them.
+ * Wires a chart segment's full hover treatment: the tooltip, highlight transition and chart-wide
+ * highlight of {@link applyHoverHighlight}, plus the typed enter/leave/click events every segmented
+ * chart emits alongside them.
  *
  * @typeParam TElement - The element type the hover is attached to.
  * @typeParam TPayload - The chart's interaction event payload.
@@ -253,7 +397,6 @@ export function applySegmentInteraction<TElement extends Element, TPayload exten
         onEnter,
         onLeave,
         onClick,
-        onHighlight,
         ...hover
     } = options;
 
@@ -265,14 +408,8 @@ export function applySegmentInteraction<TElement extends Element, TPayload exten
 
     applyHoverHighlight(element, {
         ...hover,
-        onEnter: point => {
-            onHighlight?.(true);
-            onEnter?.(eventAt(point));
-        },
-        onLeave: point => {
-            onHighlight?.(false);
-            onLeave?.(eventAt(point));
-        },
+        onEnter: point => onEnter?.(eventAt(point)),
+        onLeave: point => onLeave?.(eventAt(point)),
         onClick: point => onClick?.(eventAt(point)),
     } as HoverHighlightOptions & HoverHighlightStates<TElement>);
 }

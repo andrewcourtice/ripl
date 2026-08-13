@@ -725,3 +725,32 @@ chart.on('markerenter', event => console.log(event.data)); // event.data: LineCh
 chart.on('markerleave', event => console.log(event.data)); // event.data: LineChartMarkerEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightMarker` puts a point into the same hover state the pointer would — the marker grows and
+takes its highlight color — without waiting for one. A bare key is the category the point sits on,
+so it lights that point in every series at once; `{ key, series }` narrows it to one, and an
+accessor receives the chart's data when it is easier to address a point by position.
+`{ tooltip: true }` opens the tooltip where hovering would (the shared axis tooltip when
+`tooltip.trigger` is `'axis'`), and `{ crosshair: true }` places the crosshair on the marker. Series
+drawn with `markers: false` have nothing to highlight.
+
+```ts
+const chart = createLineChart('#container', { data, key: 'month', series });
+
+// Light February in every series, with its tooltip and the crosshair.
+chart.highlightMarker('Feb', { tooltip: true, crosshair: true });
+
+// Only the revenue series' point, then the same point addressed by position.
+chart.highlightMarker({ key: 'Feb', series: 'revenue' });
+chart.highlightMarker(data => data[1].month);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `marker*` events above. `clearHighlight()` restores it explicitly, and
+`highlightSeries('revenue')` dims every other series exactly as hovering its legend entry does. Both
+methods return `false` when nothing matched.

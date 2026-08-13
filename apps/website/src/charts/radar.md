@@ -289,3 +289,31 @@ chart.on('markerenter', event => console.log(event.data)); // event.data: RadarC
 chart.on('markerleave', event => console.log(event.data)); // event.data: RadarChartMarkerEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightMarker` puts a point into the same hover state the pointer would — the marker grows —
+without waiting for one. Markers are keyed by their axis label, the same `axisLabel` the events
+above report, so a bare label lights that axis in every series; `{ key, series }` narrows it to one
+series' point, and an accessor can compute the label rather than name it. `{ tooltip: true }` opens
+the point's tooltip where hovering would; a radar draws no crosshair, so `crosshair` is ignored
+here.
+
+```ts
+const chart = createRadarChart('#container', { data, categories, series });
+
+// Light the Speed axis on every series, with its tooltip.
+chart.highlightMarker('Speed', { tooltip: true });
+
+// Only player 1's point, then the last axis, whatever it is called.
+chart.highlightMarker({ key: 'Speed', series: 'player1' });
+chart.highlightMarker(() => categories[categories.length - 1]);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `marker*` events above. `clearHighlight()` restores it explicitly, and
+`highlightSeries('player1')` dims every other series exactly as hovering its legend entry does. Both
+methods return `false` when nothing matched.

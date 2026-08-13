@@ -1,5 +1,8 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    LinkRef,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -81,6 +84,7 @@ import {
     functionIdentity,
     numberMaxOf,
     numberSum,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** A directional flow between two nodes in a Sankey diagram. */
@@ -427,6 +431,46 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
         return widest > 0 ? widest + NODE_LABEL_GAP : 0;
     }
 
+    /**
+     * Highlights a node, dimming the rest of the chart exactly as hovering it does. The highlight is
+     * a one-shot command: the next render (a resize, an {@link Chart.update}, a legend toggle) or the
+     * next pointer hover restores the chart, and it emits no node events.
+     *
+     * @param selector - The node's id, a `{ key }` ref, or an accessor over the chart's nodes.
+     * @param options - What to show alongside the node's highlight state.
+     * @returns `true` when a live node matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('process', { tooltip: true });
+     * chart.highlightNode(nodes => nodes[0].id);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<SankeyNode<TData>>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.nodes), options);
+    }
+
+    /**
+     * Highlights the flow between two nodes, dimming the rest of the chart exactly as hovering it
+     * does.
+     *
+     * @param selector - The link's id (`"<source>-<target>"`), a `{ source, target }` ref naming the nodes it joins, or an accessor over the chart's links.
+     * @param options - What to show alongside the link's highlight state.
+     * @returns `true` when a live link matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightLink({ source: 'a', target: 'b' }, { tooltip: true });
+     * chart.highlightLink(links => ({ source: links[0].source, target: links[0].target }));
+     * ```
+     */
+    public highlightLink(selector: MarkSelector<SankeyLink, LinkRef>, options?: HighlightOptions): boolean {
+        const ref = this.resolveMarkSelector(selector, this.options.links);
+        const key = typeIsString(ref) ? ref : `${ref.source}->${ref.target}`;
+
+        return this.replayMark('link', key, options);
+    }
+
     public async render() {
         return super.render(async (scene, renderer) => {
             const {
@@ -719,6 +763,9 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             onLeave: point => this.emit('linkleave', payload(point)),
             onClick: point => this.emit('linkclick', payload(point)),
         });
+
+        this.registerMark('link', link.id, linkEl);
+        this.registerMark('link', `${link.source.id}->${link.target.id}`, linkEl);
     }
 
     private _attachNodeHover(rect: Rect, node: LayoutNode<TData>, anchorX: number, anchorY: number) {
@@ -749,6 +796,8 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             onLeave: point => this.emit('nodeleave', payload(point)),
             onClick: point => this.emit('nodeclick', payload(point)),
         });
+
+        this.registerMark('node', node.id, rect);
     }
 
 }

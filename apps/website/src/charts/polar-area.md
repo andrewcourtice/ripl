@@ -287,3 +287,28 @@ chart.on('segmententer', event => console.log(event.data)); // event.data: Polar
 chart.on('segmentleave', event => console.log(event.data)); // event.data: PolarAreaChartSegmentEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightSegment` puts a segment into the same hover state the pointer would — every segment shares
+one rest tint, so it reads as the others dimming — without waiting for one. Pass the segment's key,
+the `{ key }` ref form, or an accessor over the chart's data returning either. `{ tooltip: true }`
+opens the segment's tooltip where hovering would; a polar area chart draws no crosshair, so
+`crosshair` is ignored here.
+
+```ts
+const chart = createPolarAreaChart('#container', { data, key: 'id', value: 'value', label: 'label' });
+
+// Light the Defense segment and open its tooltip.
+chart.highlightSegment('defense', { tooltip: true });
+
+// The first segment in the dataset.
+chart.highlightSegment(data => data[0].id);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `segment*` events above. `clearHighlight()` restores it explicitly;
+`highlightSegment` returns `false` when the selector matched no live segment.

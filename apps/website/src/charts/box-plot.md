@@ -168,3 +168,28 @@ chart.on('boxenter', event => console.log(event.data)); // event.data: BoxPlotBo
 chart.on('boxleave', event => console.log(event.data)); // event.data: BoxPlotBoxEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightBox` puts a box into the same hover state the pointer would — its fill softens — without
+waiting for one. A box summarizes a whole category, so the selector is that category: its key, the
+`{ key }` ref form, or an accessor over the chart's data returning either. `{ tooltip: true }` opens
+the box's median/quartile tooltip where hovering would, and `{ crosshair: true }` places the
+crosshair on it.
+
+```ts
+const chart = createBoxPlotChart('#container', { data, key: 'region', value: 'latency' });
+
+// Light the EU box, with its tooltip and the crosshair.
+chart.highlightBox('EU', { tooltip: true, crosshair: true });
+
+// The category of the first row, whatever it happens to be.
+chart.highlightBox(data => data[0].region);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`) or the next pointer hover restores the chart, and it emits none of
+the `box*` events above. `clearHighlight()` restores it explicitly; `highlightBox` returns `false`
+when the selector matched no live box.

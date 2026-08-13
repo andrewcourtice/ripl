@@ -12,6 +12,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ChartDataLabelsInput,
     ValueFormatInput,
 } from '../core/options';
@@ -259,6 +264,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             return {
                 id: `${id}-${getKey(item)}`,
+                key: getKey(item),
                 seriesId: id,
                 xValue,
                 yValue,
@@ -283,7 +289,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         };
     }
 
-    private _attachBubbleHover(bubble: Circle, values: { seriesId: string;
+    private _attachBubbleHover(bubble: Circle, values: { key: string;
+        seriesId: string;
         xValue: number;
         yValue: number;
         sizeValue: number; }, content: string, state: CircleState) {
@@ -321,6 +328,29 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             onLeave: point => this.emit('markerleave', payload(point)),
             onClick: point => this.emit('markerclick', payload(point)),
         });
+
+        this.registerMark('marker', values.key, bubble, values.seriesId);
+    }
+
+    /**
+     * Highlights the bubble(s) at a data key, dimming the rest of the chart exactly as hovering one
+     * does. A bare key lights that item in every series; narrow it with `{ key, series }`. The
+     * highlight is a one-shot command: the next render (a resize, an {@link Chart.update}, a legend
+     * toggle) or the next pointer hover restores the chart, and it emits no marker events.
+     *
+     * @param selector - The item's key, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the bubble's highlight state.
+     * @returns `true` when at least one live bubble matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightMarker('a', { tooltip: true, crosshair: true });
+     * chart.highlightMarker(data => data[2].id);
+     * chart.highlightMarker({ key: 'a', series: 'people' });
+     * ```
+     */
+    public highlightMarker(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('marker', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     private _tooltipText(values: { label: string;

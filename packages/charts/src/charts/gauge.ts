@@ -1,5 +1,6 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
 } from '../core/chart';
 
 import {
@@ -516,6 +517,27 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             onLeave: point => this.emit('valueleave', payload(point)),
             onClick: point => this.emit('valueclick', payload(point)),
         });
+
+        this.registerMark('value', 'value', arc);
+    }
+
+    /**
+     * Highlights the value arc, applying the same treatment hovering it does. A gauge has a single
+     * arc, so there is nothing to select. The highlight is a one-shot command: the next render (a
+     * resize, an {@link Chart.update}) or the next pointer hover restores the gauge, and it emits no
+     * value events.
+     *
+     * @param options - What to show alongside the arc's highlight state.
+     * @returns `true` when the value arc is live, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightValue({ tooltip: true });
+     * chart.clearHighlight();
+     * ```
+     */
+    public highlightValue(options?: HighlightOptions): boolean {
+        return this.replayMark('value', 'value', options);
     }
 
 }

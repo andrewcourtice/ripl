@@ -312,3 +312,32 @@ chart.on('markerenter', event => console.log(event.data)); // event.data: PolarS
 chart.on('markerleave', event => console.log(event.data)); // event.data: PolarScatterMarkerEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightMarker` puts a marker into the same hover state the pointer would — it grows and takes its
+highlight color — without waiting for one. The chart has no key accessor, since every series plots
+the whole dataset, so markers are addressed by the item's position in `data` as a string — the
+`index` the events above report. A bare index lights that item in every series; `{ key, series }`
+narrows it to one, and an accessor over the chart's data can find the index for you.
+`{ tooltip: true }` opens the marker's tooltip where hovering would; a polar scatter chart draws no
+crosshair, so `crosshair` is ignored here.
+
+```ts
+const chart = createPolarScatterChart('#container', { data, series, max: 100 });
+
+// Light the third reading in every series, with its tooltip.
+chart.highlightMarker('2', { tooltip: true });
+
+// Only the wind series' marker, then the most recent reading.
+chart.highlightMarker({ key: '2', series: 'wind' });
+chart.highlightMarker(data => String(data.length - 1));
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last — and it is one-shot: the next
+render (a resize, an `update`, a legend toggle) or the next pointer hover restores the chart, and it
+emits none of the `marker*` events above. `clearHighlight()` restores it explicitly, and
+`highlightSeries('wind')` dims every other series exactly as hovering its legend entry does. Both
+methods return `false` when nothing matched.

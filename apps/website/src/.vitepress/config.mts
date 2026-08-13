@@ -643,6 +643,10 @@ export default defineConfig({
                             link: '/charts/advanced/panning-and-zooming',
                         },
                         {
+                            text: 'Programmatic Interaction',
+                            link: '/charts/advanced/programmatic-interaction',
+                        },
+                        {
                             text: 'Rendering Targets',
                             link: '/charts/advanced/rendering-targets',
                         },

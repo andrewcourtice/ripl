@@ -203,3 +203,31 @@ chart.on('linkenter',    event => console.log(event.data)); // event.data: Chord
 chart.on('linkleave',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
 ```
 <!-- events:end -->
+
+## Programmatic Interaction
+
+`highlightSegment` and `highlightLink` put a mark into the same hover state the pointer would —
+which reads as everything else dimming — without waiting for one. A group's outer arc takes its
+label or the `{ key }` ref form. A ribbon is drawn once per pair, so it takes its id or a
+`{ source, target }` ref naming the groups it joins, in the order the events above report them.
+Either method also accepts an accessor over the chart's `groups`. `{ tooltip: true }` opens the
+mark's tooltip where hovering would; a chord chart draws no crosshair, so `crosshair` is ignored
+here.
+
+```ts
+const chart = createChordChart('#container', { groups, matrix });
+
+// Light one group's arc, then the ribbon joining it to another.
+chart.highlightSegment('Engineering', { tooltip: true });
+chart.highlightLink({ source: 'Engineering', target: 'Design' }, { tooltip: true });
+
+// The first group in the list.
+chart.highlightSegment(groups => groups[0]);
+
+chart.clearHighlight();
+```
+
+One highlight is active at a time — a matching call replaces the last, including across the two
+methods — and it is one-shot: the next render (a resize, an `update`, a legend toggle) or the next
+pointer hover restores the chart, and it emits none of the events above. `clearHighlight()` restores
+it explicitly; both methods return `false` when the selector matched nothing live.

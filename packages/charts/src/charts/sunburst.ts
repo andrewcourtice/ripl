@@ -1,5 +1,7 @@
 import type {
     BaseChartOptions,
+    HighlightOptions,
+    MarkSelector,
 } from '../core/chart';
 
 import {
@@ -208,6 +210,27 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
         this.init();
     }
 
+    /**
+     * Highlights a segment by node id, dimming every other segment exactly as hovering it does. Only
+     * that node lights, not its branch — a legend hover is what widens the highlight to a whole
+     * subtree. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}, a legend toggle) or the next pointer hover restores the chart, and it
+     * emits no node events.
+     *
+     * @param selector - The node's id, a `{ key }` ref, or an accessor over the chart's root nodes.
+     * @param options - What to show alongside the segment's highlight state.
+     * @returns `true` when a live segment matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightNode('ops', { tooltip: true });
+     * chart.highlightNode(nodes => nodes[0].id);
+     * ```
+     */
+    public highlightNode(selector: MarkSelector<SunburstNode<TData>>, options?: HighlightOptions): boolean {
+        return this.replayMark('node', this.resolveMarkSelector(selector, this.options.data), options);
+    }
+
     public async render() {
         return super.render(async (scene, renderer) => {
             const { data, padWidth = DEFAULT_SEGMENT_PAD_WIDTH } = this.options;
@@ -359,8 +382,8 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
     }
 
     /** Legend items are top-level nodes, so a legend hover addresses the whole branch by its series owner. */
-    protected override highlightSeries(id: string | null) {
-        super.highlightSeries(id === null ? null : `series:${id}`);
+    protected override applySeriesHighlight(id: string | null): boolean {
+        return super.applySeriesHighlight(id === null ? null : `series:${id}`);
     }
 
     private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
@@ -379,11 +402,13 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 data: arc.data,
             },
             // Hovering a segment isolates that node alone, unlike the legend hover the override widens.
-            onHighlight: hovered => super.highlightSeries(hovered ? `node:${arc.id}` : null),
+            onHighlight: hovered => super.applySeriesHighlight(hovered ? `node:${arc.id}` : null),
             onEnter: event => this.emit('nodeenter', event),
             onLeave: event => this.emit('nodeleave', event),
             onClick: event => this.emit('nodeclick', event),
         });
+
+        this.registerMark('node', arc.id, segment);
     }
 
 }

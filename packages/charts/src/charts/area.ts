@@ -12,6 +12,11 @@ import {
 } from '../core/cartesian';
 
 import type {
+    HighlightOptions,
+    MarkSelector,
+} from '../core/chart';
+
+import type {
     ChartDataLabelsInput,
     ValueFormatInput,
 } from '../core/options';
@@ -297,7 +302,29 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit: (phase, event) => this._emitMarker(phase, event),
+            registerMark: (kind, key, element, series) => this.registerMark(kind, key, element, series),
         };
+    }
+
+    /**
+     * Highlights the marker(s) at a category key, dimming the rest of the chart exactly as hovering
+     * one does. The highlight is a one-shot command: the next render (a resize, an
+     * {@link Chart.update}, a legend toggle) or the next pointer hover restores the chart, and it
+     * emits no marker events. Markers hidden with `markers: false` are not highlightable.
+     *
+     * @param selector - The marker's category key, a `{ key, series }` ref, or an accessor over the chart's data.
+     * @param options - What to show alongside the marker's highlight state.
+     * @returns `true` when at least one live marker matched, `false` when nothing changed.
+     *
+     * @example
+     * ```ts
+     * chart.highlightMarker('Feb', { tooltip: true, crosshair: true });
+     * chart.highlightMarker(data => data[2].month);
+     * chart.highlightMarker({ key: 'Feb', series: 'traffic' });
+     * ```
+     */
+    public highlightMarker(selector: MarkSelector<TData>, options?: HighlightOptions): boolean {
+        return this.replayMark('marker', this.resolveMarkSelector(selector, this.options.data), options);
     }
 
     public async render() {
