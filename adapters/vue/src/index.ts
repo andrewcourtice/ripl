@@ -7,7 +7,10 @@ export * from './compositions';
 export * from './plugin';
 export * from './types';
 
-export { defineRiplElement } from './core/define-element';
+export {
+    defineRiplElement,
+    elementFactory,
+} from './core/define-element';
 
 export type { RiplNodeDefinition } from './core/define-element';
 

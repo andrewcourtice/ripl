@@ -2,6 +2,7 @@ import type {
     BaseElementState,
     ElementPointerEvents,
     Event,
+    Group,
 } from '@ripl/web';
 
 import type {
@@ -74,6 +75,12 @@ export interface RiplElementListeners extends RiplPointerListeners {
     onUpdated?: RiplListener<RiplUpdatedPayload>;
     /** Fired when the element is destroyed. */
     onDestroyed?: RiplListener<null>;
+    /** Fired when the element is added to a group, with the group it joined. */
+    onAttached?: RiplListener<Group>;
+    /** Fired when the element is removed from a group, with the group it left. */
+    onDetached?: RiplListener<Group>;
+    /** Fired when the shape of the scene graph at or below this element changes. */
+    onGraph?: RiplListener<null>;
 }
 
 /** Construction options every element accepts, which become plain fields rather than animatable state. */
@@ -112,19 +119,23 @@ export type RiplElementProps<TState extends BaseElementState> = Partial<TState>
 & RiplElementListeners;
 
 /**
- * A declarative component wrapping a Ripl element.
+ * A declarative component wrapping a Ripl object.
  *
  * Typed through `$props` rather than `DefineComponent` so that editors and `vue-tsc` resolve each
  * element's own state properties, which the runtime prop declarations deliberately leave untyped.
  *
+ * The instance type is the wrapped Ripl object itself, because a template ref on any of these
+ * components resolves to that object rather than to Vue's component proxy.
+ *
  * @typeParam TProps - The component's prop surface.
+ * @typeParam TExposed - The Ripl object a template ref on the component resolves to.
  */
-export interface RiplComponent<TProps> {
+export interface RiplComponent<TProps, TExposed = unknown> {
     /** @internal Structural marker that lets Vue's language tooling read the prop surface. */
     new (): {
         $props: TProps & VNodeProps & AllowedComponentProps;
         $slots: {
             default?: () => VNode[];
         };
-    };
+    } & TExposed;
 }

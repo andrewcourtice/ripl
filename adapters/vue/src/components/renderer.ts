@@ -4,10 +4,19 @@ import {
 } from '../core/events';
 
 import {
+    useExposedInstance,
+} from '../core/expose';
+
+import {
     RIPL_RENDERER,
     RIPL_SCENE,
     RIPL_TREE,
 } from '../core/injection';
+
+import {
+    ANY_PROP,
+    BOOLEAN_PROP,
+} from '../core/props';
 
 import type {
     RiplComponent,
@@ -86,24 +95,12 @@ export interface RiplRendererProps {
 export const RiplRenderer = defineComponent({
     name: 'RiplRenderer',
     props: {
-        autoStart: {
-            type: Boolean,
-            default: undefined,
-        },
-        autoStop: {
-            type: Boolean,
-            default: undefined,
-        },
-        immediate: {
-            type: Boolean,
-            default: undefined,
-        },
-        debug: {
-            type: null,
-            default: undefined,
-        },
+        autoStart: BOOLEAN_PROP,
+        autoStop: BOOLEAN_PROP,
+        immediate: BOOLEAN_PROP,
+        debug: ANY_PROP,
     },
-    emits: [...RENDERER_EVENTS],
+    emits: RENDERER_EVENTS,
     inheritAttrs: false,
     setup(props, { slots, emit }) {
         const tree = inject(RIPL_TREE, undefined);
@@ -140,7 +137,11 @@ export const RiplRenderer = defineComponent({
             }
         });
 
-        useForwardedEvents(() => renderer, RENDERER_EVENTS, emit as (event: string, ...args: unknown[]) => void);
+        if (renderer) {
+            useExposedInstance(renderer);
+        }
+
+        useForwardedEvents(() => renderer, emit);
 
         onUnmounted(() => {
             renderer?.destroy();
@@ -152,4 +153,4 @@ export const RiplRenderer = defineComponent({
 
         return () => slots.default?.() ?? null;
     },
-}) as unknown as RiplComponent<RiplRendererProps>;
+}) as unknown as RiplComponent<RiplRendererProps, Renderer>;

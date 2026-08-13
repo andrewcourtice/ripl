@@ -108,6 +108,8 @@ Each level adds capability, and every element picks up the highest one above it:
 
 An enter phase can reference a property the template never binds: the target is read off the element before the enter state is applied, so fading in from `{ opacity: 0 }` recovers a target of `1` from the element's inherited or default state.
 
+`loop` repeats a phase — `true` restarts it, `'alternate'` plays it back and forth. A looping phase never completes, so its `onComplete` never fires and the renderer cannot idle while one runs; it is cancelled when its element leaves, and ignored on the `leave` phase, which has to finish in order to destroy the element.
+
 ## Compositions
 
 ```typescript
@@ -125,6 +127,19 @@ const element = useRiplElement();
 ```
 
 Providers construct during `setup()`, so these already resolve in a descendant's own `setup()` — no watching required. They are `undefined` outside a provider, and during server rendering.
+
+A template ref on any of the components resolves to the Ripl object it wraps, typed as that object:
+
+```html
+<ripl-context ref="context">
+    <ripl-circle ref="circle" :cx="50" :cy="50" :radius="20" />
+</ripl-context>
+```
+
+## Notes
+
+- A prop you do not bind is never written, so Ripl's own defaults and a group's cascading state survive. Changing a bound prop back to `undefined` likewise leaves the last value in place.
+- Props are compared by identity, so an inline `:data="{ ... }"` or `:line-dash="[4, 2]"` re-applies on every parent render. Hoist those to a `computed`. `class` is normalised first, so every binding form is stable.
 
 ## Documentation
 

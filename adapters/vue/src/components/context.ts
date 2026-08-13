@@ -4,10 +4,20 @@ import {
 } from '../core/events';
 
 import {
+    useExposedInstance,
+} from '../core/expose';
+
+import {
     RIPL_CONTEXT,
     RIPL_PARENT,
     RIPL_TREE,
 } from '../core/injection';
+
+import {
+    ANY_PROP,
+    BOOLEAN_PROP,
+    NUMBER_PROP,
+} from '../core/props';
 
 import {
     createRiplTree,
@@ -97,22 +107,10 @@ export interface RiplContextProps extends RiplPointerListeners {
 export const RiplContext = defineComponent({
     name: 'RiplContext',
     props: {
-        context: {
-            type: null,
-            default: undefined,
-        },
-        interactive: {
-            type: Boolean,
-            default: undefined,
-        },
-        dragThreshold: {
-            type: Number,
-            default: undefined,
-        },
-        meta: {
-            type: null,
-            default: undefined,
-        },
+        context: ANY_PROP,
+        interactive: BOOLEAN_PROP,
+        dragThreshold: NUMBER_PROP,
+        meta: ANY_PROP,
     },
     emits: [
         ...CONTEXT_EVENTS,
@@ -146,7 +144,11 @@ export const RiplContext = defineComponent({
         provide(RIPL_CONTEXT, tree.context);
         provide(RIPL_PARENT, shallowRef(tree.rootGroup));
 
-        useForwardedEvents(() => tree.context.value, CONTEXT_EVENTS, emit as (event: string, ...args: unknown[]) => void);
+        if (tree.context.value) {
+            useExposedInstance(tree.context.value);
+        }
+
+        useForwardedEvents(() => tree.context.value, emit);
 
         onMounted(() => {
             const context = tree.context.value;
@@ -193,4 +195,4 @@ export const RiplContext = defineComponent({
             }, slots.default?.()),
         ]);
     },
-}) as unknown as RiplComponent<RiplContextProps>;
+}) as unknown as RiplComponent<RiplContextProps, Context>;

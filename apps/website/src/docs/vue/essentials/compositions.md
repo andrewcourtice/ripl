@@ -118,6 +118,40 @@ const bounds = computed(() => isGroup(parent.value)
 </script>
 ```
 
+## Template refs
+
+A ref on any Ripl component resolves to the object that component wraps, not to a Vue component instance — so a `ref` is the third way to reach one, alongside the compositions and `<ripl-context>`'s `ready` event:
+
+```vue
+<template>
+    <ripl-context ref="context">
+        <ripl-scene ref="scene">
+            <ripl-renderer ref="renderer">
+                <ripl-circle ref="circle" :cx="50" :cy="50" :radius="20" />
+            </ripl-renderer>
+        </ripl-scene>
+    </ripl-context>
+</template>
+
+<script setup lang="ts">
+import {
+    useTemplateRef,
+} from 'vue';
+
+const context = useTemplateRef('context');
+const circle = useTemplateRef('circle');
+
+function download() {
+    // `context` is the Context; `circle` is the Circle.
+    window.open(context.value?.export().toURL());
+}
+</script>
+```
+
+Each ref is typed as the object it holds, so `circle.value.radius` and `scene.value.queryAll(...)` are checked as you would expect. A ref is set on mount, so read it from `onMounted` onwards rather than during `setup()` — reach for the compositions when you need the object earlier than that.
+
+Use a composition rather than a ref if you need object identity: a ref hands back a transparent stand-in for the object, so every property, method and `instanceof` check works, but `===` against a handle obtained another way does not hold.
+
 ## Holding Ripl objects
 
 Ripl instances are deeply mutable and carry `Set`s, `Map`s and caches, so they should never go into `ref()` or `reactive()`. The compositions already return raw, `markRaw`'d instances inside a `shallowRef`. If you store one yourself, use `shallowRef` or a plain variable.

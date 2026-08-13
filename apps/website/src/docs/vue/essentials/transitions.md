@@ -42,7 +42,7 @@ It requires a [`<ripl-renderer>`](/docs/vue/essentials/rendering) ancestor — t
 | `leave` | The state a removed element animates to. The element is destroyed once it finishes. |
 | `appear` | Whether elements present on the initial mount run their enter phase. Defaults to `true`. |
 
-Each phase takes the same options as Ripl's own `renderer.transition`: `duration`, `ease`, `delay`, `loop`, `direction`, `state` and `onComplete`.
+Each phase takes the same options as Ripl's own `renderer.transition`: `duration`, `ease`, `delay`, `loop`, `direction`, `state`, `interpolators` and `onComplete`.
 
 ## Enter targets
 
@@ -74,6 +74,8 @@ Any phase can be a factory called per element with its index and the number of e
 </ripl-transition>
 ```
 
+Phases are resolved once every element in the scope has been created, so `length` is the size of the whole set and a `delay` spanning `index / length` spreads across all of it.
+
 The factory also receives the element itself, so a phase can vary by datum:
 
 ```ts
@@ -85,6 +87,25 @@ const enter = (element: Element) => ({
     },
 });
 ```
+
+## Looping
+
+`loop` repeats a phase instead of settling: `true` restarts it, `'alternate'` plays it back and forth.
+
+```vue
+<!-- a pulse that runs for as long as the element is on screen -->
+<ripl-transition :enter="{ duration: 900, loop: 'alternate', ease: easeInOutCubic, state: { opacity: 0.3 } }">
+    <ripl-circle :cx="50" :cy="50" :radius="8" fill="#e5484d" />
+</ripl-transition>
+```
+
+A looping phase never completes, which has three consequences:
+
+- `onComplete` is never called for it.
+- The renderer stays busy, so `auto-stop` cannot idle the loop while one is running. That is the point — a paused loop would not be a loop — but it does mean a permanent animation keeps a frame loop alive.
+- Scheduling a second looping phase on the same element replaces the first rather than stacking on it, and the element's leave or unmount cancels it.
+
+`loop` is ignored on the `leave` phase. A leave transition owns the element's destruction, so it has to finish.
 
 ## Leaving elements
 

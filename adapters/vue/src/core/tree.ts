@@ -28,6 +28,12 @@ import type {
 /** Resolves the group a DOM container currently stands for, so a `v-if`'d scene stays correct. */
 type RiplContainerResolver = () => Group | undefined;
 
+// `Group.set` detaches and re-adds every child, rebuilding the scene buffer twice — and the mirror
+// is observed for plain mounts too, which already left the order correct.
+function isSameOrder(current: readonly Element[], next: readonly Element[]): boolean {
+    return current.length === next.length && current.every((element, index) => element === next[index]);
+}
+
 /**
  * Coordinates one context's declarative tree: which group each element belongs to, which paint
  * tier is in effect, and when to repaint.
@@ -118,8 +124,13 @@ export class RiplTree {
         // A leaving element has already unmounted, so it has no marker; re-append it or its
         // transition would be cut short by the reorder that removed it.
         const leaving = this._leaving.get(group);
+        const next = leaving ? children.concat(Array.from(leaving)) : children;
 
-        group.set(leaving ? children.concat(Array.from(leaving)) : children);
+        if (isSameOrder(group.children, next)) {
+            return;
+        }
+
+        group.set(next);
     }
 
     private _paint(): void {

@@ -1,4 +1,8 @@
 import {
+    objectForEach,
+} from '@ripl/utilities';
+
+import {
     RiplContext,
 } from './components/context';
 
@@ -67,8 +71,8 @@ const COMPONENTS: Record<string, unknown> = {
 export function createRipl(): Plugin {
     return {
         install(app) {
-            Object.entries(COMPONENTS).forEach(([name, component]) => {
-                app.component(name, component as Component);
+            objectForEach(COMPONENTS, (name, component) => {
+                app.component(name as string, component as Component);
             });
         },
     };

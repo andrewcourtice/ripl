@@ -4,9 +4,12 @@ import {
 } from './events';
 
 import {
+    useExposedInstance,
+} from './expose';
+
+import {
     RIPL_ELEMENT,
     RIPL_PARENT,
-    RIPL_RENDERER,
     RIPL_TRANSITION,
     RIPL_TREE,
 } from './injection';
@@ -18,37 +21,21 @@ import {
     SHAPE_FIELD_KEYS,
 } from './props';
 
-import {
-    applyFields,
-    applyState,
-    diffProps,
-    partitionProps,
-    readBoundProps,
-    resolveClassNames,
-} from './state';
-
 import type {
     RiplWritable,
 } from './state';
 
-import type {
-    RiplTransitionPhaseOptions,
-} from './transition';
+import {
+    useElementProps,
+} from './use-element-props';
 
 import {
-    stringUniqueId,
-} from '@ripl/utilities';
-
-import {
-    factory,
-} from '@ripl/web';
+    useElementTransition,
+} from './use-element-transition';
 
 import type {
-    BaseState,
     Element,
     Group,
-    Renderer,
-    RendererTransitionOptions,
 } from '@ripl/web';
 
 import {
@@ -60,7 +47,6 @@ import {
     onUnmounted,
     provide,
     shallowRef,
-    watch,
 } from 'vue';
 
 /**
@@ -88,43 +74,15 @@ export interface RiplNodeDefinition {
  */
 const MARKER_TAG = 'ripl-node';
 
-const SHAPE_FIELDS = new Set<string>(SHAPE_FIELD_KEYS);
-
 /**
- * Captures the state an entering element should animate *towards*, read before its enter state is
- * applied. Resolving the target from the element is what lets `enter` reference a property the
- * template never bound: fading in from `{ opacity: 0 }` recovers a target of `1` from the
- * element's inherited or default state instead of leaving it stuck at zero.
+ * Adapts a typed element factory to {@link RiplNodeDefinition}'s untyped `create` hook.
+ *
+ * @typeParam TOptions - The factory's own options type.
+ * @param create - The element's factory function.
+ * @returns A `create` hook that constructs the element from a loose prop bag.
  */
-function resolveEnterTarget(element: Element, state: RiplWritable): RiplWritable {
-    let defaults: BaseState | undefined;
-
-    const resolve = (key: string): unknown => {
-        const current = element.getComputedValue(key as never);
-
-        if (current !== undefined && current !== null) {
-            return current;
-        }
-
-        defaults = defaults ?? factory.getDefaultState?.();
-
-        return (defaults as unknown as RiplWritable | undefined)?.[key];
-    };
-
-    return Object.fromEntries(Object.keys(state)
-        .map((key): [string, unknown] => [
-            key,
-            resolve(key),
-        ])
-        .filter(([, value]) => value !== undefined));
-}
-
-/** Bridges an untyped state bag onto the renderer's typed transition options. */
-function toTransitionOptions(options: RiplTransitionPhaseOptions, state: RiplWritable): RendererTransitionOptions<Element> {
-    return {
-        ...options,
-        state,
-    } as RendererTransitionOptions<Element>;
+export function elementFactory<TOptions>(create: (options: TOptions) => unknown) {
+    return (options: RiplWritable) => create(options as TOptions) as Element;
 }
 
 /**
@@ -141,7 +99,7 @@ function toTransitionOptions(options: RiplTransitionPhaseOptions, state: RiplWri
  * const RiplCircle = defineRiplElement({
  *     name: 'RiplCircle',
  *     stateKeys: ELEMENT_STATE_KEYS.circle,
- *     create: options => createCircle(options as Shape2DOptions<CircleState>),
+ *     create: elementFactory<Shape2DOptions<CircleState>>(createCircle),
  * });
  */
 export function defineRiplElement(definition: RiplNodeDefinition) {
@@ -160,22 +118,21 @@ export function defineRiplElement(definition: RiplNodeDefinition) {
     return defineComponent({
         name: definition.name,
         props: createProps(propKeys),
-        emits: [...ELEMENT_EVENTS],
+        emits: ELEMENT_EVENTS,
         inheritAttrs: false,
         setup(props, { slots, emit }) {
             const tree = inject(RIPL_TREE, undefined);
             const parent = inject(RIPL_PARENT, undefined);
-            const renderer = inject(RIPL_RENDERER, undefined);
             const scope = inject(RIPL_TRANSITION, undefined);
             const marker = shallowRef<HTMLElement>();
-            const raw = props as RiplWritable;
-            const initial = readBoundProps(raw, propKeys);
+            const transition = useElementTransition();
 
-            if (initial.class !== undefined) {
-                initial.class = resolveClassNames(initial.class);
-            }
-
-            const element = markRaw(definition.create(initial));
+            const element = useElementProps(props as RiplWritable, {
+                keys: propKeys,
+                stateKeys,
+                create: initial => markRaw(definition.create(initial)),
+                apply: transition.update,
+            }) as Element;
 
             parent?.value?.add(element);
             scope?.register(element);
@@ -186,110 +143,33 @@ export function defineRiplElement(definition: RiplNodeDefinition) {
                 provide(RIPL_PARENT, shallowRef(element as unknown as Group));
             }
 
-            const applyEnter = () => {
-                const enter = tree && scope && (tree.mounted || scope.appear)
-                    ? scope.resolve('enter', element)
-                    : undefined;
+            useExposedInstance(element);
+            useForwardedEvents(() => element, emit);
 
-                if (!enter?.state || !renderer?.value) {
-                    return;
-                }
-
-                const state = enter.state as RiplWritable;
-                const target = resolveEnterTarget(element, state);
-
-                applyState(element, state);
-                void renderer.value.transition(element, toTransitionOptions(enter, target));
-            };
-
-            const runLeave = (active: Renderer, group: Group | undefined, options: RiplTransitionPhaseOptions) => {
-                if (group) {
-                    tree?.retainLeaving(group, element);
-                }
-
-                // Retag first, so a key re-entering during the fade cannot collide with this element.
-                element.id = `${element.id}:leave:${stringUniqueId()}`;
-
-                void active.transition(element, toTransitionOptions(options, (options.state ?? {}) as RiplWritable))
-                    .catch(() => undefined)
-                    .then(() => {
-                        if (group) {
-                            tree?.releaseLeaving(group, element);
-                        }
-
-                        element.destroy();
-                    });
-            };
-
-            const leave = () => {
+            // Registered before the leave hook below, because Vue runs unmount hooks in
+            // registration order and a reorder must not see a marker whose element is leaving.
+            onUnmounted(() => {
                 if (marker.value && tree) {
                     tree.releaseMarker(marker.value);
                     tree.releaseContainer(marker.value);
                 }
-
-                scope?.unregister(element);
-
-                const active = renderer?.value;
-                const options = scope?.resolve('leave', element);
-
-                if (!options || !active || !tree || tree.disposing) {
-                    element.destroy();
-                    tree?.requestPaint();
-                    return;
-                }
-
-                runLeave(active, element.parent, options);
-            };
-
-            const update = (changed: RiplWritable) => {
-                const [state, fields] = partitionProps(changed, stateKeys);
-                const phase = scope?.resolve('update', element);
-
-                applyFields(element, fields);
-
-                if (phase && renderer?.value && Object.keys(state).length) {
-                    void renderer.value.transition(element, toTransitionOptions(phase, {
-                        ...state,
-                        ...phase.state as RiplWritable,
-                    }));
-                } else {
-                    applyState(element, state);
-                }
-
-                if (Object.keys(state).length || Object.keys(fields).some(key => SHAPE_FIELDS.has(key))) {
-                    tree?.requestPaint();
-                }
-            };
-
-            let applied = initial;
-
-            applyEnter();
-
-            watch(() => readBoundProps(raw, propKeys), next => {
-                const changed = diffProps(applied, next);
-
-                applied = next;
-
-                if (Object.keys(changed).length) {
-                    update(changed);
-                }
             });
-
-            useForwardedEvents(() => element, ELEMENT_EVENTS, emit as (event: string, ...args: unknown[]) => void);
 
             onMounted(() => {
-                if (!marker.value || !tree) {
-                    return;
+                if (marker.value && tree) {
+                    tree.registerMarker(marker.value, element);
+
+                    if (definition.container) {
+                        tree.registerContainer(marker.value, () => element as unknown as Group);
+                    }
                 }
 
-                tree.registerMarker(marker.value, element);
-
-                if (definition.container) {
-                    tree.registerContainer(marker.value, () => element as unknown as Group);
-                }
+                // Deferred to mount so the transition scope has every sibling registered, which is
+                // what makes a staggered `delay: index / length` span the whole set.
+                transition.enter(element);
             });
 
-            onUnmounted(leave);
+            onUnmounted(() => transition.leave(element));
 
             return () => h(MARKER_TAG, {
                 ref: marker,

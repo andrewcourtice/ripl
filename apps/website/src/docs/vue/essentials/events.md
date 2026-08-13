@@ -49,11 +49,17 @@ Elements and groups emit:
 | `mouseenter`, `mouseleave` | `null` |
 | `dragstart`, `drag`, `dragend` | `{ x, y, startX, startY, deltaX, deltaY }` |
 | `updated` | `{ key, value }` — a state property changed |
+| `attached`, `detached` | the group the element joined or left |
+| `graph` | `null` — the shape of the graph at or below this element changed |
 | `destroyed` | `null` |
 
 `<ripl-context>` emits all of the above pointer events, plus `resize`, `render`, and `ready` (with the context, once its host is in the document).
 
 `<ripl-renderer>` emits `start`, `stop` and `tick` (`{ time, deltaTime }`).
+
+This list is not maintained by hand. Every Ripl object declares the events it emits, and the adapter reads that declaration off the object itself — so a component forwards exactly what its underlying object can emit, and gains any event a future Ripl release adds.
+
+`attached` fires while the element is being constructed, before Vue has bound any listener to it, so it is only observable for an element that later moves between groups.
 
 ## Only bound events are subscribed
 

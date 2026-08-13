@@ -3,6 +3,7 @@ import type {
     Ease,
     Element,
     ElementInterpolationState,
+    ElementInterpolators,
     RendererTransitionDirection,
     TransitionLoopMode,
 } from '@ripl/web';
@@ -26,7 +27,11 @@ export interface RiplTransitionPhaseOptions<TElement extends Element = Element> 
     duration?: number;
     /** Easing function applied to the transition's progress. Defaults to linear. */
     ease?: Ease;
-    /** Loop behavior once the transition completes. Defaults to no looping. */
+    /**
+     * Loop behavior once the transition completes: `true` restarts, `alternate` plays back and
+     * forth. Defaults to no looping, and is ignored on the `leave` phase, which owns the element's
+     * destruction and so has to finish.
+     */
     loop?: TransitionLoopMode;
     /** Delay, in milliseconds, before the transition begins. Defaults to `0`. */
     delay?: number;
@@ -38,7 +43,9 @@ export interface RiplTransitionPhaseOptions<TElement extends Element = Element> 
      * props to form the target.
      */
     state?: ElementInterpolationState<RiplElementState<TElement>>;
-    /** Invoked with the element once its transition completes. */
+    /** Interpolators to resolve this phase's state properties with, overriding the element's own. */
+    interpolators?: ElementInterpolators<RiplElementState<TElement>>;
+    /** Invoked with the element once its transition completes. Never called for a looping phase. */
     onComplete?(element: Element): void;
 }
 
@@ -71,7 +78,7 @@ export interface RiplTransitionPhases {
 export class RiplTransitionScope {
 
     private _elements: Element[] = [];
-    private _getPhases: () => RiplTransitionPhases;
+    private readonly _getPhases: () => RiplTransitionPhases;
 
     /** Whether elements present on the initial mount run their enter phase. */
     public get appear(): boolean {

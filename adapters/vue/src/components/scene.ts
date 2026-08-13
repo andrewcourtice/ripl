@@ -4,6 +4,10 @@ import {
 } from '../core/events';
 
 import {
+    useExposedInstance,
+} from '../core/expose';
+
+import {
     RIPL_CONTEXT,
     RIPL_ELEMENT,
     RIPL_PARENT,
@@ -20,15 +24,15 @@ import {
 import {
     applyFields,
     applyState,
-    diffProps,
-    partitionProps,
-    readBoundProps,
-    resolveClassNames,
 } from '../core/state';
 
 import type {
     RiplWritable,
 } from '../core/state';
+
+import {
+    useElementProps,
+} from '../core/use-element-props';
 
 import type {
     RiplComponent,
@@ -56,7 +60,6 @@ import {
     onUnmounted,
     provide,
     shallowRef,
-    watch,
 } from 'vue';
 
 const PROP_KEYS = [
@@ -90,21 +93,24 @@ export interface RiplSceneProps extends Partial<BaseElementState>, RiplElementOp
 export const RiplScene = defineComponent({
     name: 'RiplScene',
     props: createProps(PROP_KEYS),
-    emits: [...ELEMENT_EVENTS],
+    emits: ELEMENT_EVENTS,
     inheritAttrs: false,
     setup(props, { slots, emit }) {
         const tree = inject(RIPL_TREE, undefined);
         const context = inject(RIPL_CONTEXT, undefined);
-        const raw = props as RiplWritable;
-        const initial = readBoundProps(raw, PROP_KEYS);
 
-        if (initial.class !== undefined) {
-            initial.class = resolveClassNames(initial.class);
-        }
-
-        const scene = context?.value
-            ? markRaw(createScene(context.value, initial))
-            : undefined;
+        const scene = useElementProps<Scene>(props as RiplWritable, {
+            keys: PROP_KEYS,
+            stateKeys: STATE_KEYS,
+            create: initial => context?.value
+                ? markRaw(createScene(context.value, initial))
+                : undefined,
+            apply: (target, { state, fields }) => {
+                applyFields(target, fields);
+                applyState(target, state);
+                tree?.requestPaint();
+            },
+        });
 
         if (tree && scene) {
             tree.scene.value = scene;
@@ -117,7 +123,7 @@ export const RiplScene = defineComponent({
         // The scene seeds its font from the host's computed style, which resolves to nothing while
         // the host is still detached, so re-read it once the context component attaches.
         tree?.onAttached(() => {
-            if (!scene || initial.font !== undefined || !context?.value) {
+            if (!scene || (props as RiplWritable).font !== undefined || !context?.value) {
                 return;
             }
 
@@ -128,25 +134,11 @@ export const RiplScene = defineComponent({
             }
         });
 
-        let applied = initial;
+        if (scene) {
+            useExposedInstance(scene);
+        }
 
-        watch(() => readBoundProps(raw, PROP_KEYS), next => {
-            const changed = diffProps(applied, next);
-
-            applied = next;
-
-            if (!scene || !Object.keys(changed).length) {
-                return;
-            }
-
-            const [state, fields] = partitionProps(changed, STATE_KEYS);
-
-            applyFields(scene, fields);
-            applyState(scene, state);
-            tree?.requestPaint();
-        });
-
-        useForwardedEvents(() => scene, ELEMENT_EVENTS, emit as (event: string, ...args: unknown[]) => void);
+        useForwardedEvents(() => scene, emit);
 
         onUnmounted(() => {
             if (!scene) {
@@ -163,4 +155,4 @@ export const RiplScene = defineComponent({
 
         return () => slots.default?.() ?? null;
     },
-}) as unknown as RiplComponent<RiplSceneProps>;
+}) as unknown as RiplComponent<RiplSceneProps, Scene>;

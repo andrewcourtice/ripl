@@ -6,7 +6,7 @@ import type {
  * A prop Ripl itself types, declared here only so Vue extracts it from attrs. Runtime validation
  * would duplicate — and inevitably drift from — the element state interfaces.
  */
-const ANY_PROP = {
+export const ANY_PROP = {
     type: null,
     default: undefined,
 } as const;
@@ -17,8 +17,14 @@ const ANY_PROP = {
  * alone. Declaring the default keeps valueless-attribute casting (`<ripl-rect clip>`) while letting
  * an omitted prop stay omitted.
  */
-const BOOLEAN_PROP = {
+export const BOOLEAN_PROP = {
     type: Boolean,
+    default: undefined,
+} as const;
+
+/** A numeric prop, left undefined when absent so it cannot override a Ripl default. */
+export const NUMBER_PROP = {
+    type: Number,
     default: undefined,
 } as const;
 
@@ -59,8 +65,12 @@ export const ELEMENT_OPTION_KEYS = [
     'class',
     'data',
     'id',
+    'interpolators',
     'pointerEvents',
 ] as const;
+
+/** Options an element only reads when it is constructed, so they cannot be synced on a prop change. */
+export const CONSTRUCTION_ONLY_KEYS = new Set<string>(['interpolators']);
 
 /** Plain `Shape2D` fields that change how a shape paints but emit no update event. */
 export const SHAPE_FIELD_KEYS = [
@@ -70,8 +80,11 @@ export const SHAPE_FIELD_KEYS = [
     'clip',
 ] as const;
 
-/** Boolean props, which need Vue's valueless-attribute casting. */
-const BOOLEAN_KEYS = new Set<string>(SHAPE_FIELD_KEYS);
+/**
+ * Plain fields that change how a shape paints. They are also the adapter's only boolean props, so
+ * this doubles as the set needing Vue's valueless-attribute casting.
+ */
+export const SHAPE_FIELDS = new Set<string>(SHAPE_FIELD_KEYS);
 
 /** The state properties specific to each built-in element, keyed by element type. */
 export const ELEMENT_STATE_KEYS = {
@@ -149,6 +162,6 @@ export const ELEMENT_STATE_KEYS = {
 export function createProps(keys: readonly string[]): ComponentObjectPropsOptions {
     return Object.fromEntries(keys.map(key => [
         key,
-        BOOLEAN_KEYS.has(key) ? BOOLEAN_PROP : ANY_PROP,
+        SHAPE_FIELDS.has(key) ? BOOLEAN_PROP : ANY_PROP,
     ]));
 }

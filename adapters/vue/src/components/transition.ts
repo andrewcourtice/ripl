@@ -4,11 +4,17 @@ import {
 } from '../core/injection';
 
 import {
+    ANY_PROP,
+    BOOLEAN_PROP,
+} from '../core/props';
+
+import {
     RiplTransitionScope,
 } from '../core/transition';
 
 import type {
     RiplTransitionPhase,
+    RiplTransitionPhases,
 } from '../core/transition';
 
 import type {
@@ -16,6 +22,7 @@ import type {
 } from '../types';
 
 import {
+    computed,
     defineComponent,
     inject,
     markRaw,
@@ -64,22 +71,10 @@ export interface RiplTransitionProps {
 export const RiplTransition = defineComponent({
     name: 'RiplTransition',
     props: {
-        enter: {
-            type: null,
-            default: undefined,
-        },
-        update: {
-            type: null,
-            default: undefined,
-        },
-        leave: {
-            type: null,
-            default: undefined,
-        },
-        appear: {
-            type: Boolean,
-            default: undefined,
-        },
+        enter: ANY_PROP,
+        update: ANY_PROP,
+        leave: ANY_PROP,
+        appear: BOOLEAN_PROP,
     },
     inheritAttrs: false,
     setup(props, { slots }) {
@@ -89,12 +84,16 @@ export const RiplTransition = defineComponent({
             console.warn('[@ripl/vue] <ripl-transition> needs a <ripl-renderer> ancestor; its children will apply their props directly.');
         }
 
-        provide(RIPL_TRANSITION, markRaw(new RiplTransitionScope(() => ({
+        // Computed, not a plain closure: the scope resolves phases once per element per phase, and
+        // a closure would hand back a freshly built object every one of those calls.
+        const phases = computed<RiplTransitionPhases>(() => ({
             enter: props.enter as RiplTransitionPhase | undefined,
             update: props.update as RiplTransitionPhase | undefined,
             leave: props.leave as RiplTransitionPhase | undefined,
             appear: props.appear,
-        }))));
+        }));
+
+        provide(RIPL_TRANSITION, markRaw(new RiplTransitionScope(() => phases.value)));
 
         return () => slots.default?.() ?? null;
     },

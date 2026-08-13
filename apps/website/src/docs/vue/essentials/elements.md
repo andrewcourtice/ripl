@@ -52,6 +52,24 @@ A prop you do not bind is not written to the element. This matters for the base 
 </ripl-group>
 ```
 
+A prop cannot be *unset* later either: changing a bound prop back to `undefined` leaves the element at its last value rather than restoring the default. Bind the default explicitly if you need to return to it.
+
+## Object and array bindings
+
+Props are compared by identity. A template literal like `:line-dash="[4, 2]"` or `:data="{ id: item.id }"` builds a new object on every render, so the element sees a change every time its parent re-renders — which dirties it and forces a repaint. Hoist those to a `computed` (or to the datum itself) and the comparison settles:
+
+```vue
+<template>
+    <ripl-line :x1="0" :y1="0" :x2="100" :y2="0" :line-dash="dash" />
+</template>
+
+<script setup lang="ts">
+const dash = computed(() => (emphasised.value ? [4, 2] : []));
+</script>
+```
+
+`class` is exempt — it is normalised before comparison, so every one of Vue's binding forms is stable.
+
 ## `<ripl-group>`
 
 Groups its children, cascading its own state to them and transforming them as a unit. Groups nest arbitrarily.
