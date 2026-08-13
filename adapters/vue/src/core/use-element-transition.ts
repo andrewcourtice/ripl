@@ -98,6 +98,9 @@ export function useElementTransition(): RiplElementTransition {
     const schedule = (active: Renderer, element: Element, options: RiplTransitionPhaseOptions, state: RiplWritable): Transition => {
         const instance = active.transition(element, toTransitionOptions(options, state));
 
+        // Aborting rejects the transition, and nothing here awaits it, so swallow it at the source.
+        void instance.catch(() => undefined);
+
         if (options.loop) {
             // A looping transition never completes, so nothing else will ever evict it.
             looping?.abort();
