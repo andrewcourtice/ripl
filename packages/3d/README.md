@@ -16,7 +16,7 @@
 - **Fog** — `'linear'` or `'exponential'` haze blending distant geometry towards a colour, computed identically on both backends.
 - **Triangle raycasting** — `context.raycast(x, y)` builds a world-space ray and `context.raycastAll(scene, x, y)` returns every shape it meets, nearest first, with the hit point, face, interpolated normal and UV.
 - **`Group3D`** — a group whose transform composes into the model matrix of every shape beneath it, so a subtree orbits, tilts and scales as a unit.
-- **Animation and events** — shapes are Ripl elements, so `renderer.transition`, pointer events and scene querying all apply. `interpolateVector3` tweens 3D positions.
+- **Animation and events** — shapes are Ripl elements, so `renderer.transition`, pointer events and scene querying all apply. `interpolateVector3` tweens 3D positions — declare it in a custom element's `interpolators` to animate a vector-valued property.
 
 ## Installation
 

@@ -9,6 +9,7 @@ import type {
     CanvasContext3D,
     Face3D,
     Matrix4,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
     Vector3,
@@ -202,16 +203,17 @@ function emptyField(): SurfaceField {
     };
 }
 
+const GRAPH_WIREFRAME_DEFAULTS: Shape3DDefaults<WireframeState> = {
+    revision: 0,
+};
+
 /** A set of straight edges drawn as degenerate faces, so the axis frame costs one element. */
 class Wireframe extends Shape3D<WireframeState> {
 
     private _faces: Face3D[] = [];
 
     constructor(options?: Shape3DOptions<WireframeState>) {
-        super('graph-wireframe', {
-            revision: 0,
-            ...options,
-        });
+        super('graph-wireframe', options ?? {}, GRAPH_WIREFRAME_DEFAULTS);
     }
 
     /** Replaces the edge list, invalidating the cached geometry. */

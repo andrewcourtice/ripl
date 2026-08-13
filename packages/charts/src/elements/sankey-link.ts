@@ -1,12 +1,17 @@
 import type {
     BaseElementState,
     Context,
+    Shape2DDefaults,
     Shape2DOptions,
 } from '@ripl/core';
 
 import {
     Box,
     Shape2D,
+} from '@ripl/core';
+
+import {
+    interpolateNumber,
 } from '@ripl/core';
 
 /** State interface for a Sankey link, defining source and target endpoint coordinates. */
@@ -20,6 +25,16 @@ export interface SankeyLinkState extends BaseElementState {
     /** Target endpoint y coordinate, in pixels. */
     ty: number;
 }
+
+const SANKEY_LINK_DEFAULTS: Shape2DDefaults<SankeyLinkState> = {
+    autoFill: false,
+    interpolators: {
+        sx: interpolateNumber,
+        sy: interpolateNumber,
+        tx: interpolateNumber,
+        ty: interpolateNumber,
+    },
+};
 
 /** A curved Sankey link shape rendered as a cubic Bézier curve between source and target points. */
 export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
@@ -61,10 +76,7 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
     }
 
     constructor(options: Shape2DOptions<SankeyLinkState>) {
-        super('sankey-link', {
-            autoFill: false,
-            ...options,
-        });
+        super('sankey-link', options, SANKEY_LINK_DEFAULTS);
     }
 
     public _getLocalBoundingBox(): Box {

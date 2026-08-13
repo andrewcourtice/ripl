@@ -25,6 +25,14 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a cone, defining radius, height, and segment count. */
 export interface ConeState extends Shape3DState {
     /** The radius of the base, in world units. */
@@ -34,6 +42,15 @@ export interface ConeState extends Shape3DState {
     /** The number of segments around the base. Defaults to `16`. */
     segments: number;
 }
+
+const CONE_DEFAULTS: Shape3DDefaults<ConeState> = {
+    segments: 16,
+    interpolators: {
+        height: interpolateNumber,
+        radius: interpolateNumber,
+        segments: interpolateNumber,
+    },
+};
 
 /** A 3D cone shape with configurable radius, height, and segment resolution. */
 export class Cone extends Shape3D<ConeState> {
@@ -66,10 +83,7 @@ export class Cone extends Shape3D<ConeState> {
     }
 
     constructor(options: Shape3DOptions<ConeState>) {
-        super('cone', {
-            segments: 16,
-            ...options,
-        });
+        super('cone', options, CONE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

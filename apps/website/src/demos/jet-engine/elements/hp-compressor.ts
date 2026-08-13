@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -19,6 +20,14 @@ export interface HPCompressorState extends Shape3DState {
     stages: number;
     segments: number;
 }
+
+const HP_COMPRESSOR_DEFAULTS: Shape3DDefaults<HPCompressorState> = {
+    radiusFront: 0.45,
+    radiusBack: 0.35,
+    length: 0.4,
+    stages: 8,
+    segments: 32,
+};
 
 export class HPCompressor extends Shape3D<HPCompressorState> {
 
@@ -63,14 +72,7 @@ export class HPCompressor extends Shape3D<HPCompressorState> {
     }
 
     constructor(options: Shape3DOptions<HPCompressorState>) {
-        super('hp-compressor', {
-            radiusFront: 0.45,
-            radiusBack: 0.35,
-            length: 0.4,
-            stages: 8,
-            segments: 32,
-            ...options,
-        });
+        super('hp-compressor', options, HP_COMPRESSOR_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

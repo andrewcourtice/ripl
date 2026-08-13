@@ -203,11 +203,11 @@ export class Surface extends Shape3D<SurfaceState> {
             ...state
         } = options;
 
-        super('surface', {
+        // Built per instance rather than shared: the segment count follows the field's resolution.
+        super('surface', state, {
             segments: field.resolution,
             revision: 0,
             material: SURFACE_MATERIAL,
-            ...state,
         });
 
         this._field = field;

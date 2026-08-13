@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -17,6 +18,12 @@ export interface CentralShaftState extends Shape3DState {
     length: number;
     segments: number;
 }
+
+const CENTRAL_SHAFT_DEFAULTS: Shape3DDefaults<CentralShaftState> = {
+    radius: 0.06,
+    length: 3.0,
+    segments: 24,
+};
 
 export class CentralShaft extends Shape3D<CentralShaftState> {
 
@@ -45,12 +52,7 @@ export class CentralShaft extends Shape3D<CentralShaftState> {
     }
 
     constructor(options: Shape3DOptions<CentralShaftState>) {
-        super('central-shaft', {
-            radius: 0.06,
-            length: 3.0,
-            segments: 24,
-            ...options,
-        });
+        super('central-shaft', options, CENTRAL_SHAFT_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

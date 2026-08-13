@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -18,6 +19,13 @@ export interface FanCaseState extends Shape3DState {
     thickness: number;
     segments: number;
 }
+
+const FAN_CASE_DEFAULTS: Shape3DDefaults<FanCaseState> = {
+    radius: 0.85,
+    length: 0.3,
+    thickness: 0.04,
+    segments: 36,
+};
 
 export class FanCase extends Shape3D<FanCaseState> {
 
@@ -54,13 +62,7 @@ export class FanCase extends Shape3D<FanCaseState> {
     }
 
     constructor(options: Shape3DOptions<FanCaseState>) {
-        super('fan-case', {
-            radius: 0.85,
-            length: 0.3,
-            thickness: 0.04,
-            segments: 36,
-            ...options,
-        });
+        super('fan-case', options, FAN_CASE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

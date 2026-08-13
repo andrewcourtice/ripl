@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -19,6 +20,14 @@ export interface FanState extends Shape3DState {
     bladeWidth: number;
     bladeDepth: number;
 }
+
+const FAN_DEFAULTS: Shape3DDefaults<FanState> = {
+    hubRadius: 0.15,
+    bladeRadius: 0.8,
+    bladeCount: 18,
+    bladeWidth: 0.18,
+    bladeDepth: 0.06,
+};
 
 export class Fan extends Shape3D<FanState> {
 
@@ -63,14 +72,7 @@ export class Fan extends Shape3D<FanState> {
     }
 
     constructor(options: Shape3DOptions<FanState>) {
-        super('fan', {
-            hubRadius: 0.15,
-            bladeRadius: 0.8,
-            bladeCount: 18,
-            bladeWidth: 0.18,
-            bladeDepth: 0.06,
-            ...options,
-        });
+        super('fan', options, FAN_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

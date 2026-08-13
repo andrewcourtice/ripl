@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -25,6 +26,14 @@ export interface CrankshaftState extends Shape3DState {
     /** Number of segments used to tessellate the cylinders. */
     segments: number;
 }
+
+const CRANKSHAFT_DEFAULTS: Shape3DDefaults<CrankshaftState> = {
+    mainRadius: 0.035,
+    pinRadius: 0.03,
+    throw: 0.15,
+    width: 0.5,
+    segments: 20,
+};
 
 /** A basic single-throw crankshaft: a main journal, an offset crank pin, two webs and a counterweight. */
 export class Crankshaft extends Shape3D<CrankshaftState> {
@@ -70,14 +79,7 @@ export class Crankshaft extends Shape3D<CrankshaftState> {
     }
 
     constructor(options?: Shape3DOptions<CrankshaftState>) {
-        super('crankshaft', {
-            mainRadius: 0.035,
-            pinRadius: 0.03,
-            throw: 0.15,
-            width: 0.5,
-            segments: 20,
-            ...options,
-        });
+        super('crankshaft', options ?? {}, CRANKSHAFT_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

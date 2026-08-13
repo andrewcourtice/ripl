@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     ElementOptions,
 } from '../core';
 
@@ -19,12 +20,15 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 import type {
     InterpolatorFactory,
 } from '../interpolators';
 
 import {
-    functionCache,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -42,7 +46,7 @@ export interface ImageState extends BaseElementState {
     height?: number;
 }
 
-const getRefCanvas = functionCache(() => {
+function createRefCanvas() {
     const canvas = factory.createElement('canvas') as HTMLCanvasElement;
     const context = canvas.getContext('2d');
 
@@ -54,7 +58,7 @@ const getRefCanvas = functionCache(() => {
         canvas,
         context,
     };
-});
+}
 
 // Naming the constructor keeps the check off runtimes that never declare it, rather than throwing a ReferenceError.
 function sourceIs<TSource extends CanvasImageSource>(image: CanvasImageSource, constructor: string): image is TSource {
@@ -87,8 +91,18 @@ function getSourceSize(image: CanvasImageSource): [number, number] {
 export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA, valueB) => {
     const [sourceWidth, sourceHeight] = getSourceSize(valueA);
 
+    // One buffer per transition: a shared canvas has concurrent cross-fades overwrite each other.
+    const ref = createRefCanvas();
+
     return time => {
-        const ref = getRefCanvas();
+        // Settle on the endpoints, else the transition finishes holding this buffer instead of the target.
+        if (time <= 0) {
+            return valueA;
+        }
+
+        if (time >= 1) {
+            return valueB;
+        }
 
         if (!ref) {
             return time > 0.5 ? valueB : valueA;
@@ -105,6 +119,16 @@ export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA,
 
         return ref.canvas;
     };
+};
+
+const IMAGE_DEFAULTS: ElementDefaults<ImageState> = {
+    interpolators: {
+        height: interpolateNumber,
+        image: interpolateImage,
+        width: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
 };
 
 /** An image element that draws a `CanvasImageSource` at a given position and optional size. */
@@ -156,7 +180,7 @@ export class ImageElement extends Element<ImageState> {
     }
 
     constructor(options: ElementOptions<ImageState>) {
-        super('image', options);
+        super('image', options, IMAGE_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the image. */

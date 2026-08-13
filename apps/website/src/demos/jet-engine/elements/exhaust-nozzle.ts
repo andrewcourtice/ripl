@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -18,6 +19,13 @@ export interface ExhaustNozzleState extends Shape3DState {
     length: number;
     segments: number;
 }
+
+const EXHAUST_NOZZLE_DEFAULTS: Shape3DDefaults<ExhaustNozzleState> = {
+    radiusFront: 0.4,
+    radiusBack: 0.25,
+    length: 0.4,
+    segments: 32,
+};
 
 export class ExhaustNozzle extends Shape3D<ExhaustNozzleState> {
 
@@ -54,13 +62,7 @@ export class ExhaustNozzle extends Shape3D<ExhaustNozzleState> {
     }
 
     constructor(options: Shape3DOptions<ExhaustNozzleState>) {
-        super('exhaust-nozzle', {
-            radiusFront: 0.4,
-            radiusBack: 0.25,
-            length: 0.4,
-            segments: 32,
-            ...options,
-        });
+        super('exhaust-nozzle', options, EXHAUST_NOZZLE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

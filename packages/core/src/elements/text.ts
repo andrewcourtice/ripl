@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     ElementOptions,
 } from '../core';
 
@@ -19,6 +20,11 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateAny,
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a text element, defining position, content, and optional path-based text layout. */
 export interface TextState extends BaseElementState {
     /** The x-coordinate of the text's anchor point. */
@@ -32,6 +38,16 @@ export interface TextState extends BaseElementState {
     /** The offset along the path at which the text begins. */
     startOffset?: number;
 }
+
+const TEXT_DEFAULTS: ElementDefaults<TextState> = {
+    interpolators: {
+        content: interpolateNumber,
+        pathData: interpolateAny,
+        startOffset: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
+};
 
 /** A text element that renders string or numeric content, with optional path-based text layout. */
 export class Text extends Element<TextState> {
@@ -82,7 +98,7 @@ export class Text extends Element<TextState> {
     }
 
     constructor(options: ElementOptions<TextState>) {
-        super('text', options);
+        super('text', options, TEXT_DEFAULTS);
     }
 
     // The bound context is the authority on its own metrics: a terminal cell is not a canvas glyph.

@@ -24,6 +24,14 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a sphere, defining radius, longitudinal segments, and latitudinal rings. */
 export interface SphereState extends Shape3DState {
     /** The radius of the sphere, in world units. */
@@ -33,6 +41,16 @@ export interface SphereState extends Shape3DState {
     /** The number of latitudinal rings from pole to pole. Defaults to `12`. */
     rings: number;
 }
+
+const SPHERE_DEFAULTS: Shape3DDefaults<SphereState> = {
+    segments: 16,
+    rings: 12,
+    interpolators: {
+        radius: interpolateNumber,
+        rings: interpolateNumber,
+        segments: interpolateNumber,
+    },
+};
 
 /** A 3D sphere shape tessellated with configurable segments and rings. */
 export class Sphere extends Shape3D<SphereState> {
@@ -65,11 +83,7 @@ export class Sphere extends Shape3D<SphereState> {
     }
 
     constructor(options: Shape3DOptions<SphereState>) {
-        super('sphere', {
-            segments: 16,
-            rings: 12,
-            ...options,
-        });
+        super('sphere', options, SPHERE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

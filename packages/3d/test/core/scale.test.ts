@@ -6,6 +6,7 @@ import {
 
 import {
     createCube,
+    interpolateVector3,
     mat4NormalMatrix,
     mat4TransformDirection,
     mat4TransformPoint,
@@ -109,12 +110,6 @@ describe('Shape3D scale', () => {
 
 });
 
-/*
- * interpolateVector3 was exported and unit tested but referenced by nothing: getInterpolator picked
- * from a closed list of core interpolators, and interpolateBorderRadius — which matches any array of
- * up to four numbers — claimed a Vector3 before anything else could. Every vector-valued property
- * this work added would otherwise animate as a border radius.
- */
 describe('Vector3 interpolation', () => {
 
     interface AnchoredState extends Shape3DState {
@@ -130,6 +125,9 @@ describe('Vector3 interpolation', () => {
         constructor(anchor: Vector3) {
             super('anchored', {
                 anchor,
+                interpolators: {
+                    anchor: interpolateVector3,
+                },
             });
         }
 
@@ -157,8 +155,8 @@ describe('Vector3 interpolation', () => {
         expect(element.anchor).toEqual([4, 5, 6]);
     });
 
-    // Without the registration a Vector3 fell to interpolateBorderRadius, which normalizes a
-    // three-element array into four corners and hands back a value of the wrong shape entirely.
+    // A Vector3 used to fall to interpolateBorderRadius, which normalizes a three-element array into
+    // four corners and hands back a value of the wrong shape entirely.
     test('Should not resolve a Vector3 as a border radius', () => {
         const element = new Anchored([0, 0, 0]);
         const tick = element.interpolate({

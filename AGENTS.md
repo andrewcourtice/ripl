@@ -138,7 +138,7 @@ export class Circle extends Shape<CircleState> {
 
     // ... cy, radius follow the same pattern
 
-    constructor(options: ShapeOptions<CircleState>) {
+    constructor(options: Shape2DOptions<CircleState>) {
         super('circle', options);
     }
 
