@@ -44,9 +44,6 @@ import {
     resolveMaterial,
 } from './material';
 
-// Imported for its registration side effect, which every 3D element depends on for animation.
-import './interpolators';
-
 import type {
     Material,
     ResolvedMaterial,
@@ -64,6 +61,7 @@ import {
 
 import {
     Box,
+    interpolateAny,
     interpolateNumber,
     matrixApplyToPoint,
     matrixInvert,
@@ -423,6 +421,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 scaleX: interpolateNumber,
                 scaleY: interpolateNumber,
                 scaleZ: interpolateNumber,
+                material: interpolateAny,
                 ...interpolators,
             },
             ...rest,
@@ -452,7 +451,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
      */
     public override interpolate(
         newState: Partial<ElementInterpolationState<TState>>,
-        interpolators: Partial<ElementInterpolators<TState>> = {}
+        interpolators: ElementInterpolators<TState> = {}
     ): Interpolator<void> {
         const tick = super.interpolate(newState, interpolators);
 

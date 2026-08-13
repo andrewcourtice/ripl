@@ -25,6 +25,7 @@ import type {
 import type {
     BaseElementState,
     ElementInterpolationState,
+    ElementInterpolators,
 } from './element';
 
 import type {
@@ -115,6 +116,8 @@ export interface RendererTransitionOptions<TElement extends Element> {
     direction?: RendererTransitionDirection;
     /** Target state (values, keyframes, or interpolators) the element transitions towards. */
     state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
+    /** Interpolator overrides for individual state properties, taking precedence over the defaults the element declares. See {@link ElementInterpolators}. */
+    interpolators?: ElementInterpolators<TElement extends Element<infer TState> ? TState : BaseElementState>;
     /** Invoked with the element once its transition completes. */
     onComplete?(element: Element): void;
 }
@@ -551,6 +554,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     onComplete = functionNoop,
                     direction = 'forward',
                     state,
+                    interpolators,
                 } = getOptions(element as TElement extends Group ? Element : TElement, index, totalCount);
 
                 const transitionId = Symbol();
@@ -588,7 +592,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     callback,
                     paused: false,
                     pauseOffset: 0,
-                    interpolator: element.interpolate(state),
+                    interpolator: element.interpolate(state, interpolators),
                 };
 
                 scopedTransitions.set(transitionId, {

@@ -22,6 +22,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /**
  * Evaluates a surface at a point in its parameter domain.
  *
@@ -104,6 +108,7 @@ export class Parametric extends Shape3D<ParametricState> {
     constructor(options: ParametricOptions) {
         const {
             surface,
+            interpolators,
             ...state
         } = options;
 
@@ -112,6 +117,12 @@ export class Parametric extends Shape3D<ParametricState> {
             vSegments: 24,
             revision: 0,
             ...state,
+            interpolators: {
+                revision: interpolateNumber,
+                uSegments: interpolateNumber,
+                vSegments: interpolateNumber,
+                ...interpolators,
+            },
         });
 
         this._surface = surface;

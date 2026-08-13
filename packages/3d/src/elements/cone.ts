@@ -25,6 +25,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a cone, defining radius, height, and segment count. */
 export interface ConeState extends Shape3DState {
     /** The radius of the base, in world units. */
@@ -66,9 +70,20 @@ export class Cone extends Shape3D<ConeState> {
     }
 
     constructor(options: Shape3DOptions<ConeState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
         super('cone', {
             segments: 16,
-            ...options,
+            ...rest,
+            interpolators: {
+                height: interpolateNumber,
+                radius: interpolateNumber,
+                segments: interpolateNumber,
+                ...interpolators,
+            },
         });
     }
 

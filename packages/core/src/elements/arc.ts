@@ -26,6 +26,10 @@ import {
     typeIsNil,
 } from '@ripl/utilities';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** Pad-trimmed sector geometry a rounded annular sector is traced from. */
 interface ArcSector {
     cx: number;
@@ -284,7 +288,26 @@ export class Arc extends Shape2D<ArcState> {
     }
 
     constructor(options: Shape2DOptions<ArcState>) {
-        super('arc', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('arc', {
+            ...rest,
+            interpolators: {
+                borderRadius: interpolateNumber,
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                endAngle: interpolateNumber,
+                innerRadius: interpolateNumber,
+                padAngle: interpolateNumber,
+                padWidth: interpolateNumber,
+                radius: interpolateNumber,
+                startAngle: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     /** Computes the centroid point of this arc, optionally with state overrides. */

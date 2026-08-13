@@ -3,10 +3,6 @@ import {
     vec3Lerp,
 } from '../math/vector';
 
-import {
-    registerInterpolator,
-} from '@ripl/core';
-
 import type {
     InterpolatorFactory,
 } from '@ripl/core';
@@ -24,10 +20,3 @@ export const interpolateVector3: InterpolatorFactory<Vector3> = Object.assign(
         test: (value: unknown): boolean => typeIsVector3(value),
     }
 );
-
-/*
- * Registered eagerly, because the built-in `interpolateBorderRadius` matches any array of up to
- * four numbers and would otherwise claim a Vector3 first — animating a light's colour or a shape's
- * scale as a border radius.
- */
-registerInterpolator(interpolateVector3);

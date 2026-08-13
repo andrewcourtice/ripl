@@ -24,6 +24,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a cylinder, defining top/bottom radii, height, and segment count. */
 export interface CylinderState extends Shape3DState {
     /** The radius of the top cap, in world units. A value of `0` produces a cone-like point. */
@@ -76,9 +80,21 @@ export class Cylinder extends Shape3D<CylinderState> {
     }
 
     constructor(options: Shape3DOptions<CylinderState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
         super('cylinder', {
             segments: 16,
-            ...options,
+            ...rest,
+            interpolators: {
+                height: interpolateNumber,
+                radiusBottom: interpolateNumber,
+                radiusTop: interpolateNumber,
+                segments: interpolateNumber,
+                ...interpolators,
+            },
         });
     }
 

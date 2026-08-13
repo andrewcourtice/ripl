@@ -26,9 +26,11 @@ import type {
 } from '../math';
 
 import {
+    interpolateAny,
     interpolateColor,
     interpolateGradient,
     interpolateNumber,
+    interpolateNumbers,
     interpolatePattern,
     interpolateRotation,
     interpolateTransformOrigin,
@@ -184,6 +186,50 @@ export interface ElementEventMap extends EventMap {
     destroyed: null;
 }
 
+// A paint is a colour, a gradient or a pattern, narrowest predicate first.
+const PAINT_INTERPOLATORS = [
+    interpolateGradient,
+    interpolatePattern,
+    interpolateColor,
+];
+
+/**
+ * The interpolators every element resolves its {@link BaseState} properties with, unless the element
+ * type or the caller declares otherwise.
+ *
+ * Shared by every element rather than rebuilt per instance, so treat it as read-only.
+ */
+export const ELEMENT_INTERPOLATORS: ElementInterpolators<BaseElementState> = {
+    direction: interpolateAny,
+    fill: PAINT_INTERPOLATORS,
+    filter: interpolateAny,
+    font: interpolateAny,
+    fontKerning: interpolateAny,
+    globalCompositeOperation: interpolateAny,
+    lineCap: interpolateAny,
+    lineDash: interpolateNumbers,
+    lineDashOffset: interpolateNumber,
+    lineJoin: interpolateAny,
+    lineWidth: interpolateNumber,
+    miterLimit: interpolateNumber,
+    opacity: interpolateNumber,
+    rotation: interpolateRotation,
+    shadowBlur: interpolateNumber,
+    shadowColor: PAINT_INTERPOLATORS,
+    shadowOffsetX: interpolateNumber,
+    shadowOffsetY: interpolateNumber,
+    stroke: PAINT_INTERPOLATORS,
+    textAlign: interpolateAny,
+    textBaseline: interpolateAny,
+    transformOriginX: interpolateTransformOrigin,
+    transformOriginY: interpolateTransformOrigin,
+    transformScaleX: interpolateNumber,
+    transformScaleY: interpolateNumber,
+    translateX: interpolateNumber,
+    translateY: interpolateNumber,
+    zIndex: interpolateNumber,
+};
+
 /** Options for constructing an element, combining an optional id, CSS classes, data, pointer events, and initial state. */
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
     /** Optional stable id; a unique `type:uniqueId` id is generated when omitted. */
@@ -194,8 +240,8 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     data?: unknown;
     /** Which parts of the element respond to pointer hit testing. Defaults to `all`. */
     pointerEvents?: ElementPointerEvents;
-    /** Specific state value interpolator overrides */
-    interpolators?: Partial<ElementInterpolators<TState>>;
+    /** Interpolator overrides for individual state properties, layered over the defaults the element type declares. See {@link ElementInterpolators}. */
+    interpolators?: ElementInterpolators<TState>;
 } & TState;
 
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
@@ -211,9 +257,19 @@ export type ElementInterpolationStateValue<TValue = number> = TValue
 | ElementInterpolationKeyFrame<TValue>[]
 | Interpolator<TValue>;
 
-/** A map of interpolator factories keyed by state property, used to override default interpolation behavior. */
+/** A factory typed for a single member of a union-valued state property, so a `string | number` property accepts a factory for `number` alone. */
+export type ElementInterpolatorMember<TValue> = TValue extends unknown
+    ? InterpolatorFactory<TValue>
+    : never;
+
+/** A factory able to interpolate a state value: one typed for the value itself, one typed for a single member of a union-typed value, or a universal factory such as {@link interpolateAny}. */
+export type ElementInterpolator<TValue> = InterpolatorFactory<TValue>
+| InterpolatorFactory<unknown>
+| ElementInterpolatorMember<TValue>;
+
+/** A map of interpolator factories keyed by state property, used to override default interpolation behavior. A property may declare an ordered list, tried in order: the first factory whose `test` passes wins, and a property no factory claims falls back to {@link interpolateAny}. */
 export type ElementInterpolators<TState extends BaseElementState> = {
-    [TKey in keyof TState]: OneOrMore<InterpolatorFactory<TState[TKey]>>;
+    [TKey in keyof TState]?: OneOrMore<ElementInterpolator<NonNullable<TState[TKey]>>>;
 };
 
 /** Partial state where each property can be a target value, keyframe array, or interpolator function. */
@@ -258,7 +314,7 @@ export class Element<
 
     protected state: TState;
     protected context?: Context;
-    protected interpolators: Partial<ElementInterpolators<TState>>;
+    protected interpolators: ElementInterpolators<TState>;
 
     /** Unique identifier for this element, defaulting to `type:uniqueId` when not supplied. */
     public id: string;
@@ -588,17 +644,9 @@ export class Element<
         } as unknown as TState;
 
         this.interpolators = {
-            opacity: interpolateNumber,
-            fill: [
-                interpolateGradient,
-                interpolatePattern,
-                interpolateColor,
-            ],
-            rotation: interpolateRotation,
-            transformOriginX: interpolateTransformOrigin,
-            transformOriginY: interpolateTransformOrigin,
+            ...ELEMENT_INTERPOLATORS,
             ...interpolators,
-        };
+        } as ElementInterpolators<TState>;
     }
 
     /**
@@ -868,7 +916,7 @@ export class Element<
     }
 
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */
-    public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
+    public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: ElementInterpolators<TState> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
             // Use the effective value so an inherited property animates from what's on screen.
             const currentValue = this.getComputedValue(key);

@@ -38,6 +38,11 @@ import {
     resolvePolylineRenderer,
 } from '../math/polyline';
 
+import {
+    interpolateAny,
+    interpolatePoints,
+} from '../interpolators';
+
 /** A span of a polyline's points stroked with its own dash pattern. */
 export interface PolylineSegment {
     /** Index of the point the span starts at. */
@@ -317,7 +322,20 @@ export class Polyline extends Shape2D<PolylineState> {
     }
 
     constructor(options: Shape2DOptions<PolylineState>) {
-        super('polyline', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('polyline', {
+            ...rest,
+            interpolators: {
+                points: interpolatePoints,
+                renderer: interpolateAny,
+                segments: interpolateAny,
+                ...interpolators,
+            },
+        });
     }
 
     private _trace(context: Context, path: ContextPath, renderer: PolylineRenderFunc): void {

@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State for a mesh built from an explicit face list. */
 export interface MeshState extends Shape3DState {
     /** A counter bumped whenever the face list is replaced, invalidating the cached geometry. */
@@ -50,12 +54,17 @@ export class Mesh extends Shape3D<MeshState> {
     constructor(options?: MeshOptions) {
         const {
             faces = [],
+            interpolators,
             ...state
         } = options ?? {};
 
         super('mesh', {
             revision: 0,
             ...state,
+            interpolators: {
+                revision: interpolateNumber,
+                ...interpolators,
+            },
         });
 
         this._faces = faces;

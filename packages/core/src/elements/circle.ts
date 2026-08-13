@@ -15,6 +15,10 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a circle element, defining center coordinates and radius. */
 export interface CircleState extends BaseElementState {
     /** The x-coordinate of the circle's center. */
@@ -56,7 +60,20 @@ export class Circle extends Shape2D<CircleState> {
     }
 
     constructor(options: Shape2DOptions<CircleState>) {
-        super('circle', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('circle', {
+            ...rest,
+            interpolators: {
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                radius: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     /** @internal Local-space bounding box of the circle. */

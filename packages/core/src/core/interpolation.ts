@@ -9,11 +9,11 @@ import {
 
 import {
     interpolateAny,
-    interpolateBorderRadius,
     interpolateColor,
     interpolateDate,
     interpolateGradient,
     interpolateNumber,
+    interpolateNumbers,
     interpolatePattern,
     interpolatePoints,
 } from '../interpolators';
@@ -21,6 +21,7 @@ import {
 import type {
     Interpolator,
     InterpolatorFactory,
+    PredicatedFunction,
 } from '../interpolators';
 
 import {
@@ -28,11 +29,11 @@ import {
     typeIsArray,
     typeIsNil,
     typeIsObject,
-    valueOneOrMore,
 } from '@ripl/utilities';
 
 import type {
     ElementInterpolationKeyFrame,
+    ElementInterpolator,
 } from './element';
 
 import type {
@@ -46,7 +47,7 @@ const DEFAULT_INTERPOLATORS = [
     interpolateColor,
     interpolateDate,
     interpolatePoints,
-    interpolateBorderRadius,
+    interpolateNumbers,
 ] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,36 +94,20 @@ export function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: El
     return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
 }
 
-// Registered factories are consulted before the built-ins, because a built-in predicate can be
-// broader than a package's own: interpolateBorderRadius matches any array of up to four numbers,
-// which would claim a 3D vector before @ripl/3d's own interpolator ever saw it.
-const registeredInterpolators: InterpolatorFactory<never>[] = [];
-
-/**
- * Registers an interpolator factory for {@link getInterpolator} to consider.
- *
- * A package that adds a value type — a 3D vector, a quaternion — registers its interpolator here so
- * a transition on that type animates rather than snapping. Registered factories are tried before
- * the built-ins and in registration order, and each must carry a `test` predicate. Registering the
- * same factory twice is a no-op.
- *
- * @param interpolator - The factory to register. Ignored when it has no `test` predicate.
- * @typeParam TValue - The value type the factory interpolates.
- */
-export function registerInterpolator<TValue>(interpolator: InterpolatorFactory<TValue>): void {
-    const entry = interpolator as unknown as InterpolatorFactory<never>;
-
-    if (!interpolator.test || registeredInterpolators.includes(entry)) {
-        return;
-    }
-
-    registeredInterpolators.push(entry);
+// A declared factory carrying no predicate is an explicit choice, so it claims the value outright.
+function claims(interpolator: PredicatedFunction, value: unknown): boolean {
+    return !interpolator.test || interpolator.test(value);
 }
 
-export function getInterpolator<TValue>(value: TValue, interpolators?: OneOrMore<InterpolatorFactory<TValue>>) {
-    const interpolatorSet = interpolators
-        ? valueOneOrMore(interpolators)
-        : DEFAULT_INTERPOLATORS;
+export function getInterpolator<TValue>(value: TValue, interpolators?: OneOrMore<ElementInterpolator<NonNullable<NoInfer<TValue>>>>) {
+    if (typeIsNil(interpolators)) {
+        return (DEFAULT_INTERPOLATORS.find(({ test }) => !!test?.(value)) ?? interpolateAny) as InterpolatorFactory<TValue>;
+    }
 
-    return (interpolatorSet.find(({ test }) => !!test?.(value)) ?? interpolateAny) as InterpolatorFactory<TValue>;
+    // Not normalised to an array first: one declared factory is the common case, on a per-frame path.
+    if (!typeIsArray(interpolators)) {
+        return (claims(interpolators, value) ? interpolators : interpolateAny) as InterpolatorFactory<TValue>;
+    }
+
+    return (interpolators.find(entry => claims(entry, value)) ?? interpolateAny) as InterpolatorFactory<TValue>;
 }

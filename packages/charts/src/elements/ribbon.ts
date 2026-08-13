@@ -10,6 +10,10 @@ import {
     Shape2D,
 } from '@ripl/core';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a ribbon shape connecting two arc segments via quadratic curves. */
 export interface RibbonState extends BaseElementState {
     /** Center x of the arc the ribbon spans, in pixels. */
@@ -95,7 +99,24 @@ export class Ribbon extends Shape2D<RibbonState> {
     }
 
     constructor(options: Shape2DOptions<RibbonState>) {
-        super('ribbon', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('ribbon', {
+            ...rest,
+            interpolators: {
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                radius: interpolateNumber,
+                sourceEnd: interpolateNumber,
+                sourceStart: interpolateNumber,
+                targetEnd: interpolateNumber,
+                targetStart: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     public _getLocalBoundingBox(): Box {

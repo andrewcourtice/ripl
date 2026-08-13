@@ -15,6 +15,10 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for an ellipse element, defining center, radii, rotation, and angle range. */
 export interface EllipseState extends BaseElementState {
     /** The x-coordinate of the ellipse's center. */
@@ -104,7 +108,23 @@ export class Ellipse extends Shape2D<EllipseState> {
     }
 
     constructor(options: Shape2DOptions<EllipseState>) {
-        super('ellipse', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('ellipse', {
+            ...rest,
+            interpolators: {
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                endAngle: interpolateNumber,
+                radiusX: interpolateNumber,
+                radiusY: interpolateNumber,
+                startAngle: interpolateNumber,
+                ...interpolators,
+            },
+        });
 
         // Ellipses rotate about their center by convention; a % origin keeps tracking `cx`/`cy`.
         if (options.transformOriginX === undefined && options.transformOriginY === undefined) {

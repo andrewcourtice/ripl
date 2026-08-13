@@ -19,6 +19,11 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateAny,
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a text element, defining position, content, and optional path-based text layout. */
 export interface TextState extends BaseElementState {
     /** The x-coordinate of the text's anchor point. */
@@ -82,7 +87,22 @@ export class Text extends Element<TextState> {
     }
 
     constructor(options: ElementOptions<TextState>) {
-        super('text', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('text', {
+            ...rest,
+            interpolators: {
+                content: interpolateNumber,
+                pathData: interpolateAny,
+                startOffset: interpolateNumber,
+                x: interpolateNumber,
+                y: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     // The bound context is the authority on its own metrics: a terminal cell is not a canvas glyph.

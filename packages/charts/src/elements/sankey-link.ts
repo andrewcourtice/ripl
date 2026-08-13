@@ -9,6 +9,10 @@ import {
     Shape2D,
 } from '@ripl/core';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a Sankey link, defining source and target endpoint coordinates. */
 export interface SankeyLinkState extends BaseElementState {
     /** Source endpoint x coordinate, in pixels. */
@@ -61,9 +65,21 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
     }
 
     constructor(options: Shape2DOptions<SankeyLinkState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
         super('sankey-link', {
             autoFill: false,
-            ...options,
+            ...rest,
+            interpolators: {
+                sx: interpolateNumber,
+                sy: interpolateNumber,
+                tx: interpolateNumber,
+                ty: interpolateNumber,
+                ...interpolators,
+            },
         });
     }
 

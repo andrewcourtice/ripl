@@ -20,6 +20,11 @@ import type {
     BorderRadius,
 } from '../math';
 
+import {
+    interpolateBorderRadius,
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a rectangle element, defining position, dimensions, and optional border radius. */
 export interface RectState extends BaseElementState {
     /** The x-coordinate of the rectangle's top-left corner. */
@@ -83,7 +88,22 @@ export class Rect extends Shape2D<RectState> {
     }
 
     constructor(options: Shape2DOptions<RectState>) {
-        super('rect', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('rect', {
+            ...rest,
+            interpolators: {
+                borderRadius: interpolateBorderRadius,
+                height: interpolateNumber,
+                width: interpolateNumber,
+                x: interpolateNumber,
+                y: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     /** @internal Local-space bounding box of the rectangle. */

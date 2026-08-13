@@ -8,16 +8,16 @@ outline: "deep"
 
 Interpolators are functions that compute intermediate values between two endpoints. They are the tweening engine behind Ripl's animation system: when you transition an element's `radius` from 50 to 100, an interpolator generates all the in-between values.
 
-What can be tweened is not limited to numbers. Ripl interpolates dates, colors written as hex, `rgb()`, `hsl()`, `hsv()` or a CSS keyword, gradient strings, pattern paints, rotations in degrees or radians, border radii, and point arrays — the last of which morphs one polyline or polygon outline into another, optionally matching points by key so a curved renderer survives an add or remove. The interpolator is chosen from the value's type, and a custom one can be supplied per property.
+What can be tweened is not limited to numbers. Ripl interpolates dates, colors written as hex, `rgb()`, `hsl()`, `hsv()` or a CSS keyword, gradient strings, pattern paints, rotations in degrees or radians, border radii, dash patterns, and point arrays — the last of which morphs one polyline or polygon outline into another, optionally matching points by key so a curved renderer survives an add or remove. Every built-in element declares which interpolators its own state properties use; anything undeclared is chosen from the value's type, and either can be overridden per property.
 
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Built-in Interpolators
 
-Ripl ships with interpolators for common value types. Automatic selection tests them in this order and takes the first whose `test` function returns `true`: `interpolateNumber`, `interpolateGradient`, `interpolatePattern` (matching-type `pattern(...)` paints), `interpolateColor` (hex, rgb, rgba, hsl, hsv and CSS keywords), `interpolateDate`, `interpolatePoints` (arrays of `[x, y]` tuples), and `interpolateBorderRadius`. `interpolateAny` is the fallback, snapping at t > 0.5.
+Ripl ships with interpolators for common value types. A property an element declares an interpolator for uses it directly. Anything else is detected from the value, testing in this order and taking the first whose `test` function returns `true`: `interpolateNumber`, `interpolateGradient`, `interpolatePattern` (matching-type `pattern(...)` paints), `interpolateColor` (hex, rgb, rgba, hsl, hsv and CSS keywords), `interpolateDate`, `interpolatePoints` (arrays of `[x, y]` tuples), and `interpolateNumbers` (arrays of numbers, of any length). `interpolateAny` is the fallback, snapping at t > 0.5.
 
-A further set is not auto-selected and is reached for by key or by hand: `interpolateRotation` and `interpolateTransformOrigin` are keyed to the `rotation` and `transformOrigin*` properties, and `interpolateString`, `interpolatePath`, `interpolateWaypoint`, `interpolatePolygonPoint` and `interpolateCirclePoint` are called directly.
+A further set is never detected and is reached for by declaration or by hand: `interpolateRotation` and `interpolateTransformOrigin` back the `rotation` and `transformOrigin*` properties, `interpolateBorderRadius` backs `Rect`'s `borderRadius` (which may be a single radius or a four-corner tuple), `interpolateImage` cross-fades an `Image` element's source, and `interpolateString`, `interpolatePath`, `interpolateWaypoint`, `interpolatePolygonPoint` and `interpolateCirclePoint` are called directly.
 
 ## How Interpolators Work
 
@@ -78,7 +78,7 @@ interpolate(0.7); // 'world'
 
 ## Automatic Interpolation
 
-When you use `element.interpolate()` or `renderer.transition()`, Ripl automatically selects the appropriate interpolator for each property:
+When you use `element.interpolate()` or `renderer.transition()`, Ripl selects the appropriate interpolator for each property:
 
 ```ts
 await renderer.transition(circle, {
@@ -86,6 +86,17 @@ await renderer.transition(circle, {
     state: {
         radius: 100, // uses interpolateNumber
         fill: '#ff006e', // uses interpolateColor
+    },
+});
+```
+
+`Circle` declares `radius` as numeric, so no detection runs for it. `fill` is declared as a paint — a gradient, a pattern or a color, tried in that order — so the same property tweens correctly whichever form it holds:
+
+```ts
+await renderer.transition(rect, {
+    duration: 1000,
+    state: {
+        fill: 'linear-gradient(180deg, #ff006e, #fb5607)', // uses interpolateGradient
     },
 });
 ```
@@ -118,10 +129,51 @@ import type {
 const interpolateBoolean: InterpolatorFactory<boolean> = (a, b) => {
     return t => t > 0.5 ? b : a;
 };
-
-// Optional: add a test function so it's auto-selected
-interpolateBoolean.test = (value) => typeof value === 'boolean';
 ```
+
+### The interpolators option
+
+Declare which factory a property uses with the `interpolators` option, either at construction or per transition. A transition-level entry wins over a construction-level one, which wins over the element type's own default:
+
+```ts
+const toggle = createRect({
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 40,
+    interpolators: {
+        // 'active' is this element's own state, so nothing could have guessed it
+        active: interpolateBoolean,
+    },
+});
+
+await renderer.transition(toggle, {
+    duration: 1000,
+    state: { width: 200 },
+    interpolators: {
+        width: interpolateStepped,
+    },
+});
+```
+
+A property may declare **several** factories, tried in order. Each is asked, via its `test` function, whether it can handle the value; the first to claim it wins. That is how `fill` accepts a gradient, a pattern or a color under one property:
+
+```ts
+const swatch = createRect({
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 40,
+    interpolators: {
+        fill: [interpolateGradient, interpolatePattern, interpolateColor],
+    },
+});
+```
+
+A factory with **no** `test` function is an unconditional choice and is used as-is. If every declared factory declines the value, the property snaps at t > 0.5 rather than falling back to detection — declaring a factory is a statement about what the property holds.
+
+> [!TIP]
+> A custom element should declare its own state properties this way rather than relying on detection. See [Custom Elements](/docs/core/advanced/custom-elements).
 
 ### Keyframe Values
 
@@ -158,7 +210,7 @@ await renderer.transition(circle, {
 When a transition runs, here's what happens for each property:
 
 1. **Read** the current value from the element
-2. **Select** an interpolator (custom function, keyframe array, or auto-detected factory)
+2. **Select** an interpolator: a function passed as the target value is used verbatim; otherwise the first factory to claim the value is taken from the transition's `interpolators`, then the element's, then — for a property neither declares — the built-in detection order
 3. On each frame, **compute** the eased time `t`
 4. **Apply** the interpolated value to the element
 5. The renderer re-renders the scene

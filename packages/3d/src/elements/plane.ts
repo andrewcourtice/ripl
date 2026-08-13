@@ -8,6 +8,10 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a plane, defining width and height. */
 export interface PlaneState extends Shape3DState {
     /** The width of the plane along the X axis, in world units. */
@@ -38,7 +42,19 @@ export class Plane extends Shape3D<PlaneState> {
     }
 
     constructor(options: Shape3DOptions<PlaneState>) {
-        super('plane', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('plane', {
+            ...rest,
+            interpolators: {
+                height: interpolateNumber,
+                width: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     protected computeFaces(): Face3D[] {

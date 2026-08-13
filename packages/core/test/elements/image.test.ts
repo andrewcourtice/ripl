@@ -151,3 +151,73 @@ describe('interpolateImage', () => {
     });
 
 });
+
+// jsdom has no 2D context, so the blend path is unreachable without standing one in.
+describe('interpolateImage blending', () => {
+
+    function stubCanvasContext() {
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ({
+            globalAlpha: 1,
+            clearRect: vi.fn(),
+            drawImage: vi.fn(),
+        }) as unknown as CanvasRenderingContext2D);
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should settle on each endpoint rather than hand back the blend buffer', () => {
+        stubCanvasContext();
+
+        const from = createMockImage();
+        const to = createMockImage();
+        const interpolate = interpolateImage(from, to);
+
+        expect(interpolate(0)).toBe(from);
+        expect(interpolate(1)).toBe(to);
+    });
+
+    test('Should blend into a buffer between the endpoints', () => {
+        stubCanvasContext();
+
+        const from = createMockImage();
+        const to = createMockImage();
+        const blended = interpolateImage(from, to)(0.5);
+
+        expect(blended).not.toBe(from);
+        expect(blended).not.toBe(to);
+    });
+
+    // A shared blend buffer had two cross-fades in the same frame hand back one another's pixels.
+    test('Should give concurrent cross-fades their own blend buffer', () => {
+        stubCanvasContext();
+
+        const first = interpolateImage(createMockImage(), createMockImage());
+        const second = interpolateImage(createMockImage(20, 20), createMockImage(20, 20));
+
+        expect(first(0.5)).not.toBe(second(0.5));
+    });
+
+    test('Should cross-fade an element\'s image and land on the target', () => {
+        stubCanvasContext();
+
+        const from = createMockImage();
+        const to = createMockImage();
+        const element = createImage({
+            image: from,
+            x: 0,
+            y: 0,
+        });
+
+        const interpolator = element.interpolate({ image: to });
+
+        interpolator(0.5);
+        expect(element.image).not.toBe(from);
+        expect(element.image).not.toBe(to);
+
+        interpolator(1);
+        expect(element.image).toBe(to);
+    });
+
+});

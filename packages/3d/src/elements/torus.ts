@@ -16,6 +16,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a torus, defining major radius, tube radius, and segment counts. */
 export interface TorusState extends Shape3DState {
     /** The major radius from the center of the torus to the center of the tube, in world units. */
@@ -68,10 +72,22 @@ export class Torus extends Shape3D<TorusState> {
     }
 
     constructor(options: Shape3DOptions<TorusState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
         super('torus', {
             radialSegments: 12,
             tubularSegments: 24,
-            ...options,
+            ...rest,
+            interpolators: {
+                radialSegments: interpolateNumber,
+                radius: interpolateNumber,
+                tube: interpolateNumber,
+                tubularSegments: interpolateNumber,
+                ...interpolators,
+            },
         });
     }
 

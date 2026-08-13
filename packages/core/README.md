@@ -12,7 +12,7 @@
 - **DOM-like scene graph** — elements nest in [groups](https://www.ripl.run/docs/core/essentials/group) that inherit presentation state, and are found with `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll`, `matches` and `closest`. [`Scene`](https://www.ripl.run/docs/core/essentials/scene) hoists the tree into a flat render buffer, so a frame costs O(n) in elements rather than in tree depth.
 - **Renderer** — [`createRenderer`](https://www.ripl.run/docs/core/essentials/renderer) drives `requestAnimationFrame`, stops itself when nothing is animating (`autoStop`), and carries FPS, element-count and bounding-box debug overlays.
 - **Animation** — awaitable, cancelable transitions with CSS-like keyframes, per-keyframe offsets, and **31 easing functions** (linear plus quad, cubic, quart, quint, sine, expo, circ, back, elastic and bounce in in/out/in-out form). See [Animations](https://www.ripl.run/docs/core/advanced/animations).
-- **Type-aware interpolation** — numbers, colours, gradients, pattern fills, dates, rotations, point sets and border radii are detected and tweened without configuration; `registerInterpolator` adds your own. Point-set morphing matches outlines of differing length by key, so a curve stays curved across the transition.
+- **Type-aware interpolation** — every built-in element declares how its own state tweens, so a colour, gradient, pattern fill, rotation, point set or dash pattern animates without configuration; anything undeclared is detected from the value. The `interpolators` option overrides any property, on a custom element or a built-in one. Point-set morphing matches outlines of differing length by key, so a curve stays curved across the transition.
 - **Events** — a typed `EventBus` with bubbling, delegation, `stopPropagation`, `{ self: true }` filtering and disposable subscriptions, plus pixel-accurate hit testing so a pointer event resolves to the element actually drawn under the cursor.
 - **14 scale types** — continuous, band, point, discrete, ordinal, diverging, logarithmic, power, symlog, quantile, quantize, threshold, radial and time. See [Scales](https://www.ripl.run/docs/core/advanced/scales).
 - **Colour** — parsing and serialisation for hex, `rgb()`/`rgba()`, `hsl()`/`hsla()`, `hsv()`/`hsva()` and the 148 CSS colour keywords, conversion between spaces, alpha manipulation, sequential colour scales and 8 built-in schemes (viridis, plasma, inferno, magma, cividis, turbo, RdBu, BrBG).
@@ -86,7 +86,7 @@ To render the same scene as SVG, import `createContext` from [`@ripl/svg`](https
 | [`createScene`](https://www.ripl.run/docs/core/essentials/scene) | Top-level group bound to a context, with a hoisted render buffer |
 | [`createRenderer`](https://www.ripl.run/docs/core/essentials/renderer) | Animation loop and transition manager |
 | [`scaleContinuous` … `scaleTime`](https://www.ripl.run/docs/core/advanced/scales) | The 14 scale constructors |
-| [`interpolateColor` / `registerInterpolator`](https://www.ripl.run/docs/core/advanced/interpolators) | Built-in interpolators and the hook for custom ones |
+| [`interpolateColor` / `ElementInterpolators`](https://www.ripl.run/docs/core/advanced/interpolators) | Built-in interpolators and the per-property override map |
 | [`parseGradient` / `parsePattern`](https://www.ripl.run/docs/core/advanced/gradients) | Paint-string parsing for gradients and pattern tiles |
 | [`Navigator`](https://www.ripl.run/docs/core/advanced/navigator) | Pan, zoom and brush over a viewport by rescaling domains |
 

@@ -16,6 +16,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /**
  * The sixteen control points of a bicubic Bézier patch, in row-major order.
  *
@@ -129,6 +133,7 @@ export class BezierSurface extends Shape3D<BezierSurfaceState> {
     constructor(options: BezierSurfaceOptions) {
         const {
             patches,
+            interpolators,
             ...state
         } = options;
 
@@ -136,6 +141,11 @@ export class BezierSurface extends Shape3D<BezierSurfaceState> {
             segments: 8,
             revision: 0,
             ...state,
+            interpolators: {
+                revision: interpolateNumber,
+                segments: interpolateNumber,
+                ...interpolators,
+            },
         });
 
         this._patches = patches;

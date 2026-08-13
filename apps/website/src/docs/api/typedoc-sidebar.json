@@ -2544,6 +2544,23 @@
             ]
           },
           {
+            "text": "interpolateNumbers",
+            "link": "/docs/api/@ripl/core/namespaces/interpolateNumbers/",
+            "collapsed": true,
+            "items": [
+              {
+                "text": "Functions",
+                "collapsed": true,
+                "items": [
+                  {
+                    "text": "test",
+                    "link": "/docs/api/@ripl/core/namespaces/interpolateNumbers/functions/test.md"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "text": "interpolatePattern",
             "link": "/docs/api/@ripl/core/namespaces/interpolatePattern/",
             "collapsed": true,
@@ -3074,6 +3091,14 @@
             "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolationStateValue.md"
           },
           {
+            "text": "ElementInterpolator",
+            "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolator.md"
+          },
+          {
+            "text": "ElementInterpolatorMember",
+            "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolatorMember.md"
+          },
+          {
             "text": "ElementInterpolators",
             "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolators.md"
           },
@@ -3452,6 +3477,10 @@
             "link": "/docs/api/@ripl/core/variables/easeOutSine.md"
           },
           {
+            "text": "ELEMENT_INTERPOLATORS",
+            "link": "/docs/api/@ripl/core/variables/ELEMENT_INTERPOLATORS.md"
+          },
+          {
             "text": "EVENT_WILDCARD",
             "link": "/docs/api/@ripl/core/variables/EVENT_WILDCARD.md"
           },
@@ -3492,6 +3521,10 @@
             "link": "/docs/api/@ripl/core/variables/interpolateNumber.md"
           },
           {
+            "text": "interpolateNumbers",
+            "link": "/docs/api/@ripl/core/variables/interpolateNumbers.md"
+          },
+          {
             "text": "interpolatePattern",
             "link": "/docs/api/@ripl/core/variables/interpolatePattern.md"
           },
@@ -3526,10 +3559,6 @@
           {
             "text": "TRANSFORM_DEFAULTS",
             "link": "/docs/api/@ripl/core/variables/TRANSFORM_DEFAULTS.md"
-          },
-          {
-            "text": "TRANSFORM_INTERPOLATORS",
-            "link": "/docs/api/@ripl/core/variables/TRANSFORM_INTERPOLATORS.md"
           }
         ]
       },
@@ -3960,10 +3989,6 @@
           {
             "text": "radiansToDegrees",
             "link": "/docs/api/@ripl/core/functions/radiansToDegrees.md"
-          },
-          {
-            "text": "registerInterpolator",
-            "link": "/docs/api/@ripl/core/functions/registerInterpolator.md"
           },
           {
             "text": "rescaleDomain",

@@ -16,6 +16,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 const FACE_UVS: Vector2[] = [
     [0, 1],
     [1, 1],
@@ -42,7 +46,18 @@ export class Cube extends Shape3D<CubeState> {
     }
 
     constructor(options: Shape3DOptions<CubeState>) {
-        super('cube', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('cube', {
+            ...rest,
+            interpolators: {
+                size: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     protected computeFaces(): Face3D[] {

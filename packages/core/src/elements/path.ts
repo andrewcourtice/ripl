@@ -16,6 +16,10 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a path element, defining bounding position and dimensions. */
 export interface PathState extends BaseElementState {
     /** The x-coordinate of the path's bounding box top-left corner. */
@@ -75,10 +79,20 @@ export class Path extends Shape2D<PathState> {
     constructor(options: Shape2DOptions<PathState> & { pathRenderer?: PathRenderer }) {
         const {
             pathRenderer,
+            interpolators,
             ...shapeOptions
         } = options;
 
-        super('path', shapeOptions);
+        super('path', {
+            ...shapeOptions,
+            interpolators: {
+                height: interpolateNumber,
+                width: interpolateNumber,
+                x: interpolateNumber,
+                y: interpolateNumber,
+                ...interpolators,
+            },
+        });
 
         this._pathRenderer = pathRenderer;
     }

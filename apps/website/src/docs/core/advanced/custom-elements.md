@@ -244,6 +244,59 @@ get radius() { return this.getStateValue('radius'); }
 set radius(value) { this.setStateValue('radius', value); }
 ```
 
+## Declaring Interpolators
+
+Ripl detects an interpolator from the value when a property has no declared one, which is the right behaviour for state it knows nothing about — but detection costs a predicate test per property per transition, and it can only guess from shape. A custom element should say what its own properties hold.
+
+Merge your defaults beneath whatever the caller passed, so an `interpolators` option still wins:
+
+```ts
+import {
+    interpolateAny,
+    interpolateNumber,
+    Shape2D,
+} from '@ripl/web';
+
+class Star extends Shape2D<StarState> {
+
+    constructor(options: Shape2DOptions<StarState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('star', {
+            ...rest,
+            interpolators: {
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                innerRadius: interpolateNumber,
+                outerRadius: interpolateNumber,
+                // A point count has no meaningful in-between, so snap it
+                points: interpolateAny,
+            },
+        });
+    }
+
+}
+```
+
+Base properties such as `fill`, `stroke`, `opacity` and the transform are already declared by `Element`, so only your own state needs listing.
+
+A property may declare several factories, tried in order until one claims the value via its `test` function — that is how `fill` handles a color, a gradient or a pattern. A factory with no `test` is used unconditionally. If every declared factory declines, the property snaps rather than falling back to detection. See [Interpolators](/docs/core/advanced/interpolators).
+
+This is also how a package teaches Ripl about a value type of its own. `@ripl/3d` exports `interpolateVector3`; an element with a vector-valued property declares it:
+
+```ts
+super('anchored', {
+    ...rest,
+    interpolators: {
+        anchor: interpolateVector3,
+        ...interpolators,
+    },
+});
+```
+
 ## Using Custom Elements
 
 Custom elements work exactly like built-in elements: they can be added to groups, scenes, animated with renderers, and respond to events:

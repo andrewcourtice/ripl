@@ -24,6 +24,10 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a sphere, defining radius, longitudinal segments, and latitudinal rings. */
 export interface SphereState extends Shape3DState {
     /** The radius of the sphere, in world units. */
@@ -65,10 +69,21 @@ export class Sphere extends Shape3D<SphereState> {
     }
 
     constructor(options: Shape3DOptions<SphereState>) {
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
         super('sphere', {
             segments: 16,
             rings: 12,
-            ...options,
+            ...rest,
+            interpolators: {
+                radius: interpolateNumber,
+                rings: interpolateNumber,
+                segments: interpolateNumber,
+                ...interpolators,
+            },
         });
     }
 

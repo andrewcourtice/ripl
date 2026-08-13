@@ -16,6 +16,10 @@ import {
     getPolygonPoints,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a regular polygon element, defining center, radius, and number of sides. */
 export interface PolygonState extends BaseElementState {
     /** The x-coordinate of the polygon's center. */
@@ -68,7 +72,21 @@ export class Polygon extends Shape2D<PolygonState> {
     }
 
     constructor(options: Shape2DOptions<PolygonState>) {
-        super('polygon', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('polygon', {
+            ...rest,
+            interpolators: {
+                cx: interpolateNumber,
+                cy: interpolateNumber,
+                radius: interpolateNumber,
+                sides: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     /** @internal Local-space bounding box of the polygon. */

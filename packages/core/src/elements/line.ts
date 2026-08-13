@@ -15,6 +15,10 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a line element, defining start and end coordinates. */
 export interface LineState extends BaseElementState {
     /** The x-coordinate of the line's start point. */
@@ -67,7 +71,21 @@ export class Line extends Shape2D<LineState> {
     }
 
     constructor(options: Shape2DOptions<LineState>) {
-        super('line', options);
+        const {
+            interpolators,
+            ...rest
+        } = options;
+
+        super('line', {
+            ...rest,
+            interpolators: {
+                x1: interpolateNumber,
+                x2: interpolateNumber,
+                y1: interpolateNumber,
+                y2: interpolateNumber,
+                ...interpolators,
+            },
+        });
     }
 
     /** @internal Local-space bounding box of the line. */
