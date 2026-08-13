@@ -27,6 +27,11 @@ import type {
 
 import {
     interpolateColor,
+    interpolateGradient,
+    interpolateNumber,
+    interpolatePattern,
+    interpolateRotation,
+    interpolateTransformOrigin,
     type Interpolator,
     type InterpolatorFactory,
 } from '../interpolators';
@@ -208,7 +213,7 @@ export type ElementInterpolationStateValue<TValue = number> = TValue
 
 /** A map of interpolator factories keyed by state property, used to override default interpolation behavior. */
 export type ElementInterpolators<TState extends BaseElementState> = {
-    [TKey in keyof TState]: InterpolatorFactory<TState[TKey]>;
+    [TKey in keyof TState]: OneOrMore<InterpolatorFactory<TState[TKey]>>;
 };
 
 /** Partial state where each property can be a target value, keyframe array, or interpolator function. */
@@ -583,7 +588,15 @@ export class Element<
         } as unknown as TState;
 
         this.interpolators = {
-            fill: interpolateColor,
+            opacity: interpolateNumber,
+            fill: [
+                interpolateGradient,
+                interpolatePattern,
+                interpolateColor,
+            ],
+            rotation: interpolateRotation,
+            transformOriginX: interpolateTransformOrigin,
+            transformOriginY: interpolateTransformOrigin,
             ...interpolators,
         };
     }
@@ -868,9 +881,7 @@ export class Element<
                 return (output[key] = value, output);
             }
 
-            const interpolator = interpolators[key]
-                ?? this.interpolators[key]
-                ?? getInterpolator(currentValue, key as string);
+            const interpolator = getInterpolator(currentValue, interpolators[key] ?? this.interpolators[key]);
 
             if (isElementValueKeyFrame(value)) {
                 return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);

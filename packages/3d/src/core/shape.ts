@@ -64,6 +64,7 @@ import {
 
 import {
     Box,
+    interpolateNumber,
     matrixApplyToPoint,
     matrixInvert,
     Shape,
@@ -398,6 +399,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     constructor(type: string, options: Shape3DOptions<TState>) {
         const {
             scale = 1,
+            interpolators,
             ...rest
         } = options;
 
@@ -411,6 +413,18 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             scaleX: scale,
             scaleY: scale,
             scaleZ: scale,
+            interpolators: {
+                x: interpolateNumber,
+                y: interpolateNumber,
+                z: interpolateNumber,
+                rotationX: interpolateNumber,
+                rotationY: interpolateNumber,
+                rotationZ: interpolateNumber,
+                scaleX: interpolateNumber,
+                scaleY: interpolateNumber,
+                scaleZ: interpolateNumber,
+                ...interpolators,
+            },
             ...rest,
         } as unknown as ElementOptions<TState>);
 

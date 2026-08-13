@@ -2,15 +2,6 @@ import type {
     Context,
 } from '../context';
 
-import {
-    interpolateRotation,
-    interpolateTransformOrigin,
-} from '../interpolators';
-
-import type {
-    InterpolatorFactory,
-} from '../interpolators';
-
 import type {
     BaseElementState,
     ElementEventMap,
@@ -73,14 +64,6 @@ export const CONTEXT_OPERATIONS = {
     transformOriginY: functionNoop,
 } as {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
-};
-
-/** Interpolator factories for transform-related properties that require special interpolation (rotation, transform-origin). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>> = {
-    rotation: interpolateRotation,
-    transformOriginX: interpolateTransformOrigin,
-    transformOriginY: interpolateTransformOrigin,
 };
 
 /** Default numeric values for transform properties (translate, scale, rotation, transform-origin). */

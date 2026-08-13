@@ -4,10 +4,6 @@
  */
 
 import {
-    TRANSFORM_INTERPOLATORS,
-} from './constants';
-
-import {
     scaleContinuous,
 } from '../scales';
 
@@ -32,11 +28,26 @@ import {
     typeIsArray,
     typeIsNil,
     typeIsObject,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 import type {
     ElementInterpolationKeyFrame,
 } from './element';
+
+import type {
+    OneOrMore,
+} from '@ripl/utilities';
+
+const DEFAULT_INTERPOLATORS = [
+    interpolateNumber,
+    interpolateGradient,
+    interpolatePattern,
+    interpolateColor,
+    interpolateDate,
+    interpolatePoints,
+    interpolateBorderRadius,
+] as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
@@ -108,21 +119,10 @@ export function registerInterpolator<TValue>(interpolator: InterpolatorFactory<T
     registeredInterpolators.push(entry);
 }
 
-export function getInterpolator<TValue>(value: TValue, key?: string) {
-    if (key && TRANSFORM_INTERPOLATORS[key]) {
-        return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
-    }
+export function getInterpolator<TValue>(value: TValue, interpolators?: OneOrMore<InterpolatorFactory<TValue>>) {
+    const interpolatorSet = interpolators
+        ? valueOneOrMore(interpolators)
+        : DEFAULT_INTERPOLATORS;
 
-    const interpolator = [
-        ...registeredInterpolators,
-        interpolateNumber,
-        interpolateGradient,
-        interpolatePattern,
-        interpolateColor,
-        interpolateDate,
-        interpolatePoints,
-        interpolateBorderRadius,
-    ].find(({ test }) => !!test?.(value));
-
-    return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
+    return (interpolatorSet.find(({ test }) => !!test?.(value)) ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
