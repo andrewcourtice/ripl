@@ -10,10 +10,9 @@
                 <RiplSwitch v-model="flatShading" label="Flat" />
                 <RiplSwitch v-model="spinning" label="Spin" />
             </RiplControlGroup>
-            <RiplControlGroup>
-                <label class="teapot-demo__label">Shine</label>
+            <RiplField label="Shine">
                 <RiplInputRange v-model="shininess" :min="0" :max="120" :step="1" />
-            </RiplControlGroup>
+            </RiplField>
         </div>
         <div class="teapot-demo__viewport" ref="viewport"></div>
         <p class="teapot-demo__note">
@@ -35,6 +34,7 @@ import {
 
 import RiplButtonGroup from '../../.vitepress/components/ripl-button-group.vue';
 import RiplControlGroup from '../../.vitepress/components/ripl-control-group.vue';
+import RiplField from '../../.vitepress/components/ripl-field.vue';
 import RiplInputRange from '../../.vitepress/components/ripl-input-range.vue';
 import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 

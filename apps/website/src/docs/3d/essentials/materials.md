@@ -18,13 +18,14 @@ Every property is optional. An element with only a `fill` behaves exactly as it 
 :::tabs
 == Demo
 <ripl-3d-example @context-changed="contextChanged">
-    <template #header>
+    <template #footer>
         <RiplControlGroup>
             <RiplSwitch v-model="flatShading" label="Flat" />
             <RiplSwitch v-model="wireframe" label="Wireframe" />
-            <label class="ripl-example__label">Shine</label>
-            <RiplInputRange v-model="shininess" :min="0" :max="120" :step="1" />
         </RiplControlGroup>
+        <RiplField label="Shine">
+            <RiplInputRange v-model="shininess" :min="0" :max="120" :step="1" />
+        </RiplField>
     </template>
 </ripl-3d-example>
 == Code
@@ -175,9 +176,9 @@ const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
 
     spheres.length = 0;
     spheres.push(
-        createSphere({ x: -1.6, radius: 0.9, segments: 32, rings: 24, fill: '#b87333' }),
-        createSphere({ x: 0, radius: 0.9, segments: 32, rings: 24, fill: '#7f9ec4' }),
-        createSphere({ x: 1.6, radius: 0.9, segments: 32, rings: 24, fill: '#5c9e78' }),
+        createSphere({ x: -1.9, radius: 0.7, segments: 32, rings: 24, fill: '#b87333' }),
+        createSphere({ x: 0, radius: 0.7, segments: 32, rings: 24, fill: '#7f9ec4' }),
+        createSphere({ x: 1.9, radius: 0.7, segments: 32, rings: 24, fill: '#5c9e78' }),
     );
 
     scene.add(spheres);

@@ -261,6 +261,19 @@ onUnmounted(() => {
         margin-left: auto;
     }
 
+    // Stands in for the context switcher on a pane with only one context to offer.
+    .ripl-example__context-label {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.875rem;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: var(--vp-c-text-2);
+        border: 1px solid var(--vp-c-divider);
+        border-radius: 0.375rem;
+        background-color: var(--vp-button-alt-bg);
+    }
+
     .ripl-example__config-button {
         display: inline-flex;
         align-items: center;
@@ -282,7 +295,22 @@ onUnmounted(() => {
     }
 
     .ripl-example__footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 0.75rem 1rem;
         border-top: 1px solid var(--vp-c-divider);
+    }
+
+    .ripl-example__footer .ripl-control-group {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+    // A stacked field sizes to its own basis so sliders share a row instead of each claiming one.
+    .ripl-example__footer .ripl-field {
+        flex: 1 1 12rem;
+        max-width: 20rem;
     }
 
     .ripl-example__root {

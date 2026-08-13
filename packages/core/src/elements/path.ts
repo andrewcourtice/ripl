@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -15,6 +16,10 @@ import type {
 import {
     Box,
 } from '../math';
+
+import {
+    interpolateNumber,
+} from '../interpolators';
 
 /** State interface for a path element, defining bounding position and dimensions. */
 export interface PathState extends BaseElementState {
@@ -30,6 +35,15 @@ export interface PathState extends BaseElementState {
 
 /** A callback that draws custom geometry onto a `ContextPath` using the element's state. */
 export type PathRenderer = (path: ContextPath, state: PathState) => void;
+
+const PATH_DEFAULTS: ElementDefaults<PathState> = {
+    interpolators: {
+        height: interpolateNumber,
+        width: interpolateNumber,
+        x: interpolateNumber,
+        y: interpolateNumber,
+    },
+};
 
 /** A general-purpose shape rendered by a user-supplied path renderer callback. */
 export class Path extends Shape2D<PathState> {
@@ -78,7 +92,7 @@ export class Path extends Shape2D<PathState> {
             ...shapeOptions
         } = options;
 
-        super('path', shapeOptions);
+        super('path', shapeOptions, PATH_DEFAULTS);
 
         this._pathRenderer = pathRenderer;
     }

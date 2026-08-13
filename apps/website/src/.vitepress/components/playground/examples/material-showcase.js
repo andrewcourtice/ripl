@@ -19,7 +19,8 @@ context.lights.add(
 );
 
 scene.add(SHININESS.map((shininess, index) => createSphere({
-    x: (index - 1.5) * 1.5,
+    x: index % 2 === 0 ? -0.8 : 0.8,
+    y: index < 2 ? 0.8 : -0.8,
     radius: 0.6,
     segments: 36,
     rings: 24,

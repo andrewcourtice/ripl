@@ -16,6 +16,14 @@ import type {
     Vector3,
 } from '../math/vector';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 const FACE_UVS: Vector2[] = [
     [0, 1],
     [1, 1],
@@ -28,6 +36,12 @@ export interface CubeState extends Shape3DState {
     /** The length of each edge of the cube, in world units. */
     size: number;
 }
+
+const CUBE_DEFAULTS: Shape3DDefaults<CubeState> = {
+    interpolators: {
+        size: interpolateNumber,
+    },
+};
 
 /** A 3D cube shape with uniform edge size. */
 export class Cube extends Shape3D<CubeState> {
@@ -42,7 +56,7 @@ export class Cube extends Shape3D<CubeState> {
     }
 
     constructor(options: Shape3DOptions<CubeState>) {
-        super('cube', options);
+        super('cube', options, CUBE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

@@ -14,14 +14,15 @@ A **Circle** draws a filled and/or stroked circle defined by a center point (`cx
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Radius</span>
+        <RiplField label="Radius">
             <RiplInputRange v-model="radius" :min="10" :max="100" :step="1" @update:model-value="redraw" />
-            <span>Stroke</span>
+        </RiplField>
+        <RiplField label="Stroke Width">
             <RiplInputRange v-model="lineWidth" :min="0" :max="10" :step="1" @update:model-value="redraw" />
-            <span>Opacity</span>
+        </RiplField>
+        <RiplField label="Opacity">
             <RiplInputRange v-model="opacity" :min="0" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code
@@ -82,7 +83,7 @@ function renderDemo(context: Context) {
 
         createText({
             x: w / 2, y: h / 2 + r + 24,
-            content: `radius: ${Math.round(r)}  stroke: ${lineWidth.value}  opacity: ${opacity.value}%`,
+            content: `radius: ${Math.round(r)}  lineWidth: ${lineWidth.value}  opacity: ${opacity.value}%`,
             fill: '#666', textAlign: 'center', font: '12px sans-serif',
         }).render(context);
     });

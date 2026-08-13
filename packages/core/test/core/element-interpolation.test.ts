@@ -151,7 +151,7 @@ describe('Element.interpolate', () => {
 
         const interpolator = rect.interpolate(
             { x: 200 },
-            { x: customFactory } as any
+            { x: customFactory }
         );
 
         interpolator(0.5);

@@ -5,8 +5,8 @@ import {
 
 scene.add([
     createCube({
-        x: -1.5,
-        size: 0.8,
+        x: -1.35,
+        size: 0.9,
         fill: '#6366f1',
     }),
     createSphere({
@@ -15,8 +15,8 @@ scene.add([
         fill: '#f59e0b',
     }),
     createCube({
-        x: 1.5,
-        size: 0.8,
+        x: 1.35,
+        size: 0.9,
         fill: '#10b981',
     }),
 ]);

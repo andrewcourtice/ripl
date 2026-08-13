@@ -198,6 +198,9 @@ VitePress page with a live example. Copy an existing page (e.g. `radial-bar.md`)
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
+        <RiplField label="Points">
+            <RiplInputRange v-model="points" :min="3" :max="12" :step="1" />
+        </RiplField>
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="<Name>">

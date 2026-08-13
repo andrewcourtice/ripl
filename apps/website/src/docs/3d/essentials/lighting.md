@@ -16,7 +16,7 @@ A 3D **context** carries a list of **lights**. Each one has a colour and an inte
 :::tabs
 == Demo
 <ripl-3d-example @context-changed="contextChanged">
-    <template #header>
+    <template #footer>
         <RiplControlGroup>
             <RiplSwitch v-model="ambient" label="Ambient" />
             <RiplSwitch v-model="key" label="Key" />
@@ -214,7 +214,7 @@ const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
 
     scene.add([
         createSphere({ radius: 1.1, segments: 40, rings: 28, fill: '#e8e8e8' }),
-        createTorus({ x: 0, y: -1.35, radius: 1.7, tube: 0.16, radialSegments: 12, tubularSegments: 48, fill: '#8899aa' }),
+        createTorus({ x: 0, y: -1, radius: 1.7, tube: 0.16, radialSegments: 12, tubularSegments: 48, fill: '#8899aa' }),
     ]);
 
     applyToggles();

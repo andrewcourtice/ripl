@@ -16,10 +16,9 @@ Patterns keep shapes distinguishable without relying on color alone, which helps
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Tile size</span>
+        <RiplField label="Tile size">
             <RiplInputRange v-model="tileSize" :min="4" :max="24" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

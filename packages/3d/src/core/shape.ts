@@ -44,9 +44,6 @@ import {
     resolveMaterial,
 } from './material';
 
-// Imported for its registration side effect, which every 3D element depends on for animation.
-import './interpolators';
-
 import type {
     Material,
     ResolvedMaterial,
@@ -64,6 +61,8 @@ import {
 
 import {
     Box,
+    interpolateAny,
+    interpolateNumber,
     matrixApplyToPoint,
     matrixInvert,
     Shape,
@@ -74,6 +73,7 @@ import type {
     ColorRGBA,
     Context,
     Element,
+    ElementDefaults,
     ElementInterpolationState,
     ElementInterpolators,
     ElementIntersectionOptions,
@@ -87,6 +87,7 @@ import type {
 import {
     functionCache,
     numberSum,
+    typeIsNil,
 } from '@ripl/utilities';
 
 import type {
@@ -231,6 +232,36 @@ export interface Shape3DState extends BaseElementState {
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>> & {
     /** A uniform scale, applied to all three axes. Overridden by any per-axis scale also given. */
     scale?: number;
+};
+
+/** Class-level defaults for a 3D shape. Excludes `scale`, which {@link Shape3D} expands itself, and `zIndex`, which it derives from projected depth. */
+export type Shape3DDefaults<TState extends Shape3DState = Shape3DState> =
+    Partial<Omit<Shape3DOptions<TState>, 'id' | 'class' | 'data' | 'scale'>>;
+
+// Kept out of SHAPE3D_DEFAULTS: a subclass's `interpolators` must merge with these, not replace them.
+const SHAPE3D_INTERPOLATORS: ElementInterpolators<Shape3DState> = {
+    material: interpolateAny,
+    rotationX: interpolateNumber,
+    rotationY: interpolateNumber,
+    rotationZ: interpolateNumber,
+    scaleX: interpolateNumber,
+    scaleY: interpolateNumber,
+    scaleZ: interpolateNumber,
+    x: interpolateNumber,
+    y: interpolateNumber,
+    z: interpolateNumber,
+};
+
+const SHAPE3D_DEFAULTS: Shape3DDefaults = {
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    scaleX: 1,
+    scaleY: 1,
+    scaleZ: 1,
+    x: 0,
+    y: 0,
+    z: 0,
 };
 
 // The GPU mesh needs numeric channels, so an unparseable fill degrades to the default grey there.
@@ -395,24 +426,30 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         console.warn('Setting zIndex will have no impact this element. 3D shapes derive zIndex from projected depth.');
     }
 
-    constructor(type: string, options: Shape3DOptions<TState>) {
+    constructor(type: string, options: Shape3DOptions<TState>, defaults?: Shape3DDefaults<TState>) {
         const {
-            scale = 1,
+            scale,
             ...rest
         } = options;
 
-        super(type, {
-            x: 0,
-            y: 0,
-            z: 0,
-            rotationX: 0,
-            rotationY: 0,
-            rotationZ: 0,
-            scaleX: scale,
-            scaleY: scale,
-            scaleZ: scale,
-            ...rest,
-        } as unknown as ElementOptions<TState>);
+        // `scale` is caller input, so it rides with the options: above any default, below an explicit axis.
+        const elementOptions = typeIsNil(scale)
+            ? rest
+            : {
+                scaleX: scale,
+                scaleY: scale,
+                scaleZ: scale,
+                ...rest,
+            };
+
+        super(type, elementOptions as ElementOptions<TState>, {
+            ...SHAPE3D_DEFAULTS,
+            ...defaults,
+            interpolators: {
+                ...SHAPE3D_INTERPOLATORS,
+                ...defaults?.interpolators,
+            },
+        } as ElementDefaults<TState>);
 
         this._getCachedFaces = functionCache(() => this.computeFaces());
     }
@@ -438,7 +475,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
      */
     public override interpolate(
         newState: Partial<ElementInterpolationState<TState>>,
-        interpolators: Partial<ElementInterpolators<TState>> = {}
+        interpolators: ElementInterpolators<TState> = {}
     ): Interpolator<void> {
         const tick = super.interpolate(newState, interpolators);
 

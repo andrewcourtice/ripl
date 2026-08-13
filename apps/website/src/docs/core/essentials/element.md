@@ -119,6 +119,17 @@ const interpolator = circle.interpolate({
 interpolator(0.5); // Apply at 50% progress
 ```
 
+A second argument overrides the interpolator used for individual properties, taking precedence over whatever the element type declares:
+
+```ts
+const interpolator = circle.interpolate(
+    { radius: 100 },
+    { radius: interpolateStepped }
+);
+```
+
+`renderer.transition()` accepts the same map as its `interpolators` option. See [Interpolators](/docs/core/advanced/interpolators).
+
 This is used internally by the [Renderer](/docs/core/essentials/renderer) for animations, but can also be used directly with the standalone `transition` function. See [Animations](/docs/core/advanced/animations) for more.
 
 ## Events

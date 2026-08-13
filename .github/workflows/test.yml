@@ -47,6 +47,11 @@ jobs:
       - name: Check chart config coverage
         run: yarn workspace @ripl/website check-config-coverage
 
+      # Demo controls belong in the pane's footer, wrapped in a RiplField. The website build is not
+      # a lerna package, so without this step the guard would only run on deploy, after merge.
+      - name: Check demo controls
+        run: yarn workspace @ripl/website check-demo-controls
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest

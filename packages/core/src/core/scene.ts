@@ -140,10 +140,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             ? factory.getComputedStyle(context.element).font
             : undefined;
 
-        super({
-            ...font ? { font } : {},
-            ...groupOptions,
-        });
+        super(groupOptions, font ? { font } : undefined);
 
         this.context = context;
         this._rebuild();

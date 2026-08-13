@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -37,6 +38,11 @@ import type {
 import {
     resolvePolylineRenderer,
 } from '../math/polyline';
+
+import {
+    interpolateAny,
+    interpolatePoints,
+} from '../interpolators';
 
 /** A span of a polyline's points stroked with its own dash pattern. */
 export interface PolylineSegment {
@@ -283,6 +289,14 @@ class SegmentedPathTracer extends ContextPath {
 
 }
 
+const POLYLINE_DEFAULTS: ElementDefaults<PolylineState> = {
+    interpolators: {
+        points: interpolatePoints,
+        renderer: interpolateAny,
+        segments: interpolateAny,
+    },
+};
+
 /** A multi-point line shape supporting various curve interpolation algorithms. */
 export class Polyline extends Shape2D<PolylineState> {
 
@@ -317,7 +331,7 @@ export class Polyline extends Shape2D<PolylineState> {
     }
 
     constructor(options: Shape2DOptions<PolylineState>) {
-        super('polyline', options);
+        super('polyline', options, POLYLINE_DEFAULTS);
     }
 
     private _trace(context: Context, path: ContextPath, renderer: PolylineRenderFunc): void {

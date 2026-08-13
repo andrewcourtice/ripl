@@ -14,10 +14,9 @@ Ripl supports CSS gradient strings directly in `fill` and `stroke` properties. T
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Angle</span>
+        <RiplField label="Angle">
             <RiplInputRange v-model="angleDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

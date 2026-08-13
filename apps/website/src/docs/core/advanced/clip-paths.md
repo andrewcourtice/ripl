@@ -16,10 +16,9 @@ The demo below shows a circle clip path masking a gradient-filled rectangle and 
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Clip Radius</span>
+        <RiplField label="Clip Radius">
             <RiplInputRange v-model="clipRadiusPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

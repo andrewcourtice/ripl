@@ -16,31 +16,35 @@ An **Arc** draws a circular or annular (donut) arc segment defined by a center p
 == Single
 <ripl-example @context-changed="singleChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>End Angle</span>
+        <RiplField label="End Angle">
             <RiplInputRange v-model="singleEndAnglePct" :min="0" :max="100" :step="1" @update:model-value="redrawSingle" />
-            <span>Inner Radius %</span>
+        </RiplField>
+        <RiplField label="Inner Radius %">
             <RiplInputRange v-model="singleInnerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redrawSingle" />
-            <span>Border Radius</span>
+        </RiplField>
+        <RiplField label="Border Radius">
             <RiplInputRange v-model="singleBorderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redrawSingle" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Stacked
 <ripl-example @context-changed="stackedChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>End Angle</span>
+        <RiplField label="End Angle">
             <RiplInputRange v-model="stackedEndAnglePct" :min="0" :max="100" :step="1" @update:model-value="redrawStacked" />
-            <span>Inner Radius %</span>
+        </RiplField>
+        <RiplField label="Inner Radius %">
             <RiplInputRange v-model="stackedInnerRadiusPct" :min="0" :max="90" :step="1" @update:model-value="redrawStacked" />
-            <span>Pad Width (px, takes precedence)</span>
+        </RiplField>
+        <RiplField label="Pad Width">
             <RiplInputRange v-model="stackedPadWidthVal" :min="0" :max="40" :step="1" @update:model-value="redrawStacked" />
-            <span>Pad Angle (applies only at Pad Width 0)</span>
+        </RiplField>
+        <RiplField label="Pad Angle">
             <RiplInputRange v-model="stackedPadAngleVal" :min="0" :max="20" :step="1" @update:model-value="redrawStacked" />
-            <span>Border Radius</span>
+        </RiplField>
+        <RiplField label="Border Radius">
             <RiplInputRange v-model="stackedBorderRadiusVal" :min="0" :max="40" :step="1" @update:model-value="redrawStacked" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code
@@ -65,7 +69,7 @@ createArc({
 ```
 :::
 
-**Single** is one `createArc` call. **Stacked** is three of them sharing a centre, which is the only arrangement where padding has anything to separate — hence the two extra controls.
+**Single** is one `createArc` call. **Stacked** is three of them sharing a centre, which is the only arrangement where padding has anything to separate — hence the two extra controls. **Pad Width** is in pixels and takes precedence; this demo passes it only while it is non-zero, so drag it to `0` to hand control back to **Pad Angle**.
 
 <script lang="ts" setup>
 import {

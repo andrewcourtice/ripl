@@ -14,12 +14,12 @@ Ripl's built-in elements cover common shapes, but you can create your own custom
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Points</span>
+        <RiplField label="Points">
             <RiplInputRange v-model="starPoints" :min="3" :max="12" :step="1" @update:model-value="redraw" />
-            <span>Inner Radius %</span>
+        </RiplField>
+        <RiplField label="Inner Radius %">
             <RiplInputRange v-model="innerPct" :min="10" :max="90" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code
@@ -41,19 +41,19 @@ star.render(context);
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
-## Extending Shape
+## Extending Shape2D
 
-Most custom elements should extend `Shape`, which provides path-based rendering with automatic fill/stroke and hit testing. Here's a complete example of a custom **Star** element:
+Most custom elements should extend `Shape2D`, which provides path-based rendering with automatic fill/stroke and hit testing. Here's a complete example of a custom **Star** element:
 
 ```ts
 import type {
     BaseElementState,
     Context,
-    ShapeOptions,
+    Shape2DOptions,
 } from '@ripl/web';
 
 import {
-    Shape,
+    Shape2D,
 } from '@ripl/web';
 
 // 1. Define your state interface
@@ -65,8 +65,8 @@ interface StarState extends BaseElementState {
     points: number;
 }
 
-// 2. Extend Shape with your state
-class Star extends Shape<StarState> {
+// 2. Extend Shape2D with your state
+class Star extends Shape2D<StarState> {
 
     get cx() {
         return this.getStateValue('cx');
@@ -103,7 +103,7 @@ class Star extends Shape<StarState> {
         this.setStateValue('points', value);
     }
 
-    constructor(options: ShapeOptions<StarState>) {
+    constructor(options: Shape2DOptions<StarState>) {
         super('star', options); // 'star' is the element type name
     }
 
@@ -133,7 +133,7 @@ class Star extends Shape<StarState> {
 }
 
 // 4. Create a factory function
-function createStar(options: ShapeOptions<StarState>) {
+function createStar(options: Shape2DOptions<StarState>) {
     return new Star(options);
 }
 ```
@@ -242,6 +242,65 @@ Always expose state properties as getter/setter pairs. The setter should call `s
 ```ts
 get radius() { return this.getStateValue('radius'); }
 set radius(value) { this.setStateValue('radius', value); }
+```
+
+## Declaring Defaults
+
+An element type usually wants values of its own beneath whatever the caller passes — a default segment count, a default paint, or the interpolator each of its state properties tweens with. The constructor takes a third `defaults` argument for exactly this: a partial options object applied *under* the caller's options.
+
+```ts
+import {
+    interpolateAny,
+    interpolateNumber,
+    Shape2D,
+} from '@ripl/web';
+
+import type {
+    ElementDefaults,
+    Shape2DOptions,
+} from '@ripl/web';
+
+const STAR_DEFAULTS: ElementDefaults<StarState> = {
+    points: 5,
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        innerRadius: interpolateNumber,
+        outerRadius: interpolateNumber,
+        // A point count has no meaningful in-between, so snap it
+        points: interpolateAny,
+    },
+};
+
+class Star extends Shape2D<StarState> {
+
+    constructor(options: Shape2DOptions<StarState>) {
+        super('star', options, STAR_DEFAULTS);
+    }
+
+}
+```
+
+Precedence runs in one direction — **Ripl's built-in defaults, then yours, then the caller's options** — so a caller always wins, and each layer of a class hierarchy sits beneath the one below it. Declare the defaults as a module-level constant like the one above: it never changes, so every instance can share it rather than rebuilding one per element.
+
+`Shape2D` reads its own flags (`autoFill`, `autoStroke`, `clip`, `cachePath`) from the same object, so a shape that should never fill declares `{ autoFill: false }` there. `Shape3D` does the same for its transform properties. Where a default is genuinely computed — from the context, or from another option — pass an object literal instead of a constant.
+
+### Interpolators
+
+Ripl detects an interpolator from the value when a property has no declared one, which is the right behaviour for state it knows nothing about — but detection costs a predicate test per property per transition, and it can only guess from shape. A custom element should say what its own properties hold.
+
+Base properties such as `fill`, `stroke`, `opacity` and the transform are already declared by `Element`, so only your own state needs listing.
+
+A property may declare several factories, tried in order until one claims the value via its `test` function — that is how `fill` handles a color, a gradient or a pattern. A factory with no `test` is used unconditionally. If every declared factory declines, the property snaps rather than falling back to detection. See [Interpolators](/docs/core/advanced/interpolators).
+
+This is also how a package teaches Ripl about a value type of its own. `@ripl/3d` exports `interpolateVector3`; an element with a vector-valued property declares it:
+
+```ts
+const ANCHORED_DEFAULTS: Shape3DDefaults<AnchoredState> = {
+    interpolators: {
+        anchor: interpolateVector3,
+    },
+};
 ```
 
 ## Using Custom Elements

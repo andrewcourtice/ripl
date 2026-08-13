@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -20,6 +21,15 @@ export interface CombustionChamberState extends Shape3DState {
     segments: number;
     rings: number;
 }
+
+const COMBUSTION_CHAMBER_DEFAULTS: Shape3DDefaults<CombustionChamberState> = {
+    radiusFront: 0.35,
+    radiusBack: 0.35,
+    radiusBulge: 0.48,
+    length: 0.45,
+    segments: 32,
+    rings: 12,
+};
 
 export class CombustionChamber extends Shape3D<CombustionChamberState> {
 
@@ -72,15 +82,7 @@ export class CombustionChamber extends Shape3D<CombustionChamberState> {
     }
 
     constructor(options: Shape3DOptions<CombustionChamberState>) {
-        super('combustion-chamber', {
-            radiusFront: 0.35,
-            radiusBack: 0.35,
-            radiusBulge: 0.48,
-            length: 0.45,
-            segments: 32,
-            rings: 12,
-            ...options,
-        });
+        super('combustion-chamber', options, COMBUSTION_CHAMBER_DEFAULTS);
     }
 
     private radiusAt(t: number): number {

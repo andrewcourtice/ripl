@@ -108,10 +108,9 @@ Use the demo below to benchmark Ripl's rendering performance. Adjust the element
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Elements</span>
+        <RiplField label="Elements">
             <RiplInputRange v-model="elementCount" :min="100" :max="5000" :step="100" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

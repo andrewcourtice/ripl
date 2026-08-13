@@ -4,6 +4,7 @@ import {
 
 import type {
     Face3D,
+    Shape3DDefaults,
     Shape3DOptions,
     Shape3DState,
 } from '@ripl/3d';
@@ -27,6 +28,15 @@ export interface ConnectingRodState extends Shape3DState {
     /** Number of segments used to tessellate the end rings. */
     segments: number;
 }
+
+const CONNECTING_ROD_DEFAULTS: Shape3DDefaults<ConnectingRodState> = {
+    length: 0.4,
+    smallEndRadius: 0.03,
+    bigEndRadius: 0.05,
+    width: 0.05,
+    beamWidth: 0.03,
+    segments: 18,
+};
 
 /** A basic connecting rod: a small-end ring, a big-end ring and a beam joining them along Y. */
 export class ConnectingRod extends Shape3D<ConnectingRodState> {
@@ -80,15 +90,7 @@ export class ConnectingRod extends Shape3D<ConnectingRodState> {
     }
 
     constructor(options?: Shape3DOptions<ConnectingRodState>) {
-        super('connecting-rod', {
-            length: 0.4,
-            smallEndRadius: 0.03,
-            bigEndRadius: 0.05,
-            width: 0.05,
-            beamWidth: 0.03,
-            segments: 18,
-            ...options,
-        });
+        super('connecting-rod', options ?? {}, CONNECTING_ROD_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

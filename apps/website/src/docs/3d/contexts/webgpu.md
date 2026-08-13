@@ -45,13 +45,13 @@ const camera = createCamera(context, {
 scene.add(createCube({
     size: 1,
     fill: '#3a86ff',
-    translateX: -1.2,
+    x: -1.2,
 }));
 
 scene.add(createSphere({
     radius: 0.6,
     fill: '#ff006e',
-    translateX: 1.2,
+    x: 1.2,
 }));
 
 camera.flush();
@@ -229,7 +229,6 @@ if (navigator.gpu) {
 <script lang="ts" setup>
 import {
     onUnmounted,
-    shallowRef,
 } from 'vue';
 
 import {
@@ -239,7 +238,6 @@ import {
 } from '@ripl/3d';
 
 import type {
-    Camera,
     Context3D,
 } from '@ripl/3d';
 
@@ -249,7 +247,6 @@ import {
 } from '@ripl/web';
 
 import type {
-    Renderer,
     Scene,
 } from '@ripl/web';
 
@@ -263,9 +260,9 @@ function contextChanged(ctx: Context3D) {
     const scene = createScene(ctx) as Scene<Context3D>;
     currentScene = scene;
 
-    const renderer = createRenderer(scene, { autoStop: false });
+    createRenderer(scene, { autoStop: false });
 
-    const camera = createCamera(context, {
+    const camera = createCamera(ctx, {
         position: [0, 1.5, 5],
         target: [0, 0, 0],
         fov: 50,
@@ -274,13 +271,13 @@ function contextChanged(ctx: Context3D) {
     scene.add(createCube({
         size: 1,
         fill: '#3a86ff',
-        translateX: -1.2,
+        x: -1.2,
     }));
 
     scene.add(createSphere({
         radius: 0.6,
         fill: '#ff006e',
-        translateX: 1.2,
+        x: 1.2,
     }));
 
     camera.flush();

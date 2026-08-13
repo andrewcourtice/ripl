@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -25,6 +26,10 @@ import {
     numberClamp,
     typeIsNil,
 } from '@ripl/utilities';
+
+import {
+    interpolateNumber,
+} from '../interpolators';
 
 /** Pad-trimmed sector geometry a rounded annular sector is traced from. */
 interface ArcSector {
@@ -199,6 +204,20 @@ function traceRoundedWedge(path: ContextPath, cx: number, cy: number, radius: nu
     path.closePath();
 }
 
+const ARC_DEFAULTS: ElementDefaults<ArcState> = {
+    interpolators: {
+        borderRadius: interpolateNumber,
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        endAngle: interpolateNumber,
+        innerRadius: interpolateNumber,
+        padAngle: interpolateNumber,
+        padWidth: interpolateNumber,
+        radius: interpolateNumber,
+        startAngle: interpolateNumber,
+    },
+};
+
 /** An arc or annular sector shape supporting inner radius, angular or constant-width padding, and rounded corners. */
 export class Arc extends Shape2D<ArcState> {
 
@@ -284,7 +303,7 @@ export class Arc extends Shape2D<ArcState> {
     }
 
     constructor(options: Shape2DOptions<ArcState>) {
-        super('arc', options);
+        super('arc', options, ARC_DEFAULTS);
     }
 
     /** Computes the centroid point of this arc, optionally with state overrides. */

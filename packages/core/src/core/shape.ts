@@ -5,6 +5,7 @@ import type {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     ElementIntersectionOptions,
     ElementOptions,
 } from './element';
@@ -34,6 +35,10 @@ export type Shape2DOptions<TState extends BaseElementState = BaseElementState> =
     cachePath?: boolean;
 };
 
+/** Class-level defaults for a 2D shape, adding the automatic fill/stroke and clipping flags to {@link ElementDefaults}. */
+export type Shape2DDefaults<TState extends BaseElementState = BaseElementState> =
+    Partial<Omit<Shape2DOptions<TState>, 'id' | 'class' | 'data'>>;
+
 /**
  * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
  * to testing both fill and stroke.
@@ -57,8 +62,8 @@ const STROKE_HIT_PROPERTIES = [
 /** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
 export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
-    constructor(type: string, options: ElementOptions<TState>) {
-        super(type, options);
+    constructor(type: string, options: ElementOptions<TState>, defaults?: ElementDefaults<TState>) {
+        super(type, options, defaults);
     }
 
 }
@@ -79,16 +84,24 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
     /** When `true`, the shape reuses its traced path across render cycles while unchanged, on backends that support path caching. */
     public cachePath: boolean;
 
-    constructor(type: string, options: Shape2DOptions<TState>) {
+    constructor(type: string, options: Shape2DOptions<TState>, defaults?: Shape2DDefaults<TState>) {
         const {
-            autoFill = true,
-            autoStroke = true,
-            clip = false,
-            cachePath = true,
+            autoFill: defaultAutoFill = true,
+            autoStroke: defaultAutoStroke = true,
+            clip: defaultClip = false,
+            cachePath: defaultCachePath = true,
+            ...elementDefaults
+        } = defaults ?? {};
+
+        const {
+            autoFill = defaultAutoFill,
+            autoStroke = defaultAutoStroke,
+            clip = defaultClip,
+            cachePath = defaultCachePath,
             ...elementOptions
         } = options;
 
-        super(type, elementOptions as ElementOptions<TState>);
+        super(type, elementOptions as ElementOptions<TState>, elementDefaults as ElementDefaults<TState>);
 
         this.autoFill = autoFill;
         this.autoStroke = autoStroke;

@@ -8,6 +8,14 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+import type {
+    Shape3DDefaults,
+} from '../core/shape';
+
+import {
+    interpolateNumber,
+} from '@ripl/core';
+
 /** State interface for a plane, defining width and height. */
 export interface PlaneState extends Shape3DState {
     /** The width of the plane along the X axis, in world units. */
@@ -15,6 +23,13 @@ export interface PlaneState extends Shape3DState {
     /** The height of the plane along the Y axis, in world units. */
     height: number;
 }
+
+const PLANE_DEFAULTS: Shape3DDefaults<PlaneState> = {
+    interpolators: {
+        height: interpolateNumber,
+        width: interpolateNumber,
+    },
+};
 
 /** A flat rectangular 3D plane oriented along the XY plane. */
 export class Plane extends Shape3D<PlaneState> {
@@ -38,7 +53,7 @@ export class Plane extends Shape3D<PlaneState> {
     }
 
     constructor(options: Shape3DOptions<PlaneState>) {
-        super('plane', options);
+        super('plane', options, PLANE_DEFAULTS);
     }
 
     protected computeFaces(): Face3D[] {

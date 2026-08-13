@@ -1,6 +1,7 @@
 import type {
     BaseElementState,
     Context,
+    Shape2DDefaults,
     Shape2DOptions,
 } from '@ripl/core';
 
@@ -8,6 +9,10 @@ import {
     Box,
     getThetaPoint,
     Shape2D,
+} from '@ripl/core';
+
+import {
+    interpolateNumber,
 } from '@ripl/core';
 
 /** State interface for a ribbon shape connecting two arc segments via quadratic curves. */
@@ -27,6 +32,18 @@ export interface RibbonState extends BaseElementState {
     /** End angle of the target arc, in radians. */
     targetEnd: number;
 }
+
+const RIBBON_DEFAULTS: Shape2DDefaults<RibbonState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        radius: interpolateNumber,
+        sourceEnd: interpolateNumber,
+        sourceStart: interpolateNumber,
+        targetEnd: interpolateNumber,
+        targetStart: interpolateNumber,
+    },
+};
 
 /** A chord diagram ribbon connecting two arc segments with quadratic Bézier curves through the center. */
 export class Ribbon extends Shape2D<RibbonState> {
@@ -95,7 +112,7 @@ export class Ribbon extends Shape2D<RibbonState> {
     }
 
     constructor(options: Shape2DOptions<RibbonState>) {
-        super('ribbon', options);
+        super('ribbon', options, RIBBON_DEFAULTS);
     }
 
     public _getLocalBoundingBox(): Box {

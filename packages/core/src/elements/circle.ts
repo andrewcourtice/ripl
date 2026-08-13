@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -15,6 +16,10 @@ import {
     Box,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a circle element, defining center coordinates and radius. */
 export interface CircleState extends BaseElementState {
     /** The x-coordinate of the circle's center. */
@@ -24,6 +29,14 @@ export interface CircleState extends BaseElementState {
     /** The radius of the circle. */
     radius: number;
 }
+
+const CIRCLE_DEFAULTS: ElementDefaults<CircleState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        radius: interpolateNumber,
+    },
+};
 
 /** A circle shape rendered at a center point with a given radius. */
 export class Circle extends Shape2D<CircleState> {
@@ -56,7 +69,7 @@ export class Circle extends Shape2D<CircleState> {
     }
 
     constructor(options: Shape2DOptions<CircleState>) {
-        super('circle', options);
+        super('circle', options, CIRCLE_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the circle. */

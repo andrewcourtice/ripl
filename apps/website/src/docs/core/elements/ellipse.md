@@ -14,14 +14,15 @@ An **Ellipse** draws an elliptical shape with independent X and Y radii (`radius
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <RiplControlGroup>
-            <span>Radius X</span>
+        <RiplField label="Radius X">
             <RiplInputRange v-model="rxPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
-            <span>Radius Y</span>
+        </RiplField>
+        <RiplField label="Radius Y">
             <RiplInputRange v-model="ryPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
-            <span>Rotation</span>
+        </RiplField>
+        <RiplField label="Rotation">
             <RiplInputRange v-model="rotationDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

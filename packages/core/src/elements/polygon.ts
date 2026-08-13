@@ -4,6 +4,7 @@ import {
 
 import type {
     BaseElementState,
+    ElementDefaults,
     Shape2DOptions,
 } from '../core';
 
@@ -16,6 +17,10 @@ import {
     getPolygonPoints,
 } from '../math';
 
+import {
+    interpolateNumber,
+} from '../interpolators';
+
 /** State interface for a regular polygon element, defining center, radius, and number of sides. */
 export interface PolygonState extends BaseElementState {
     /** The x-coordinate of the polygon's center. */
@@ -27,6 +32,15 @@ export interface PolygonState extends BaseElementState {
     /** The number of sides of the polygon. */
     sides: number;
 }
+
+const POLYGON_DEFAULTS: ElementDefaults<PolygonState> = {
+    interpolators: {
+        cx: interpolateNumber,
+        cy: interpolateNumber,
+        radius: interpolateNumber,
+        sides: interpolateNumber,
+    },
+};
 
 /** A regular polygon shape with a configurable number of sides. */
 export class Polygon extends Shape2D<PolygonState> {
@@ -68,7 +82,7 @@ export class Polygon extends Shape2D<PolygonState> {
     }
 
     constructor(options: Shape2DOptions<PolygonState>) {
-        super('polygon', options);
+        super('polygon', options, POLYGON_DEFAULTS);
     }
 
     /** @internal Local-space bounding box of the polygon. */

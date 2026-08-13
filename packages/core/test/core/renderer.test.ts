@@ -313,6 +313,32 @@ describe('Renderer', () => {
         renderer.destroy();
     });
 
+    test('Should honour per-transition interpolator overrides', async () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        const el = createElement('rect', { opacity: 0 });
+        scene.add(el);
+
+        const t = renderer.transition(el, {
+            duration: 100,
+            state: { opacity: 1 },
+            interpolators: {
+                opacity: (valueA, valueB) => () => (valueA + valueB) / 4,
+            },
+        });
+
+        await vi.advanceTimersByTimeAsync(200);
+        await t;
+
+        expect(el.opacity).toBeCloseTo(0.25, 5);
+
+        renderer.destroy();
+    });
+
     test('Should reset element flags after each rendered tick', async () => {
         const { scene } = createMockScene();
         const renderer = new Renderer(scene, {

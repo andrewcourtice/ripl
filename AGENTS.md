@@ -138,7 +138,7 @@ export class Circle extends Shape<CircleState> {
 
     // ... cy, radius follow the same pattern
 
-    constructor(options: ShapeOptions<CircleState>) {
+    constructor(options: Shape2DOptions<CircleState>) {
         super('circle', options);
     }
 
@@ -620,6 +620,7 @@ Reusable UI components live in `apps/website/src/.vitepress/components/` and are
 | `RiplButtonGroup` | Radio-toggle group: `v-model` + `:options="[{ label, value }]"` |
 | `RiplControlGroup` | Flex container with gap for grouping controls (toolbar-style) |
 | `RiplSwitch` | Toggle switch: `v-model` + `label` |
+| `RiplField` | Label + control wrapper: `label` (+ optional `option`); stacked by default, `inline` for the config drawer's two-column rows |
 | `RiplSelect` | Styled `<select>` wrapper with slot for `<option>` elements |
 | `RiplInputRange` | Styled range input: `v-model`, `min`, `max`, `step` |
 | `RiplDropdown` | Popover dropdown with `#trigger` slot and `align` prop (`left`/`right`) |
@@ -633,6 +634,7 @@ Reusable UI components live in `apps/website/src/.vitepress/components/` and are
 - **Markdown files** — Use Vue component tags (e.g. `<RiplButton>`, `<RiplSwitch v-model="x" label="Y" />`) instead of raw HTML with CSS classes
 - **Icons** — Use `lucide-vue-next` for icons. Render as slot content: `<RiplButton><RotateCcw :size="14" /></RiplButton>`
 - **Global registration** — New reusable components should be registered in `theme/index.ts` so they're available in markdown
+- **Demo pane** — A `<ripl-example>` demo puts its controls in `#footer`, never `#header`: the header is reserved for the context switcher, Customize and Export. Buttons and switches sit in a `RiplControlGroup`; every slider, select, colour, number and text input is wrapped in `<RiplField label="…">`. Chart options belong in the `#config` drawer instead, and the standalone demos under `src/demos/` keep their own toolbars. Enforced by `yarn workspace @ripl/website check-demo-controls`
 
 ### Playground
 

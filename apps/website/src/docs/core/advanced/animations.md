@@ -405,9 +405,9 @@ Use the controls below to start a transition, then pause, seek, and reverse it i
             <RiplButton @click="togglePause" :active="isPaused">{{ isPaused ? 'Play' : 'Pause' }}</RiplButton>
             <RiplButton @click="reversePlayback">Reverse</RiplButton>
         </RiplControlGroup>
-        <RiplControlGroup>
+        <RiplField label="Seek">
             <RiplInputRange v-model="seekValue" :min="0" :max="1" :step="0.01" @update:model-value="onSeek" />
-        </RiplControlGroup>
+        </RiplField>
     </template>
 </ripl-example>
 == Code

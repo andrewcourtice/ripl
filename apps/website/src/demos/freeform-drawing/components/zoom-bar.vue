@@ -3,6 +3,7 @@
         <button
             class="freeform-zoom__button"
             title="Undo (⌘Z)"
+            aria-label="Undo (⌘Z)"
             :disabled="!canUndo"
             @click="$emit('action', 'undo')"
         >
@@ -11,6 +12,7 @@
         <button
             class="freeform-zoom__button"
             title="Redo (⌘⇧Z)"
+            aria-label="Redo (⌘⇧Z)"
             :disabled="!canRedo"
             @click="$emit('action', 'redo')"
         >
@@ -19,31 +21,31 @@
 
         <span class="freeform-zoom__divider"></span>
 
-        <button class="freeform-zoom__button" title="Zoom out" @click="$emit('action', 'zoom-out')">
+        <button class="freeform-zoom__button" title="Zoom out" aria-label="Zoom out" @click="$emit('action', 'zoom-out')">
             <ZoomOut :size="16" />
         </button>
         <button class="freeform-zoom__readout" title="Reset to 100%" @click="$emit('action', 'reset')">
             {{ Math.round(zoom * 100) }}%
         </button>
-        <button class="freeform-zoom__button" title="Zoom in" @click="$emit('action', 'zoom-in')">
+        <button class="freeform-zoom__button" title="Zoom in" aria-label="Zoom in" @click="$emit('action', 'zoom-in')">
             <ZoomIn :size="16" />
         </button>
-        <button class="freeform-zoom__button" title="Fit to content" @click="$emit('action', 'fit')">
+        <button class="freeform-zoom__button" title="Fit to content" aria-label="Fit to content" @click="$emit('action', 'fit')">
             <Maximize :size="16" />
         </button>
 
         <span class="freeform-zoom__divider"></span>
 
-        <button class="freeform-zoom__button" title="Export PNG" @click="$emit('action', 'png')">
+        <button class="freeform-zoom__button" title="Export PNG" aria-label="Export PNG" @click="$emit('action', 'png')">
             <Image :size="16" />
         </button>
-        <button class="freeform-zoom__button" title="Export SVG" @click="$emit('action', 'svg')">
+        <button class="freeform-zoom__button" title="Export SVG" aria-label="Export SVG" @click="$emit('action', 'svg')">
             <FileCode :size="16" />
         </button>
-        <button class="freeform-zoom__button" title="Add 5,000 shapes (stress test)" @click="$emit('action', 'stress')">
+        <button class="freeform-zoom__button" title="Add 5,000 shapes (stress test)" aria-label="Add 5,000 shapes (stress test)" @click="$emit('action', 'stress')">
             <Boxes :size="16" />
         </button>
-        <button class="freeform-zoom__button freeform-zoom__button--danger" title="Clear canvas" @click="$emit('action', 'clear')">
+        <button class="freeform-zoom__button freeform-zoom__button--danger" title="Clear canvas" aria-label="Clear canvas" @click="$emit('action', 'clear')">
             <Trash2 :size="16" />
         </button>
     </div>

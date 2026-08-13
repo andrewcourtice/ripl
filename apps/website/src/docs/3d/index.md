@@ -65,5 +65,5 @@ createRenderer(scene, {
 - **Textures**: image, canvas and bitmap sources with clamp/repeat/mirror wrapping, nearest or linear filtering and UV transforms
 - **Raycasting**: read the shape, hit point, face, normal and texture coordinate under a screen position
 - **Groups**: `Group3D` positions, rotates and scales a subtree as a unit
-- **Vector3 Interpolator**: animate 3D positions with Ripl's animation system
+- **Vector3 Interpolator**: `interpolateVector3`, declared in a custom element's `interpolators` to animate a vector-valued property
 - **WebGPU backend**: swap in `@ripl/webgpu` for GPU rasterization with WGSL shaders, a depth buffer, and 4× MSAA
