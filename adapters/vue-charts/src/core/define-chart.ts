@@ -15,6 +15,10 @@ import {
 } from '@ripl/dom';
 
 import type {
+    Disposable,
+} from '@ripl/utilities';
+
+import type {
     Context,
 } from '@ripl/core';
 
@@ -42,6 +46,16 @@ import {
     shallowRef,
     watch,
 } from 'vue';
+
+/**
+ * Chart options whose names Vue reserves, mapped to the prop name that stands in for them.
+ *
+ * `key` is the one that bites: Vue consumes it as the vnode key, so a `key` prop never reaches the
+ * component at all and the option would silently arrive unset.
+ */
+const PROP_ALIASES: Record<string, string> = {
+    key: 'keyBy',
+};
 
 /** Fills the component's root, so the chart inherits whatever size the consumer gives that root. */
 const HOST_STYLE = {
@@ -97,10 +111,31 @@ export interface RiplChartDefinition {
  * });
  */
 export function defineRiplChart(definition: RiplChartDefinition) {
-    const propKeys = [
+    const optionKeys = [
         ...BASE_CHART_OPTION_KEYS,
         ...definition.optionKeys,
     ];
+
+    const propKeys = optionKeys.map(key => PROP_ALIASES[key] ?? key);
+    const aliased = optionKeys.filter(key => key in PROP_ALIASES);
+
+    /** Renames the aliased props back to the option names the chart actually reads. */
+    const toOptions = (props: RiplWritable): RiplWritable => {
+        const output = {
+            ...props,
+        };
+
+        aliased.forEach(key => {
+            const alias = PROP_ALIASES[key];
+
+            if (alias in output) {
+                output[key] = output[alias];
+                delete output[alias];
+            }
+        });
+
+        return output;
+    };
 
     return defineComponent({
         name: definition.name,
@@ -118,18 +153,23 @@ export function defineRiplChart(definition: RiplChartDefinition) {
             const owned = !context?.value;
 
             let host: HTMLElement | undefined;
+            let repaint: Disposable | undefined;
+
+            // A chart renders itself on construction, but its surface is still detached at that
+            // point and therefore 0x0 — scales collapse and the first frame never recovers. Hold
+            // the first paint until the surface has a size, which is what `resize` announces.
+            const options = {
+                ...toOptions(applied),
+                autoRender: false,
+            };
 
             if (context?.value) {
-                chart.value = markRaw(definition.create(context.value, {
-                    ...applied,
-                }));
+                chart.value = markRaw(definition.create(context.value, options));
             } else if (hasWindow) {
                 host = document.createElement('div');
                 Object.assign(host.style, HOST_STYLE);
 
-                chart.value = markRaw(definition.create(host, {
-                    ...applied,
-                }));
+                chart.value = markRaw(definition.create(host, options));
             }
 
             provide(RIPL_CHART, chart);
@@ -142,19 +182,32 @@ export function defineRiplChart(definition: RiplChartDefinition) {
 
             watch(() => collectChangedProps(raw, propKeys, applied), changed => {
                 if (changed) {
-                    chart.value?.update(changed);
+                    chart.value?.update(toOptions(changed));
                 }
             });
 
             onMounted(() => {
+                const active = chart.value;
+
                 if (host && root.value) {
                     root.value.appendChild(host);
                 }
+
+                if (!active || applied.autoRender === false) {
+                    return;
+                }
+
+                repaint = active.context.once('resize', () => {
+                    // Hand rendering back to the chart now that it has a surface to render onto.
+                    (active as unknown as RiplWritable).autoRender = true;
+                    void active.render();
+                });
             });
 
             onUnmounted(() => {
                 const active = chart.value;
 
+                repaint?.dispose();
                 chart.value = undefined;
 
                 if (!active) {

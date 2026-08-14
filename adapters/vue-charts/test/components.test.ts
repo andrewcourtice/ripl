@@ -73,7 +73,7 @@ const SERIES = [
 function barProps(extra: Record<string, unknown> = {}) {
     return {
         data: DATA,
-        key: 'month',
+        keyBy: 'month',
         series: SERIES,
         animation: false,
         ...extra,
@@ -257,6 +257,29 @@ describe('@ripl/vue-charts', () => {
             expect(update).toHaveBeenCalledTimes(1);
             expect(update.mock.calls[0][0]).toHaveProperty('data');
             expect(chart.value).toBe(before);
+
+            wrapper.unmount();
+        });
+
+        // Vue consumes a `key` attribute as the vnode key, so the chart's `key` option is bound as
+        // `keyBy` and renamed on the way in; bound as `key` it would never arrive.
+        test('Should rename keyBy onto the chart key option', () => {
+            const chart = shallowRef<BarChart>();
+
+            const Harness = defineComponent({
+                setup() {
+                    return () => h(RiplBarChart, {
+                        ref: chart,
+                        ...barProps(),
+                    });
+                },
+            });
+
+            const wrapper = mount(Harness);
+            const options = (chart.value as unknown as { options: Record<string, unknown> }).options;
+
+            expect(options.key).toBe('month');
+            expect(options).not.toHaveProperty('keyBy');
 
             wrapper.unmount();
         });

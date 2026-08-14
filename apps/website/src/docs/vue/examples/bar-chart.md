@@ -8,6 +8,9 @@ description: "A live, interactive bar chart built from ripl-rect, ripl-text and 
 Everything below is built from the built-in elements — no `@ripl/charts`, no imperative
 `createScene` or `createRenderer`. Scales come from `@ripl/core`, and the rest is template.
 
+That is the point of this page: it shows what the primitives can do. For a bar chart with axes,
+legends and tooltips already built, reach for [`<ripl-bar-chart>`](/docs/vue/charts/) instead.
+
 Click a bar to select it, hover to highlight, and use the controls to drive the enter, update and
 leave transitions.
 

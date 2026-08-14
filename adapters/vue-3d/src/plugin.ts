@@ -36,8 +36,16 @@ import type {
     Plugin,
 } from 'vue';
 
-/** Every component the plugin registers, keyed by the name it is registered under. */
+/**
+ * Every component the plugin registers, keyed by the name it is registered under.
+ *
+ * The two names carrying `3D` are registered twice. Vue resolves a kebab-case tag by camelizing it,
+ * so `<ripl-context-3d>` looks for `RiplContext3d` and would not find `RiplContext3D` — the alias
+ * is what makes the kebab-case form work alongside the PascalCase one.
+ */
 const COMPONENTS: Record<string, unknown> = {
+    RiplContext3d: RiplContext3D,
+    RiplGroup3d: RiplGroup3D,
     RiplAmbientLight,
     RiplBezierSurface,
     RiplCamera,

@@ -69,6 +69,8 @@ const SECTION_HUBS = new Set([
     'docs/core/',
     'docs/3d/',
     'docs/vue/',
+    'docs/vue/3d/',
+    'docs/vue/charts/',
     'playground',
 ]);
 
@@ -545,6 +547,40 @@ export default defineConfig({
                         {
                             text: 'Compositions',
                             link: '/docs/vue/essentials/compositions',
+                        },
+                    ],
+                },
+                {
+                    text: '3D',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/3d/',
+                        },
+                        {
+                            text: 'Shapes',
+                            link: '/docs/vue/3d/shapes',
+                        },
+                        {
+                            text: 'Camera',
+                            link: '/docs/vue/3d/camera',
+                        },
+                        {
+                            text: 'Lighting',
+                            link: '/docs/vue/3d/lighting',
+                        },
+                    ],
+                },
+                {
+                    text: 'Charts',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/charts/',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/vue/charts/components',
                         },
                     ],
                 },

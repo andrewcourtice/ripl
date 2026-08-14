@@ -29,6 +29,7 @@ import type {
 } from '@ripl/web';
 
 import {
+    createRipl3D,
     RiplAmbientLight,
     RiplCamera,
     RiplContext3D,
@@ -48,6 +49,7 @@ import {
 } from '@vue/test-utils';
 
 import {
+    createApp,
     defineComponent,
     h,
     nextTick,
@@ -396,6 +398,81 @@ describe('@ripl/vue-3d', () => {
             expect(context.value?.lights.length).toBe(0);
 
             wrapper.unmount();
+        });
+
+    });
+
+    describe('Repainting', () => {
+
+        // A group transform is a plain field, so it carries no state change to dirty the scene with
+        // — and a running renderer skips the paint on a frame where nothing is dirty.
+        test('Should invalidate the scene when a plain field changes under a renderer', async () => {
+            const rotation = ref(0);
+
+            const {
+                captured,
+                wrapper,
+            } = mountScene(() => h(RiplGroup3D, {
+                id: 'group',
+                rotationY: rotation.value,
+            }, {
+                default: () => h(RiplCube, {
+                    id: 'a',
+                    size: 1,
+                }),
+            }));
+
+            captured.scene?.$consumeRender();
+
+            expect(captured.scene?.needsRender).toBe(false);
+
+            rotation.value = 1;
+            await nextTick();
+
+            expect(captured.scene?.needsRender).toBe(true);
+
+            wrapper.unmount();
+        });
+
+    });
+
+    describe('Plugin', () => {
+
+        // Vue camelizes a kebab tag to resolve it, so `<ripl-context-3d>` looks for `RiplContext3d`
+        // and the PascalCase-registered `RiplContext3D` alone would never be found in a template.
+        test('Should register the 3D names under both casings', () => {
+            const app = createApp(defineComponent({
+                render: () => null,
+            }));
+
+            app.use(createRipl3D());
+
+            expect(app.component('RiplContext3D')).toBeDefined();
+            expect(app.component('RiplContext3d')).toBeDefined();
+            expect(app.component('RiplGroup3D')).toBeDefined();
+            expect(app.component('RiplGroup3d')).toBeDefined();
+        });
+
+        test('Should resolve every registered 3D component from its kebab-case tag', () => {
+            const app = createApp(defineComponent({
+                render: () => null,
+            }));
+
+            app.use(createRipl3D());
+
+            const names = Object.keys((app as unknown as {
+                _context: { components: Record<string, unknown> };
+            })._context.components).filter(name => name.startsWith('Ripl'));
+
+            const unresolvable = names.filter(name => {
+                const kebab = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+                const camel = kebab.replace(/-(\w)/g, (_, char: string) => char.toUpperCase());
+                const pascal = camel.charAt(0).toUpperCase() + camel.slice(1);
+
+                return !app.component(pascal);
+            });
+
+            expect(unresolvable).toEqual([]);
         });
 
     });

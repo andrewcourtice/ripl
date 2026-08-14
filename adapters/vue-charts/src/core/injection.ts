@@ -17,7 +17,7 @@ import type {
  *
  * `EventBus` holds its listeners in a `Map` keyed by the event map, which makes two charts with
  * different event maps mutually unassignable however narrow the base — so nothing is a real
- * supertype of every chart and {@link chartFactory} bridges the gap with a single cast.
+ * supertype of every chart, and `chartFactory` bridges the gap with a single cast.
  */
 export type RiplAnyChart = Chart<BaseChartOptions, EventMap>;
 

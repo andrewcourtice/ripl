@@ -242,6 +242,9 @@ export class RiplTree {
         const renderer = this.renderer.value;
 
         if (renderer) {
+            // Waking the loop is not enough on its own: the renderer skips the paint on a frame
+            // where nothing is dirty, and a plain field carries no state change to dirty it with.
+            this.scene.value?.invalidate();
             renderer.start();
             return;
         }

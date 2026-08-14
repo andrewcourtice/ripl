@@ -18,3 +18,15 @@ export type RiplChartListener<TPayload> = (payload: TPayload, event: Event<TPayl
 export type RiplChartListeners<TEventMap> = {
     [TKey in keyof TEventMap as `on${Capitalize<string & TKey>}`]?: RiplChartListener<TEventMap[TKey]>;
 };
+
+/**
+ * A chart's options as component props, with any option whose name Vue reserves renamed.
+ *
+ * Only `key` is affected: Vue consumes a `key` attribute as the vnode key, so the option is bound
+ * as `keyBy` instead.
+ *
+ * @typeParam TOptions - The chart's options interface, e.g. `BarChartOptions`.
+ */
+export type RiplChartProps<TOptions> = Omit<TOptions, 'key'> & {
+    [TKey in keyof TOptions as TKey extends 'key' ? 'keyBy' : never]: TOptions[TKey];
+};

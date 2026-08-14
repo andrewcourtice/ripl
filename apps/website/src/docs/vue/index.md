@@ -115,3 +115,8 @@ Add a scene once you need z-ordering or many elements, and a renderer once you n
 - [Events](/docs/vue/essentials/events) — pointer and drag listeners.
 - [Compositions](/docs/vue/essentials/compositions) — reaching the underlying Ripl objects.
 - [Bar chart](/docs/vue/examples/bar-chart) — a live, interactive chart built from the elements above.
+
+Two companion packages extend the same surface:
+
+- [3D](/docs/vue/3d/) — `@ripl/vue-3d` adds a 3D context, nine shapes, a camera and lights. The scene, renderer and transition components above drive it unchanged.
+- [Charts](/docs/vue/charts/) — `@ripl/vue-charts` turns all 25 of Ripl's chart types into components whose props are the chart's options.

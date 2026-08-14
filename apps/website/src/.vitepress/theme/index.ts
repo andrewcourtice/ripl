@@ -79,9 +79,17 @@ import ExampleVueBarChart from '../components/example-vue-bar-chart.vue';
 
 import ExampleVueQuickStart from '../components/example-vue-quick-start.vue';
 
+import ExampleVue3D from '../components/example-vue-3d.vue';
+
+import ExampleVueCharts from '../components/example-vue-charts.vue';
+
 import {
-    createRipl,
-} from '@ripl/vue';
+    createRipl3D,
+} from '@ripl/vue-3d';
+
+import {
+    createRiplCharts,
+} from '@ripl/vue-charts';
 
 import {
     enhanceAppWithTabs,
@@ -103,7 +111,8 @@ export default {
     },
     enhanceApp({ app }) {
         app.use(createPinia());
-        app.use(createRipl());
+        app.use(createRipl3D());
+        app.use(createRiplCharts());
         app.component('ripl-example', Example);
         app.component('ripl-3d-example', Example3D);
         app.component('ripl-playground', RiplPlayground);
@@ -129,6 +138,8 @@ export default {
         app.component('example-terminal-interactive', ExampleTerminalInteractive);
         app.component('example-vue-bar-chart', ExampleVueBarChart);
         app.component('example-vue-quick-start', ExampleVueQuickStart);
+        app.component('example-vue-3d', ExampleVue3D);
+        app.component('example-vue-charts', ExampleVueCharts);
 
         enhanceAppWithTabs(app);
 
