@@ -1,8 +1,4 @@
 import {
-    objectForEach,
-} from '@ripl/utilities';
-
-import {
     RiplContext,
 } from './components/context';
 
@@ -32,8 +28,11 @@ import {
     RiplTransition,
 } from './components/transition';
 
+import {
+    registerComponents,
+} from './core/register';
+
 import type {
-    Component,
     Plugin,
 } from 'vue';
 
@@ -61,6 +60,7 @@ const COMPONENTS: Record<string, unknown> = {
  * `<ripl-circle>` and `<RiplCircle>` without importing them.
  *
  * Components can equally be imported one at a time; the plugin is a convenience, not a requirement.
+ * Applying it more than once, directly or through a sibling adapter's plugin, is a no-op.
  *
  * @returns A plugin to pass to `app.use()`.
  * @example
@@ -71,9 +71,7 @@ const COMPONENTS: Record<string, unknown> = {
 export function createRipl(): Plugin {
     return {
         install(app) {
-            objectForEach(COMPONENTS, (name, component) => {
-                app.component(name as string, component as Component);
-            });
+            registerComponents(app, COMPONENTS);
         },
     };
 }

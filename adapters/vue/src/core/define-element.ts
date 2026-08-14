@@ -22,6 +22,7 @@ import {
 } from './props';
 
 import type {
+    RiplFieldWriters,
     RiplWritable,
 } from './state';
 
@@ -62,6 +63,16 @@ export interface RiplNodeDefinition {
     name: string;
     /** The element's own state property names, on top of the shared base state. */
     stateKeys: readonly string[];
+    /** The inheritable state every element of this kind carries. Defaults to the 2D base state. */
+    baseStateKeys?: readonly string[];
+    /** Extra prop names written as plain fields rather than animatable state. */
+    fieldKeys?: readonly string[];
+    /** Prop names read only at construction. Defaults to the shared element set. */
+    constructionOnlyKeys?: ReadonlySet<string>;
+    /** Plain fields that change how the element paints. Defaults to the shape fields. */
+    paintedKeys?: ReadonlySet<string>;
+    /** Write overrides for fields the element exposes through a method rather than a setter. */
+    fieldWriters?: RiplFieldWriters;
     /** Whether the node owns children: a group renders its slot and parents its descendants. */
     container?: boolean;
     /** Constructs the underlying element from the props bound on the component. */
@@ -103,15 +114,18 @@ export function elementFactory<TOptions>(create: (options: TOptions) => unknown)
  * });
  */
 export function defineRiplElement(definition: RiplNodeDefinition) {
+    const baseStateKeys = definition.baseStateKeys ?? BASE_STATE_KEYS;
+
     const propKeys = [
         ...ELEMENT_OPTION_KEYS,
         ...SHAPE_FIELD_KEYS,
-        ...BASE_STATE_KEYS,
+        ...definition.fieldKeys ?? [],
+        ...baseStateKeys,
         ...definition.stateKeys,
     ];
 
     const stateKeys = new Set<string>([
-        ...BASE_STATE_KEYS,
+        ...baseStateKeys,
         ...definition.stateKeys,
     ]);
 
@@ -125,11 +139,13 @@ export function defineRiplElement(definition: RiplNodeDefinition) {
             const parent = inject(RIPL_PARENT, undefined);
             const scope = inject(RIPL_TRANSITION, undefined);
             const marker = shallowRef<HTMLElement>();
-            const transition = useElementTransition();
+            const transition = useElementTransition(definition.fieldWriters);
 
             const element = useElementProps(props as RiplWritable, {
                 keys: propKeys,
                 stateKeys,
+                constructionOnlyKeys: definition.constructionOnlyKeys,
+                paintedKeys: definition.paintedKeys,
                 create: initial => markRaw(definition.create(initial)),
                 apply: transition.update,
             }) as Element;

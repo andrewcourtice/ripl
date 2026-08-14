@@ -13,6 +13,9 @@ import {
 /** An untyped view of an element, used to write state through its accessors by key. */
 export type RiplWritable = Record<string, unknown>;
 
+/** Per-field write overrides, for fields an element exposes through a method rather than a setter. */
+export type RiplFieldWriters = Record<string, (element: Element, value: unknown) => void>;
+
 /** The two halves a changed prop batch splits into, and what each half needs applying. */
 export interface RiplPropPartition {
     /** The changed props that are animatable element state. */
@@ -130,9 +133,22 @@ export function applyState(element: Element, state: RiplWritable): void {
     });
 }
 
-/** Writes the plain fields, which emit nothing, so a repaint has to be requested separately. */
-export function applyFields(element: Element, fields: RiplWritable): void {
+/**
+ * Writes the plain fields, which emit nothing, so a repaint has to be requested separately.
+ *
+ * @param element - The element to write to.
+ * @param fields - The changed fields.
+ * @param writers - Write overrides for fields with no plain setter.
+ */
+export function applyFields(element: Element, fields: RiplWritable, writers?: RiplFieldWriters): void {
     objectForEach(fields, (key, value) => {
+        const writer = writers?.[key];
+
+        if (writer) {
+            writer(element, value);
+            return;
+        }
+
         if (key !== 'class') {
             (element as unknown as RiplWritable)[key] = value;
             return;

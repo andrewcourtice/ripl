@@ -12,7 +12,9 @@
         "../../packages/terminal",
         "../../packages/dom",
         "../../packages/utilities",
-        "../../adapters/vue"
+        "../../adapters/vue",
+        "../../adapters/vue-3d",
+        "../../adapters/vue-charts"
     ],
     "out": "./src/docs/api",
     "plugin": [

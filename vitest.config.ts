@@ -24,6 +24,8 @@ export default defineConfig({
             '@ripl/node': resolve('node'),
             '@ripl/test-utils': resolve('test-utils'),
             '@ripl/vue': resolveAdapter('vue'),
+            '@ripl/vue-3d': resolveAdapter('vue-3d'),
+            '@ripl/vue-charts': resolveAdapter('vue-charts'),
         },
     },
     test: {

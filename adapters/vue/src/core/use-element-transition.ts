@@ -10,6 +10,7 @@ import {
 } from './state';
 
 import type {
+    RiplFieldWriters,
     RiplPropPartition,
     RiplWritable,
 } from './state';
@@ -86,9 +87,10 @@ function toTransitionOptions(options: RiplTransitionPhaseOptions, state: RiplWri
  * Must be called from a component's `setup()`, and the returned appliers take their element per
  * call, so an element can be constructed after the phases are resolved.
  *
+ * @param writers - Write overrides for fields an element exposes through a method rather than a setter.
  * @returns The enter, update and leave appliers.
  */
-export function useElementTransition(): RiplElementTransition {
+export function useElementTransition(writers?: RiplFieldWriters): RiplElementTransition {
     const tree = inject(RIPL_TREE, undefined);
     const renderer = inject(RIPL_RENDERER, undefined);
     const scope = inject(RIPL_TRANSITION, undefined);
@@ -134,7 +136,7 @@ export function useElementTransition(): RiplElementTransition {
             hasPaintedField,
         } = partition;
 
-        applyFields(element, fields);
+        applyFields(element, fields, writers);
 
         const options = hasState ? scope?.resolve('update', element) : undefined;
 

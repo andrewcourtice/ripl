@@ -37,6 +37,8 @@
             "@ripl/node": ["./packages/node/src/index.ts"],
             "@ripl/test-utils": ["./packages/test-utils/src/index.ts"],
             "@ripl/vue": ["./adapters/vue/src/index.ts"],
+            "@ripl/vue-3d": ["./adapters/vue-3d/src/index.ts"],
+            "@ripl/vue-charts": ["./adapters/vue-charts/src/index.ts"],
         }
     },
     "files": [

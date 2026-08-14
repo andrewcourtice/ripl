@@ -141,6 +141,35 @@ A template ref on any of the components resolves to the Ripl object it wraps, ty
 - A prop you do not bind is never written, so Ripl's own defaults and a group's cascading state survive. Changing a bound prop back to `undefined` likewise leaves the last value in place.
 - Props are compared by identity, so an inline `:data="{ ... }"` or `:line-dash="[4, 2]"` re-applies on every parent render. Hoist those to a `computed`. `class` is normalised first, so every binding form is stable.
 
+## Extending
+
+`@ripl/vue` exports the pieces it is built from, so a sibling adapter can wrap a different kind of
+Ripl object without re-implementing the machinery. `@ripl/vue-3d` and `@ripl/vue-charts` are built
+this way.
+
+| Export | Use |
+| --- | --- |
+| `defineRiplElement`, `elementFactory` | Wrap anything that extends `Element` as a component. |
+| `useElementProps` | Construct an object from bound props and keep it in sync with them. |
+| `useForwardedEvents` | Forward a bus's own `$events` to Vue listeners, subscribing only to bound ones. |
+| `useExposedInstance` | Make a template ref resolve to the Ripl object rather than a Vue proxy. |
+| `registerComponents` | Register components on an app, skipping names already taken. |
+| `RIPL_CONTEXT`, `RIPL_SCENE`, `RIPL_RENDERER`, `RIPL_PARENT`, `RIPL_ELEMENT`, `RIPL_TREE`, `RIPL_TRANSITION` | The injection keys the components provide. |
+| `readBoundProps`, `collectChangedProps`, `partitionProps`, `applyState`, `applyFields` | The prop pipeline. |
+
+Two contracts a sibling adapter depends on:
+
+- **This package owns the `@ripl/web` import**, and with it the platform factory —
+  `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState`, `measureText`. A sibling adapter
+  inherits that through its dependency on `@ripl/vue` and should not add an `@ripl/web` import of
+  its own: a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away,
+  whereas the value imports here cannot.
+- **The injection keys are registry symbols** (`Symbol.for`), so two copies of this module — which
+  the standalone IIFE builds produce — still resolve to the same key.
+
+Plugins compose in any order: `createRipl3D()` and `createRiplCharts()` install the core components
+themselves, and registering a name twice is a no-op.
+
 ## Documentation
 
 Full documentation lives at [ripl.run](https://www.ripl.run).

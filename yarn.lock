@@ -2102,6 +2102,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/vue-3d@workspace:adapters/vue-3d":
+  version: 0.0.0-use.local
+  resolution: "@ripl/vue-3d@workspace:adapters/vue-3d"
+  dependencies:
+    "@ripl/3d": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+    "@ripl/vue": "workspace:^"
+    vue: "npm:^3.5.40"
+  peerDependencies:
+    vue: ^3.5.0
+  languageName: unknown
+  linkType: soft
+
 "@ripl/vue@workspace:^, @ripl/vue@workspace:adapters/vue":
   version: 0.0.0-use.local
   resolution: "@ripl/vue@workspace:adapters/vue"

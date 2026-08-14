@@ -29,6 +29,10 @@ export interface RiplElementPropsOptions<TElement extends Element> {
     keys: readonly string[];
     /** Which of those names are animatable state rather than plain fields. */
     stateKeys: ReadonlySet<string>;
+    /** Which are read only at construction. Defaults to the shared element set. */
+    constructionOnlyKeys?: ReadonlySet<string>;
+    /** Which plain fields change how the element paints, so a repaint has to be requested. Defaults to the shape fields. */
+    paintedKeys?: ReadonlySet<string>;
     /** Builds the element from the construction snapshot, or returns `undefined` to decline. */
     create(initial: RiplWritable): TElement | undefined;
     /** Writes a batch of changed props onto the element. */
@@ -51,6 +55,8 @@ export function useElementProps<TElement extends Element>(props: RiplWritable, o
     const {
         keys,
         stateKeys,
+        constructionOnlyKeys = CONSTRUCTION_ONLY_KEYS,
+        paintedKeys = SHAPE_FIELDS,
         create,
         apply,
     } = options;
@@ -70,13 +76,13 @@ export function useElementProps<TElement extends Element>(props: RiplWritable, o
         return undefined;
     }
 
-    const syncKeys = keys.filter(key => !CONSTRUCTION_ONLY_KEYS.has(key));
+    const syncKeys = keys.filter(key => !constructionOnlyKeys.has(key));
 
     // The getter writes through to `applied`, so an unchanged tick returns `undefined` and
     // allocates nothing; `watch` seeds its old value from a first call that is already in sync.
     watch(() => collectChangedProps(props, syncKeys, applied), changed => {
         if (changed) {
-            apply(element, partitionProps(changed, stateKeys, SHAPE_FIELDS));
+            apply(element, partitionProps(changed, stateKeys, paintedKeys));
         }
     });
 

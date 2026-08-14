@@ -237,6 +237,8 @@ export default defineConfig({
                 '@ripl/terminal': path.resolve(__dirname, '../../../../packages/terminal/src/index.ts'),
                 '@ripl/node': path.resolve(__dirname, '../../../../packages/node/src/index.ts'),
                 '@ripl/vue': path.resolve(__dirname, '../../../../adapters/vue/src/index.ts'),
+                '@ripl/vue-3d': path.resolve(__dirname, '../../../../adapters/vue-3d/src/index.ts'),
+                '@ripl/vue-charts': path.resolve(__dirname, '../../../../adapters/vue-charts/src/index.ts'),
             },
         },
         css: {
