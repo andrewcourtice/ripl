@@ -1,5 +1,6 @@
 import {
     CONTEXT_OPERATIONS,
+    NON_GEOMETRY_STATE_KEYS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
 } from './constants';
@@ -302,6 +303,7 @@ export class Element<
 > extends EventBus<TEventMap> implements Queryable {
 
     private _dirty = false;
+    private _geometryDirty = false;
     private _touched = false;
     private _stateVersion = 0;
 
@@ -350,6 +352,16 @@ export class Element<
     /** Whether an own state value has changed since the last render cycle. Drives per-element path-cache invalidation and is reset after each render cycle. */
     public get $dirty(): boolean {
         return this._dirty;
+    }
+
+    /**
+     * Whether a state value affecting the element's traced geometry has changed since the last
+     * render cycle. Paint and transform changes do not set it: a path is authored in local space
+     * and the transform is applied to the context, so neither can invalidate a cached path.
+     * Reset after each render cycle.
+     */
+    public get $geometryDirty(): boolean {
+        return this._geometryDirty;
     }
 
     /** Whether a state value was set since the last render cycle (the element was addressed), whether or not the value changed, so a real change also sets this. Reset after each render cycle. */
@@ -706,6 +718,11 @@ export class Element<
         this.state[key] = value;
         this._stateVersion++;
         this._dirty = true;
+
+        if (!NON_GEOMETRY_STATE_KEYS.has(key)) {
+            this._geometryDirty = true;
+        }
+
         this.emit('updated', {
             key,
             value,
@@ -964,9 +981,12 @@ export class Element<
             return (output[key] = interpolator(currentValue, value as TState[keyof TState]), output);
         }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
+        const tracesGeometry = Object.keys(mappedIntpls).some(key => !NON_GEOMETRY_STATE_KEYS.has(key));
+
         return time => {
             // The tick bypasses `setStateValue`, so mark dirty or a cached path goes stale.
             this._dirty = true;
+            this._geometryDirty ||= tracesGeometry;
             this._stateVersion++;
 
             objectForEach(mappedIntpls, (key, value) => {
@@ -1018,6 +1038,7 @@ export class Element<
      */
     public $reset(): void {
         this._dirty = false;
+        this._geometryDirty = false;
         this._touched = false;
     }
 

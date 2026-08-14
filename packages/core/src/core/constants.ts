@@ -77,6 +77,39 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
     transformOriginY: 0,
 };
 
+/**
+ * State properties that change how an element is painted or placed, but not the geometry it traces.
+ *
+ * A path is authored in the element's own local space and the transform is applied to the context,
+ * not to the path, so neither paint nor transform changes can invalidate it. Anything absent from
+ * this set — every element-specific property, plus the text and stroke-width properties that move
+ * glyphs or insets — is treated as geometry and re-traces the path.
+ */
+export const NON_GEOMETRY_STATE_KEYS = new Set<PropertyKey>([
+    'fill',
+    'filter',
+    'globalCompositeOperation',
+    'lineCap',
+    'lineDash',
+    'lineDashOffset',
+    'lineJoin',
+    'miterLimit',
+    'opacity',
+    'rotation',
+    'shadowBlur',
+    'shadowColor',
+    'shadowOffsetX',
+    'shadowOffsetY',
+    'stroke',
+    'transformOriginX',
+    'transformOriginY',
+    'transformScaleX',
+    'transformScaleY',
+    'translateX',
+    'translateY',
+    'zIndex',
+]);
+
 /** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
 export const TRACKED_EVENTS = [
     'click',
