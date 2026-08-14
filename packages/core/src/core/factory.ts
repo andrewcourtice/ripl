@@ -5,6 +5,12 @@ import type {
     MeasureTextOptions,
 } from '../context';
 
+// Type-only: a value import would cycle (factory → navigator → event-bus → factory).
+import type {
+    Navigator,
+    NavigatorOptions,
+} from './navigator';
+
 /** Platform-specific function implementations injected at runtime. */
 export interface FactoryOptions {
     /** Schedules `callback` to run before the next repaint, returning a handle used to cancel it. */
@@ -22,6 +28,13 @@ export interface FactoryOptions {
     };
     /** Creates a rendering {@link Context} bound to the given target selector or element. */
     createContext(target: string | HTMLElement, options?: ContextOptions): Context;
+    /**
+     * Creates the platform's pan/zoom/brush {@link Navigator} for the given context, wired to
+     * whatever input that platform has. `@ripl/web` registers the gesture-bound DOM navigator;
+     * `@ripl/node` registers the base {@link Navigator}, which owns the same view model but binds
+     * no input.
+     */
+    createNavigator(context: Context, options?: NavigatorOptions): Navigator;
     /** Creates a DOM element with the given tag name. */
     createElement(tagName: string): HTMLElement;
     /** Creates a namespaced DOM element (e.g. SVG) with the given namespace URI and tag name. */
@@ -64,6 +77,11 @@ class Factory {
     /** The platform {@link Context} factory function. */
     public get createContext() {
         return this._state.createContext!;
+    }
+
+    /** The platform {@link Navigator} factory function. */
+    public get createNavigator() {
+        return this._state.createNavigator!;
     }
 
     /** The platform element-creation function. */

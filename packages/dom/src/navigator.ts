@@ -22,11 +22,8 @@ import {
     onDOMEvent,
 } from './dom';
 
-/** Options for constructing a {@link DOMNavigator}, adding interaction wiring to the base options. */
-export interface DOMNavigatorOptions extends NavigatorOptions {
-    /** Enables all wheel/pointer/touch interactions, or configures pan, zoom, and brush individually. */
-    interactions?: boolean | NavigatorInteractions;
-}
+/** Options for constructing a {@link DOMNavigator}. Alias of {@link NavigatorOptions}, which carries the `interactions` and `bounds` this class honors. */
+export type DOMNavigatorOptions = NavigatorOptions;
 
 const INTERACTION_KEY = Symbol('navigator-interaction');
 const VIEWPORT_KEY = Symbol('navigator-viewport');
@@ -57,6 +54,10 @@ function isInteractiveElement(element: unknown): element is HTMLElement {
  * Because the base transform is unbounded, dragging past the viewport edge (the pointer is captured
  * for the duration of the drag) keeps panning, so content outside the current viewport can be reached
  * and then re-framed with the base `centerOn`/`fitBounds` helpers.
+ *
+ * {@link Navigator.bounds} scopes which gestures are claimed: the wheel and a gesture's first press
+ * are ignored outside the region, leaving the rest of the surface to whatever else is listening.
+ * Continuation is never gated, so a drag that leaves the region keeps tracking.
  */
 export class DOMNavigator extends Navigator {
 
@@ -143,6 +144,25 @@ export class DOMNavigator extends Navigator {
         ];
     }
 
+    /** Whether a gesture starting at `point` belongs to this navigator, per its {@link Navigator.bounds}. */
+    private _withinBounds(point: Point): boolean {
+        if (!this._bounds) {
+            return true;
+        }
+
+        const {
+            x,
+            y,
+            width,
+            height,
+        } = this._bounds;
+
+        return point[0] >= x
+            && point[0] <= x + width
+            && point[1] >= y
+            && point[1] <= y + height;
+    }
+
     private _setCursor(cursor: string): void {
         if (this._panCursorEnabled) {
             this._element.style.cursor = cursor;
@@ -174,11 +194,18 @@ export class DOMNavigator extends Navigator {
 
         if (zoom.enabled) {
             this.retain(onDOMEvent(this._element, 'wheel', event => {
+                const point = this._localPoint(event);
+
+                // Ahead of `preventDefault`, so a wheel outside the claimed region still scrolls the page.
+                if (!this._withinBounds(point)) {
+                    return;
+                }
+
                 event.preventDefault();
 
                 const factor = Math.exp(-event.deltaY * WHEEL_SENSITIVITY * zoom.sensitivity);
 
-                this.zoomBy(factor, this._localPoint(event));
+                this.zoomBy(factor, point);
             }), INTERACTION_KEY);
         }
 
@@ -199,7 +226,14 @@ export class DOMNavigator extends Navigator {
 
     private _attachPointerInteractions(pan: ResolvedInteraction, brush: ResolvedInteraction): void {
         this.retain(onDOMEvent(this._element, 'pointerdown', event => {
-            this._pointers.set(event.pointerId, this._localPoint(event));
+            const origin = this._localPoint(event);
+
+            // Only a gesture's first press is gated; a second finger completing a pinch may land anywhere.
+            if (this._pointers.size === 0 && !this._withinBounds(origin)) {
+                return;
+            }
+
+            this._pointers.set(event.pointerId, origin);
 
             // Every tracked pointer, not just the gesturing ones: an uncaptured release off the element leaks its entry.
             this._element.setPointerCapture?.(event.pointerId);
@@ -221,7 +255,7 @@ export class DOMNavigator extends Navigator {
                 return;
             }
 
-            this._dragStart = this._localPoint(event);
+            this._dragStart = origin;
 
             if (this._panning) {
                 this._setCursor('grabbing');

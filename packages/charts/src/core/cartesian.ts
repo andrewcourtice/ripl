@@ -126,6 +126,7 @@ import type {
     EventMap,
     Group,
     NavigatorInteractions,
+    NavigatorOptions,
     NavigatorTransform,
     Rect,
     Scale,
@@ -136,6 +137,8 @@ import {
     createFrameBuffer,
     createGroup,
     createRect,
+    factory,
+    Navigator,
     scaleContinuous,
 } from '@ripl/core';
 
@@ -153,14 +156,6 @@ import {
     typeIsNumber,
     typeIsObject,
 } from '@ripl/utilities';
-
-import {
-    createNavigator,
-} from '@ripl/dom';
-
-import type {
-    DOMNavigator,
-} from '@ripl/dom';
 
 /** Resolved animation used to snap geometry into place during navigator-driven re-renders. */
 const NO_ANIMATION = normalizeAnimation(false);
@@ -231,10 +226,15 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
     annotations?: ChartAnnotation[];
     /**
      * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
-     * click-drag pan; an object configures each interaction individually. The chart auto-creates a
-     * {@link DOMNavigator} on its context and rescales the axis domains as the view changes, with no
-     * data rebuild. Access the underlying controller via `chart.navigator` for imperative framing
-     * (`centerOn`/`fitBounds`) or brush-and-link.
+     * click-drag pan; an object configures each interaction individually. The chart auto-creates the
+     * platform's {@link Navigator} on its context and rescales the axis domains as the view changes,
+     * with no data rebuild. Access the underlying controller via `chart.navigator` for imperative
+     * framing (`centerOn`/`fitBounds`) or brush-and-link.
+     *
+     * Gestures are claimed within the plot rectangle only, so a drag starting over the axis gutter,
+     * title, legend or overview strip is left to whatever else is there. Which gestures are wired at
+     * all is the platform's business: `@ripl/web` binds wheel/pointer/touch, while `@ripl/node` has
+     * no pointer and leaves the controller drivable only from code.
      */
     navigator?: boolean | NavigatorInteractions;
     /**
@@ -295,7 +295,7 @@ export abstract class CartesianChart<
     private _annotations?: ChartAnnotations;
     private _setup: CartesianSetup = {};
 
-    private _navigator?: DOMNavigator;
+    private _navigator?: Navigator;
     private _navigatorConfigKey?: string;
     private _view: NavigatorTransform = {
         k: 1,
@@ -320,7 +320,7 @@ export abstract class CartesianChart<
      * Use it for imperative framing (`centerOn`, `fitBounds`, `reset`) and to subscribe to
      * `brush`/`brushend` for brush-and-link.
      */
-    public get navigator(): DOMNavigator | undefined {
+    public get navigator(): Navigator | undefined {
         return this._navigator;
     }
 
@@ -368,7 +368,6 @@ export abstract class CartesianChart<
     protected setupCartesian(setup: CartesianSetup = {}) {
         this._setup = setup;
 
-        // Strip before the in-plot navigator, so a strip `pointerdown` is claimed by the strip alone.
         this._navigatorStrip = new ChartNavigator({
             scene: this.scene,
             renderer: this.renderer,
@@ -568,11 +567,17 @@ export abstract class CartesianChart<
             }
             : config;
 
-        this._navigator = createNavigator(this.scene.context, {
+        const options: NavigatorOptions = {
             interactions,
             // Lower bound `1` is the full-data identity view; never zoom out past the dataset extent.
             scaleExtent: [1, NAV_MAX_ZOOM],
-        });
+            bounds: this._navPlot,
+        };
+
+        // Same guard as `Scene`: without a platform package the base controller still drives the view.
+        this._navigator = factory.createNavigator
+            ? factory.createNavigator(this.scene.context, options)
+            : new Navigator(options);
 
         this._navigator.on('change', event => {
             // Clamping is a fixpoint, so re-applying the clamped transform re-enters once then settles.
@@ -941,6 +946,11 @@ export abstract class CartesianChart<
     protected clipPlot(area: ChartArea): void {
         this._navPlot = area;
         this._ensurePlotContent();
+
+        // The plot is also what the navigator claims for input, leaving the overview strip its own band.
+        if (this._navigator) {
+            this._navigator.bounds = area;
+        }
 
         // Only clip the axis that actually slides; clipping the held value axis bisected its min/max labels.
         const navigating = !!this._navigator;

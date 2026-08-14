@@ -15,7 +15,7 @@
 - **Same chart, several targets** — Canvas or SVG in the browser, and braille text or raw `ImageData` from a headless Node script via [`@ripl/node`](https://www.npmjs.com/package/@ripl/node).
 - **Three built-in themes** — `lightTheme`, `darkTheme` and `colorBlindTheme`, with `registerTheme` for your own and per-chart or per-series overrides.
 - **Tree-shakable** — importing one factory ships one chart type.
-- **No third-party runtime dependencies** — the only dependencies are four sibling packages in this repository (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`).
+- **No third-party runtime dependencies** — the only dependencies are two sibling packages in this repository (`@ripl/core`, `@ripl/utilities`). Nothing DOM-specific, so the same chart code runs in a terminal.
 
 ## Chart types
 

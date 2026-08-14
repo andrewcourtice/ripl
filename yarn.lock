@@ -1981,7 +1981,6 @@ __metadata:
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
     "@ripl/core": "workspace:^"
-    "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
   languageName: unknown
   linkType: soft

@@ -1,5 +1,6 @@
 import {
     factory,
+    Navigator,
 } from '@ripl/core';
 
 import type {
@@ -166,6 +167,8 @@ factory.set({
         resolveOutput(target),
         options as TerminalContextOptions
     ),
+    // The terminal has no pointer, so the base navigator's view model is the whole of what it can offer.
+    createNavigator: (_context, options) => new Navigator(options),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getComputedStyle: () => ({ font: '10px monospace' } as any),
     createElement: (tagName) => createNodeElement(tagName) as unknown as HTMLElement,

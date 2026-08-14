@@ -45,6 +45,18 @@ export interface NavigatorViewport {
     height: number;
 }
 
+/** The region of the surface a navigator claims for input, in logical pixels. */
+export interface NavigatorBounds {
+    /** X coordinate of the region's left edge, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
+    x: number;
+    /** Y coordinate of the region's top edge, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
+    y: number;
+    /** Width of the region, in logical pixels. */
+    width: number;
+    /** Height of the region, in logical pixels. */
+    height: number;
+}
+
 /** Enable/disable a single interaction, optionally with a sensitivity multiplier. */
 export type NavigatorInteractionOption = boolean | {
     /** Whether the interaction is enabled. */
@@ -77,6 +89,18 @@ export interface NavigatorOptions {
     scaleExtent?: [number, number];
     /** Initial viewport dimensions used by {@link Navigator.centerOn}/{@link Navigator.fitBounds}. */
     viewport?: NavigatorViewport;
+    /**
+     * Enables all gestures, or configures pan, zoom, and brush individually. Honored by
+     * input-bound navigators (e.g. the one `@ripl/web` registers on {@link FactoryOptions.createNavigator});
+     * the base {@link Navigator} binds no input and ignores it. See {@link NavigatorInteractions}.
+     */
+    interactions?: boolean | NavigatorInteractions;
+    /**
+     * The region of the surface the navigator claims for input. A gesture starting outside it is
+     * left to whatever else is there; an unset region claims the whole surface. Honored by
+     * input-bound navigators; the base {@link Navigator} binds no input and ignores it.
+     */
+    bounds?: NavigatorBounds;
 }
 
 /** Options for {@link Navigator.fitBounds}. */
@@ -175,6 +199,7 @@ export function rescaleDomain<TDomain>(
 export class Navigator extends EventBus<NavigatorEventMap> {
 
     protected _brush: NavigatorBrush | null = null;
+    protected _bounds?: NavigatorBounds;
     protected _scaleExtent: [number, number];
     protected _viewport: NavigatorViewport;
     protected _transform: NavigatorTransform = {
@@ -229,6 +254,24 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         };
     }
 
+    /**
+     * The region of the surface this navigator claims for input, or `undefined` when it claims all
+     * of it. Input-bound subclasses ignore gestures starting outside it; the base class binds no
+     * input and only stores it. Set it to hand the rest of the surface to something else — a chart
+     * scopes its navigator to the plot rectangle so the overview strip beneath owns its own band.
+     */
+    public get bounds(): NavigatorBounds | undefined {
+        return this._bounds && {
+            ...this._bounds,
+        };
+    }
+
+    public set bounds(bounds: NavigatorBounds | undefined) {
+        this._bounds = bounds && {
+            ...bounds,
+        };
+    }
+
     constructor(options?: NavigatorOptions) {
         super();
 
@@ -237,6 +280,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
             width: options?.viewport?.width ?? 0,
             height: options?.viewport?.height ?? 0,
         };
+        this.bounds = options?.bounds;
     }
 
     protected _commit(event: 'zoom' | 'pan'): void {

@@ -452,3 +452,117 @@ describe('DOMNavigator interactions', () => {
     });
 
 });
+
+describe('DOMNavigator bounds', () => {
+
+    const BOUNDS = {
+        x: 40,
+        y: 40,
+        width: 100,
+        height: 100,
+    };
+
+    function boundedNavigator(): DOMNavigator {
+        return createNavigator(fakeContext(), {
+            bounds: BOUNDS,
+            interactions: {
+                zoom: true,
+                pan: true,
+            },
+        });
+    }
+
+    test('Should zoom on a wheel inside the claimed region', () => {
+        const navigator = boundedNavigator();
+
+        fire('wheel', {
+            deltaY: -100,
+            clientX: 90,
+            clientY: 90,
+        });
+
+        expect(navigator.transform.k).toBeGreaterThan(1);
+
+        navigator.destroy();
+    });
+
+    test('Should leave a wheel outside the claimed region to the page', () => {
+        const navigator = boundedNavigator();
+
+        const event = new Event('wheel', {
+            bubbles: true,
+            cancelable: true,
+        });
+
+        Object.assign(event, {
+            deltaY: -100,
+            clientX: 10,
+            clientY: 10,
+        });
+
+        element.dispatchEvent(event);
+
+        expect(navigator.transform.k).toBe(1);
+        // Not consuming the gesture is the point: a swallowed wheel would freeze the page scroll.
+        expect(event.defaultPrevented).toBe(false);
+
+        navigator.destroy();
+    });
+
+    test('Should ignore a drag that starts outside the claimed region', () => {
+        const navigator = boundedNavigator();
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 10,
+            clientY: 10,
+        });
+
+        fire('pointermove', {
+            pointerId: 1,
+            clientX: 60,
+            clientY: 60,
+        });
+
+        expect(navigator.transform.x).toBe(0);
+
+        navigator.destroy();
+    });
+
+    test('Should keep tracking a drag that starts inside and leaves the region', () => {
+        const navigator = boundedNavigator();
+
+        fire('pointerdown', {
+            pointerId: 1,
+            clientX: 100,
+            clientY: 100,
+        });
+
+        fire('pointermove', {
+            pointerId: 1,
+            clientX: 400,
+            clientY: 100,
+        });
+
+        expect(navigator.transform.x).toBe(300);
+
+        navigator.destroy();
+    });
+
+    test('Should claim everything again once the region is cleared', () => {
+        const navigator = boundedNavigator();
+
+        navigator.bounds = undefined;
+
+        fire('wheel', {
+            deltaY: -100,
+            clientX: 10,
+            clientY: 10,
+        });
+
+        expect(navigator.transform.k).toBeGreaterThan(1);
+
+        navigator.destroy();
+    });
+
+});

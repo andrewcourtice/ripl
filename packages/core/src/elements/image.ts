@@ -87,7 +87,12 @@ function getSourceSize(image: CanvasImageSource): [number, number] {
     return [0, 0];
 }
 
-/** Interpolator factory that cross-fades between two image sources using an offscreen canvas. */
+/**
+ * Interpolator factory that cross-fades between two image sources using an offscreen canvas.
+ *
+ * The canvas comes from the platform, so off-platform (e.g. under `@ripl/node`, where there is
+ * none) this degrades to swapping images at the halfway point rather than throwing.
+ */
 export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA, valueB) => {
     const [sourceWidth, sourceHeight] = getSourceSize(valueA);
 

@@ -15,6 +15,7 @@ import {
     createContext,
     createRenderer,
     createScene,
+    DOMNavigator,
     factory,
 } from '@ripl/web';
 
@@ -22,6 +23,10 @@ describe('@ripl/web', () => {
 
     test('registers the canvas context factory for the browser', () => {
         expect(typeof factory.createContext).toBe('function');
+    });
+
+    test('registers the gesture-bound navigator for the browser', () => {
+        expect(typeof factory.createNavigator).toBe('function');
     });
 
     test('re-exports the core and canvas entry points', () => {
@@ -48,6 +53,15 @@ describe('@ripl/web', () => {
 
             expect(renderer).toBeDefined();
             expect(typeof renderer.start).toBe('function');
+        });
+
+        test('builds a DOM navigator through the factory', () => {
+            const scene = createScene(document.createElement('div'));
+            const navigator = factory.createNavigator(scene.context);
+
+            expect(navigator).toBeInstanceOf(DOMNavigator);
+
+            navigator.destroy();
         });
 
     });

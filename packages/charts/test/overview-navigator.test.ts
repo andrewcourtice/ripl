@@ -671,3 +671,128 @@ describe('Overview navigator strip', () => {
     });
 
 });
+
+describe('Overview navigator strip dragging', () => {
+
+    async function stripChart() {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const chart = createLineChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        return chart;
+    }
+
+    /** Dispatches a real mouse event on the chart's surface, the way a browser would. */
+    function mouse(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
+        (chart.context.element as HTMLElement).dispatchEvent(new MouseEvent(type, {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+        }));
+    }
+
+    /** Dispatches a pointer event, which only the navigator listens for. */
+    function pointer(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
+        const event = new Event(type, {
+            bubbles: true,
+            cancelable: true,
+        });
+
+        Object.assign(event, {
+            pointerId: 1,
+            clientX: x,
+            clientY: y,
+        });
+
+        (chart.context.element as HTMLElement).dispatchEvent(event);
+    }
+
+    test('Should narrow the window when an edge handle is dragged, driving the view transform', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+        const crossY = strip.y + strip.height / 2;
+
+        mouse(chart, 'mousedown', strip.x + strip.width, crossY);
+        mouse(chart, 'mousemove', strip.x + strip.width / 2, crossY);
+        mouse(chart, 'mouseup', strip.x + strip.width / 2, crossY);
+
+        // Halving the window doubles the zoom of the category axis.
+        expect(chart.navigator?.transform.k).toBeCloseTo(2, 1);
+
+        chart.destroy();
+    });
+
+    test('Should ignore a press outside the strip band', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+
+        mouse(chart, 'mousedown', strip.x + strip.width, strip.y - strip.height);
+        mouse(chart, 'mousemove', strip.x + strip.width / 2, strip.y - strip.height);
+
+        expect(chart.navigator?.transform.k).toBe(1);
+
+        chart.destroy();
+    });
+
+    test('Should scope the navigator to the plot rectangle', async () => {
+        const chart = await stripChart();
+
+        expect(chart.navigator?.bounds).toEqual(plotOf(chart));
+
+        chart.destroy();
+    });
+
+    // The strip used to block the navigator by stopping propagation; the bounds gate replaces it.
+    test('Should not pan the plot when a gesture starts in the strip band', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+        const crossY = strip.y + strip.height / 2;
+
+        pointer(chart, 'pointerdown', strip.x + strip.width / 2, crossY);
+        pointer(chart, 'pointermove', strip.x + strip.width / 4, crossY);
+
+        expect(chart.navigator?.transform).toEqual({
+            k: 1,
+            x: 0,
+            y: 0,
+        });
+
+        chart.destroy();
+    });
+
+    test('Should still pan when a gesture starts inside the plot', async () => {
+        const chart = await stripChart();
+        const plot = plotOf(chart);
+        const midX = plot.x + plot.width / 2;
+        const midY = plot.y + plot.height / 2;
+
+        // The identity view is the full data extent, where translation clamps to zero; zoom in to pan at all.
+        chart.navigator?.zoomTo(2, [midX, midY]);
+
+        const before = chart.navigator!.transform.x;
+
+        pointer(chart, 'pointerdown', midX, midY);
+        pointer(chart, 'pointermove', midX + 20, midY);
+
+        expect(chart.navigator!.transform.x).toBeGreaterThan(before);
+
+        chart.destroy();
+    });
+
+});

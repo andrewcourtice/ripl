@@ -239,7 +239,12 @@ const getRefPathElement = functionCache(() => {
     return factory.createElementNS('http://www.w3.org/2000/svg', 'path') as SVGPathElement;
 });
 
-/** Computes the total length of an SVG path from its `d` attribute string. */
+/**
+ * Computes the total length of an SVG path from its `d` attribute string.
+ *
+ * Measured by a real SVG `<path>` element, so this needs a DOM. Off-platform (e.g. under
+ * `@ripl/node`) the element is a stub and this returns `0` rather than throwing.
+ */
 export function getPathLength(pathData: string): number {
     const pathEl = getRefPathElement();
     pathEl.setAttribute('d', pathData);
@@ -247,7 +252,12 @@ export function getPathLength(pathData: string): number {
     return pathEl.getTotalLength();
 }
 
-/** Samples a point and tangent angle at the given distance along an SVG path. */
+/**
+ * Samples a point and tangent angle at the given distance along an SVG path.
+ *
+ * Measured by a real SVG `<path>` element, so this needs a DOM. Off-platform (e.g. under
+ * `@ripl/node`) the element is a stub and this returns the origin rather than throwing.
+ */
 export function samplePathPoint(pathData: string, distance: number): PathPoint {
     const pathEl = getRefPathElement();
 
