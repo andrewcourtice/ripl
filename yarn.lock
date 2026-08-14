@@ -2102,11 +2102,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/vue-3d@workspace:adapters/vue-3d":
+"@ripl/vue-3d@workspace:^, @ripl/vue-3d@workspace:adapters/vue-3d":
   version: 0.0.0-use.local
   resolution: "@ripl/vue-3d@workspace:adapters/vue-3d"
   dependencies:
     "@ripl/3d": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+    "@ripl/vue": "workspace:^"
+    vue: "npm:^3.5.40"
+  peerDependencies:
+    vue: ^3.5.0
+  languageName: unknown
+  linkType: soft
+
+"@ripl/vue-charts@workspace:^, @ripl/vue-charts@workspace:adapters/vue-charts":
+  version: 0.0.0-use.local
+  resolution: "@ripl/vue-charts@workspace:adapters/vue-charts"
+  dependencies:
+    "@ripl/charts": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
@@ -2168,6 +2183,8 @@ __metadata:
     "@ripl/terminal": "workspace:^"
     "@ripl/utilities": "workspace:^"
     "@ripl/vue": "workspace:^"
+    "@ripl/vue-3d": "workspace:^"
+    "@ripl/vue-charts": "workspace:^"
     "@ripl/web": "workspace:^"
     "@ripl/webgpu": "workspace:^"
     "@vercel/analytics": "npm:^2.0.1"

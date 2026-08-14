@@ -66,41 +66,50 @@ export const SHAPE_3D_FIELDS = new Set<string>([
 
 /** The state properties specific to each built-in 3D shape, keyed by shape type. */
 export const SHAPE_3D_KEYS = {
+    /** The state properties specific to a Bézier surface. */
     bezierSurface: [
         'revision',
         'segments',
     ],
+    /** The state properties specific to a cone. */
     cone: [
         'height',
         'radius',
         'segments',
     ],
+    /** The state properties specific to a cube. */
     cube: [
         'size',
     ],
+    /** The state properties specific to a cylinder. */
     cylinder: [
         'height',
         'radiusBottom',
         'radiusTop',
         'segments',
     ],
+    /** The state properties specific to a mesh. */
     mesh: [
         'revision',
     ],
+    /** The state properties specific to a parametric surface. */
     parametric: [
         'revision',
         'uSegments',
         'vSegments',
     ],
+    /** The state properties specific to a plane. */
     plane: [
         'height',
         'width',
     ],
+    /** The state properties specific to a sphere. */
     sphere: [
         'radius',
         'rings',
         'segments',
     ],
+    /** The state properties specific to a torus. */
     torus: [
         'radialSegments',
         'radius',

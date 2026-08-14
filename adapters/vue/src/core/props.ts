@@ -7,7 +7,9 @@ import type {
  * would duplicate — and inevitably drift from — the element state interfaces.
  */
 export const ANY_PROP = {
+    /** Vue's runtime type check for any value. */
     type: null,
+    /** Absent means unset, so an omitted prop leaves the Ripl default alone. */
     default: undefined,
 } as const;
 
@@ -18,13 +20,17 @@ export const ANY_PROP = {
  * an omitted prop stay omitted.
  */
 export const BOOLEAN_PROP = {
+    /** Vue's runtime type check for a boolean. */
     type: Boolean,
+    /** Absent means unset, so an omitted prop leaves the Ripl default alone. */
     default: undefined,
 } as const;
 
 /** A numeric prop, left undefined when absent so it cannot override a Ripl default. */
 export const NUMBER_PROP = {
+    /** Vue's runtime type check for a number. */
     type: Number,
+    /** Absent means unset, so an omitted prop leaves the Ripl default alone. */
     default: undefined,
 } as const;
 
@@ -88,6 +94,7 @@ export const SHAPE_FIELDS = new Set<string>(SHAPE_FIELD_KEYS);
 
 /** The state properties specific to each built-in element, keyed by element type. */
 export const ELEMENT_STATE_KEYS = {
+    /** The state properties specific to an arc. */
     arc: [
         'borderRadius',
         'cx',
@@ -99,11 +106,13 @@ export const ELEMENT_STATE_KEYS = {
         'radius',
         'startAngle',
     ],
+    /** The state properties specific to a circle. */
     circle: [
         'cx',
         'cy',
         'radius',
     ],
+    /** The state properties specific to an ellipse. */
     ellipse: [
         'cx',
         'cy',
@@ -112,6 +121,7 @@ export const ELEMENT_STATE_KEYS = {
         'radiusY',
         'startAngle',
     ],
+    /** The state properties specific to an image. */
     image: [
         'height',
         'image',
@@ -119,29 +129,34 @@ export const ELEMENT_STATE_KEYS = {
         'x',
         'y',
     ],
+    /** The state properties specific to a line. */
     line: [
         'x1',
         'x2',
         'y1',
         'y2',
     ],
+    /** The state properties specific to a path. */
     path: [
         'height',
         'width',
         'x',
         'y',
     ],
+    /** The state properties specific to a polygon. */
     polygon: [
         'cx',
         'cy',
         'radius',
         'sides',
     ],
+    /** The state properties specific to a polyline. */
     polyline: [
         'points',
         'renderer',
         'segments',
     ],
+    /** The state properties specific to a rect. */
     rect: [
         'borderRadius',
         'height',
@@ -149,6 +164,7 @@ export const ELEMENT_STATE_KEYS = {
         'x',
         'y',
     ],
+    /** The state properties specific to a text run. */
     text: [
         'content',
         'pathData',
