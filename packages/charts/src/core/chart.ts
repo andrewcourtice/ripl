@@ -2,7 +2,6 @@ import {
     createRenderer,
     createScene,
     EventBus,
-    factory,
 } from '@ripl/core';
 
 import type {
@@ -14,10 +13,6 @@ import type {
     Renderer,
     Scene,
 } from '@ripl/core';
-
-import {
-    createContext,
-} from '@ripl/canvas';
 
 import {
     COLORS,
@@ -101,10 +96,6 @@ import {
     typeIsFunction,
     typeIsNumber,
 } from '@ripl/utilities';
-
-if (!factory.createContext) {
-    factory.set({ createContext });
-}
 
 export type {
     ChartAnimationOptions,

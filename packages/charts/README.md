@@ -29,22 +29,33 @@
 
 ## Installation
 
+`@ripl/charts` is context-agnostic: it draws a chart onto whatever surface it is given and ships no
+rendering backend of its own. Install it **alongside** the backend for your environment.
+
 ```bash
-# npm
-npm install @ripl/charts
+# In a browser, with Canvas or SVG
+npm install @ripl/charts @ripl/web
 
-# yarn
-yarn add @ripl/charts
-
-# pnpm
-pnpm add @ripl/charts
+# In Node, rendering to the terminal
+npm install @ripl/charts @ripl/node
 ```
 
-Pair it with [`@ripl/web`](https://www.npmjs.com/package/@ripl/web) when the same page also draws its own graphics; charts alone need nothing else.
+Import the backend once, anywhere in your entry point. It registers the platform bindings a chart
+needs — a rendering context, text measurement and an animation frame:
+
+```typescript
+import '@ripl/web';
+```
+
+Without one, a chart given a selector or an element throws rather than guessing a backend. Passing
+a `Context` you built yourself needs no backend import at all.
 
 ## Quick start
 
 ```typescript
+// Registers the browser rendering backend. Swap for `@ripl/node` to render to a terminal.
+import '@ripl/web';
+
 import {
     createBarChart,
 } from '@ripl/charts';

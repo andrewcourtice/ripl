@@ -357,6 +357,10 @@
             "link": "/docs/api/@ripl/3d/type-aliases/RenderStrategy.md"
           },
           {
+            "text": "Shape3DDefaults",
+            "link": "/docs/api/@ripl/3d/type-aliases/Shape3DDefaults.md"
+          },
+          {
             "text": "Shape3DOptions",
             "link": "/docs/api/@ripl/3d/type-aliases/Shape3DOptions.md"
           },
@@ -3079,6 +3083,10 @@
             "link": "/docs/api/@ripl/core/type-aliases/Ease.md"
           },
           {
+            "text": "ElementDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/ElementDefaults.md"
+          },
+          {
             "text": "ElementInterpolationKeyFrame",
             "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolationKeyFrame.md"
           },
@@ -3241,6 +3249,10 @@
           {
             "text": "SceneEventMap",
             "link": "/docs/api/@ripl/core/type-aliases/SceneEventMap.md"
+          },
+          {
+            "text": "Shape2DDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/Shape2DDefaults.md"
           },
           {
             "text": "Shape2DOptions",

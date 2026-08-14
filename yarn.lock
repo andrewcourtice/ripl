@@ -1980,7 +1980,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
-    "@ripl/canvas": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
