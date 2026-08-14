@@ -170,6 +170,15 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
+    /** The event types an area chart can emit. */
+    public get $events(): (keyof AreaChartEventMap)[] {
+        return [
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
 

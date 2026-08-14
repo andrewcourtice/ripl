@@ -53,17 +53,52 @@ function stripDeclarationSourcemapComment(): TsdownPlugin {
     };
 }
 
-/** Reads the name of the package being built, or an empty string if it can't be read. */
-function readPackageName(cwd: string): string {
-    try {
-        const { name } = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as {
-            name: string;
-        };
+/**
+ * Maps a peer dependency onto the global it exposes on `window`, for the IIFE build. A peer
+ * dependency is the consumer's to provide, so unlike a workspace dependency it must stay external
+ * even in the standalone bundle; without an entry here rolldown emits a bare import that no
+ * `<script>` tag can resolve.
+ */
+const PEER_DEPENDENCY_GLOBALS: Record<string, string> = {
+    vue: 'Vue',
+};
 
-        return name;
+/** The fields this config reads out of the package being built. */
+interface PackageManifest {
+    /** The package's npm name, e.g. `@ripl/core`. */
+    name: string;
+    /** The package's peer dependencies, keyed by name. */
+    peerDependencies: Record<string, string>;
+}
+
+/** Reads the manifest of the package being built, falling back to empty values if it can't be read. */
+function readPackageManifest(cwd: string): PackageManifest {
+    try {
+        const {
+            name,
+            peerDependencies,
+        } = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as Partial<PackageManifest>;
+
+        return {
+            name: name ?? '',
+            peerDependencies: peerDependencies ?? {},
+        };
     } catch {
-        return '';
+        return {
+            name: '',
+            peerDependencies: {},
+        };
     }
+}
+
+/** Builds the IIFE `globals` map for a package's peer dependencies, skipping any without a known global. */
+function resolvePeerGlobals(peerDependencies: Record<string, string>): Record<string, string> {
+    return Object.fromEntries(Object.keys(peerDependencies)
+        .filter(name => name in PEER_DEPENDENCY_GLOBALS)
+        .map(name => [
+            name,
+            PEER_DEPENDENCY_GLOBALS[name],
+        ]));
 }
 
 /**
@@ -86,7 +121,13 @@ export default defineConfig((inlineConfig): UserConfig[] => {
     // against it. Do NOT enable tsdown's `workspace` mode: it evaluates this config once for
     // the whole monorepo, so every package would inherit the first package's IIFE global.
     const cwd = inlineConfig.cwd ?? process.cwd();
-    const packageName = readPackageName(cwd);
+
+    const {
+        name: packageName,
+        peerDependencies,
+    } = readPackageManifest(cwd);
+
+    const peerGlobals = resolvePeerGlobals(peerDependencies);
 
     const shared = {
         cwd,
@@ -164,6 +205,12 @@ export default defineConfig((inlineConfig): UserConfig[] => {
                     RIPL_PACKAGES,
                 ],
             },
+            outputOptions: (outputOptions, format, meta) => ({
+                ...shared.outputOptions(outputOptions, format, meta),
+                // Peer dependencies stay external here, unlike workspace deps, so they need a
+                // global to read off `window` rather than a bare import no `<script>` can resolve.
+                globals: peerGlobals,
+            }),
             // Declarations come from the ESM/CJS build above; without this the IIFE build
             // emits a stray `index.iife.d.ts`.
             dts: false,

@@ -14,6 +14,7 @@
     // The extension's `.vue` blocks need `vue-tsc` and stay uncovered; its `.ts` is checked here.
     "include": [
         "packages/*/src/**/*.ts",
+        "adapters/*/src/**/*.ts",
         "apps/devtools-extension/src/**/*.ts"
     ]
 }

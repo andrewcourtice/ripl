@@ -357,6 +357,10 @@
             "link": "/docs/api/@ripl/3d/type-aliases/RenderStrategy.md"
           },
           {
+            "text": "Shape3DDefaults",
+            "link": "/docs/api/@ripl/3d/type-aliases/Shape3DDefaults.md"
+          },
+          {
             "text": "Shape3DOptions",
             "link": "/docs/api/@ripl/3d/type-aliases/Shape3DOptions.md"
           },
@@ -3079,6 +3083,10 @@
             "link": "/docs/api/@ripl/core/type-aliases/Ease.md"
           },
           {
+            "text": "ElementDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/ElementDefaults.md"
+          },
+          {
             "text": "ElementInterpolationKeyFrame",
             "link": "/docs/api/@ripl/core/type-aliases/ElementInterpolationKeyFrame.md"
           },
@@ -3241,6 +3249,10 @@
           {
             "text": "SceneEventMap",
             "link": "/docs/api/@ripl/core/type-aliases/SceneEventMap.md"
+          },
+          {
+            "text": "Shape2DDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/Shape2DDefaults.md"
           },
           {
             "text": "Shape2DOptions",
@@ -4911,6 +4923,757 @@
           {
             "text": "valueOneOrMore",
             "link": "/docs/api/@ripl/utilities/functions/valueOneOrMore.md"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": "@ripl/vue",
+    "link": "/docs/api/@ripl/vue/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplTransitionScope",
+            "link": "/docs/api/@ripl/vue/classes/RiplTransitionScope.md"
+          },
+          {
+            "text": "RiplTree",
+            "link": "/docs/api/@ripl/vue/classes/RiplTree.md"
+          }
+        ]
+      },
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplComponent",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplComponent.md"
+          },
+          {
+            "text": "RiplContextProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplContextProps.md"
+          },
+          {
+            "text": "RiplDragPayload",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplDragPayload.md"
+          },
+          {
+            "text": "RiplElementListeners",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplElementListeners.md"
+          },
+          {
+            "text": "RiplElementOptionProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplElementOptionProps.md"
+          },
+          {
+            "text": "RiplElementPropsOptions",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplElementPropsOptions.md"
+          },
+          {
+            "text": "RiplNodeDefinition",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplNodeDefinition.md"
+          },
+          {
+            "text": "RiplPointerListeners",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplPointerListeners.md"
+          },
+          {
+            "text": "RiplPointerPayload",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplPointerPayload.md"
+          },
+          {
+            "text": "RiplPropPartition",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplPropPartition.md"
+          },
+          {
+            "text": "RiplRendererProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplRendererProps.md"
+          },
+          {
+            "text": "RiplSceneProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplSceneProps.md"
+          },
+          {
+            "text": "RiplShapeProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplShapeProps.md"
+          },
+          {
+            "text": "RiplTickPayload",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplTickPayload.md"
+          },
+          {
+            "text": "RiplTransitionPhaseOptions",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplTransitionPhaseOptions.md"
+          },
+          {
+            "text": "RiplTransitionPhases",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplTransitionPhases.md"
+          },
+          {
+            "text": "RiplTransitionProps",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplTransitionProps.md"
+          },
+          {
+            "text": "RiplUpdatedPayload",
+            "link": "/docs/api/@ripl/vue/interfaces/RiplUpdatedPayload.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplElementProps",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplElementProps.md"
+          },
+          {
+            "text": "RiplElementState",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplElementState.md"
+          },
+          {
+            "text": "RiplFieldWriters",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplFieldWriters.md"
+          },
+          {
+            "text": "RiplListener",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplListener.md"
+          },
+          {
+            "text": "RiplTransitionPhase",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplTransitionPhase.md"
+          },
+          {
+            "text": "RiplTransitionPhaseName",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplTransitionPhaseName.md"
+          },
+          {
+            "text": "RiplWritable",
+            "link": "/docs/api/@ripl/vue/type-aliases/RiplWritable.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "ANY_PROP",
+            "link": "/docs/api/@ripl/vue/variables/ANY_PROP.md"
+          },
+          {
+            "text": "BASE_STATE_KEYS",
+            "link": "/docs/api/@ripl/vue/variables/BASE_STATE_KEYS.md"
+          },
+          {
+            "text": "BOOLEAN_PROP",
+            "link": "/docs/api/@ripl/vue/variables/BOOLEAN_PROP.md"
+          },
+          {
+            "text": "CONSTRUCTION_ONLY_KEYS",
+            "link": "/docs/api/@ripl/vue/variables/CONSTRUCTION_ONLY_KEYS.md"
+          },
+          {
+            "text": "CONTEXT_EVENTS",
+            "link": "/docs/api/@ripl/vue/variables/CONTEXT_EVENTS.md"
+          },
+          {
+            "text": "ELEMENT_EVENTS",
+            "link": "/docs/api/@ripl/vue/variables/ELEMENT_EVENTS.md"
+          },
+          {
+            "text": "ELEMENT_OPTION_KEYS",
+            "link": "/docs/api/@ripl/vue/variables/ELEMENT_OPTION_KEYS.md"
+          },
+          {
+            "text": "ELEMENT_STATE_KEYS",
+            "link": "/docs/api/@ripl/vue/variables/ELEMENT_STATE_KEYS.md"
+          },
+          {
+            "text": "NUMBER_PROP",
+            "link": "/docs/api/@ripl/vue/variables/NUMBER_PROP.md"
+          },
+          {
+            "text": "RENDERER_EVENTS",
+            "link": "/docs/api/@ripl/vue/variables/RENDERER_EVENTS.md"
+          },
+          {
+            "text": "RIPL_CONTEXT",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_CONTEXT.md"
+          },
+          {
+            "text": "RIPL_ELEMENT",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_ELEMENT.md"
+          },
+          {
+            "text": "RIPL_PARENT",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_PARENT.md"
+          },
+          {
+            "text": "RIPL_RENDERER",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_RENDERER.md"
+          },
+          {
+            "text": "RIPL_SCENE",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_SCENE.md"
+          },
+          {
+            "text": "RIPL_TRANSITION",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_TRANSITION.md"
+          },
+          {
+            "text": "RIPL_TREE",
+            "link": "/docs/api/@ripl/vue/variables/RIPL_TREE.md"
+          },
+          {
+            "text": "RiplArc",
+            "link": "/docs/api/@ripl/vue/variables/RiplArc.md"
+          },
+          {
+            "text": "RiplCircle",
+            "link": "/docs/api/@ripl/vue/variables/RiplCircle.md"
+          },
+          {
+            "text": "RiplContext",
+            "link": "/docs/api/@ripl/vue/variables/RiplContext.md"
+          },
+          {
+            "text": "RiplEllipse",
+            "link": "/docs/api/@ripl/vue/variables/RiplEllipse.md"
+          },
+          {
+            "text": "RiplGroup",
+            "link": "/docs/api/@ripl/vue/variables/RiplGroup.md"
+          },
+          {
+            "text": "RiplImage",
+            "link": "/docs/api/@ripl/vue/variables/RiplImage.md"
+          },
+          {
+            "text": "RiplLine",
+            "link": "/docs/api/@ripl/vue/variables/RiplLine.md"
+          },
+          {
+            "text": "RiplPath",
+            "link": "/docs/api/@ripl/vue/variables/RiplPath.md"
+          },
+          {
+            "text": "RiplPolygon",
+            "link": "/docs/api/@ripl/vue/variables/RiplPolygon.md"
+          },
+          {
+            "text": "RiplPolyline",
+            "link": "/docs/api/@ripl/vue/variables/RiplPolyline.md"
+          },
+          {
+            "text": "RiplRect",
+            "link": "/docs/api/@ripl/vue/variables/RiplRect.md"
+          },
+          {
+            "text": "RiplRenderer",
+            "link": "/docs/api/@ripl/vue/variables/RiplRenderer.md"
+          },
+          {
+            "text": "RiplScene",
+            "link": "/docs/api/@ripl/vue/variables/RiplScene.md"
+          },
+          {
+            "text": "RiplText",
+            "link": "/docs/api/@ripl/vue/variables/RiplText.md"
+          },
+          {
+            "text": "RiplTransition",
+            "link": "/docs/api/@ripl/vue/variables/RiplTransition.md"
+          },
+          {
+            "text": "SHAPE_FIELD_KEYS",
+            "link": "/docs/api/@ripl/vue/variables/SHAPE_FIELD_KEYS.md"
+          },
+          {
+            "text": "SHAPE_FIELDS",
+            "link": "/docs/api/@ripl/vue/variables/SHAPE_FIELDS.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "applyFields",
+            "link": "/docs/api/@ripl/vue/functions/applyFields.md"
+          },
+          {
+            "text": "applyState",
+            "link": "/docs/api/@ripl/vue/functions/applyState.md"
+          },
+          {
+            "text": "collectChangedProps",
+            "link": "/docs/api/@ripl/vue/functions/collectChangedProps.md"
+          },
+          {
+            "text": "createProps",
+            "link": "/docs/api/@ripl/vue/functions/createProps.md"
+          },
+          {
+            "text": "createRipl",
+            "link": "/docs/api/@ripl/vue/functions/createRipl.md"
+          },
+          {
+            "text": "createRiplTree",
+            "link": "/docs/api/@ripl/vue/functions/createRiplTree.md"
+          },
+          {
+            "text": "defineRiplElement",
+            "link": "/docs/api/@ripl/vue/functions/defineRiplElement.md"
+          },
+          {
+            "text": "elementFactory",
+            "link": "/docs/api/@ripl/vue/functions/elementFactory.md"
+          },
+          {
+            "text": "partitionProps",
+            "link": "/docs/api/@ripl/vue/functions/partitionProps.md"
+          },
+          {
+            "text": "readBoundProps",
+            "link": "/docs/api/@ripl/vue/functions/readBoundProps.md"
+          },
+          {
+            "text": "registerComponents",
+            "link": "/docs/api/@ripl/vue/functions/registerComponents.md"
+          },
+          {
+            "text": "resolveClassNames",
+            "link": "/docs/api/@ripl/vue/functions/resolveClassNames.md"
+          },
+          {
+            "text": "useElementProps",
+            "link": "/docs/api/@ripl/vue/functions/useElementProps.md"
+          },
+          {
+            "text": "useExposedInstance",
+            "link": "/docs/api/@ripl/vue/functions/useExposedInstance.md"
+          },
+          {
+            "text": "useForwardedEvents",
+            "link": "/docs/api/@ripl/vue/functions/useForwardedEvents.md"
+          },
+          {
+            "text": "useRiplContext",
+            "link": "/docs/api/@ripl/vue/functions/useRiplContext.md"
+          },
+          {
+            "text": "useRiplElement",
+            "link": "/docs/api/@ripl/vue/functions/useRiplElement.md"
+          },
+          {
+            "text": "useRiplRenderer",
+            "link": "/docs/api/@ripl/vue/functions/useRiplRenderer.md"
+          },
+          {
+            "text": "useRiplScene",
+            "link": "/docs/api/@ripl/vue/functions/useRiplScene.md"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": "@ripl/vue-3d",
+    "link": "/docs/api/@ripl/vue-3d/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplCameraProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplCameraProps.md"
+          },
+          {
+            "text": "RiplContext3DProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplContext3DProps.md"
+          },
+          {
+            "text": "RiplDirectionalLightProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplDirectionalLightProps.md"
+          },
+          {
+            "text": "RiplGroup3DProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplGroup3DProps.md"
+          },
+          {
+            "text": "RiplHemisphereLightProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplHemisphereLightProps.md"
+          },
+          {
+            "text": "RiplLightProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplLightProps.md"
+          },
+          {
+            "text": "RiplPointLightProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplPointLightProps.md"
+          },
+          {
+            "text": "RiplSpotLightProps",
+            "link": "/docs/api/@ripl/vue-3d/interfaces/RiplSpotLightProps.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "Ripl3DBaseState",
+            "link": "/docs/api/@ripl/vue-3d/type-aliases/Ripl3DBaseState.md"
+          },
+          {
+            "text": "Ripl3DElementProps",
+            "link": "/docs/api/@ripl/vue-3d/type-aliases/Ripl3DElementProps.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "BASE_3D_STATE_KEYS",
+            "link": "/docs/api/@ripl/vue-3d/variables/BASE_3D_STATE_KEYS.md"
+          },
+          {
+            "text": "GROUP_3D_FIELD_KEYS",
+            "link": "/docs/api/@ripl/vue-3d/variables/GROUP_3D_FIELD_KEYS.md"
+          },
+          {
+            "text": "RIPL_CAMERA",
+            "link": "/docs/api/@ripl/vue-3d/variables/RIPL_CAMERA.md"
+          },
+          {
+            "text": "RIPL_CONTEXT_3D",
+            "link": "/docs/api/@ripl/vue-3d/variables/RIPL_CONTEXT_3D.md"
+          },
+          {
+            "text": "RiplAmbientLight",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplAmbientLight.md"
+          },
+          {
+            "text": "RiplBezierSurface",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplBezierSurface.md"
+          },
+          {
+            "text": "RiplCamera",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplCamera.md"
+          },
+          {
+            "text": "RiplCone",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplCone.md"
+          },
+          {
+            "text": "RiplContext3D",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplContext3D.md"
+          },
+          {
+            "text": "RiplCube",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplCube.md"
+          },
+          {
+            "text": "RiplCylinder",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplCylinder.md"
+          },
+          {
+            "text": "RiplDirectionalLight",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplDirectionalLight.md"
+          },
+          {
+            "text": "RiplGroup3D",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplGroup3D.md"
+          },
+          {
+            "text": "RiplHemisphereLight",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplHemisphereLight.md"
+          },
+          {
+            "text": "RiplMesh",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplMesh.md"
+          },
+          {
+            "text": "RiplParametric",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplParametric.md"
+          },
+          {
+            "text": "RiplPlane",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplPlane.md"
+          },
+          {
+            "text": "RiplPointLight",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplPointLight.md"
+          },
+          {
+            "text": "RiplRenderer",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplRenderer.md"
+          },
+          {
+            "text": "RiplScene",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplScene.md"
+          },
+          {
+            "text": "RiplSphere",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplSphere.md"
+          },
+          {
+            "text": "RiplSpotLight",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplSpotLight.md"
+          },
+          {
+            "text": "RiplTorus",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplTorus.md"
+          },
+          {
+            "text": "RiplTransition",
+            "link": "/docs/api/@ripl/vue-3d/variables/RiplTransition.md"
+          },
+          {
+            "text": "SHAPE_3D_FIELD_KEYS",
+            "link": "/docs/api/@ripl/vue-3d/variables/SHAPE_3D_FIELD_KEYS.md"
+          },
+          {
+            "text": "SHAPE_3D_FIELDS",
+            "link": "/docs/api/@ripl/vue-3d/variables/SHAPE_3D_FIELDS.md"
+          },
+          {
+            "text": "SHAPE_3D_KEYS",
+            "link": "/docs/api/@ripl/vue-3d/variables/SHAPE_3D_KEYS.md"
+          },
+          {
+            "text": "SHAPE_3D_STATE_KEYS",
+            "link": "/docs/api/@ripl/vue-3d/variables/SHAPE_3D_STATE_KEYS.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "createRipl3D",
+            "link": "/docs/api/@ripl/vue-3d/functions/createRipl3D.md"
+          },
+          {
+            "text": "useRiplCamera",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplCamera.md"
+          },
+          {
+            "text": "useRiplContext",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplContext.md"
+          },
+          {
+            "text": "useRiplContext3D",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplContext3D.md"
+          },
+          {
+            "text": "useRiplElement",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplElement.md"
+          },
+          {
+            "text": "useRiplRenderer",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplRenderer.md"
+          },
+          {
+            "text": "useRiplScene",
+            "link": "/docs/api/@ripl/vue-3d/functions/useRiplScene.md"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": "@ripl/vue-charts",
+    "link": "/docs/api/@ripl/vue-charts/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplChartDefinition",
+            "link": "/docs/api/@ripl/vue-charts/interfaces/RiplChartDefinition.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RiplAnyChart",
+            "link": "/docs/api/@ripl/vue-charts/type-aliases/RiplAnyChart.md"
+          },
+          {
+            "text": "RiplChartListener",
+            "link": "/docs/api/@ripl/vue-charts/type-aliases/RiplChartListener.md"
+          },
+          {
+            "text": "RiplChartListeners",
+            "link": "/docs/api/@ripl/vue-charts/type-aliases/RiplChartListeners.md"
+          },
+          {
+            "text": "RiplChartProps",
+            "link": "/docs/api/@ripl/vue-charts/type-aliases/RiplChartProps.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "BASE_CHART_OPTION_KEYS",
+            "link": "/docs/api/@ripl/vue-charts/variables/BASE_CHART_OPTION_KEYS.md"
+          },
+          {
+            "text": "CHART_OPTION_KEYS",
+            "link": "/docs/api/@ripl/vue-charts/variables/CHART_OPTION_KEYS.md"
+          },
+          {
+            "text": "RIPL_CHART",
+            "link": "/docs/api/@ripl/vue-charts/variables/RIPL_CHART.md"
+          },
+          {
+            "text": "RiplArcDiagramChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplArcDiagramChart.md"
+          },
+          {
+            "text": "RiplAreaChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplAreaChart.md"
+          },
+          {
+            "text": "RiplBarChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplBarChart.md"
+          },
+          {
+            "text": "RiplBoxPlotChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplBoxPlotChart.md"
+          },
+          {
+            "text": "RiplChordChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplChordChart.md"
+          },
+          {
+            "text": "RiplContext",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplContext.md"
+          },
+          {
+            "text": "RiplForceDirectedChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplForceDirectedChart.md"
+          },
+          {
+            "text": "RiplFunnelChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplFunnelChart.md"
+          },
+          {
+            "text": "RiplGanttChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplGanttChart.md"
+          },
+          {
+            "text": "RiplGaugeChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplGaugeChart.md"
+          },
+          {
+            "text": "RiplHeatmapChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplHeatmapChart.md"
+          },
+          {
+            "text": "RiplHistogramChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplHistogramChart.md"
+          },
+          {
+            "text": "RiplLineChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplLineChart.md"
+          },
+          {
+            "text": "RiplPackedCircleChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplPackedCircleChart.md"
+          },
+          {
+            "text": "RiplPieChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplPieChart.md"
+          },
+          {
+            "text": "RiplPolarAreaChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplPolarAreaChart.md"
+          },
+          {
+            "text": "RiplPolarScatterChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplPolarScatterChart.md"
+          },
+          {
+            "text": "RiplRadarChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplRadarChart.md"
+          },
+          {
+            "text": "RiplRadialBarChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplRadialBarChart.md"
+          },
+          {
+            "text": "RiplRealtimeChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplRealtimeChart.md"
+          },
+          {
+            "text": "RiplSankeyChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplSankeyChart.md"
+          },
+          {
+            "text": "RiplScatterChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplScatterChart.md"
+          },
+          {
+            "text": "RiplStockChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplStockChart.md"
+          },
+          {
+            "text": "RiplSunburstChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplSunburstChart.md"
+          },
+          {
+            "text": "RiplTreemapChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplTreemapChart.md"
+          },
+          {
+            "text": "RiplTrendChart",
+            "link": "/docs/api/@ripl/vue-charts/variables/RiplTrendChart.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "createRiplCharts",
+            "link": "/docs/api/@ripl/vue-charts/functions/createRiplCharts.md"
+          },
+          {
+            "text": "defineRiplChart",
+            "link": "/docs/api/@ripl/vue-charts/functions/defineRiplChart.md"
+          },
+          {
+            "text": "useRiplChart",
+            "link": "/docs/api/@ripl/vue-charts/functions/useRiplChart.md"
+          },
+          {
+            "text": "useRiplContext",
+            "link": "/docs/api/@ripl/vue-charts/functions/useRiplContext.md"
           }
         ]
       }

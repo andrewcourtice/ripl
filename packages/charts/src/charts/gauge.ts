@@ -128,6 +128,15 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
     /** Signature of the tick geometry (center/radius/count) so ticks only re-animate when they move. */
     private _tickSignature?: string;
 
+    /** The event types a gauge can emit. */
+    public get $events(): (keyof GaugeChartEventMap)[] {
+        return [
+            'valueclick',
+            'valueenter',
+            'valueleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
         super(target, options);
 

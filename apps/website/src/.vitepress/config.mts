@@ -68,6 +68,9 @@ const SECTION_HUBS = new Set([
     'demos/',
     'docs/core/',
     'docs/3d/',
+    'docs/vue/',
+    'docs/vue/3d/',
+    'docs/vue/charts/',
     'playground',
 ]);
 
@@ -235,6 +238,9 @@ export default defineConfig({
                 '@ripl/webgpu': path.resolve(__dirname, '../../../../packages/webgpu/src/index.ts'),
                 '@ripl/terminal': path.resolve(__dirname, '../../../../packages/terminal/src/index.ts'),
                 '@ripl/node': path.resolve(__dirname, '../../../../packages/node/src/index.ts'),
+                '@ripl/vue': path.resolve(__dirname, '../../../../adapters/vue/src/index.ts'),
+                '@ripl/vue-3d': path.resolve(__dirname, '../../../../adapters/vue-3d/src/index.ts'),
+                '@ripl/vue-charts': path.resolve(__dirname, '../../../../adapters/vue-charts/src/index.ts'),
             },
         },
         css: {
@@ -284,6 +290,14 @@ export default defineConfig({
                             {
                                 text: '3D',
                                 link: '/docs/3d/',
+                            },
+                        ],
+                    },
+                    {
+                        items: [
+                            {
+                                text: 'Vue',
+                                link: '/docs/vue/',
                             },
                         ],
                     },
@@ -501,6 +515,80 @@ export default defineConfig({
                 },
             ],
 
+            '/docs/vue': [
+                {
+                    text: 'Getting Started',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/',
+                        },
+                    ],
+                },
+                {
+                    text: 'Essentials',
+                    items: [
+                        {
+                            text: 'Rendering',
+                            link: '/docs/vue/essentials/rendering',
+                        },
+                        {
+                            text: 'Elements',
+                            link: '/docs/vue/essentials/elements',
+                        },
+                        {
+                            text: 'Transitions',
+                            link: '/docs/vue/essentials/transitions',
+                        },
+                        {
+                            text: 'Events',
+                            link: '/docs/vue/essentials/events',
+                        },
+                        {
+                            text: 'Compositions',
+                            link: '/docs/vue/essentials/compositions',
+                        },
+                        {
+                            text: 'Examples',
+                            link: '/docs/vue/essentials/examples',
+                        },
+                    ],
+                },
+                {
+                    text: '3D',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/3d/',
+                        },
+                        {
+                            text: 'Shapes',
+                            link: '/docs/vue/3d/shapes',
+                        },
+                        {
+                            text: 'Camera',
+                            link: '/docs/vue/3d/camera',
+                        },
+                        {
+                            text: 'Lighting',
+                            link: '/docs/vue/3d/lighting',
+                        },
+                    ],
+                },
+                {
+                    text: 'Charts',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/vue/charts/',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/vue/charts/components',
+                        },
+                    ],
+                },
+            ],
             '/docs/3d': [
                 {
                     text: 'Getting Started',

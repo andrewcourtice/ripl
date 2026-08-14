@@ -152,6 +152,15 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
     private _enclosing?: Circle;
     private _tooltip: Tooltip;
 
+    /** The event types a packed circle chart can emit. */
+    public get $events(): (keyof PackedCircleChartEventMap)[] {
+        return [
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: PackedCircleChartOptions<TData>) {
         super(target, options);
 

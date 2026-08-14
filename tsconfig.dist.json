@@ -23,6 +23,8 @@
     },
     "include": [
         "packages/*/dist/index.d.ts",
-        "packages/*/dist/index.d.cts"
+        "packages/*/dist/index.d.cts",
+        "adapters/*/dist/index.d.ts",
+        "adapters/*/dist/index.d.cts"
     ]
 }

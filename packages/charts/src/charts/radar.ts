@@ -163,6 +163,15 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
     private _gridAxisLines: Line[] = [];
     private _gridLabels: Text[] = [];
     private _tooltip!: Tooltip;
+    /** The event types a radar chart can emit. */
+    public get $events(): (keyof RadarChartEventMap)[] {
+        return [
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
         super(target, options);
 

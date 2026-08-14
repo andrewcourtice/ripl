@@ -170,6 +170,15 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
     private _tooltip: Tooltip;
     private _radialScale!: Scale;
 
+    /** The event types a polar scatter chart can emit. */
+    public get $events(): (keyof PolarScatterChartEventMap)[] {
+        return [
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: PolarScatterChartOptions<TData>) {
         super(target, options);
 

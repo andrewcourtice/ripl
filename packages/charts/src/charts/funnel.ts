@@ -133,6 +133,15 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a funnel chart can emit. */
+    public get $events(): (keyof FunnelChartEventMap)[] {
+        return [
+            'segmentclick',
+            'segmententer',
+            'segmentleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
         super(target, options);
 

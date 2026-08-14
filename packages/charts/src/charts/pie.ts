@@ -156,6 +156,15 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a pie chart can emit. */
+    public get $events(): (keyof PieChartEventMap)[] {
+        return [
+            'segmentclick',
+            'segmententer',
+            'segmentleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
         super(target, options);
 

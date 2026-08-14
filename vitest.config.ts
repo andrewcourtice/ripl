@@ -5,6 +5,7 @@ import {
 } from 'vitest/config';
 
 const resolve = (pkg: string) => path.resolve(__dirname, `packages/${pkg}/src/index.ts`);
+const resolveAdapter = (adapter: string) => path.resolve(__dirname, `adapters/${adapter}/src/index.ts`);
 
 export default defineConfig({
     resolve: {
@@ -22,6 +23,9 @@ export default defineConfig({
             '@ripl/terminal': resolve('terminal'),
             '@ripl/node': resolve('node'),
             '@ripl/test-utils': resolve('test-utils'),
+            '@ripl/vue': resolveAdapter('vue'),
+            '@ripl/vue-3d': resolveAdapter('vue-3d'),
+            '@ripl/vue-charts': resolveAdapter('vue-charts'),
         },
     },
     test: {
