@@ -18,7 +18,7 @@ Every built-in 3D shape has a component. Props map onto the shape's state, so th
 | `<ripl-mesh>` | `faces` |
 | `<ripl-parametric>` | `surface`, `uSegments`, `vSegments` |
 | `<ripl-bezier-surface>` | `patches`, `segments` |
-| `<ripl-group-3d>` | — (a container; see below) |
+| `<ripl-group-3d>` | — |
 
 ## Shared props
 
@@ -56,16 +56,18 @@ const material = computed(() => ({
 
 ## `<ripl-group-3d>`
 
-Groups its children, composing its transform onto theirs. Groups nest arbitrarily, and an ordinary `<ripl-group>` in between is harmless — it contributes no transform.
+Groups its children, composing its transform onto theirs. Groups nest arbitrarily, and an ordinary `<ripl-group>` in between is harmless, since it contributes no transform.
 
 ```vue
-<ripl-group-3d :y="-0.9" :rotation-y="spin">
-    <ripl-cube :size="1" :x="-1" />
-    <ripl-cube :size="1" :x="1" />
-</ripl-group-3d>
+<template>
+    <ripl-group-3d :y="-0.9" :rotation-y="spin">
+        <ripl-cube :size="1" :x="-1" />
+        <ripl-cube :size="1" :x="1" />
+    </ripl-group-3d>
+</template>
 ```
 
-A group's transform lives outside element state, because a group's own state is not parameterized. Two consequences:
+A group's transform lives outside element state, because a group's own state is not parameterized:
 
 - It applies immediately, without a repaint request.
 - It **cannot be animated** by a `<ripl-transition>`. Animate the children's `x`/`y`/`z` and rotations instead, or drive the group's rotation from the renderer's `tick`.
@@ -75,7 +77,9 @@ A group's transform lives outside element state, because a group's own state is 
 `<ripl-mesh>`, `<ripl-parametric>` and `<ripl-bezier-surface>` carry their geometry by reference. Binding a new value replaces it and rebuilds the mesh:
 
 ```vue
-<ripl-parametric :surface="surface" :u-segments="32" :v-segments="32" />
+<template>
+    <ripl-parametric :surface="surface" :u-segments="32" :v-segments="32" />
+</template>
 ```
 
 Comparison is by identity, so return a new function or array rather than mutating in place.

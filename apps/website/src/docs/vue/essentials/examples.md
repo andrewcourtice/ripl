@@ -1,18 +1,17 @@
 ---
-title: Bar chart
-description: "A live, interactive bar chart built from ripl-rect, ripl-text and ripl-line — with staggered enter transitions, animated updates, and click and hover events."
+title: Examples
+description: "Complete scenes built from the Vue components: a live, interactive bar chart with staggered enter transitions, animated updates, and click and hover events."
 ---
 
-# Bar chart
+# Examples
 
-Everything below is built from the built-in elements — no `@ripl/charts`, no imperative
-`createScene` or `createRenderer`. Scales come from `@ripl/core`, and the rest is template.
+Complete scenes assembled from the components in this section.
 
-That is the point of this page: it shows what the primitives can do. For a bar chart with axes,
-legends and tooltips already built, reach for [`<ripl-bar-chart>`](/docs/vue/charts/) instead.
+## Bar chart
 
-Click a bar to select it, hover to highlight, and use the controls to drive the enter, update and
-leave transitions.
+This chart is built entirely from the built-in elements, with no `@ripl/charts` and no imperative `createScene` or `createRenderer`. Scales come from `@ripl/core`, and the rest is template. For a bar chart that already has axes, legends and tooltips, reach for [`<ripl-bar-chart>`](/docs/vue/charts/) instead.
+
+Click a bar to select it, hover to highlight, and use the controls to drive the enter, update and leave transitions.
 
 :::tabs
 == Demo
@@ -162,11 +161,9 @@ function toggle(month: string) {
 ```
 :::
 
-## Layout and scales
+### Layout and scales
 
-The chart needs its own size, and `<ripl-context>` has none — it fills whatever element you give it.
-Capture the context from `@ready` and re-read its dimensions on `@resize`; the resize event carries
-no payload, so you need the context itself:
+The chart needs its own size, and `<ripl-context>` has none of its own: it fills whatever element you give it. Capture the context from `@ready` and re-read its dimensions on `@resize`. The resize event carries no payload, so you need the context itself:
 
 ```ts
 function syncSize() {
@@ -175,8 +172,7 @@ function syncSize() {
 }
 ```
 
-Ripl's [scales](/docs/core/advanced/scales) do the rest. A band scale spaces the categories and
-reports a `bandwidth` for the bar width, and a continuous scale maps values to pixels:
+Ripl's [scales](/docs/core/advanced/scales) do the rest. A band scale spaces the categories and reports a `bandwidth` for the bar width, and a continuous scale maps values to pixels:
 
 ```ts
 const categoryScale = scaleBand(months, [plot.x, plot.x + plot.width], {
@@ -189,10 +185,7 @@ const valueScale = scaleContinuous([0, max], [plot.y + plot.height, plot.y], {
 });
 ```
 
-Two details are worth copying. The value scale's range runs **bottom to top**, because pixel `y`
-grows downward — which also means `valueScale(0)` lands on the axis, giving you the baseline with no
-special-casing. And `padToTicks` expands the domain to a round tick boundary, so the gridlines land
-on sensible numbers.
+The value scale's range runs **bottom to top**, because pixel `y` grows downward. That also puts `valueScale(0)` on the axis, which gives you the baseline with no special-casing. `padToTicks` expands the domain to a round tick boundary, so the gridlines land on sensible numbers.
 
 Each bar is then four numbers:
 
@@ -205,16 +198,13 @@ const bar = {
 };
 ```
 
-Deriving the whole layout in a `computed` and iterating it with one `v-for` per visual layer keeps
-the geometry out of the template. Note `bandwidth` is a property, not a method.
+Deriving the whole layout in a `computed` and iterating it with one `v-for` per visual layer keeps the geometry out of the template. Note `bandwidth` is a property, not a method.
 
-Guard the plot on `plot.width > 0`: the surface genuinely has no size until its host element lands
-in the document, and the first real measurement arrives with the first resize.
+Guard the plot on `plot.width > 0`. The surface genuinely has no size until its host element lands in the document, and the first real measurement arrives with the first resize.
 
-## Transitions
+### Transitions
 
-Bars grow out of the baseline, which is exactly the enter phase's `state` — the state an element
-animates *from*:
+Bars grow out of the baseline, which is the enter phase's `state`: the state an element animates *from*.
 
 ```ts
 const barEnter = computed(() => (element, index, length) => ({
@@ -228,40 +218,31 @@ const barEnter = computed(() => (element, index, length) => ({
 }));
 ```
 
-Expressing the phase as a factory is what produces the staggered sweep: each element gets its index
-and the total, so the delay fans out across the set. Leaving reverses it — bars collapse back to the
-baseline and fade before being destroyed.
+Expressing the phase as a factory produces the staggered sweep. Each element gets its index and the total, so the delay fans out across the set. Leaving reverses it, collapsing the bars back to the baseline and fading them before they are destroyed.
 
-The phases are `computed` so `baseline` stays current after a resize. They are also plain reactive
-props, which means switching them off is just binding `undefined` — that is what the **Animate**
-toggle does, and unanimated changes then apply instantly.
+The phases are `computed` so `baseline` stays current after a resize. They are also plain reactive props, so the **Animate** toggle switches them off by binding `undefined`, after which unanimated changes apply instantly.
 
-The value and category labels sit in their own `<ripl-transition>` fading on `{ opacity: 0 }`. A
-scope applies its phases to every descendant, and `height` means nothing to a
-[text element](/docs/vue/essentials/elements), so they need a phase of their own. The gridlines get
-a third scope with only an `update` phase, so a tick that survives a domain change slides rather
-than jumping.
+The value and category labels sit in their own `<ripl-transition>` fading on `{ opacity: 0 }`. A scope applies its phases to every descendant, and `height` means nothing to a [text element](/docs/vue/essentials/elements), so the labels need a phase of their own. The gridlines get a third scope with only an `update` phase, so a tick that survives a domain change slides rather than jumping.
 
 See [Transitions](/docs/vue/essentials/transitions) for the full phase API.
 
-## Interaction
+### Interaction
 
 Selection and hover are ordinary Vue listeners on the rect:
 
 ```vue
-<ripl-rect
-    v-for="bar in bars"
-    :key="bar.key"
-    :fill="bar.fill"
-    @click="toggle(bar.key)"
-    @mouseenter="hovered = bar.key"
-    @mouseleave="hovered = undefined"
-/>
+<template>
+    <ripl-rect
+        v-for="bar in bars"
+        :key="bar.key"
+        :fill="bar.fill"
+        @click="toggle(bar.key)"
+        @mouseenter="hovered = bar.key"
+        @mouseleave="hovered = undefined"
+    />
+</template>
 ```
 
-Both feed back into `bar.fill`, so the highlight is not a separate code path — it is the same
-reactive prop the rest of the chart uses, and it tweens through the `update` phase for free.
+Both feed back into `bar.fill`, so the highlight is the same reactive prop the rest of the chart uses rather than a separate code path, and it tweens through the `update` phase without any extra work.
 
-Only the events you bind are subscribed, which matters here: binding a pointer listener is what
-makes an element a hit-test target. The text labels bind nothing, so they never steal a click from
-the bar behind them. See [Events](/docs/vue/essentials/events) for the full list and their payloads.
+Only the events you bind are subscribed, which matters here: binding a pointer listener is what makes an element a hit-test target. The text labels bind nothing, so they never steal a click from the bar behind them. See [Events](/docs/vue/essentials/events) for the full list and their payloads.

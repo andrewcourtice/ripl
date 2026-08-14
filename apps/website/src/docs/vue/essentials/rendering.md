@@ -9,7 +9,7 @@ Three components map onto Ripl's three rendering concerns. Each is optional abov
 
 ## `<ripl-context>`
 
-Creates the drawing surface and provides it to everything below. It renders a plain element that the canvas fills, so it needs a size — from a class, an inline style, or its parent's layout.
+Creates the drawing surface and provides it to everything below. It renders a plain element that the canvas fills, so it needs a size, whether from a class, an inline style, or its parent's layout.
 
 ```vue
 <template>
@@ -109,9 +109,6 @@ It emits `start`, `stop` and `tick`.
 
 Vue runs `setup()` top-down (parent before child) but mount hooks bottom-up (child before parent). Every one of these components therefore builds its Ripl object during `setup()`, not `onMounted`: the context is constructed against a detached host element, which the component attaches on mount.
 
-Two things follow from that, both of which you can rely on:
-
-- A descendant's `setup()` already sees a live context, scene and renderer — [compositions](/docs/vue/essentials/compositions) resolve immediately, with no watching.
-- Paint order matches template order, because `setup()` runs in template order.
+That gives you two guarantees. A descendant's `setup()` already sees a live context, scene and renderer, so [compositions](/docs/vue/essentials/compositions) resolve immediately with no watching. And paint order matches template order, because `setup()` runs in template order.
 
 Reordering a keyed `v-for` moves components rather than remounting them, so `setup()` does not run again. The adapter detects those moves separately and replays them onto the group, which means paint order tracks the template in that case too.

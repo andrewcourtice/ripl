@@ -40,8 +40,12 @@ createApp(App).use(createRipl()).mount('#app');
 
 Or import the components you use directly, in which case the plugin is unnecessary.
 
-Then describe a scene. `<ripl-context>` renders a plain element that the canvas fills, so give it a size:
+Then describe a scene. `<ripl-context>` renders a plain element that the canvas fills, so give it a size. Click the circle in the demo below:
 
+:::tabs
+== Demo
+<example-vue-quick-start />
+== Code
 ```vue
 <template>
     <ripl-context style="width: 400px; height: 300px">
@@ -73,12 +77,9 @@ import {
 const grown = ref(false);
 </script>
 ```
+:::
 
-Click the circle:
-
-<example-vue-quick-start />
-
-That is the whole thing: props drive the element's state, `@click` is an ordinary Vue listener, and wrapping the element in a `<ripl-transition>` animates every prop change through it.
+Props drive the element's state, `@click` is an ordinary Vue listener, and wrapping the element in a `<ripl-transition>` animates every prop change through it.
 
 Both casings work: `<ripl-circle>` and `<RiplCircle>` resolve to the same component, exported as `RiplCircle`.
 
@@ -109,14 +110,14 @@ Add a scene once you need z-ordering or many elements, and a renderer once you n
 
 ## Where to go next
 
-- [Rendering](/docs/vue/essentials/rendering) — the context, scene and renderer components.
-- [Elements](/docs/vue/essentials/elements) — groups, the built-in elements, and how props map to state.
-- [Transitions](/docs/vue/essentials/transitions) — animating enter, update and leave.
-- [Events](/docs/vue/essentials/events) — pointer and drag listeners.
-- [Compositions](/docs/vue/essentials/compositions) — reaching the underlying Ripl objects.
-- [Bar chart](/docs/vue/examples/bar-chart) — a live, interactive chart built from the elements above.
+- **[Rendering](/docs/vue/essentials/rendering)**: the context, scene and renderer components
+- **[Elements](/docs/vue/essentials/elements)**: groups, the built-in elements, and how props map to state
+- **[Transitions](/docs/vue/essentials/transitions)**: animating enter, update and leave
+- **[Events](/docs/vue/essentials/events)**: pointer and drag listeners
+- **[Compositions](/docs/vue/essentials/compositions)**: reaching the underlying Ripl objects
+- **[Examples](/docs/vue/essentials/examples)**: a live, interactive chart built from the elements above
 
 Two companion packages extend the same surface:
 
-- [3D](/docs/vue/3d/) — `@ripl/vue-3d` adds a 3D context, nine shapes, a camera and lights. The scene, renderer and transition components above drive it unchanged.
-- [Charts](/docs/vue/charts/) — `@ripl/vue-charts` turns all 25 of Ripl's chart types into components whose props are the chart's options.
+- **[3D](/docs/vue/3d/)**: `@ripl/vue-3d` adds a 3D context, nine shapes, a camera and lights. The scene, renderer and transition components above drive it unchanged.
+- **[Charts](/docs/vue/charts/)**: `@ripl/vue-charts` turns all 25 of Ripl's chart types into components whose props are the chart's options.

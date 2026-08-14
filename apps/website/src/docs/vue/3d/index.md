@@ -21,12 +21,14 @@ import {
 createApp(App).use(createRipl3D()).mount('#app');
 ```
 
-`createRipl3D()` installs the core components too, and applying `createRipl()` as well — in either order — is harmless.
+`createRipl3D()` installs the core components too, and applying `createRipl()` as well is harmless in either order.
 
 ## A scene
 
+:::tabs
+== Demo
 <example-vue-3d />
-
+== Code
 ```vue
 <template>
     <ripl-context-3d :lights="lights">
@@ -49,6 +51,7 @@ createApp(App).use(createRipl3D()).mount('#app');
     </ripl-context-3d>
 </template>
 ```
+:::
 
 `auto-stop="false"` is the norm in 3D. Camera orbit and light changes ask the context to repaint rather than changing element state, so a renderer that idles when no transition is running would stop before they land.
 
@@ -69,6 +72,6 @@ It emits `ready` with the context, plus `resize`, `render` and every pointer eve
 
 ## Where to go next
 
-- [Shapes](/docs/vue/3d/shapes) — the nine built-in shapes and `<ripl-group-3d>`.
-- [Camera](/docs/vue/3d/camera) — framing and pointer interactions.
-- [Lighting](/docs/vue/3d/lighting) — the five light types and the default rig.
+- **[Shapes](/docs/vue/3d/shapes)**: the nine built-in shapes and `<ripl-group-3d>`
+- **[Camera](/docs/vue/3d/camera)**: framing and pointer interactions
+- **[Lighting](/docs/vue/3d/lighting)**: the five light types and the default rig

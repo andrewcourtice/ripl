@@ -19,12 +19,14 @@ import {
 createApp(App).use(createRiplCharts()).mount('#app');
 ```
 
-`createRiplCharts()` installs the core `@ripl/vue` components too, so a chart can share a page with hand-drawn elements. Applying `createRipl()` as well, in either order, is harmless.
+`createRiplCharts()` installs the core `@ripl/vue` components too, so a chart can share a page with hand-drawn elements. Applying `createRipl()` as well is harmless in either order.
 
 ## A chart
 
+:::tabs
+== Demo
 <example-vue-charts />
-
+== Code
 ```vue
 <template>
     <ripl-bar-chart
@@ -70,27 +72,27 @@ function onBarClick(payload) {
 }
 </script>
 ```
+:::
 
 A chart sizes itself to its root element and re-renders on resize, so give the component a size the way you would any other element.
 
 ## Props are options
 
-Every prop maps to a top-level chart option, including the furniture — `axis`, `grid`, `legend`, `tooltip`, `crosshair`, `annotations`, `navigator`, `title`, `animation`, `theme`, `padding`.
+Every prop maps to a top-level chart option, including the furniture: `axis`, `grid`, `legend`, `tooltip`, `crosshair`, `annotations`, `navigator`, `title`, `animation`, `theme` and `padding`.
 
-Two rules follow from how a chart merges options:
+How the chart merges those options gives you two rules to work to. An unbound prop is never written, so the chart keeps its own default and binding nothing is different from binding `undefined`. And a bound object replaces the whole option, since the merge is shallow and top-level: `:axis="{ y: { ticks: 5 } }"` replaces the entire `axis` option rather than merging into it, so pass the whole thing.
 
-- **An unbound prop is never written.** The chart keeps its own default, so binding nothing is different from binding `undefined`.
-- **A bound object replaces the whole option.** The merge is shallow and top-level, so `:axis="{ y: { ticks: 5 } }"` replaces the entire `axis` option rather than merging into it. Pass the whole thing.
-
-Props are compared by identity, so hoist object and array bindings to a `computed` rather than writing them inline — otherwise every parent render looks like a change.
+Props are compared by identity, so hoist object and array bindings to a `computed` rather than writing them inline. Otherwise every parent render looks like a change.
 
 ### `keyBy`, not `key`
 
 Charts that group by a category take a `key` option. Vue reserves `key` as the vnode key, so it can never reach a component as a prop; bind **`key-by`** instead and the adapter renames it on the way in.
 
 ```vue
-<!-- not :key="'month'" — Vue would eat it -->
-<ripl-line-chart key-by="month" :data="data" :series="series" />
+<template>
+    <!-- not :key="'month'", which Vue would eat -->
+    <ripl-line-chart key-by="month" :data="data" :series="series" />
+</template>
 ```
 
 ## Events
@@ -98,14 +100,16 @@ Charts that group by a category take a `key` option. Vue reserves `key` as the v
 Listener props come from the events each chart declares, so they match the imperative API exactly: `@barclick` on a bar chart, `@segmententer` on a pie chart, `@nodeclick` and `@linkclick` on a sankey diagram. Every payload carries the chart-space `x` and `y` alongside the datum.
 
 ```vue
-<ripl-pie-chart
-    :data="data"
-    key-by="label"
-    :value="'value'"
-    :label="'label'"
-    @segmentclick="select"
-    @segmententer="hover"
-/>
+<template>
+    <ripl-pie-chart
+        :data="data"
+        key-by="label"
+        :value="'value'"
+        :label="'label'"
+        @segmentclick="select"
+        @segmententer="hover"
+    />
+</template>
 ```
 
 As with the core components, a chart only subscribes to an event you actually bind.
@@ -115,12 +119,14 @@ As with the core components, a chart only subscribes to an event you actually bi
 A chart builds its own scene and renderer, so it is a peer of `<ripl-context>` rather than something that lives inside a `<ripl-scene>`. Given one, it draws into it instead of creating its own:
 
 ```vue
-<ripl-context style="width: 640px; height: 360px">
-    <ripl-bar-chart :data="data" :series="series" key-by="month" />
-</ripl-context>
+<template>
+    <ripl-context style="width: 640px; height: 360px">
+        <ripl-bar-chart :data="data" :series="series" key-by="month" />
+    </ripl-context>
+</template>
 ```
 
-Unmounting the chart then leaves the context alone — the context component owns it — whereas a standalone chart destroys the surface it made.
+Unmounting the chart then leaves the context alone, since the context component owns it. A standalone chart destroys the surface it made.
 
 ## Reaching the chart
 
@@ -142,7 +148,7 @@ const download = () => window.open(chart.value?.export().toURL());
 </script>
 ```
 
-This is also how you reach the handful of imperative APIs that have no declarative equivalent — `chart.navigator` on a cartesian chart, and `push()` / `clear()` on a realtime chart.
+This is also how you reach the handful of imperative APIs that have no declarative equivalent: `chart.navigator` on a cartesian chart, and `push()` / `clear()` on a realtime chart.
 
 ## Every chart
 

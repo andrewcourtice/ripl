@@ -2,9 +2,7 @@
 
 Declarative Vue 3 components for [Ripl](https://www.ripl.run) 3D scenes.
 
-A 3D context is an ordinary Ripl context and a 3D shape is an ordinary element, so this package adds
-only what 3D genuinely needs — a context, nine shapes, a group, a camera and five lights. The scene,
-renderer and transition components from [`@ripl/vue`](../vue) drive a 3D scene unchanged.
+A 3D context is an ordinary Ripl context and a 3D shape is an ordinary element, so this package adds only what 3D genuinely needs: a context, nine shapes, a group, a camera and five lights. The scene, renderer and transition components from [`@ripl/vue`](../vue) drive a 3D scene unchanged.
 
 ## Installation
 
@@ -24,27 +22,26 @@ import {
 createApp(App).use(createRipl3D()).mount('#app');
 ```
 
-`createRipl3D()` registers the core Ripl components too. Applying `createRipl()` as well, in either
-order, is harmless.
+`createRipl3D()` registers the core Ripl components too. Applying `createRipl()` as well is harmless in either order.
 
-```html
-<ripl-context-3d :lights="lights">
-    <ripl-scene>
-        <ripl-renderer :auto-stop="false">
-            <ripl-camera :position="[0, 2, 5]" :interactions="true" />
+```vue
+<template>
+    <ripl-context-3d :lights="lights">
+        <ripl-scene>
+            <ripl-renderer :auto-stop="false">
+                <ripl-camera :position="[0, 2, 5]" :interactions="true" />
 
-            <ripl-group-3d :rotation-y="spin">
-                <ripl-cube :size="1" :x="-1" fill="#4488ff" />
-                <ripl-sphere :radius="0.6" :x="1" fill="#ff006e" />
-            </ripl-group-3d>
-        </ripl-renderer>
-    </ripl-scene>
-</ripl-context-3d>
+                <ripl-group-3d :rotation-y="spin">
+                    <ripl-cube :size="1" :x="-1" fill="#4488ff" />
+                    <ripl-sphere :radius="0.6" :x="1" fill="#ff006e" />
+                </ripl-group-3d>
+            </ripl-renderer>
+        </ripl-scene>
+    </ripl-context-3d>
+</template>
 ```
 
-`auto-stop="false"` is the norm in 3D: camera and light changes ask the context to repaint rather
-than changing element state, so a renderer that idles when no transition is running would stop
-before they land.
+`auto-stop="false"` is the norm in 3D: camera and light changes ask the context to repaint rather than changing element state, so a renderer that idles when no transition is running would stop before they land.
 
 ## Components
 
@@ -74,10 +71,8 @@ The four core compositions are re-exported, so one import covers a whole scene.
 ## Notes
 
 - There is no `zIndex` on a 3D shape: it derives depth ordering from its projected position.
-- A group's transform lives outside element state, so it applies immediately and cannot be animated
-  by a `<ripl-transition>`. Animate the children instead.
-- A context resolves at most eight lights. Binding the context's `lights` prop, even to `[]`, is what
-  clears the default ambient-plus-directional rig.
+- A group's transform lives outside element state, so it applies immediately and cannot be animated by a `<ripl-transition>`. Animate the children instead.
+- A context resolves at most eight lights. Binding the context's `lights` prop, even to `[]`, is what clears the default ambient-plus-directional rig.
 
 ## Documentation
 

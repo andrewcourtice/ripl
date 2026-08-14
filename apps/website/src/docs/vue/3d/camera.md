@@ -8,20 +8,22 @@ description: "Framing a 3D scene with <ripl-camera>, enabling orbit, pan and zoo
 `<ripl-camera>` views the enclosing `<ripl-context-3d>`. It renders nothing, so it can sit anywhere inside the context.
 
 ```vue
-<ripl-context-3d>
-    <ripl-scene>
-        <ripl-renderer :auto-stop="false">
-            <ripl-camera
-                :position="[0, 2, 5]"
-                :target="[0, 0, 0]"
-                :fov="45"
-                :interactions="true"
-            />
+<template>
+    <ripl-context-3d>
+        <ripl-scene>
+            <ripl-renderer :auto-stop="false">
+                <ripl-camera
+                    :position="[0, 2, 5]"
+                    :target="[0, 0, 0]"
+                    :fov="45"
+                    :interactions="true"
+                />
 
-            <ripl-cube :size="1" fill="#4488ff" />
-        </ripl-renderer>
-    </ripl-scene>
-</ripl-context-3d>
+                <ripl-cube :size="1" fill="#4488ff" />
+            </ripl-renderer>
+        </ripl-scene>
+    </ripl-context-3d>
+</template>
 ```
 
 | Prop | Description |
@@ -34,20 +36,22 @@ description: "Framing a 3D scene with <ripl-camera>, enabling orbit, pan and zoo
 | `projection` | `perspective` (default) or `orthographic`. |
 | `interactions` | `true` for all pointer interactions, or an object enabling `zoom`, `pivot` and `pan` individually. |
 
-`interactions` is read once, when the camera wires up its listeners, so changing it later has no effect — bind it to a constant.
+`interactions` is read once, when the camera wires up its listeners, so changing it later has no effect. Bind it to a constant.
 
 A camera belongs to the context rather than the scene graph, so it takes no part in a `<ripl-transition>`. Its props are written straight through and coalesced onto the next microtask.
 
 ## Interactions in detail
 
 ```vue
-<ripl-camera
-    :interactions="{
-        zoom: true,
-        pivot: { sensitivity: 0.5 },
-        pan: false,
-    }"
-/>
+<template>
+    <ripl-camera
+        :interactions="{
+            zoom: true,
+            pivot: { sensitivity: 0.5 },
+            pan: false,
+        }"
+    />
+</template>
 ```
 
 Each interaction takes `true`, `false`, or `{ enabled, sensitivity }`.
@@ -77,7 +81,7 @@ function frame() {
 </script>
 ```
 
-`useRiplCamera()` resolves the same camera from anywhere inside the context — the context owns the ref, so it does not matter which slot the camera was declared in:
+`useRiplCamera()` resolves the same camera from anywhere inside the context. The context owns the ref, so it does not matter which slot the camera was declared in:
 
 ```ts
 import {

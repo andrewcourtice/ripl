@@ -5,32 +5,36 @@ description: "The five light components, how they replace the default ambient-pl
 
 # Lighting
 
-A `<ripl-context-3d>` starts with a default rig — an ambient light plus a directional one — so a shape is shaded without any lighting setup at all. Declaring your own lights replaces it.
+A `<ripl-context-3d>` starts with a default rig of an ambient light plus a directional one, so a shape is shaded without any lighting setup at all. Declaring your own lights replaces it.
 
 ```vue
-<ripl-context-3d :lights="[]">
-    <ripl-ambient-light color="#8899bb" :intensity="0.25" />
-    <ripl-directional-light :direction="[-0.6, -0.8, -0.5]" color="#fff2e0" :intensity="0.75" />
-    <ripl-point-light :position="[0, 4, 3]" color="#ffd0a0" :intensity="12" :distance="14" />
+<template>
+    <ripl-context-3d :lights="[]">
+        <ripl-ambient-light color="#8899bb" :intensity="0.25" />
+        <ripl-directional-light :direction="[-0.6, -0.8, -0.5]" color="#fff2e0" :intensity="0.75" />
+        <ripl-point-light :position="[0, 4, 3]" color="#ffd0a0" :intensity="12" :distance="14" />
 
-    <ripl-scene>
-        <ripl-sphere :radius="1" fill="#3a86ff" />
-    </ripl-scene>
-</ripl-context-3d>
+        <ripl-scene>
+            <ripl-sphere :radius="1" fill="#3a86ff" />
+        </ripl-scene>
+    </ripl-context-3d>
+</template>
 ```
 
-Binding `lights` — even to an empty array, as above — is what clears the default rig. Without it your lights stack on top of it, which is rarely what you want. You can equally pass the lights themselves rather than declaring components:
+Binding `lights`, even to an empty array as above, is what clears the default rig. Without it your lights stack on top of it, which is rarely what you want. You can equally pass the lights themselves rather than declaring components:
 
 ```vue
-<ripl-context-3d :lights="lights" />
+<template>
+    <ripl-context-3d :lights="lights" />
+</template>
 ```
 
 ## The five types
 
 | Component | Adds |
 | --- | --- |
-| `<ripl-ambient-light>` | — lights every surface equally |
-| `<ripl-hemisphere-light>` | `groundColor` — a second colour for downward-facing surfaces |
+| `<ripl-ambient-light>` | — (it lights every surface equally) |
+| `<ripl-hemisphere-light>` | `groundColor`, a second colour for downward-facing surfaces |
 | `<ripl-directional-light>` | `direction`, `space` |
 | `<ripl-point-light>` | `position`, `distance`, `decay` |
 | `<ripl-spot-light>` | the point props plus `direction`, `space`, `angle`, `penumbra` |
@@ -48,11 +52,13 @@ A context resolves at most **eight** lights. Beyond that the extras are dropped 
 If the default rig is close enough, tune it on the context instead of replacing it:
 
 ```vue
-<ripl-context-3d
-    :light-direction="[-0.5, -1, -0.3]"
-    light-mode="camera"
-    :ambient-intensity="0.4"
-/>
+<template>
+    <ripl-context-3d
+        :light-direction="[-0.5, -1, -0.3]"
+        light-mode="camera"
+        :ambient-intensity="0.4"
+    />
+</template>
 ```
 
 These three props drive the default rig only. Binding `lights` detaches them.

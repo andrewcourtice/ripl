@@ -50,9 +50,9 @@ import App from './app.vue';
 createApp(App).use(createRipl()).mount('#app');
 ```
 
-Then describe a scene. Give `<ripl-context>` a size — the canvas fills it:
+Then describe a scene. Give `<ripl-context>` a size, since the canvas fills it:
 
-```html
+```vue
 <template>
     <ripl-context style="width: 400px; height: 300px">
         <ripl-scene>
@@ -94,21 +94,23 @@ Each level adds capability, and every element picks up the highest one above it:
 
 `enter` is the state an element animates *from*; `leave` is the state it animates *to*; `update` is how a prop change animates. Each takes an options object or a factory called per element, which is what makes staggering work:
 
-```html
-<ripl-transition
-    :enter="(element, index, length) => ({
-        duration: 400,
-        delay: (index / length) * 200,
-        state: { opacity: 0 },
-    })"
->
-    <ripl-rect v-for="bar in bars" :key="bar.id" v-bind="bar" />
-</ripl-transition>
+```vue
+<template>
+    <ripl-transition
+        :enter="(element, index, length) => ({
+            duration: 400,
+            delay: (index / length) * 200,
+            state: { opacity: 0 },
+        })"
+    >
+        <ripl-rect v-for="bar in bars" :key="bar.id" v-bind="bar" />
+    </ripl-transition>
+</template>
 ```
 
 An enter phase can reference a property the template never binds: the target is read off the element before the enter state is applied, so fading in from `{ opacity: 0 }` recovers a target of `1` from the element's inherited or default state.
 
-`loop` repeats a phase — `true` restarts it, `'alternate'` plays it back and forth. A looping phase never completes, so its `onComplete` never fires and the renderer cannot idle while one runs; it is cancelled when its element leaves, and ignored on the `leave` phase, which has to finish in order to destroy the element.
+`loop` repeats a phase: `true` restarts it, `'alternate'` plays it back and forth. A looping phase never completes, so its `onComplete` never fires and the renderer cannot idle while one runs; it is cancelled when its element leaves, and ignored on the `leave` phase, which has to finish in order to destroy the element.
 
 ## Compositions
 
@@ -126,14 +128,16 @@ const renderer = useRiplRenderer();
 const element = useRiplElement();
 ```
 
-Providers construct during `setup()`, so these already resolve in a descendant's own `setup()` — no watching required. They are `undefined` outside a provider, and during server rendering.
+Providers construct during `setup()`, so these already resolve in a descendant's own `setup()` with no watching required. They are `undefined` outside a provider, and during server rendering.
 
 A template ref on any of the components resolves to the Ripl object it wraps, typed as that object:
 
-```html
-<ripl-context ref="context">
-    <ripl-circle ref="circle" :cx="50" :cy="50" :radius="20" />
-</ripl-context>
+```vue
+<template>
+    <ripl-context ref="context">
+        <ripl-circle ref="circle" :cx="50" :cy="50" :radius="20" />
+    </ripl-context>
+</template>
 ```
 
 ## Notes
@@ -143,9 +147,7 @@ A template ref on any of the components resolves to the Ripl object it wraps, ty
 
 ## Extending
 
-`@ripl/vue` exports the pieces it is built from, so a sibling adapter can wrap a different kind of
-Ripl object without re-implementing the machinery. `@ripl/vue-3d` and `@ripl/vue-charts` are built
-this way.
+`@ripl/vue` exports the pieces it is built from, so a sibling adapter can wrap a different kind of Ripl object without re-implementing the machinery. `@ripl/vue-3d` and `@ripl/vue-charts` are built this way.
 
 | Export | Use |
 | --- | --- |
@@ -159,16 +161,10 @@ this way.
 
 Two contracts a sibling adapter depends on:
 
-- **This package owns the `@ripl/web` import**, and with it the platform factory —
-  `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState`, `measureText`. A sibling adapter
-  inherits that through its dependency on `@ripl/vue` and should not add an `@ripl/web` import of
-  its own: a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away,
-  whereas the value imports here cannot.
-- **The injection keys are registry symbols** (`Symbol.for`), so two copies of this module — which
-  the standalone IIFE builds produce — still resolve to the same key.
+- **This package owns the `@ripl/web` import**, and with it the platform factory: `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState` and `measureText`. A sibling adapter inherits that through its dependency on `@ripl/vue` and should not add an `@ripl/web` import of its own, because a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away, whereas the value imports here cannot.
+- **The injection keys are registry symbols** (`Symbol.for`), so two copies of this module, which the standalone IIFE builds produce, still resolve to the same key.
 
-Plugins compose in any order: `createRipl3D()` and `createRiplCharts()` install the core components
-themselves, and registering a name twice is a no-op.
+Plugins compose in any order: `createRipl3D()` and `createRiplCharts()` install the core components themselves, and registering a name twice is a no-op.
 
 ## Documentation
 

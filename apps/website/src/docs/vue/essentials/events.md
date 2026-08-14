@@ -48,16 +48,16 @@ Elements and groups emit:
 | `click`, `mousedown`, `mouseup`, `mousemove` | `{ x, y }` in logical (CSS) pixels |
 | `mouseenter`, `mouseleave` | `null` |
 | `dragstart`, `drag`, `dragend` | `{ x, y, startX, startY, deltaX, deltaY }` |
-| `updated` | `{ key, value }` — a state property changed |
+| `updated` | `{ key, value }` for the state property that changed |
 | `attached`, `detached` | the group the element joined or left |
-| `graph` | `null` — the shape of the graph at or below this element changed |
+| `graph` | `null`; the shape of the graph at or below this element changed |
 | `destroyed` | `null` |
 
 `<ripl-context>` emits all of the above pointer events, plus `resize`, `render`, and `ready` (with the context, once its host is in the document).
 
 `<ripl-renderer>` emits `start`, `stop` and `tick` (`{ time, deltaTime }`).
 
-This list is not maintained by hand. Every Ripl object declares the events it emits, and the adapter reads that declaration off the object itself — so a component forwards exactly what its underlying object can emit, and gains any event a future Ripl release adds.
+This list is not maintained by hand. Every Ripl object declares the events it emits and the adapter reads that declaration off the object itself, so a component forwards exactly what its underlying object can emit, and gains any event a future Ripl release adds.
 
 `attached` fires while the element is being constructed, before Vue has bound any listener to it, so it is only observable for an element that later moves between groups.
 
@@ -68,11 +68,13 @@ The adapter subscribes to an event only when you actually bind a listener. This 
 Use `pointerEvents` to control which region of an element is tested:
 
 ```vue
-<!-- only the stroke is clickable -->
-<ripl-circle pointer-events="stroke" :cx="50" :cy="50" :radius="20" @click="select" />
+<template>
+    <!-- only the stroke is clickable -->
+    <ripl-circle pointer-events="stroke" :cx="50" :cy="50" :radius="20" @click="select" />
 
-<!-- never a pointer target, whatever is bound -->
-<ripl-rect pointer-events="none" :x="0" :y="0" :width="100" :height="100" />
+    <!-- never a pointer target, whatever is bound -->
+    <ripl-rect pointer-events="none" :x="0" :y="0" :width="100" :height="100" />
+</template>
 ```
 
 ## Bubbling
@@ -80,9 +82,11 @@ Use `pointerEvents` to control which region of an element is tested:
 Events bubble up the group tree, so a listener on a group catches its children's:
 
 ```vue
-<ripl-group @click="onAnySegmentClick">
-    <ripl-arc v-for="segment in segments" :key="segment.id" v-bind="segment" :data="segment" />
-</ripl-group>
+<template>
+    <ripl-group @click="onAnySegmentClick">
+        <ripl-arc v-for="segment in segments" :key="segment.id" v-bind="segment" :data="segment" />
+    </ripl-group>
+</template>
 ```
 
 `event.target` is the element that was hit, which pairs well with `data`:

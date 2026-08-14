@@ -548,6 +548,10 @@ export default defineConfig({
                             text: 'Compositions',
                             link: '/docs/vue/essentials/compositions',
                         },
+                        {
+                            text: 'Examples',
+                            link: '/docs/vue/essentials/examples',
+                        },
                     ],
                 },
                 {
@@ -581,15 +585,6 @@ export default defineConfig({
                         {
                             text: 'Components',
                             link: '/docs/vue/charts/components',
-                        },
-                    ],
-                },
-                {
-                    text: 'Examples',
-                    items: [
-                        {
-                            text: 'Bar chart',
-                            link: '/docs/vue/examples/bar-chart',
                         },
                     ],
                 },

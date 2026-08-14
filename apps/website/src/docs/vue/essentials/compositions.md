@@ -1,6 +1,6 @@
 ---
 title: Compositions
-description: "useRiplContext, useRiplScene, useRiplRenderer and useRiplElement — reaching the underlying Ripl objects when the declarative surface is not enough."
+description: "useRiplContext, useRiplScene, useRiplRenderer and useRiplElement: reaching the underlying Ripl objects when the declarative surface is not enough."
 ---
 
 # Compositions
@@ -21,7 +21,7 @@ const renderer = useRiplRenderer();
 const element = useRiplElement();
 ```
 
-Each returns a `ShallowRef`. Because the components construct during `setup()` rather than on mount, these already hold their value in a descendant's own `setup()` — you do not need to watch them:
+Each returns a `ShallowRef`. Because the components construct during `setup()` rather than on mount, these already hold their value in a descendant's own `setup()`, so there is nothing to watch:
 
 ```vue
 <script setup lang="ts">
@@ -40,7 +40,7 @@ They are `undefined` in two cases: outside the corresponding provider, and durin
 
 ## `useRiplContext`
 
-The rendering context — the drawing surface. Useful for exporting:
+The rendering context, which is the drawing surface. Useful for exporting:
 
 ```vue
 <script setup lang="ts">
@@ -98,7 +98,7 @@ function pulse() {
 
 ## `useRiplElement`
 
-The nearest enclosing element, group or scene. Called from a component nested inside a `<ripl-group>`, it returns that group — which lets you write a component that contributes to whatever group it is dropped into:
+The nearest enclosing element, group or scene. Called from a component nested inside a `<ripl-group>`, it returns that group, which lets you write a component that contributes to whatever group it is dropped into:
 
 ```vue
 <script setup lang="ts">
@@ -120,7 +120,7 @@ const bounds = computed(() => isGroup(parent.value)
 
 ## Template refs
 
-A ref on any Ripl component resolves to the object that component wraps, not to a Vue component instance — so a `ref` is the third way to reach one, alongside the compositions and `<ripl-context>`'s `ready` event:
+A ref on any Ripl component resolves to the object that component wraps, not to a Vue component instance, so a `ref` is the third way to reach one alongside the compositions and `<ripl-context>`'s `ready` event:
 
 ```vue
 <template>
@@ -148,7 +148,7 @@ function download() {
 </script>
 ```
 
-Each ref is typed as the object it holds, so `circle.value.radius` and `scene.value.queryAll(...)` are checked as you would expect. A ref is set on mount, so read it from `onMounted` onwards rather than during `setup()` — reach for the compositions when you need the object earlier than that.
+Each ref is typed as the object it holds, so `circle.value.radius` and `scene.value.queryAll(...)` are checked as you would expect. A ref is set on mount, so read it from `onMounted` onwards rather than during `setup()`. Reach for the compositions when you need the object earlier than that.
 
 Use a composition rather than a ref if you need object identity: a ref hands back a transparent stand-in for the object, so every property, method and `instanceof` check works, but `===` against a handle obtained another way does not hold.
 
