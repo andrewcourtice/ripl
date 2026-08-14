@@ -188,6 +188,18 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
     private _nodeElements: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types an arc diagram can emit. */
+    public get $events(): (keyof ArcDiagramChartEventMap<TData>)[] {
+        return [
+            'linkclick',
+            'linkenter',
+            'linkleave',
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: ArcDiagramChartOptions<TData>) {
         super(target, options);
 

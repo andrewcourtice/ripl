@@ -181,6 +181,15 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
     private _gridLines: Line[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a polar area chart can emit. */
+    public get $events(): (keyof PolarAreaChartEventMap)[] {
+        return [
+            'segmentclick',
+            'segmententer',
+            'segmentleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
 
