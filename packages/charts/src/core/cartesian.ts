@@ -202,6 +202,11 @@ function isSameTransform(a: NavigatorTransform, b: NavigatorTransform): boolean 
     return a.k === b.k && a.x === b.x && a.y === b.y;
 }
 
+/** The plot rectangle as a {@link Box}, the form the navigator gates its gestures against. */
+function plotBounds(area: ChartArea): Box {
+    return new Box(area.y, area.x, area.y + area.height, area.x + area.width);
+}
+
 /**
  * Clamps a view translation so the visible window stays within the full domain: given the axis plot
  * `origin`/`size` and zoom `k`, the translate must lie in `[(origin+size)(1-k), origin(1-k)]`.
@@ -571,7 +576,7 @@ export abstract class CartesianChart<
             interactions,
             // Lower bound `1` is the full-data identity view; never zoom out past the dataset extent.
             scaleExtent: [1, NAV_MAX_ZOOM],
-            bounds: this._navPlot,
+            bounds: this._navPlot && plotBounds(this._navPlot),
         };
 
         // Same guard as `Scene`: without a platform package the base controller still drives the view.
@@ -949,7 +954,7 @@ export abstract class CartesianChart<
 
         // The plot is also what the navigator claims for input, leaving the overview strip its own band.
         if (this._navigator) {
-            this._navigator.bounds = area;
+            this._navigator.bounds = plotBounds(area);
         }
 
         // Only clip the axis that actually slides; clipping the held value axis bisected its min/max labels.

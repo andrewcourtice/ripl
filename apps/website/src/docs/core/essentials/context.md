@@ -115,9 +115,28 @@ context.markRenderEnd();
 
 ## Interaction
 
-The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior: when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
+The context owns all pointer interactivity. It listens for DOM **pointer** events on its element — so mouse, pen and touch all work the same way — performs hit testing against rendered elements, and delegates `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior: when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
 
-The context emits the same pointer events itself, whether or not an element was hit — subscribe to `context.on('mousedown' | 'mouseup' | 'click' | 'mousemove' | 'mouseenter' | 'mouseleave' | 'dragstart' | 'drag' | 'dragend', …)` for surface-wide interaction. `mouseup` fires exactly once per button press, including when the release lands outside the surface and when a second button is pressed mid-gesture; the release that ends a drag suppresses the `click` that follows it, but still emits `mouseup`.
+The context emits the same events itself, whether or not an element was hit — subscribe to `context.on('mousedown' | 'mouseup' | 'click' | 'mousemove' | 'mouseenter' | 'mouseleave' | 'dragstart' | 'drag' | 'dragend', …)` for surface-wide interaction. `mouseup` fires exactly once per button press, including when the release lands outside the surface and when a second button is pressed mid-gesture; the release that ends a drag suppresses the `click` that follows it, but still emits `mouseup`.
+
+### Pointer events
+
+Alongside those, the context emits `pointerenter`, `pointerleave`, `pointerdown`, `pointermove`, `pointerup` and `pointercancel`. Two differences matter:
+
+- They fire for **every** pointer, where the `mouse*` events report only the primary one. A `pointerId` tells concurrent pointers apart, which is what makes a two-finger pinch expressible.
+- Their payload carries `pointerId`, `pointerType` (`'mouse' | 'pen' | 'touch'`), `isPrimary`, `button`, `buttons` and the `altKey`/`ctrlKey`/`metaKey`/`shiftKey` modifiers, on top of the `x`/`y` every payload has.
+
+```ts
+context.on('pointerdown', (event) => {
+    const { x, y, pointerId, pointerType, isPrimary } = event.data;
+
+    if (pointerType === 'touch' && !isPrimary) {
+        // a second finger — the start of a pinch
+    }
+});
+```
+
+The surface captures the pointer for the duration of a press, so a drag that leaves the surface keeps reporting moves and still ends with a `pointerup`. Crossing the edge mid-drag emits `pointerleave`/`mouseleave` on the way out and `pointerenter`/`mouseenter` on the way back, exactly once each. `pointercancel` ends a gesture the host took over (a browser deciding a touch was a scroll); it emits `mouseup` and `dragend` like a release, but is never followed by a `click`.
 
 All pointer payloads report coordinates in the same space elements are authored in, so a point you receive can be fed straight back into anything that takes one — `element.intersectsWith(x, y)` included. See [Coordinates](#coordinates) below.
 

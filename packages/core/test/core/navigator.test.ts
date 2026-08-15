@@ -6,6 +6,7 @@ import {
 } from 'vitest';
 
 import {
+    Box,
     Navigator,
     rescaleDomain,
 } from '../../src';
@@ -233,6 +234,42 @@ describe('rescaleDomain', () => {
         }, [0, 200]);
 
         expect(domain).toEqual([50, 150]);
+    });
+
+});
+
+describe('Navigator bounds', () => {
+
+    test('Should claim the whole surface by default', () => {
+        expect(new Navigator().bounds).toBeUndefined();
+    });
+
+    test('Should take a claimed region from the options', () => {
+        const bounds = new Box(16, 30, 304, 624);
+        const navigator = new Navigator({ bounds });
+
+        expect(navigator.bounds).toBe(bounds);
+        expect(navigator.bounds?.width).toBe(594);
+        expect(navigator.bounds?.height).toBe(288);
+    });
+
+    // The accessor hands back the instance, so `width`/`height` survive; a spread would drop them.
+    test('Should hand back the assigned box rather than a copy of its own', () => {
+        const navigator = new Navigator();
+        const bounds = new Box(0, 0, 100, 200);
+
+        navigator.bounds = bounds;
+
+        expect(navigator.bounds).toBe(bounds);
+        expect(navigator.bounds).toBeInstanceOf(Box);
+    });
+
+    test('Should clear the claimed region', () => {
+        const navigator = new Navigator({ bounds: new Box(0, 0, 10, 10) });
+
+        navigator.bounds = undefined;
+
+        expect(navigator.bounds).toBeUndefined();
     });
 
 });

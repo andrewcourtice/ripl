@@ -144,6 +144,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             'mouseleave',
             'mousemove',
             'mouseup',
+            'pointercancel',
+            'pointerdown',
+            'pointerenter',
+            'pointerleave',
+            'pointermove',
+            'pointerup',
             'render',
             'resize',
         ];

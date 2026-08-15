@@ -1,4 +1,5 @@
 import {
+    isPointInBox,
     Navigator,
     resolveInteraction,
 } from '@ripl/core';
@@ -51,9 +52,12 @@ function isInteractiveElement(element: unknown): element is HTMLElement {
  * - **wheel** zooms toward the pointer, and a two-finger **pinch** zooms toward the gesture center;
  * - **⇧ shift-drag** brushes a rectangular selection when brushing is enabled.
  *
- * Because the base transform is unbounded, dragging past the viewport edge (the pointer is captured
- * for the duration of the drag) keeps panning, so content outside the current viewport can be reached
- * and then re-framed with the base `centerOn`/`fitBounds` helpers.
+ * Pointer input arrives through the context's own `pointer*` events, which report every pointer in
+ * logical space and cover mouse, pen and touch alike; only the wheel is read from the DOM directly,
+ * because suppressing page scroll needs the raw event. Because the base transform is unbounded,
+ * dragging past the viewport edge keeps panning — the context captures the pointer for the duration
+ * of the gesture — so content outside the current viewport can be reached and then re-framed with
+ * the base `centerOn`/`fitBounds` helpers.
  *
  * {@link Navigator.bounds} scopes which gestures are claimed: the wheel and a gesture's first press
  * are ignored outside the region, leaving the rest of the surface to whatever else is listening.
@@ -61,6 +65,7 @@ function isInteractiveElement(element: unknown): element is HTMLElement {
  */
 export class DOMNavigator extends Navigator {
 
+    private _context: Context;
     private _element: HTMLElement;
     private _previousTouchAction = '';
     private _previousCursor = '';
@@ -78,6 +83,7 @@ export class DOMNavigator extends Navigator {
     constructor(context: Context, options?: DOMNavigatorOptions) {
         super(options);
 
+        this._context = context;
         this._element = context.element as unknown as HTMLElement;
 
         // Non-DOM contexts (e.g. terminal) carry a dummy element, so feature-detect and stay inert, not crash.
@@ -146,21 +152,7 @@ export class DOMNavigator extends Navigator {
 
     /** Whether a gesture starting at `point` belongs to this navigator, per its {@link Navigator.bounds}. */
     private _withinBounds(point: Point): boolean {
-        if (!this._bounds) {
-            return true;
-        }
-
-        const {
-            x,
-            y,
-            width,
-            height,
-        } = this._bounds;
-
-        return point[0] >= x
-            && point[0] <= x + width
-            && point[1] >= y
-            && point[1] <= y + height;
+        return !this._bounds || isPointInBox(point, this._bounds);
     }
 
     private _setCursor(cursor: string): void {
@@ -225,8 +217,8 @@ export class DOMNavigator extends Navigator {
     }
 
     private _attachPointerInteractions(pan: ResolvedInteraction, brush: ResolvedInteraction): void {
-        this.retain(onDOMEvent(this._element, 'pointerdown', event => {
-            const origin = this._localPoint(event);
+        this.retain(this._context.on('pointerdown', ({ data: event }) => {
+            const origin: Point = [event.x, event.y];
 
             // Only a gesture's first press is gated; a second finger completing a pinch may land anywhere.
             if (this._pointers.size === 0 && !this._withinBounds(origin)) {
@@ -235,9 +227,6 @@ export class DOMNavigator extends Navigator {
 
             this._pointers.set(event.pointerId, origin);
 
-            // Every tracked pointer, not just the gesturing ones: an uncaptured release off the element leaks its entry.
-            this._element.setPointerCapture?.(event.pointerId);
-
             if (this._pointers.size === 2) {
                 this._pinchDistance = this._pointerDistance();
                 this._panning = false;
@@ -245,7 +234,7 @@ export class DOMNavigator extends Navigator {
                 return;
             }
 
-            const button = event.button ?? 0;
+            const button = event.button;
 
             // Shift-drag brushes; any other left/middle click-and-hold pans, matching the Figma grab gesture.
             this._brushing = brush.enabled && event.shiftKey;
@@ -262,12 +251,12 @@ export class DOMNavigator extends Navigator {
             }
         }), INTERACTION_KEY);
 
-        this.retain(onDOMEvent(this._element, 'pointermove', event => {
+        this.retain(this._context.on('pointermove', ({ data: event }) => {
             if (!this._pointers.has(event.pointerId)) {
                 return;
             }
 
-            const point = this._localPoint(event);
+            const point: Point = [event.x, event.y];
             this._pointers.set(event.pointerId, point);
 
             if (this._pointers.size >= 2) {
@@ -291,8 +280,8 @@ export class DOMNavigator extends Navigator {
             }
         }), INTERACTION_KEY);
 
-        const endPointer = (event: PointerEvent) => {
-            this._pointers.delete(event.pointerId);
+        const endPointer = (pointerId: number) => {
+            this._pointers.delete(pointerId);
 
             if (this._brushing) {
                 this.emit('brushend', this.brush);
@@ -315,8 +304,8 @@ export class DOMNavigator extends Navigator {
             this._setCursor('grab');
         };
 
-        this.retain(onDOMEvent(this._element, 'pointerup', endPointer), INTERACTION_KEY);
-        this.retain(onDOMEvent(this._element, 'pointercancel', endPointer), INTERACTION_KEY);
+        this.retain(this._context.on('pointerup', ({ data }) => endPointer(data.pointerId)), INTERACTION_KEY);
+        this.retain(this._context.on('pointercancel', ({ data }) => endPointer(data.pointerId)), INTERACTION_KEY);
     }
 
     private _pointerDistance(): number {

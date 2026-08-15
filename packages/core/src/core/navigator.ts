@@ -7,6 +7,7 @@ import type {
 } from './event-bus';
 
 import type {
+    Box,
     Point,
 } from '../math';
 
@@ -42,18 +43,6 @@ export interface NavigatorViewport {
     /** Width of the surface, in logical pixels. */
     width: number;
     /** Height of the surface, in logical pixels. */
-    height: number;
-}
-
-/** The region of the surface a navigator claims for input, in logical pixels. */
-export interface NavigatorBounds {
-    /** X coordinate of the region's left edge, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
-    x: number;
-    /** Y coordinate of the region's top edge, in logical pixels (CSS pixels relative to the context's top-left, unaffected by the device pixel ratio). */
-    y: number;
-    /** Width of the region, in logical pixels. */
-    width: number;
-    /** Height of the region, in logical pixels. */
     height: number;
 }
 
@@ -96,11 +85,12 @@ export interface NavigatorOptions {
      */
     interactions?: boolean | NavigatorInteractions;
     /**
-     * The region of the surface the navigator claims for input. A gesture starting outside it is
-     * left to whatever else is there; an unset region claims the whole surface. Honored by
-     * input-bound navigators; the base {@link Navigator} binds no input and ignores it.
+     * The region of the surface the navigator claims for input, in logical pixels. A gesture
+     * starting outside it is left to whatever else is there; an unset region claims the whole
+     * surface. Honored by input-bound navigators; the base {@link Navigator} binds no input and
+     * ignores it.
      */
-    bounds?: NavigatorBounds;
+    bounds?: Box;
 }
 
 /** Options for {@link Navigator.fitBounds}. */
@@ -199,7 +189,7 @@ export function rescaleDomain<TDomain>(
 export class Navigator extends EventBus<NavigatorEventMap> {
 
     protected _brush: NavigatorBrush | null = null;
-    protected _bounds?: NavigatorBounds;
+    protected _bounds?: Box;
     protected _scaleExtent: [number, number];
     protected _viewport: NavigatorViewport;
     protected _transform: NavigatorTransform = {
@@ -259,17 +249,17 @@ export class Navigator extends EventBus<NavigatorEventMap> {
      * of it. Input-bound subclasses ignore gestures starting outside it; the base class binds no
      * input and only stores it. Set it to hand the rest of the surface to something else — a chart
      * scopes its navigator to the plot rectangle so the overview strip beneath owns its own band.
+     *
+     * Assign a new {@link Box} rather than mutating the existing one. Unlike the other accessors
+     * here this returns the instance, not a copy: a `Box` carries `width`/`height` as prototype
+     * getters, which a spread would silently drop.
      */
-    public get bounds(): NavigatorBounds | undefined {
-        return this._bounds && {
-            ...this._bounds,
-        };
+    public get bounds(): Box | undefined {
+        return this._bounds;
     }
 
-    public set bounds(bounds: NavigatorBounds | undefined) {
-        this._bounds = bounds && {
-            ...bounds,
-        };
+    public set bounds(bounds: Box | undefined) {
+        this._bounds = bounds;
     }
 
     constructor(options?: NavigatorOptions) {

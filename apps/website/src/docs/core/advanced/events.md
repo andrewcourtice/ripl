@@ -157,9 +157,11 @@ Following browser DOM behavior, pointer events target the **topmost element** (h
 
 Elements with `pointerEvents` set to `'none'` are transparent to hit testing, allowing events to pass through to the next element below.
 
+Input is read from DOM **pointer** events, so a finger or a stylus drives these exactly as a mouse does. The `mouse*` names are kept for the element-level vocabulary and report the primary pointer; for multi-pointer gestures and device details, subscribe to the context's own [pointer events](/docs/core/essentials/context#pointer-events) instead.
+
 ### Tracked Events
 
-The context tracks `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
+The context tracks `click`, `mousedown`, `mouseup`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events on elements automatically.
 
 ```ts
 const scene = createScene('.container', {

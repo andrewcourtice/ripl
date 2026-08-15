@@ -2801,6 +2801,10 @@
             "link": "/docs/api/@ripl/core/interfaces/ContextOptions.md"
           },
           {
+            "text": "ContextPointerEvent",
+            "link": "/docs/api/@ripl/core/interfaces/ContextPointerEvent.md"
+          },
+          {
             "text": "DivergingScaleOptions",
             "link": "/docs/api/@ripl/core/interfaces/DivergingScaleOptions.md"
           },
@@ -2859,10 +2863,6 @@
           {
             "text": "LogarithmicScaleOptions",
             "link": "/docs/api/@ripl/core/interfaces/LogarithmicScaleOptions.md"
-          },
-          {
-            "text": "NavigatorBounds",
-            "link": "/docs/api/@ripl/core/interfaces/NavigatorBounds.md"
           },
           {
             "text": "NavigatorBrush",
@@ -3077,6 +3077,10 @@
           {
             "text": "ContextFactory",
             "link": "/docs/api/@ripl/core/type-aliases/ContextFactory.md"
+          },
+          {
+            "text": "ContextPointerType",
+            "link": "/docs/api/@ripl/core/type-aliases/ContextPointerType.md"
           },
           {
             "text": "Direction",

@@ -69,17 +69,64 @@ export interface RenderElement {
     emit(type: string, data: any): void;
 }
 
+/** How a pointer input was produced. */
+export type ContextPointerType = 'mouse' | 'pen' | 'touch';
+
+/**
+ * A single pointer's state during an interaction with the context surface.
+ *
+ * Unlike the `mouse*` events, which report only the primary pointer, these carry every pointer —
+ * `pointerId` is what lets a consumer track two fingers through a pinch. Backends that cannot
+ * distinguish devices report `pointerType: 'mouse'` with `isPrimary: true`.
+ */
+export interface ContextPointerEvent {
+    /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
+    x: number;
+    /** Y coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
+    y: number;
+    /** Identifies this pointer for the duration of its gesture, so concurrent pointers can be told apart. */
+    pointerId: number;
+    /** The kind of device that produced the input. */
+    pointerType: ContextPointerType;
+    /** Whether this is the first pointer of a multi-pointer gesture. Only the primary pointer also emits the `mouse*` events. */
+    isPrimary: boolean;
+    /** The button whose state changed, or `-1` when no button changed (as on a plain move). */
+    button: number;
+    /** Bitmask of the buttons currently held. */
+    buttons: number;
+    /** Whether the alt key was held. */
+    altKey: boolean;
+    /** Whether the control key was held. */
+    ctrlKey: boolean;
+    /** Whether the meta (command/windows) key was held. */
+    metaKey: boolean;
+    /** Whether the shift key was held. */
+    shiftKey: boolean;
+}
+
 /** Event map for a rendering context, including resize and pointer events. */
 export interface ContextEventMap extends EventMap {
+    /** Emitted when a pointer enters the context surface. */
+    pointerenter: ContextPointerEvent;
+    /** Emitted when a pointer leaves the context surface. */
+    pointerleave: ContextPointerEvent;
+    /** Emitted when a pointer button is pressed over the surface. */
+    pointerdown: ContextPointerEvent;
+    /** Emitted as a pointer moves over the surface. */
+    pointermove: ContextPointerEvent;
+    /** Emitted when a pointer button is released; fires once per press, even when the release lands outside the surface. */
+    pointerup: ContextPointerEvent;
+    /** Emitted when a gesture is cancelled by the host (e.g. the browser taking over for a scroll), ending it without a `click`. */
+    pointercancel: ContextPointerEvent;
     /** Emitted when the context's rendering surface is resized. */
     resize: null;
     /** Emitted to request that the bound scene repaint on the next frame, for context-level changes (e.g. a 3D camera move) that mutate no element. */
     render: null;
-    /** Emitted when the pointer enters the context surface. */
+    /** Emitted when the primary pointer enters the context surface. */
     mouseenter: null;
-    /** Emitted when the pointer leaves the context surface. */
+    /** Emitted when the primary pointer leaves the context surface. */
     mouseleave: null;
-    /** Emitted as the pointer moves over the surface, carrying its position. */
+    /** Emitted as the primary pointer moves over the surface, carrying its position. */
     mousemove: {
         /** X coordinate of the pointer, in logical space (CSS pixels relative to the context's top-left). */
         x: number;

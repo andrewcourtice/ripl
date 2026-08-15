@@ -251,16 +251,18 @@ The gesture model is intentionally Figma-like: click-and-hold (left or middle bu
 
 ### Claiming part of the surface
 
-By default a navigator claims the whole surface. Pass `bounds` (or assign `navigator.bounds` later) to scope it to a rectangle, in logical pixels, leaving the rest to whatever else is listening — this is how a chart keeps its overview strip draggable without the plot panning underneath it:
+By default a navigator claims the whole surface. Pass `bounds` (or assign `navigator.bounds` later) to scope it to a [`Box`](/docs/api/@ripl/core/classes/Box), in logical pixels, leaving the rest to whatever else is listening — this is how a chart keeps its overview strip draggable without the plot panning underneath it:
 
 ```ts
-navigator.bounds = {
-    x: 40,
-    y: 16,
-    width: 520,
-    height: 300,
-};
+import {
+    Box,
+} from '@ripl/web';
+
+// top, left, bottom, right
+navigator.bounds = new Box(16, 40, 316, 560);
 ```
+
+Assign a new `Box` rather than mutating the one already there.
 
 Only the wheel and a gesture's **first press** are gated, so a drag that starts inside the region keeps tracking after it leaves. A wheel outside the region is not consumed at all, so the page scrolls as usual.
 

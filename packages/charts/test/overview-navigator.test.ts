@@ -11,6 +11,7 @@ import {
 } from 'vitest';
 
 import {
+    dispatchPointerEvent,
     mockCanvasContext,
     polyfillPath2D,
 } from '@ripl/test-utils';
@@ -21,6 +22,10 @@ import {
     createLineChart,
     createTrendChart,
 } from '../src';
+
+import {
+    Box,
+} from '@ripl/core';
 
 import type {
     Group,
@@ -698,29 +703,19 @@ describe('Overview navigator strip dragging', () => {
         return chart;
     }
 
-    /** Dispatches a real mouse event on the chart's surface, the way a browser would. */
-    function mouse(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
-        (chart.context.element as HTMLElement).dispatchEvent(new MouseEvent(type, {
-            bubbles: true,
+    /** Dispatches a pointer event on the chart's surface, the way a browser would. */
+    function pointer(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
+        dispatchPointerEvent(chart.context.element as HTMLElement, type, {
             clientX: x,
             clientY: y,
-        }));
+        });
     }
 
-    /** Dispatches a pointer event, which only the navigator listens for. */
-    function pointer(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
-        const event = new Event(type, {
-            bubbles: true,
-            cancelable: true,
-        });
+    /** The plot rectangle the navigator claims, in the `Box` form it stores. */
+    function plotBox(chart: unknown): Box {
+        const plot = plotOf(chart);
 
-        Object.assign(event, {
-            pointerId: 1,
-            clientX: x,
-            clientY: y,
-        });
-
-        (chart.context.element as HTMLElement).dispatchEvent(event);
+        return new Box(plot.y, plot.x, plot.y + plot.height, plot.x + plot.width);
     }
 
     test('Should narrow the window when an edge handle is dragged, driving the view transform', async () => {
@@ -728,9 +723,9 @@ describe('Overview navigator strip dragging', () => {
         const strip = rectOf(chart, 'navigator-strip');
         const crossY = strip.y + strip.height / 2;
 
-        mouse(chart, 'mousedown', strip.x + strip.width, crossY);
-        mouse(chart, 'mousemove', strip.x + strip.width / 2, crossY);
-        mouse(chart, 'mouseup', strip.x + strip.width / 2, crossY);
+        pointer(chart, 'pointerdown', strip.x + strip.width, crossY);
+        pointer(chart, 'pointermove', strip.x + strip.width / 2, crossY);
+        pointer(chart, 'pointerup', strip.x + strip.width / 2, crossY);
 
         // Halving the window doubles the zoom of the category axis.
         expect(chart.navigator?.transform.k).toBeCloseTo(2, 1);
@@ -742,8 +737,8 @@ describe('Overview navigator strip dragging', () => {
         const chart = await stripChart();
         const strip = rectOf(chart, 'navigator-strip');
 
-        mouse(chart, 'mousedown', strip.x + strip.width, strip.y - strip.height);
-        mouse(chart, 'mousemove', strip.x + strip.width / 2, strip.y - strip.height);
+        pointer(chart, 'pointerdown', strip.x + strip.width, strip.y - strip.height);
+        pointer(chart, 'pointermove', strip.x + strip.width / 2, strip.y - strip.height);
 
         expect(chart.navigator?.transform.k).toBe(1);
 
@@ -753,7 +748,7 @@ describe('Overview navigator strip dragging', () => {
     test('Should scope the navigator to the plot rectangle', async () => {
         const chart = await stripChart();
 
-        expect(chart.navigator?.bounds).toEqual(plotOf(chart));
+        expect(chart.navigator?.bounds).toEqual(plotBox(chart));
 
         chart.destroy();
     });

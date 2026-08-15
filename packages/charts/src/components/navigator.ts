@@ -11,9 +11,10 @@
  * axis, scaled along the **cross** (value) axis.
  *
  * Dragging is wired through the context's own pointer events, which report logical coordinates — the
- * space the strip's geometry is authored in — so the strip is backend-agnostic and simply inert on a
- * context that emits no pointer events. The in-plot navigator is kept out of the band by its
- * `bounds`, which the host scopes to the plot rectangle.
+ * space the strip's geometry is authored in — so the strip is backend-agnostic, works under touch
+ * and pen as well as a mouse, and is simply inert on a context that emits no pointer events. The
+ * in-plot navigator is kept out of the band by its `bounds`, which the host scopes to the plot
+ * rectangle.
  */
 
 import {
@@ -148,15 +149,29 @@ export class ChartNavigator extends ChartComponent {
     /**
      * Subscribes the strip to the context's pointer events so its window can be dragged. Idempotent,
      * and inert on a context that emits no pointer events (e.g. the terminal).
+     *
+     * Only the primary pointer drives the window: a second finger arriving mid-drag would otherwise
+     * yank it to wherever that finger landed.
      */
     public attach(): void {
         if (this._attached) {
             return;
         }
 
-        this.retain(this.context.on('mousedown', ({ data }) => this._onPointerDown(data.x, data.y)), LISTENER_KEY);
-        this.retain(this.context.on('mousemove', ({ data }) => this._onPointerMove(data.x, data.y)), LISTENER_KEY);
-        this.retain(this.context.on('mouseup', () => this._onPointerUp()), LISTENER_KEY);
+        this.retain(this.context.on('pointerdown', ({ data }) => {
+            if (data.isPrimary) {
+                this._onPointerDown(data.x, data.y);
+            }
+        }), LISTENER_KEY);
+
+        this.retain(this.context.on('pointermove', ({ data }) => {
+            if (data.isPrimary) {
+                this._onPointerMove(data.x, data.y);
+            }
+        }), LISTENER_KEY);
+
+        this.retain(this.context.on('pointerup', () => this._onPointerUp()), LISTENER_KEY);
+        this.retain(this.context.on('pointercancel', () => this._onPointerUp()), LISTENER_KEY);
         this._attached = true;
     }
 
