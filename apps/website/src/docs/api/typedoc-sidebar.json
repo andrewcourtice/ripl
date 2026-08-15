@@ -2861,6 +2861,10 @@
             "link": "/docs/api/@ripl/core/interfaces/LogarithmicScaleOptions.md"
           },
           {
+            "text": "NavigatorBounds",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorBounds.md"
+          },
+          {
             "text": "NavigatorBrush",
             "link": "/docs/api/@ripl/core/interfaces/NavigatorBrush.md"
           },
@@ -4206,10 +4210,6 @@
             "link": "/docs/api/@ripl/dom/interfaces/DOMElementResizeEvent.md"
           },
           {
-            "text": "DOMNavigatorOptions",
-            "link": "/docs/api/@ripl/dom/interfaces/DOMNavigatorOptions.md"
-          },
-          {
             "text": "ParentRef",
             "link": "/docs/api/@ripl/dom/interfaces/ParentRef.md"
           },
@@ -4238,6 +4238,10 @@
           {
             "text": "DOMEventHandler",
             "link": "/docs/api/@ripl/dom/type-aliases/DOMEventHandler.md"
+          },
+          {
+            "text": "DOMNavigatorOptions",
+            "link": "/docs/api/@ripl/dom/type-aliases/DOMNavigatorOptions.md"
           }
         ]
       },
