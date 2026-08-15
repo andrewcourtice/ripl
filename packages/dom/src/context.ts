@@ -6,6 +6,8 @@ import {
 
 import type {
     ContextOptions,
+    ContextPointerEvent,
+    ContextPointerType,
     RenderElement,
 } from '@ripl/core';
 
@@ -29,11 +31,14 @@ interface InteractionState {
     left: number;
     top: number;
     pointerButtons: Set<number>;
+    activePointers: Set<number>;
     dragElement: RenderElement | undefined;
     dragStartX: number;
     dragStartY: number;
     dragStarted: boolean;
     suppressClick: boolean;
+    withinSurface: boolean;
+    capturedPointerId: number | undefined;
     scheduleHitTest: ReturnType<typeof createFrameBuffer>;
 }
 
@@ -141,27 +146,90 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._activeElements.clear();
     }
 
-    private _handleMouseEnter(): void {
-        this._refreshOrigin(true);
-        this.emit('mouseenter', null);
-    }
-
-    private _handleMouseLeave(): void {
-        this._flushActiveElements();
-        this.emit('mouseleave', null);
-    }
-
     private _getLogicalPoint(event: MouseEvent): [number, number] {
         const state = this._interactionState!;
 
         return [event.clientX - state.left, event.clientY - state.top];
     }
 
-    private _handleMouseDown(event: MouseEvent): void {
+    private _pointerPayload(event: PointerEvent, x: number, y: number): ContextPointerEvent {
+        return {
+            x,
+            y,
+            pointerId: event.pointerId,
+            pointerType: event.pointerType as ContextPointerType,
+            isPrimary: event.isPrimary,
+            button: event.button,
+            buttons: event.buttons,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            shiftKey: event.shiftKey,
+        };
+    }
+
+    /**
+     * The single gate for context-level enter/leave, so the native events and the ones synthesized
+     * during a captured drag cannot double up. Capture retargets moves to the surface and suppresses
+     * the browser's own leave, so crossing the edge mid-gesture is only visible here.
+     */
+    private _setWithinSurface(inside: boolean, event: PointerEvent, x: number, y: number): void {
+        const state = this._interactionState!;
+
+        if (state.withinSurface === inside) {
+            return;
+        }
+
+        state.withinSurface = inside;
+
+        const payload = this._pointerPayload(event, x, y);
+
+        if (inside) {
+            this._refreshOrigin(true);
+            this.emit('pointerenter', payload);
+
+            if (event.isPrimary) {
+                this.emit('mouseenter', null);
+            }
+
+            return;
+        }
+
+        this._flushActiveElements();
+        this.emit('pointerleave', payload);
+
+        if (event.isPrimary) {
+            this.emit('mouseleave', null);
+        }
+    }
+
+    private _handlePointerEnter(event: PointerEvent): void {
+        this._refreshOrigin(true);
+        this._setWithinSurface(true, event, ...this._getLogicalPoint(event));
+    }
+
+    private _handlePointerLeave(event: PointerEvent): void {
+        this._flushActiveElements();
+        this._setWithinSurface(false, event, ...this._getLogicalPoint(event));
+    }
+
+    private _handlePointerDown(event: PointerEvent): void {
         this._refreshOrigin();
 
         const state = this._interactionState!;
         const [x, y] = this._getLogicalPoint(event);
+
+        state.activePointers.add(event.pointerId);
+        this.emit('pointerdown', this._pointerPayload(event, x, y));
+
+        if (!event.isPrimary) {
+            return;
+        }
+
+        // Capture keeps a drag tracking once it leaves the surface; without it the gesture strands.
+        (this.element as unknown as HTMLElement).setPointerCapture?.(event.pointerId);
+        state.capturedPointerId = event.pointerId;
+        state.withinSurface = true;
 
         const payload = {
             x,
@@ -183,11 +251,25 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         hitElements.find(element => element.has('mousedown'))?.emit('mousedown', payload);
     }
 
-    private _handleMouseMove(event: MouseEvent): void {
+    private _handlePointerMove(event: PointerEvent): void {
         this._refreshOrigin();
 
         const state = this._interactionState!;
         const [x, y] = this._getLogicalPoint(event);
+
+        this.emit('pointermove', this._pointerPayload(event, x, y));
+
+        if (!event.isPrimary) {
+            return;
+        }
+
+        // While captured the browser reports no leave of its own, so the edge crossing is only visible here.
+        if (state.capturedPointerId !== undefined) {
+            this._setWithinSurface(this._isWithinSurface(x, y), event, x, y);
+        } else if (this._isWithinSurface(x, y)) {
+            // A move over the surface proves the pointer is on it, even where the enter was missed.
+            state.withinSurface = true;
+        }
 
         this.emit('mousemove', {
             x,
@@ -275,15 +357,20 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
      * {@link DOMContext.disableInteraction} has already dropped — hence the null check rather than
      * the non-null assertion the surface-bound handlers use.
      */
-    private _handleMouseUp(event: MouseEvent): void {
+    private _handlePointerUp(event: PointerEvent, cancelled?: boolean): void {
         const state = this._interactionState;
+
+        // Per pointer, so every finger of a pinch is released and the double-bound handler dedupes.
+        if (state?.activePointers.delete(event.pointerId)) {
+            this._refreshOrigin();
+            this._releaseCapture(event);
+            this.emit(cancelled ? 'pointercancel' : 'pointerup', this._pointerPayload(event, ...this._getLogicalPoint(event)));
+        }
 
         // Per button, so a second button gets its own `mouseup` and the double-bound handler dedupes.
         if (!state?.pointerButtons.delete(event.button)) {
             return;
         }
-
-        this._refreshOrigin();
 
         const [x, y] = this._getLogicalPoint(event);
 
@@ -317,6 +404,27 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.dragStarted = false;
     }
 
+    /**
+     * A gesture the host took over (a browser deciding the touch was a scroll). It ends the same way
+     * a release does — a consumer half-way through a drag must not be stranded — but no `click`
+     * follows one, so the suppression flag is left alone.
+     */
+    private _handlePointerCancel(event: PointerEvent): void {
+        this._handlePointerUp(event, true);
+    }
+
+    /** Hands the pointer back to the browser, so its own leave/enter reporting resumes. */
+    private _releaseCapture(event: PointerEvent): void {
+        const state = this._interactionState!;
+
+        if (state.capturedPointerId !== event.pointerId) {
+            return;
+        }
+
+        (this.element as unknown as HTMLElement).releasePointerCapture?.(event.pointerId);
+        state.capturedPointerId = undefined;
+    }
+
     private _handleClick(event: MouseEvent): void {
         const state = this._interactionState!;
 
@@ -340,7 +448,17 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this.hitTest(['click'], x, y).at(0)?.emit('click', payload);
     }
 
-    /** Enables DOM interaction events (mouse enter, leave, move, down, up, click, drag) with element hit testing. */
+    /**
+     * Enables interaction events (pointer enter, leave, move, down, up, cancel, click, drag) with
+     * element hit testing.
+     *
+     * Pointer events are the single input source: they cover mouse, pen and touch alike, where the
+     * mouse events they replace only reached touch through the browser's compatibility shims. Each
+     * one emits its `pointer*` event for every pointer, then — for the primary pointer only — the
+     * `mouse*`/`drag*` events with their original payloads, so existing consumers are unchanged and
+     * gain touch and pen for free. `click` keeps its own binding; its suppression-after-drag
+     * semantics are unrelated.
+     */
     public enableInteraction(): void {
         if (this._interactionEnabled) {
             return;
@@ -352,19 +470,23 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             left: 0,
             top: 0,
             pointerButtons: new Set(),
+            activePointers: new Set(),
             dragElement: undefined,
             dragStartX: 0,
             dragStartY: 0,
             dragStarted: false,
             suppressClick: false,
+            withinSurface: false,
+            capturedPointerId: undefined,
             scheduleHitTest: createFrameBuffer(),
         };
 
-        this._attachInteractionEvent('mouseenter', () => this._handleMouseEnter());
-        this._attachInteractionEvent('mouseleave', () => this._handleMouseLeave());
-        this._attachInteractionEvent('mousedown', event => this._handleMouseDown(event));
-        this._attachInteractionEvent('mousemove', event => this._handleMouseMove(event));
-        this._attachInteractionEvent('mouseup', event => this._handleMouseUp(event));
+        this._attachInteractionEvent('pointerenter', event => this._handlePointerEnter(event));
+        this._attachInteractionEvent('pointerleave', event => this._handlePointerLeave(event));
+        this._attachInteractionEvent('pointerdown', event => this._handlePointerDown(event));
+        this._attachInteractionEvent('pointermove', event => this._handlePointerMove(event));
+        this._attachInteractionEvent('pointerup', event => this._handlePointerUp(event));
+        this._attachInteractionEvent('pointercancel', event => this._handlePointerCancel(event));
         this._attachInteractionEvent('click', event => this._handleClick(event));
 
         if (hasWindow) {
@@ -377,10 +499,11 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), INTERACTION_KEY);
 
             // A release outside the surface never reaches the element, stranding the drag with no `dragend`.
-            this.retain(onDOMEvent(window, 'mouseup', event => this._handleMouseUp(event)), INTERACTION_KEY);
+            this.retain(onDOMEvent(window, 'pointerup', event => this._handlePointerUp(event)), INTERACTION_KEY);
+            this.retain(onDOMEvent(window, 'pointercancel', event => this._handlePointerCancel(event)), INTERACTION_KEY);
         }
 
-        // Seeded now rather than on the first `mouseenter`, which never fires for a surface mounted under the pointer.
+        // Seeded now rather than on the first enter, which never fires for a surface mounted under the pointer.
         this._refreshOrigin(true);
     }
 
@@ -391,6 +514,12 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         }
 
         this._interactionEnabled = false;
+
+        const captured = this._interactionState?.capturedPointerId;
+
+        if (captured !== undefined) {
+            (this.element as unknown as HTMLElement).releasePointerCapture?.(captured);
+        }
 
         // Ahead of dropping the state, which holds the frame buffer the flush has to cancel.
         this._flushActiveElements();

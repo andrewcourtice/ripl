@@ -60,9 +60,7 @@
         "test:browser": "playwright test -c test/visual/playwright.config.ts parity.spec.ts hit.spec.ts"
     },
     "dependencies": {
-        "@ripl/canvas": "workspace:^",
         "@ripl/core": "workspace:^",
-        "@ripl/dom": "workspace:^",
         "@ripl/utilities": "workspace:^"
     }
 }

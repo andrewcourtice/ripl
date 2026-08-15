@@ -12,6 +12,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    createNavigator,
     hasWindow,
 } from '@ripl/dom';
 
@@ -84,6 +85,7 @@ if (hasWindow) {
         },
         getComputedStyle: (el) => window.getComputedStyle(el as Element),
         createContext,
+        createNavigator,
         createElement: (tagName) => document.createElement(tagName),
         createElementNS: (namespace, tagName) => document.createElementNS(namespace, tagName),
         getDefaultState,

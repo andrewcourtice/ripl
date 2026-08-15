@@ -15,7 +15,7 @@
 - **Same chart, several targets** — Canvas or SVG in the browser, and braille text or raw `ImageData` from a headless Node script via [`@ripl/node`](https://www.npmjs.com/package/@ripl/node).
 - **Three built-in themes** — `lightTheme`, `darkTheme` and `colorBlindTheme`, with `registerTheme` for your own and per-chart or per-series overrides.
 - **Tree-shakable** — importing one factory ships one chart type.
-- **No third-party runtime dependencies** — the only dependencies are four sibling packages in this repository (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`).
+- **No third-party runtime dependencies** — the only dependencies are two sibling packages in this repository (`@ripl/core`, `@ripl/utilities`). Nothing DOM-specific, so the same chart code runs in a terminal.
 
 ## Chart types
 
@@ -29,22 +29,33 @@
 
 ## Installation
 
+`@ripl/charts` is context-agnostic: it draws a chart onto whatever surface it is given and ships no
+rendering backend of its own. Install it **alongside** the backend for your environment.
+
 ```bash
-# npm
-npm install @ripl/charts
+# In a browser, with Canvas or SVG
+npm install @ripl/charts @ripl/web
 
-# yarn
-yarn add @ripl/charts
-
-# pnpm
-pnpm add @ripl/charts
+# In Node, rendering to the terminal
+npm install @ripl/charts @ripl/node
 ```
 
-Pair it with [`@ripl/web`](https://www.npmjs.com/package/@ripl/web) when the same page also draws its own graphics; charts alone need nothing else.
+Import the backend once, anywhere in your entry point. It registers the platform bindings a chart
+needs — a rendering context, text measurement and an animation frame:
+
+```typescript
+import '@ripl/web';
+```
+
+Without one, a chart given a selector or an element throws rather than guessing a backend. Passing
+a `Context` you built yourself needs no backend import at all.
 
 ## Quick start
 
 ```typescript
+// Registers the browser rendering backend. Swap for `@ripl/node` to render to a terminal.
+import '@ripl/web';
+
 import {
     createBarChart,
 } from '@ripl/charts';

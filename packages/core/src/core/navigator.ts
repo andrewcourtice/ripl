@@ -7,6 +7,7 @@ import type {
 } from './event-bus';
 
 import type {
+    Box,
     Point,
 } from '../math';
 
@@ -77,6 +78,19 @@ export interface NavigatorOptions {
     scaleExtent?: [number, number];
     /** Initial viewport dimensions used by {@link Navigator.centerOn}/{@link Navigator.fitBounds}. */
     viewport?: NavigatorViewport;
+    /**
+     * Enables all gestures, or configures pan, zoom, and brush individually. Honored by
+     * input-bound navigators (e.g. the one `@ripl/web` registers on {@link FactoryOptions.createNavigator});
+     * the base {@link Navigator} binds no input and ignores it. See {@link NavigatorInteractions}.
+     */
+    interactions?: boolean | NavigatorInteractions;
+    /**
+     * The region of the surface the navigator claims for input, in logical pixels. A gesture
+     * starting outside it is left to whatever else is there; an unset region claims the whole
+     * surface. Honored by input-bound navigators; the base {@link Navigator} binds no input and
+     * ignores it.
+     */
+    bounds?: Box;
 }
 
 /** Options for {@link Navigator.fitBounds}. */
@@ -175,6 +189,7 @@ export function rescaleDomain<TDomain>(
 export class Navigator extends EventBus<NavigatorEventMap> {
 
     protected _brush: NavigatorBrush | null = null;
+    protected _bounds?: Box;
     protected _scaleExtent: [number, number];
     protected _viewport: NavigatorViewport;
     protected _transform: NavigatorTransform = {
@@ -229,6 +244,24 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         };
     }
 
+    /**
+     * The region of the surface this navigator claims for input, or `undefined` when it claims all
+     * of it. Input-bound subclasses ignore gestures starting outside it; the base class binds no
+     * input and only stores it. Set it to hand the rest of the surface to something else — a chart
+     * scopes its navigator to the plot rectangle so the overview strip beneath owns its own band.
+     *
+     * Assign a new {@link Box} rather than mutating the existing one. Unlike the other accessors
+     * here this returns the instance, not a copy: a `Box` carries `width`/`height` as prototype
+     * getters, which a spread would silently drop.
+     */
+    public get bounds(): Box | undefined {
+        return this._bounds;
+    }
+
+    public set bounds(bounds: Box | undefined) {
+        this._bounds = bounds;
+    }
+
     constructor(options?: NavigatorOptions) {
         super();
 
@@ -237,6 +270,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
             width: options?.viewport?.width ?? 0,
             height: options?.viewport?.height ?? 0,
         };
+        this.bounds = options?.bounds;
     }
 
     protected _commit(event: 'zoom' | 'pan'): void {

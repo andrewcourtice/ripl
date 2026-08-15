@@ -532,5 +532,30 @@ export default tseslint.config(
                 message: 'Use a keyed object-lookup dispatch instead of switch (see AGENTS.md → Control Flow).',
             }],
         },
+    },
+
+    // `@ripl/core` and `@ripl/charts` are context-agnostic: they render through the `Context`
+    // abstraction and reach platform capabilities through `factory`, so the same code runs in a
+    // browser and in a terminal. Depending on a backend would decide that for the consumer.
+    {
+        name: 'ripl/context-agnostic',
+        files: ['packages/core/src/**/*.ts', 'packages/charts/src/**/*.ts'],
+        rules: {
+            'no-restricted-imports': ['error', {
+                patterns: [{
+                    group: [
+                        '@ripl/3d',
+                        '@ripl/canvas',
+                        '@ripl/dom',
+                        '@ripl/node',
+                        '@ripl/svg',
+                        '@ripl/terminal',
+                        '@ripl/web',
+                        '@ripl/webgpu',
+                    ],
+                    message: 'This package must stay context-agnostic. Reach the platform through `factory` in @ripl/core instead.',
+                }],
+            }],
+        },
     }
 );

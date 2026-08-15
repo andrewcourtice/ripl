@@ -10,9 +10,11 @@
  * type (lines as polylines, areas as filled bands, bars as silhouettes) along the **main** (category)
  * axis, scaled along the **cross** (value) axis.
  *
- * Dragging is wired with DOM pointer listeners on the render context (pointer capture keeps a drag
- * tracking outside the strip). A `pointerdown` inside the strip band calls `stopImmediatePropagation`
- * so the in-plot navigator, whose listeners attach after the strip's, never also pans.
+ * Dragging is wired through the context's own pointer events, which report logical coordinates — the
+ * space the strip's geometry is authored in — so the strip is backend-agnostic, works under touch
+ * and pen as well as a mouse, and is simply inert on a context that emits no pointer events. The
+ * in-plot navigator is kept out of the band by its `bounds`, which the host scopes to the plot
+ * rectangle.
  */
 
 import {
@@ -46,14 +48,9 @@ import {
     arrayMapRange,
     numberClamp,
     numberSum,
-    typeIsFunction,
 } from '@ripl/utilities';
 
-import {
-    onDOMEvent,
-} from '@ripl/dom';
-
-/** Retention key for the strip's DOM pointer listeners. */
+/** Retention key for the strip's context pointer subscriptions. */
 const LISTENER_KEY = Symbol('navigator-strip-listeners');
 /** Pixel slop for grabbing an edge handle. */
 const HANDLE_SLOP = 10;
@@ -135,7 +132,6 @@ type DragMode = 'move' | 'resize-start' | 'resize-end';
 export class ChartNavigator extends ChartComponent {
 
     private _group?: Group;
-    private _element?: HTMLElement;
     private _orientation: ChartNavigatorOrientation = 'horizontal';
     private _area?: ChartArea;
     private _window: ChartNavigatorWindow = {
@@ -151,26 +147,31 @@ export class ChartNavigator extends ChartComponent {
     };
 
     /**
-     * Attaches the strip's DOM pointer listeners to the render context. Call this **before** the chart
-     * creates its in-plot navigator so the strip's `pointerdown` listener runs first and can suppress
-     * in-plot panning within the strip band. No-op on non-DOM contexts or if already attached.
+     * Subscribes the strip to the context's pointer events so its window can be dragged. Idempotent,
+     * and inert on a context that emits no pointer events (e.g. the terminal).
+     *
+     * Only the primary pointer drives the window: a second finger arriving mid-drag would otherwise
+     * yank it to wherever that finger landed.
      */
     public attach(): void {
         if (this._attached) {
             return;
         }
 
-        const element = this.context.element as unknown as HTMLElement;
+        this.retain(this.context.on('pointerdown', ({ data }) => {
+            if (data.isPrimary) {
+                this._onPointerDown(data.x, data.y);
+            }
+        }), LISTENER_KEY);
 
-        if (!element || !typeIsFunction(element.getBoundingClientRect) || !typeIsFunction(element.addEventListener)) {
-            return;
-        }
+        this.retain(this.context.on('pointermove', ({ data }) => {
+            if (data.isPrimary) {
+                this._onPointerMove(data.x, data.y);
+            }
+        }), LISTENER_KEY);
 
-        this._element = element;
-        this.retain(onDOMEvent(element, 'pointerdown', this._onPointerDown), LISTENER_KEY);
-        this.retain(onDOMEvent(element, 'pointermove', this._onPointerMove), LISTENER_KEY);
-        this.retain(onDOMEvent(element, 'pointerup', this._onPointerUp), LISTENER_KEY);
-        this.retain(onDOMEvent(element, 'pointercancel', this._onPointerUp), LISTENER_KEY);
+        this.retain(this.context.on('pointerup', () => this._onPointerUp()), LISTENER_KEY);
+        this.retain(this.context.on('pointercancel', () => this._onPointerUp()), LISTENER_KEY);
         this._attached = true;
     }
 
@@ -525,23 +526,14 @@ export class ChartNavigator extends ChartComponent {
         return this._group;
     }
 
-    private _localPoint(event: PointerEvent): Point {
-        const rect = this._element!.getBoundingClientRect();
-
-        return [
-            event.clientX - rect.left,
-            event.clientY - rect.top,
-        ];
-    }
-
     /** The pointer coordinate along the main (window) axis. */
-    private _mainCoord(point: Point): number {
-        return this._horizontal ? point[0] : point[1];
+    private _mainCoord(x: number, y: number): number {
+        return this._horizontal ? x : y;
     }
 
     /** The pointer coordinate along the cross axis (used for the band hit test). */
-    private _crossCoord(point: Point): number {
-        return this._horizontal ? point[1] : point[0];
+    private _crossCoord(x: number, y: number): number {
+        return this._horizontal ? y : x;
     }
 
     private _hitTest(main: number): DragMode | null {
@@ -563,24 +555,19 @@ export class ChartNavigator extends ChartComponent {
         return null;
     }
 
-    private _onPointerDown = (event: PointerEvent): void => {
-        if (!this._area || !this._onWindow || !this._element) {
+    private _onPointerDown(x: number, y: number): void {
+        if (!this._area || !this._onWindow) {
             return;
         }
 
-        const point = this._localPoint(event);
-        const cross = this._crossCoord(point);
+        const cross = this._crossCoord(x, y);
 
-        // Only claim pointers that land inside the strip band; leave the rest to the in-plot navigator.
+        // Only claim presses that land inside the strip band; the rest belong to the plot.
         if (cross < this._crossStart() || cross > this._crossStart() + this._crossSize()) {
             return;
         }
 
-        // Block the in-plot navigator (its listeners were attached after ours) from also panning.
-        event.stopImmediatePropagation();
-        event.preventDefault();
-
-        const main = this._mainCoord(point);
+        const main = this._mainCoord(x, y);
         const mode = this._hitTest(main);
 
         if (!mode) {
@@ -592,16 +579,14 @@ export class ChartNavigator extends ChartComponent {
             startMain: main,
             startWindow: { ...this._window },
         };
+    }
 
-        this._element.setPointerCapture?.(event.pointerId);
-    };
-
-    private _onPointerMove = (event: PointerEvent): void => {
+    private _onPointerMove(x: number, y: number): void {
         if (!this._drag || !this._area || !this._onWindow) {
             return;
         }
 
-        const main = this._mainCoord(this._localPoint(event));
+        const main = this._mainCoord(x, y);
         const delta = (main - this._drag.startMain) / Math.max(1, this._mainSize());
         const { mode, startWindow } = this._drag;
 
@@ -622,15 +607,10 @@ export class ChartNavigator extends ChartComponent {
             start,
             end,
         });
-    };
+    }
 
-    private _onPointerUp = (event: PointerEvent): void => {
-        if (!this._drag) {
-            return;
-        }
-
+    private _onPointerUp(): void {
         this._drag = undefined;
-        this._element?.releasePointerCapture?.(event.pointerId);
-    };
+    }
 
 }

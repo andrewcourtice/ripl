@@ -249,6 +249,38 @@ const navigator = createNavigator(context, {
 
 The gesture model is intentionally Figma-like: click-and-hold (left or middle button, with or without ⌘/Ctrl) pans, the wheel and two-finger pinch zoom toward the pointer, and shift-drag brushes a rectangle. Call `navigator.destroy()` to detach every listener.
 
+### Claiming part of the surface
+
+By default a navigator claims the whole surface. Pass `bounds` (or assign `navigator.bounds` later) to scope it to a [`Box`](/docs/api/@ripl/core/classes/Box), in logical pixels, leaving the rest to whatever else is listening — this is how a chart keeps its overview strip draggable without the plot panning underneath it:
+
+```ts
+import {
+    Box,
+} from '@ripl/web';
+
+// top, left, bottom, right
+navigator.bounds = new Box(16, 40, 316, 560);
+```
+
+Assign a new `Box` rather than mutating the one already there.
+
+Only the wheel and a gesture's **first press** are gated, so a drag that starts inside the region keeps tracking after it leaves. A wheel outside the region is not consumed at all, so the page scrolls as usual.
+
+### Choosing a navigator by platform
+
+`factory.createNavigator` is the platform seam. Importing `@ripl/web` registers the gesture-bound `DOMNavigator`; importing `@ripl/node` registers the base `Navigator`, which owns the same view model but binds no input because a terminal has no pointer. Code that wants whichever one the host installed — `@ripl/charts` does exactly this — goes through the factory rather than importing a class:
+
+```ts
+import {
+    factory,
+    Navigator,
+} from '@ripl/core';
+
+const navigator = factory.createNavigator
+    ? factory.createNavigator(context, { interactions: true })
+    : new Navigator();
+```
+
 ## The view transform
 
 The transform is a plain `{ k, x, y }` object: a content-space point `p` maps to the screen as `k · p + [x, y]`. Two helpers convert between spaces:

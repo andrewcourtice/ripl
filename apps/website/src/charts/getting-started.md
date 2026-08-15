@@ -13,23 +13,38 @@ outline: "deep"
 
 ## Installation
 
+`@ripl/charts` is context-agnostic — it draws onto whatever surface it is given and ships no
+rendering backend of its own. Install it alongside the backend for your environment:
+[`@ripl/web`](/docs/core/contexts/canvas) in a browser, or
+`@ripl/node` to render to a terminal.
+
 :::tabs
 == npm
 ```bash
-npm install @ripl/charts
+npm install @ripl/charts @ripl/web
 ```
 == yarn
 ```bash
-yarn add @ripl/charts
+yarn add @ripl/charts @ripl/web
 ```
 == pnpm
 ```bash
-pnpm add @ripl/charts
+pnpm add @ripl/charts @ripl/web
 ```
 :::
 
+Import the backend once, anywhere in your entry point:
+
+```ts
+import '@ripl/web';
+```
+
+That registers the platform bindings a chart needs — a rendering context, text measurement and an
+animation frame. Without one, a chart given a selector or an element throws rather than silently
+choosing a backend; a chart handed a `Context` you built yourself needs no import at all.
+
 > [!TIP]
-> `@ripl/charts` depends on `@ripl/core`, which is installed automatically. You don't need to install it separately.
+> `@ripl/core` is installed automatically as a dependency of both. You never install it directly.
 
 ## Your First Chart
 
@@ -40,6 +55,9 @@ Every chart follows the same pattern:
 3. **Update** the chart reactively via `chart.update(options)`
 
 ```ts
+// Registers the browser rendering backend. Swap for `@ripl/node` to render to a terminal.
+import '@ripl/web';
+
 import {
     createBarChart,
 } from '@ripl/charts';

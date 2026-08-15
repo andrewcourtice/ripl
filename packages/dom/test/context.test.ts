@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 
 import {
+    dispatchPointerEvent,
     mockCanvasContext,
     polyfillPath2D,
 } from '@ripl/test-utils';
@@ -85,10 +86,10 @@ describe('DOMContext interaction origin', () => {
 
         const subscription = context.on('mousemove', event => positions.push(event.data));
 
-        context.element.dispatchEvent(new MouseEvent('mousemove', {
+        dispatchPointerEvent(context.element, 'pointermove', {
             clientX,
             clientY,
-        }));
+        });
 
         subscription.dispose();
 
@@ -112,7 +113,7 @@ describe('DOMContext interaction origin', () => {
 
         const context = create();
 
-        context.element.dispatchEvent(new MouseEvent('mouseenter'));
+        dispatchPointerEvent(context.element, 'pointerenter');
 
         expect(mouseMove(context, 200, 150)).toEqual({
             x: 80,
@@ -126,7 +127,7 @@ describe('DOMContext interaction origin', () => {
 
         const context = create();
 
-        context.element.dispatchEvent(new MouseEvent('mouseenter'));
+        dispatchPointerEvent(context.element, 'pointerenter');
         setOrigin(120, 20);
         window.dispatchEvent(new Event('scroll'));
 
@@ -141,7 +142,7 @@ describe('DOMContext interaction origin', () => {
 
         const context = create();
 
-        context.element.dispatchEvent(new MouseEvent('mouseenter'));
+        dispatchPointerEvent(context.element, 'pointerenter');
         setOrigin(40, 80);
         window.dispatchEvent(new Event('resize'));
 
@@ -156,7 +157,7 @@ describe('DOMContext interaction origin', () => {
 
         const context = create();
 
-        context.element.dispatchEvent(new MouseEvent('mouseenter'));
+        dispatchPointerEvent(context.element, 'pointerenter');
         setOrigin(10, 10);
 
         context['rescale'](SURFACE_WIDTH, SURFACE_HEIGHT);
@@ -196,10 +197,10 @@ describe('DOMContext interaction origin', () => {
         const getBoundingClientRect = vi.spyOn(context.element, 'getBoundingClientRect').mockClear();
 
         window.dispatchEvent(new Event('scroll'));
-        context.element.dispatchEvent(new MouseEvent('mousemove', {
+        dispatchPointerEvent(context.element, 'pointermove', {
             clientX: 200,
             clientY: 150,
-        }));
+        });
 
         expect(getBoundingClientRect).not.toHaveBeenCalled();
     });
@@ -292,7 +293,28 @@ describe('DOMContext pointer state machine', () => {
         return element.events.map(({ type }) => type);
     }
 
+    // `click` is still sourced from the DOM click; everything else now comes from a pointer event.
+    const POINTER_EQUIVALENT: Record<string, string> = {
+        mousedown: 'pointerdown',
+        mousemove: 'pointermove',
+        mouseup: 'pointerup',
+        mouseenter: 'pointerenter',
+        mouseleave: 'pointerleave',
+    };
+
     function mouse(context: ReturnType<typeof create>, type: string, clientX: number, clientY: number, button = 0): void {
+        const pointerType = POINTER_EQUIVALENT[type];
+
+        if (pointerType) {
+            dispatchPointerEvent(context.element, pointerType, {
+                clientX,
+                clientY,
+                button,
+            });
+
+            return;
+        }
+
         context.element.dispatchEvent(new MouseEvent(type, {
             clientX,
             clientY,
@@ -315,7 +337,7 @@ describe('DOMContext pointer state machine', () => {
 
         expect(typesOf(element)).toEqual(['mouseenter']);
 
-        context.element.dispatchEvent(new MouseEvent('mouseleave'));
+        dispatchPointerEvent(context.element, 'pointerleave');
 
         expect(typesOf(element)).toEqual(['mouseenter', 'mouseleave']);
     });
@@ -327,8 +349,8 @@ describe('DOMContext pointer state machine', () => {
         register(context, [element]);
         hover(context, 50, 50);
 
-        context.element.dispatchEvent(new MouseEvent('mouseleave'));
-        context.element.dispatchEvent(new MouseEvent('mouseenter'));
+        dispatchPointerEvent(context.element, 'pointerleave');
+        dispatchPointerEvent(context.element, 'pointerenter');
 
         hover(context, 50, 50);
 
@@ -389,10 +411,10 @@ describe('DOMContext pointer state machine', () => {
         mouse(context, 'mousemove', 100, 100);
         mouse(context, 'mousemove', 140, 140);
 
-        window.dispatchEvent(new MouseEvent('mouseup', {
+        dispatchPointerEvent(window, 'pointerup', {
             clientX: 900,
             clientY: 900,
-        }));
+        });
 
         expect(typesOf(element)).toEqual(['dragstart', 'drag', 'dragend']);
     });
@@ -477,10 +499,10 @@ describe('DOMContext pointer state machine', () => {
         mouse(context, 'mousedown', 10, 10);
         mouse(context, 'mousemove', 100, 100);
 
-        window.dispatchEvent(new MouseEvent('mouseup', {
+        dispatchPointerEvent(window, 'pointerup', {
             clientX: 900,
             clientY: 900,
-        }));
+        });
 
         element.events.length = 0;
 
@@ -635,10 +657,10 @@ describe('DOMContext pointer state machine', () => {
 
         context.on('mouseup', event => releases.push(event.data));
 
-        window.dispatchEvent(new MouseEvent('mouseup', {
+        dispatchPointerEvent(window, 'pointerup', {
             clientX: 900,
             clientY: 900,
-        }));
+        });
 
         expect(releases).toHaveLength(0);
     });
@@ -656,10 +678,10 @@ describe('DOMContext pointer state machine', () => {
         mouse(context, 'mousedown', 10, 10);
         mouse(context, 'mousemove', 100, 100);
 
-        window.dispatchEvent(new MouseEvent('mouseup', {
+        dispatchPointerEvent(window, 'pointerup', {
             clientX: 900,
             clientY: 900,
-        }));
+        });
 
         expect(events).toEqual(['mouseup', 'dragend']);
         expect(typesOf(element)).toEqual(['dragstart', 'dragend']);
@@ -697,10 +719,10 @@ describe('DOMContext pointer state machine', () => {
         mouse(context, 'mousedown', 10, 10);
         mouse(context, 'mousemove', 100, 100);
 
-        window.dispatchEvent(new MouseEvent('mouseup', {
+        dispatchPointerEvent(window, 'pointerup', {
             clientX: 900,
             clientY: 900,
-        }));
+        });
 
         mouse(context, 'click', 100, 100);
 
@@ -771,6 +793,179 @@ describe('DOMContext pointer state machine', () => {
             x: 50,
             y: 50,
         });
+    });
+
+    describe('DOMContext pointer events', () => {
+
+        function pointer(context: ReturnType<typeof create>, type: string, init?: Parameters<typeof dispatchPointerEvent>[2]): void {
+            dispatchPointerEvent(context.element, type, init);
+        }
+
+        test('Should emit a pointer event carrying the device, the pointer id and the modifiers', () => {
+            const context = create();
+            const payloads: unknown[] = [];
+
+            context.on('pointerdown', event => payloads.push(event.data));
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 60,
+                pointerId: 7,
+                pointerType: 'touch',
+                shiftKey: true,
+            });
+
+            expect(payloads).toEqual([{
+                x: 50,
+                y: 60,
+                pointerId: 7,
+                pointerType: 'touch',
+                isPrimary: true,
+                button: 0,
+                buttons: 0,
+                altKey: false,
+                ctrlKey: false,
+                metaKey: false,
+                shiftKey: true,
+            }]);
+        });
+
+        // A second finger must reach a pinch handler, but must not fire a second `mousedown`.
+        test('Should emit pointer events for a non-primary pointer but no mouse events', () => {
+            const context = create();
+            const events: string[] = [];
+
+            context.on('pointerdown', () => events.push('pointerdown'));
+            context.on('mousedown', () => events.push('mousedown'));
+            context.on('pointermove', () => events.push('pointermove'));
+            context.on('mousemove', () => events.push('mousemove'));
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 50,
+                pointerId: 2,
+                isPrimary: false,
+            });
+
+            pointer(context, 'pointermove', {
+                clientX: 60,
+                clientY: 60,
+                pointerId: 2,
+                isPrimary: false,
+            });
+
+            expect(events).toEqual(['pointerdown', 'pointermove']);
+        });
+
+        test('Should emit both vocabularies for the primary pointer', () => {
+            const context = create();
+            const events: string[] = [];
+
+            context.on('pointerdown', () => events.push('pointerdown'));
+            context.on('mousedown', () => events.push('mousedown'));
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            expect(events).toEqual(['pointerdown', 'mousedown']);
+        });
+
+        test('Should end a gesture on pointercancel without emitting a click', () => {
+            const context = create();
+            const element = createMockElement('a', [...DRAG_EVENTS, 'click']);
+            const events: string[] = [];
+
+            register(context, [element]);
+
+            context.on('pointercancel', () => events.push('pointercancel'));
+            context.on('mouseup', () => events.push('mouseup'));
+            context.on('dragend', () => events.push('dragend'));
+            context.on('click', () => events.push('click'));
+
+            pointer(context, 'pointerdown', {
+                clientX: 10,
+                clientY: 10,
+            });
+
+            pointer(context, 'pointermove', {
+                clientX: 100,
+                clientY: 100,
+            });
+
+            pointer(context, 'pointercancel', {
+                clientX: 100,
+                clientY: 100,
+            });
+
+            expect(events).toEqual(['pointercancel', 'mouseup', 'dragend']);
+            expect(typesOf(element)).toEqual(['dragstart', 'dragend']);
+        });
+
+        test('Should release the button state on pointercancel so the next press is not swallowed', () => {
+            const context = create();
+            const events: string[] = [];
+
+            context.on('mouseup', () => events.push('mouseup'));
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointercancel', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointerup', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            expect(events).toEqual(['mouseup', 'mouseup']);
+        });
+
+        // Capture retargets moves to the surface, so the browser reports no leave of its own.
+        test('Should keep tracking a captured drag past the surface edge, leaving and re-entering once each', () => {
+            const context = create();
+            const events: string[] = [];
+            const moves: unknown[] = [];
+
+            context.on('mouseenter', () => events.push('mouseenter'));
+            context.on('mouseleave', () => events.push('mouseleave'));
+            context.on('mousemove', event => moves.push(event.data));
+
+            pointer(context, 'pointerdown', {
+                clientX: 50,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointermove', {
+                clientX: 900,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointermove', {
+                clientX: 950,
+                clientY: 50,
+            });
+
+            pointer(context, 'pointermove', {
+                clientX: 60,
+                clientY: 50,
+            });
+
+            expect(events).toEqual(['mouseleave', 'mouseenter']);
+            expect(moves).toHaveLength(3);
+        });
+
     });
 
 });

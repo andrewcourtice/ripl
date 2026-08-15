@@ -1,3 +1,7 @@
+// Side-effect import: `@ripl/web` registers the browser factory (canvas context, text
+// measurement, rAF). `@ripl/charts` is context-agnostic and installs no backend of its own.
+import '@ripl/web';
+
 import {
     afterEach,
     describe,
@@ -7,6 +11,7 @@ import {
 } from 'vitest';
 
 import {
+    dispatchPointerEvent,
     mockCanvasContext,
     polyfillPath2D,
 } from '@ripl/test-utils';
@@ -17,6 +22,10 @@ import {
     createLineChart,
     createTrendChart,
 } from '../src';
+
+import {
+    Box,
+} from '@ripl/core';
 
 import type {
     Group,
@@ -664,6 +673,121 @@ describe('Overview navigator strip', () => {
             .toBeGreaterThan(pointsOf(overlapping, 'navigator-overview-a-line')[0][1]);
 
         overlapping.destroy();
+    });
+
+});
+
+describe('Overview navigator strip dragging', () => {
+
+    async function stripChart() {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const chart = createLineChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        return chart;
+    }
+
+    /** Dispatches a pointer event on the chart's surface, the way a browser would. */
+    function pointer(chart: { context: { element: unknown } }, type: string, x: number, y: number): void {
+        dispatchPointerEvent(chart.context.element as HTMLElement, type, {
+            clientX: x,
+            clientY: y,
+        });
+    }
+
+    /** The plot rectangle the navigator claims, in the `Box` form it stores. */
+    function plotBox(chart: unknown): Box {
+        const plot = plotOf(chart);
+
+        return new Box(plot.y, plot.x, plot.y + plot.height, plot.x + plot.width);
+    }
+
+    test('Should narrow the window when an edge handle is dragged, driving the view transform', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+        const crossY = strip.y + strip.height / 2;
+
+        pointer(chart, 'pointerdown', strip.x + strip.width, crossY);
+        pointer(chart, 'pointermove', strip.x + strip.width / 2, crossY);
+        pointer(chart, 'pointerup', strip.x + strip.width / 2, crossY);
+
+        // Halving the window doubles the zoom of the category axis.
+        expect(chart.navigator?.transform.k).toBeCloseTo(2, 1);
+
+        chart.destroy();
+    });
+
+    test('Should ignore a press outside the strip band', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+
+        pointer(chart, 'pointerdown', strip.x + strip.width, strip.y - strip.height);
+        pointer(chart, 'pointermove', strip.x + strip.width / 2, strip.y - strip.height);
+
+        expect(chart.navigator?.transform.k).toBe(1);
+
+        chart.destroy();
+    });
+
+    test('Should scope the navigator to the plot rectangle', async () => {
+        const chart = await stripChart();
+
+        expect(chart.navigator?.bounds).toEqual(plotBox(chart));
+
+        chart.destroy();
+    });
+
+    // The strip used to block the navigator by stopping propagation; the bounds gate replaces it.
+    test('Should not pan the plot when a gesture starts in the strip band', async () => {
+        const chart = await stripChart();
+        const strip = rectOf(chart, 'navigator-strip');
+        const crossY = strip.y + strip.height / 2;
+
+        pointer(chart, 'pointerdown', strip.x + strip.width / 2, crossY);
+        pointer(chart, 'pointermove', strip.x + strip.width / 4, crossY);
+
+        expect(chart.navigator?.transform).toEqual({
+            k: 1,
+            x: 0,
+            y: 0,
+        });
+
+        chart.destroy();
+    });
+
+    test('Should still pan when a gesture starts inside the plot', async () => {
+        const chart = await stripChart();
+        const plot = plotOf(chart);
+        const midX = plot.x + plot.width / 2;
+        const midY = plot.y + plot.height / 2;
+
+        // The identity view is the full data extent, where translation clamps to zero; zoom in to pan at all.
+        chart.navigator?.zoomTo(2, [midX, midY]);
+
+        const before = chart.navigator!.transform.x;
+
+        pointer(chart, 'pointerdown', midX, midY);
+        pointer(chart, 'pointermove', midX + 20, midY);
+
+        expect(chart.navigator!.transform.x).toBeGreaterThan(before);
+
+        chart.destroy();
     });
 
 });

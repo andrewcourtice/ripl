@@ -1,3 +1,7 @@
+// Side-effect import: `@ripl/web` registers the browser factory (canvas context, text
+// measurement, rAF). `@ripl/charts` is context-agnostic and installs no backend of its own.
+import '@ripl/web';
+
 import {
     afterEach,
     describe,

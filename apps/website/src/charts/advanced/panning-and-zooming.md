@@ -53,6 +53,8 @@ Which axes the view affects depends on the chart:
 
 While a gesture is in flight the chart suppresses transition animations, so marks snap to the new view each frame instead of tweening behind the pointer. Marks are clipped to the plot rectangle so panning never smears them over the axes, title, or legend.
 
+Gestures are claimed within the plot rectangle only. A wheel or drag starting over the axis gutter, title, legend or overview strip is left alone — so a wheel there scrolls the page as usual, and dragging the overview window never also pans the plot behind it.
+
 ## The Overview Strip
 
 `overview: true` renders a miniature of the full dataset beside the plot (below it for category-on-x charts, to the right for a horizontal bar chart) with a draggable window over it:
@@ -101,7 +103,7 @@ chart.update({
 
 ## Imperative Control
 
-When the `navigator` option is on, `chart.navigator` exposes the underlying controller (`DOMNavigator`) for imperative framing and brush-and-link:
+When the `navigator` option is on, `chart.navigator` exposes the underlying `Navigator` for imperative framing and brush-and-link. The chart asks the platform for it, so importing `@ripl/web` gets you the gesture-bound `DOMNavigator` while `@ripl/node` gets the base controller — the imperative API below is the same either way:
 
 ```ts
 const nav = chart.navigator;

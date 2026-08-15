@@ -11,3 +11,10 @@ export type {
     MockCanvasStateStub,
     MockTextMetricsOptions,
 } from './canvas';
+
+export {
+    createPointerEvent,
+    dispatchPointerEvent,
+} from './pointer';
+
+export type { PointerEventInit } from './pointer';

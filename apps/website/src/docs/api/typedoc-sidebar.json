@@ -357,6 +357,10 @@
             "link": "/docs/api/@ripl/3d/type-aliases/RenderStrategy.md"
           },
           {
+            "text": "Shape3DDefaults",
+            "link": "/docs/api/@ripl/3d/type-aliases/Shape3DDefaults.md"
+          },
+          {
             "text": "Shape3DOptions",
             "link": "/docs/api/@ripl/3d/type-aliases/Shape3DOptions.md"
           },
@@ -2797,6 +2801,10 @@
             "link": "/docs/api/@ripl/core/interfaces/ContextOptions.md"
           },
           {
+            "text": "ContextPointerEvent",
+            "link": "/docs/api/@ripl/core/interfaces/ContextPointerEvent.md"
+          },
+          {
             "text": "DivergingScaleOptions",
             "link": "/docs/api/@ripl/core/interfaces/DivergingScaleOptions.md"
           },
@@ -3071,12 +3079,20 @@
             "link": "/docs/api/@ripl/core/type-aliases/ContextFactory.md"
           },
           {
+            "text": "ContextPointerType",
+            "link": "/docs/api/@ripl/core/type-aliases/ContextPointerType.md"
+          },
+          {
             "text": "Direction",
             "link": "/docs/api/@ripl/core/type-aliases/Direction.md"
           },
           {
             "text": "Ease",
             "link": "/docs/api/@ripl/core/type-aliases/Ease.md"
+          },
+          {
+            "text": "ElementDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/ElementDefaults.md"
           },
           {
             "text": "ElementInterpolationKeyFrame",
@@ -3241,6 +3257,10 @@
           {
             "text": "SceneEventMap",
             "link": "/docs/api/@ripl/core/type-aliases/SceneEventMap.md"
+          },
+          {
+            "text": "Shape2DDefaults",
+            "link": "/docs/api/@ripl/core/type-aliases/Shape2DDefaults.md"
           },
           {
             "text": "Shape2DOptions",
@@ -4194,10 +4214,6 @@
             "link": "/docs/api/@ripl/dom/interfaces/DOMElementResizeEvent.md"
           },
           {
-            "text": "DOMNavigatorOptions",
-            "link": "/docs/api/@ripl/dom/interfaces/DOMNavigatorOptions.md"
-          },
-          {
             "text": "ParentRef",
             "link": "/docs/api/@ripl/dom/interfaces/ParentRef.md"
           },
@@ -4226,6 +4242,10 @@
           {
             "text": "DOMEventHandler",
             "link": "/docs/api/@ripl/dom/type-aliases/DOMEventHandler.md"
+          },
+          {
+            "text": "DOMNavigatorOptions",
+            "link": "/docs/api/@ripl/dom/type-aliases/DOMNavigatorOptions.md"
           }
         ]
       },
