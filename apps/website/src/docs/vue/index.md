@@ -111,11 +111,11 @@ Add a scene once you need z-ordering or many elements, and a renderer once you n
 ## Where to go next
 
 - **[Rendering](/docs/vue/essentials/rendering)**: the context, scene and renderer components
-- **[Elements](/docs/vue/essentials/elements)**: groups, the built-in elements, and how props map to state
+- **[Components](/docs/vue/essentials/components)**: groups, the built-in components, and how props map to state
 - **[Transitions](/docs/vue/essentials/transitions)**: animating enter, update and leave
 - **[Events](/docs/vue/essentials/events)**: pointer and drag listeners
 - **[Compositions](/docs/vue/essentials/compositions)**: reaching the underlying Ripl objects
-- **[Examples](/docs/vue/essentials/examples)**: a live, interactive chart built from the elements above
+- **[Examples](/docs/vue/essentials/examples)**: a live, interactive chart built from the components above
 
 Two companion packages extend the same surface:
 

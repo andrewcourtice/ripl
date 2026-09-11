@@ -72,6 +72,6 @@ It emits `ready` with the context, plus `resize`, `render` and every pointer eve
 
 ## Where to go next
 
-- **[Shapes](/docs/vue/3d/shapes)**: the nine built-in shapes and `<ripl-group-3d>`
+- **[Components](/docs/vue/3d/components)**: the nine built-in shapes and `<ripl-group-3d>`
 - **[Camera](/docs/vue/3d/camera)**: framing and pointer interactions
 - **[Lighting](/docs/vue/3d/lighting)**: the five light types and the default rig

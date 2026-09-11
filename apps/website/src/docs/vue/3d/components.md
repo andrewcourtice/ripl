@@ -1,9 +1,9 @@
 ---
-title: Shapes
+title: Components
 description: "The nine built-in 3D shape components, how their transform props map onto state, and what <ripl-group-3d> can and cannot animate."
 ---
 
-# Shapes
+# Components
 
 Every built-in 3D shape has a component. Props map onto the shape's state, so the names match the imperative API exactly.
 
@@ -22,7 +22,7 @@ Every built-in 3D shape has a component. Props map onto the shape's state, so th
 
 ## Shared props
 
-Every shape accepts the 3D transform, the shared base state, and the same construction options as a 2D element:
+Every component accepts the 3D transform, the shared base state, and the same construction options as a 2D component:
 
 | Prop | Description |
 | --- | --- |
@@ -32,7 +32,7 @@ Every shape accepts the 3D transform, the shared base state, and the same constr
 | `scale` | A uniform scale, applied to all three axes. Overridden by any per-axis scale also given. |
 | `material` | How the surface responds to light. Without one the shape shades from its `fill` alone. |
 | `fill`, `stroke`, `opacity`, `lineWidth`, … | The shared base state, as in 2D. |
-| `id`, `class`, `data`, `pointerEvents` | As on a 2D element. |
+| `id`, `class`, `data`, `pointerEvents` | As on a 2D component. |
 
 There is deliberately **no `zIndex`**. A 3D shape derives its depth ordering from its projected position, and assigning one does nothing.
 

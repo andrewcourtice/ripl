@@ -1,9 +1,9 @@
 ---
-title: Elements
+title: Components
 description: "The built-in element components, how props map onto element state, class and data binding, and grouping with <ripl-group>."
 ---
 
-# Elements
+# Components
 
 Every built-in Ripl element has a component. Props map directly onto the element's state, so the names match the imperative API exactly.
 
@@ -23,7 +23,7 @@ Every built-in Ripl element has a component. Props map directly onto the element
 
 ## Shared props
 
-On top of its own state, every element accepts the full base state (`fill`, `stroke`, `opacity`, `lineWidth`, `lineDash`, `lineCap`, `lineJoin`, `font`, `textAlign`, `shadowBlur`, `zIndex`, `translateX`, `translateY`, `rotation`, `transformScaleX`, `transformOriginX` and the rest) plus:
+On top of its own state, every component accepts the full base state (`fill`, `stroke`, `opacity`, `lineWidth`, `lineDash`, `lineCap`, `lineJoin`, `font`, `textAlign`, `shadowBlur`, `zIndex`, `translateX`, `translateY`, `rotation`, `transformScaleX`, `transformOriginX` and the rest) plus:
 
 | Prop | Description |
 | --- | --- |
@@ -111,7 +111,7 @@ Children paint in template order, and reordering a keyed `v-for` reorders the pa
 
 `zIndex` is additive down the tree: a child's effective z-index is its own plus its parent's.
 
-## Custom elements
+## Custom components
 
 `defineRiplElement` builds a component for an element Ripl does not ship, given its state property names and a factory:
 

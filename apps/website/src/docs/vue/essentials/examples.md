@@ -9,7 +9,7 @@ Complete scenes assembled from the components in this section.
 
 ## Bar chart
 
-This chart is built entirely from the built-in elements, with no `@ripl/charts` and no imperative `createScene` or `createRenderer`. Scales come from `@ripl/core`, and the rest is template. For a bar chart that already has axes, legends and tooltips, reach for [`<ripl-bar-chart>`](/docs/vue/charts/) instead.
+This chart is built entirely from the built-in components, with no `@ripl/charts` and no imperative `createScene` or `createRenderer`. Scales come from `@ripl/core`, and the rest is template. For a bar chart that already has axes, legends and tooltips, reach for [`<ripl-bar-chart>`](/docs/vue/charts/) instead.
 
 Click a bar to select it, hover to highlight, and use the controls to drive the enter, update and leave transitions.
 
@@ -222,7 +222,7 @@ Expressing the phase as a factory produces the staggered sweep. Each element get
 
 The phases are `computed` so `baseline` stays current after a resize. They are also plain reactive props, so the **Animate** toggle switches them off by binding `undefined`, after which unanimated changes apply instantly.
 
-The value and category labels sit in their own `<ripl-transition>` fading on `{ opacity: 0 }`. A scope applies its phases to every descendant, and `height` means nothing to a [text element](/docs/vue/essentials/elements), so the labels need a phase of their own. The gridlines get a third scope with only an `update` phase, so a tick that survives a domain change slides rather than jumping.
+The value and category labels sit in their own `<ripl-transition>` fading on `{ opacity: 0 }`. A scope applies its phases to every descendant, and `height` means nothing to a [text component](/docs/vue/essentials/components), so the labels need a phase of their own. The gridlines get a third scope with only an `update` phase, so a tick that survives a domain change slides rather than jumping.
 
 See [Transitions](/docs/vue/essentials/transitions) for the full phase API.
 

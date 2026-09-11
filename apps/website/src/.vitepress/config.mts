@@ -533,8 +533,8 @@ export default defineConfig({
                             link: '/docs/vue/essentials/rendering',
                         },
                         {
-                            text: 'Elements',
-                            link: '/docs/vue/essentials/elements',
+                            text: 'Components',
+                            link: '/docs/vue/essentials/components',
                         },
                         {
                             text: 'Transitions',
@@ -562,8 +562,8 @@ export default defineConfig({
                             link: '/docs/vue/3d/',
                         },
                         {
-                            text: 'Shapes',
-                            link: '/docs/vue/3d/shapes',
+                            text: 'Components',
+                            link: '/docs/vue/3d/components',
                         },
                         {
                             text: 'Camera',
