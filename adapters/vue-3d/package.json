@@ -1,6 +1,6 @@
 {
     "name": "@ripl/vue-3d",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "Declarative Vue 3 components and compositions for Ripl 3D",
     "keywords": [
         "ripl",
