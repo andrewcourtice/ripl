@@ -1,16 +1,16 @@
 import {
-    chartFactory,
     defineRiplChart,
 } from '../core/define-chart';
 
 import {
     CHART_OPTION_KEYS,
-} from '../core/props';
+    chartFactory,
+} from '@ripl/adapters-charts';
 
 import type {
     RiplChartListeners,
     RiplChartProps,
-} from '../types';
+} from '@ripl/adapters-charts';
 
 import {
     ArcDiagramChart,

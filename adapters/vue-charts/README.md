@@ -79,6 +79,8 @@ const chart = useRiplChart();
 
 A template ref on any chart component resolves to the chart itself, which is how you reach the imperative APIs with no declarative equivalent: `chart.navigator`, and `push()` / `clear()` on a realtime chart.
 
+The option tables and the chart lifecycle live in [`@ripl/adapters-charts`](../../packages/adapters-charts), shared with `@ripl/react-charts`, and are re-exported here.
+
 ## Documentation
 
 Full documentation lives at [ripl.run](https://www.ripl.run/docs/vue/charts/).

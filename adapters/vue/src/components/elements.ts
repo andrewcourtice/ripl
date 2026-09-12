@@ -1,11 +1,11 @@
 import {
     defineRiplElement,
-    elementFactory,
 } from '../core/define-element';
 
 import {
     ELEMENT_STATE_KEYS,
-} from '../core/props';
+    elementFactory,
+} from '@ripl/adapters';
 
 import type {
     RiplComponent,

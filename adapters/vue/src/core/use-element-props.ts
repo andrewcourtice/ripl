@@ -1,19 +1,16 @@
 import {
-    CONSTRUCTION_ONLY_KEYS,
-    SHAPE_FIELDS,
-} from './props';
-
-import {
     collectChangedProps,
+    CONSTRUCTION_ONLY_KEYS,
     partitionProps,
     readBoundProps,
     resolveClassNames,
-} from './state';
+    SHAPE_FIELDS,
+} from '@ripl/adapters';
 
 import type {
     RiplPropPartition,
     RiplWritable,
-} from './state';
+} from '@ripl/adapters';
 
 import type {
     Element,

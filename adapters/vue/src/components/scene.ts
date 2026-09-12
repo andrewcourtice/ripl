@@ -1,5 +1,4 @@
 import {
-    ELEMENT_EVENTS,
     useForwardedEvents,
 } from '../core/events';
 
@@ -16,19 +15,9 @@ import {
 } from '../core/injection';
 
 import {
-    BASE_STATE_KEYS,
     createProps,
     ELEMENT_OPTION_KEYS,
 } from '../core/props';
-
-import {
-    applyFields,
-    applyState,
-} from '../core/state';
-
-import type {
-    RiplWritable,
-} from '../core/state';
 
 import {
     useElementProps,
@@ -41,16 +30,24 @@ import type {
 } from '../types';
 
 import {
+    applyFields,
+    applyState,
+    BASE_STATE_KEYS,
+    ELEMENT_EVENTS,
+} from '@ripl/adapters';
+
+import type {
+    RiplWritable,
+} from '@ripl/adapters';
+
+import {
+    createScene,
     factory,
 } from '@ripl/web';
 
 import type {
     BaseElementState,
     Scene,
-} from '@ripl/web';
-
-import {
-    createScene,
 } from '@ripl/web';
 
 import {
@@ -112,11 +109,13 @@ export const RiplScene = defineComponent({
             },
         });
 
+        const current = shallowRef(scene);
+
         if (tree && scene) {
-            tree.scene.value = scene;
+            tree.scene = scene;
         }
 
-        provide(RIPL_SCENE, tree?.scene ?? shallowRef<Scene>());
+        provide(RIPL_SCENE, current);
         provide(RIPL_PARENT, shallowRef(scene));
         provide(RIPL_ELEMENT, shallowRef(scene));
 
@@ -147,9 +146,10 @@ export const RiplScene = defineComponent({
 
             // `false`: the context component owns the context and destroys it itself.
             scene.destroy(false);
+            current.value = undefined;
 
             if (tree) {
-                tree.scene.value = undefined;
+                tree.scene = undefined;
             }
         });
 

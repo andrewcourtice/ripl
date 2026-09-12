@@ -7,25 +7,43 @@ export * from './compositions';
 export * from './plugin';
 export * from './types';
 
+export { defineRiplElement } from './core/define-element';
+
+// The building blocks a sibling adapter (`@ripl/vue-3d`, `@ripl/vue-charts`) needs to wrap a Ripl
+// object the same way this package does. Their implementations live in `@ripl/adapters`, shared
+// with the React adapters; they are re-exported here so one import covers a whole adapter.
+
 export {
-    defineRiplElement,
+    applyFields,
+    applyState,
+    BASE_STATE_KEYS,
+    collectChangedProps,
+    CONSTRUCTION_ONLY_KEYS,
+    CONTEXT_EVENTS,
+    ELEMENT_EVENTS,
+    ELEMENT_STATE_KEYS,
     elementFactory,
-} from './core/define-element';
-
-export type { RiplNodeDefinition } from './core/define-element';
-
-export { RiplTransitionScope } from './core/transition';
+    partitionProps,
+    readBoundProps,
+    RENDERER_EVENTS,
+    resolveClassNames,
+    RiplTransitionScope,
+    RiplTree,
+    SHAPE_FIELD_KEYS,
+    SHAPE_FIELDS,
+} from '@ripl/adapters';
 
 export type {
     RiplElementState,
+    RiplFieldWriters,
+    RiplNodeDefinition,
+    RiplPropPartition,
     RiplTransitionPhase,
     RiplTransitionPhaseName,
     RiplTransitionPhaseOptions,
     RiplTransitionPhases,
-} from './core/transition';
-
-// The building blocks a sibling adapter (`@ripl/vue-3d`, `@ripl/vue-charts`) needs to wrap a Ripl
-// object the same way this package does. Exported deliberately; see the README's Extending section.
+    RiplWritable,
+} from '@ripl/adapters';
 
 export {
     RIPL_CONTEXT,
@@ -37,45 +55,17 @@ export {
     RIPL_TREE,
 } from './core/injection';
 
-export {
-    createRiplTree,
-    RiplTree,
-} from './core/tree';
+export { createRiplTree } from './core/tree';
 
 export {
     ANY_PROP,
-    BASE_STATE_KEYS,
     BOOLEAN_PROP,
-    CONSTRUCTION_ONLY_KEYS,
     createProps,
     ELEMENT_OPTION_KEYS,
-    ELEMENT_STATE_KEYS,
     NUMBER_PROP,
-    SHAPE_FIELD_KEYS,
-    SHAPE_FIELDS,
 } from './core/props';
 
-export {
-    applyFields,
-    applyState,
-    collectChangedProps,
-    partitionProps,
-    readBoundProps,
-    resolveClassNames,
-} from './core/state';
-
-export type {
-    RiplFieldWriters,
-    RiplPropPartition,
-    RiplWritable,
-} from './core/state';
-
-export {
-    CONTEXT_EVENTS,
-    ELEMENT_EVENTS,
-    RENDERER_EVENTS,
-    useForwardedEvents,
-} from './core/events';
+export { useForwardedEvents } from './core/events';
 
 export { useExposedInstance } from './core/expose';
 

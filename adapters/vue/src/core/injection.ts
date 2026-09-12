@@ -1,10 +1,7 @@
 import type {
     RiplTransitionScope,
-} from './transition';
-
-import type {
     RiplTree,
-} from './tree';
+} from '@ripl/adapters';
 
 import type {
     Context,

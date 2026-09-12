@@ -17,6 +17,11 @@ import type {
 } from '@ripl/3d';
 
 import {
+    CAMERA_PROP_KEYS,
+    CAMERA_SYNC_KEYS,
+} from '@ripl/adapters-3d';
+
+import {
     ANY_PROP,
     NUMBER_PROP,
     readBoundProps,
@@ -36,20 +41,6 @@ import {
     shallowRef,
     watch,
 } from 'vue';
-
-const PROP_KEYS = [
-    'far',
-    'fov',
-    'interactions',
-    'near',
-    'position',
-    'projection',
-    'target',
-    'up',
-];
-
-/** `interactions` is read once, when the camera wires up its listeners, and has no setter. */
-const SYNC_KEYS = PROP_KEYS.filter(key => key !== 'interactions');
 
 /**
  * Views the enclosing 3D context, optionally with pointer orbit, pan and zoom.
@@ -79,7 +70,7 @@ export const RiplCamera = defineComponent({
         const raw = props as RiplWritable;
 
         if (context?.value) {
-            camera.value = markRaw(createCamera(context.value, readBoundProps(raw, PROP_KEYS) as CameraOptions));
+            camera.value = markRaw(createCamera(context.value, readBoundProps(raw, CAMERA_PROP_KEYS) as CameraOptions));
         } else {
             console.warn('[@ripl/vue-3d] <ripl-camera> needs a <ripl-context-3d> ancestor.');
         }
@@ -90,7 +81,7 @@ export const RiplCamera = defineComponent({
 
         // The camera coalesces writes and flushes them on a microtask, so assigning the whole bound
         // set is no more work than assigning the one property that changed.
-        watch(() => readBoundProps(raw, SYNC_KEYS), next => {
+        watch(() => readBoundProps(raw, CAMERA_SYNC_KEYS), next => {
             const active = camera.value as unknown as RiplWritable | undefined;
 
             if (active) {

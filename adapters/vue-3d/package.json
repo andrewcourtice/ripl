@@ -54,6 +54,8 @@
     },
     "dependencies": {
         "@ripl/3d": "workspace:^",
+        "@ripl/adapters": "workspace:^",
+        "@ripl/adapters-3d": "workspace:^",
         "@ripl/core": "workspace:^",
         "@ripl/dom": "workspace:^",
         "@ripl/utilities": "workspace:^",

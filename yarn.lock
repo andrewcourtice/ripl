@@ -250,7 +250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/code-frame@npm:^7.0.0":
+"@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.4":
   version: 7.29.7
   resolution: "@babel/code-frame@npm:7.29.7"
   dependencies:
@@ -286,7 +286,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.26.10":
+"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.26.10":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
   checksum: 10/9883b4951787779fd382b121f22f92966d85f19434841f65fb00b2dfec232107e139683f47c6f252891826ad8ee18317b46c3a0e4819116a9885f47b46d7126a
@@ -1994,6 +1994,39 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/adapters-3d@workspace:^, @ripl/adapters-3d@workspace:packages/adapters-3d":
+  version: 0.0.0-use.local
+  resolution: "@ripl/adapters-3d@workspace:packages/adapters-3d"
+  dependencies:
+    "@ripl/3d": "workspace:^"
+    "@ripl/adapters": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
+"@ripl/adapters-charts@workspace:^, @ripl/adapters-charts@workspace:packages/adapters-charts":
+  version: 0.0.0-use.local
+  resolution: "@ripl/adapters-charts@workspace:packages/adapters-charts"
+  dependencies:
+    "@ripl/adapters": "workspace:^"
+    "@ripl/charts": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
+"@ripl/adapters@workspace:^, @ripl/adapters@workspace:packages/adapters":
+  version: 0.0.0-use.local
+  resolution: "@ripl/adapters@workspace:packages/adapters"
+  dependencies:
+    "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+    "@ripl/web": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@ripl/canvas@workspace:^, @ripl/canvas@workspace:packages/canvas":
   version: 0.0.0-use.local
   resolution: "@ripl/canvas@workspace:packages/canvas"
@@ -2069,6 +2102,54 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/react-3d@workspace:^, @ripl/react-3d@workspace:adapters/react-3d":
+  version: 0.0.0-use.local
+  resolution: "@ripl/react-3d@workspace:adapters/react-3d"
+  dependencies:
+    "@ripl/3d": "workspace:^"
+    "@ripl/adapters": "workspace:^"
+    "@ripl/adapters-3d": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/react": "workspace:^"
+    "@types/react": "npm:^19.3.0"
+    react: "npm:^19.3.0"
+  peerDependencies:
+    react: ^18.3.0 || ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@ripl/react-charts@workspace:^, @ripl/react-charts@workspace:adapters/react-charts":
+  version: 0.0.0-use.local
+  resolution: "@ripl/react-charts@workspace:adapters/react-charts"
+  dependencies:
+    "@ripl/adapters": "workspace:^"
+    "@ripl/adapters-charts": "workspace:^"
+    "@ripl/charts": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/react": "workspace:^"
+    "@types/react": "npm:^19.3.0"
+    react: "npm:^19.3.0"
+  peerDependencies:
+    react: ^18.3.0 || ^19.0.0
+  languageName: unknown
+  linkType: soft
+
+"@ripl/react@workspace:^, @ripl/react@workspace:adapters/react":
+  version: 0.0.0-use.local
+  resolution: "@ripl/react@workspace:adapters/react"
+  dependencies:
+    "@ripl/adapters": "workspace:^"
+    "@ripl/core": "workspace:^"
+    "@ripl/dom": "workspace:^"
+    "@ripl/utilities": "workspace:^"
+    "@ripl/web": "workspace:^"
+    "@types/react": "npm:^19.3.0"
+    react: "npm:^19.3.0"
+  peerDependencies:
+    react: ^18.3.0 || ^19.0.0
+  languageName: unknown
+  linkType: soft
+
 "@ripl/svg@workspace:^, @ripl/svg@workspace:packages/svg":
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
@@ -2107,6 +2188,8 @@ __metadata:
   resolution: "@ripl/vue-3d@workspace:adapters/vue-3d"
   dependencies:
     "@ripl/3d": "workspace:^"
+    "@ripl/adapters": "workspace:^"
+    "@ripl/adapters-3d": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
@@ -2121,6 +2204,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/vue-charts@workspace:adapters/vue-charts"
   dependencies:
+    "@ripl/adapters": "workspace:^"
+    "@ripl/adapters-charts": "workspace:^"
     "@ripl/charts": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/dom": "workspace:^"
@@ -2136,6 +2221,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/vue@workspace:adapters/vue"
   dependencies:
+    "@ripl/adapters": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/dom": "workspace:^"
     "@ripl/utilities": "workspace:^"
@@ -2174,11 +2260,17 @@ __metadata:
   resolution: "@ripl/website@workspace:apps/website"
   dependencies:
     "@ripl/3d": "workspace:^"
+    "@ripl/adapters": "workspace:^"
+    "@ripl/adapters-3d": "workspace:^"
+    "@ripl/adapters-charts": "workspace:^"
     "@ripl/canvas": "workspace:^"
     "@ripl/charts": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/devtools": "workspace:^"
     "@ripl/node": "workspace:^"
+    "@ripl/react": "workspace:^"
+    "@ripl/react-3d": "workspace:^"
+    "@ripl/react-charts": "workspace:^"
     "@ripl/svg": "workspace:^"
     "@ripl/terminal": "workspace:^"
     "@ripl/utilities": "workspace:^"
@@ -2187,6 +2279,8 @@ __metadata:
     "@ripl/vue-charts": "workspace:^"
     "@ripl/web": "workspace:^"
     "@ripl/webgpu": "workspace:^"
+    "@types/react": "npm:^19.3.0"
+    "@types/react-dom": "npm:^19.3.0"
     "@vercel/analytics": "npm:^2.0.1"
     "@vue/devtools-api": "npm:^8.2.1"
     "@webgpu/types": "npm:^0.1.71"
@@ -2197,6 +2291,8 @@ __metadata:
     mathjs: "npm:^15.2.0"
     monaco-editor: "npm:^0.56.0"
     pinia: "npm:^4.0.2"
+    react: "npm:^19.3.0"
+    react-dom: "npm:^19.3.0"
     rolldown: "npm:~1.2.0"
     sass: "npm:^1.102.0"
     typedoc: "npm:^0.28.20"
@@ -2815,6 +2911,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/dom@npm:^10.4.1":
+  version: 10.4.1
+  resolution: "@testing-library/dom@npm:10.4.1"
+  dependencies:
+    "@babel/code-frame": "npm:^7.10.4"
+    "@babel/runtime": "npm:^7.12.5"
+    "@types/aria-query": "npm:^5.0.1"
+    aria-query: "npm:5.3.0"
+    dom-accessibility-api: "npm:^0.5.9"
+    lz-string: "npm:^1.5.0"
+    picocolors: "npm:1.1.1"
+    pretty-format: "npm:^27.0.2"
+  checksum: 10/7f93e09ea015f151f8b8f42cbab0b2b858999b5445f15239a72a612ef7716e672b14c40c421218194cf191cbecbde0afa6f3dc2cc83dda93ff6a4fb0237df6e6
+  languageName: node
+  linkType: hard
+
+"@testing-library/react@npm:^16.3.3":
+  version: 16.3.3
+  resolution: "@testing-library/react@npm:16.3.3"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+  peerDependencies:
+    "@testing-library/dom": ^10.0.0
+    "@types/react": ^18.0.0 || ^19.0.0
+    "@types/react-dom": ^18.0.0 || ^19.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10/c330e2d8158fd0f4b059cb1cd30f74265c6e80b204cf7245c9b2c4117582d6deb985d51edb62bd1b94e79ef48a2eaba4d002278d06caf725830a8b0f475e0118
+  languageName: node
+  linkType: hard
+
 "@tufjs/canonical-json@npm:2.0.0":
   version: 2.0.0
   resolution: "@tufjs/canonical-json@npm:2.0.0"
@@ -2847,6 +2979,13 @@ __metadata:
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10/6cf39f7a2926b1c8bc6fe3f9f03318a33dd6dae81bdbd059983f9c6ee22d10a827f12564d648c05a2d4926e03c86cbe2799fb20609ee65e9efc39603039b4765
+  languageName: node
+  linkType: hard
+
+"@types/aria-query@npm:^5.0.1":
+  version: 5.0.4
+  resolution: "@types/aria-query@npm:5.0.4"
+  checksum: 10/c0084c389dc030daeaf0115a92ce43a3f4d42fc8fef2d0e22112d87a42798d4a15aac413019d4a63f868327d52ad6740ab99609462b442fe6b9286b172d2e82e
   languageName: node
   linkType: hard
 
@@ -3015,6 +3154,24 @@ __metadata:
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
   checksum: 10/65dff72b543997b7be8b0265eca7ace0e34b75c3e5fee31de11179d08fa7124a7a5587265d53d0409532ecb7f7fba662c2012807963e1f9b059653ec2c83ee05
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:^19.3.0":
+  version: 19.3.0
+  resolution: "@types/react-dom@npm:19.3.0"
+  peerDependencies:
+    "@types/react": ^19.3.0
+  checksum: 10/e24ee9948dc3a6c81e8aa4acf120a1194d3a3b68e97205b1e5e24e087b9f0c0c2e40b128fd258663ccb5889c852aeee558c0daa3255c3d82e0fc1c5d64c4b69a
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^19.3.0":
+  version: 19.3.0
+  resolution: "@types/react@npm:19.3.0"
+  dependencies:
+    csstype: "npm:^3.2.2"
+  checksum: 10/2f4589222fd9c512e1ef78e65f334ade8777400add8ec0803fcc3a044761679b7984ba8410a890af24255383c3251a568bb692b60acfa22397ba0a64b2e032bf
   languageName: node
   linkType: hard
 
@@ -3974,7 +4131,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansi-styles@npm:^5.2.0":
+"ansi-styles@npm:^5.0.0, ansi-styles@npm:^5.2.0":
   version: 5.2.0
   resolution: "ansi-styles@npm:5.2.0"
   checksum: 10/d7f4e97ce0623aea6bc0d90dcd28881ee04cba06c570b97fd3391bd7a268eedfd9d5e2dd4fdcbdd82b8105df5faf6f24aaedc08eaf3da898e702db5948f63469
@@ -4006,6 +4163,15 @@ __metadata:
   version: 2.0.1
   resolution: "argparse@npm:2.0.1"
   checksum: 10/18640244e641a417ec75a9bd38b0b2b6b95af5199aa241b131d4b2fb206f334d7ecc600bd194861610a5579084978bfcbb02baa399dbe442d56d0ae5e60dbaef
+  languageName: node
+  linkType: hard
+
+"aria-query@npm:5.3.0":
+  version: 5.3.0
+  resolution: "aria-query@npm:5.3.0"
+  dependencies:
+    dequal: "npm:^2.0.3"
+  checksum: 10/c3e1ed127cc6886fea4732e97dd6d3c3938e64180803acfb9df8955517c4943760746ffaf4020ce8f7ffaa7556a3b5f85c3769a1f5ca74a1288e02d042f9ae4e
   languageName: node
   linkType: hard
 
@@ -4779,7 +4945,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.2.3":
+"csstype@npm:^3.2.2, csstype@npm:^3.2.3":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10/ad41baf7e2ffac65ab544d79107bf7cd1a4bb9bab9ac3302f59ab4ba655d5e30942a8ae46e10ba160c6f4ecea464cc95b975ca2fefbdeeacd6ac63f12f99fe1f
@@ -4911,7 +5077,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dequal@npm:^2.0.0":
+"dequal@npm:^2.0.0, dequal@npm:^2.0.3":
   version: 2.0.3
   resolution: "dequal@npm:2.0.3"
   checksum: 10/6ff05a7561f33603df87c45e389c9ac0a95e3c056be3da1a0c4702149e3a7f6fe5ffbb294478687ba51a9e95f3a60e8b6b9005993acd79c292c7d15f71964b6b
@@ -4931,6 +5097,13 @@ __metadata:
   dependencies:
     dequal: "npm:^2.0.0"
   checksum: 10/3cc5f903d02d279d6dc4aa71ab6ed9898b9f4d1f861cc5421ce7357893c21b9520de78afb203c92bd650a6977ad0ca98195453a0707a39958cf5fea3b0a8ddd8
+  languageName: node
+  linkType: hard
+
+"dom-accessibility-api@npm:^0.5.9":
+  version: 0.5.16
+  resolution: "dom-accessibility-api@npm:0.5.16"
+  checksum: 10/377b4a7f9eae0a5d72e1068c369c99e0e4ca17fdfd5219f3abd32a73a590749a267475a59d7b03a891f9b673c27429133a818c44b2e47e32fec024b34274e2ca
   languageName: node
   linkType: hard
 
@@ -7301,6 +7474,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lz-string@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "lz-string@npm:1.5.0"
+  bin:
+    lz-string: bin/bin.js
+  checksum: 10/e86f0280e99a8d8cd4eef24d8601ddae15ce54e43ac9990dfcb79e1e081c255ad24424a30d78d2ad8e51a8ce82a66a930047fed4b4aa38c6f0b392ff9300edfc
+  languageName: node
+  linkType: hard
+
 "magic-string@npm:^0.30.12, magic-string@npm:^0.30.21":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
@@ -9338,6 +9520,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pretty-format@npm:^27.0.2":
+  version: 27.5.1
+  resolution: "pretty-format@npm:27.5.1"
+  dependencies:
+    ansi-regex: "npm:^5.0.1"
+    ansi-styles: "npm:^5.0.0"
+    react-is: "npm:^17.0.1"
+  checksum: 10/248990cbef9e96fb36a3e1ae6b903c551ca4ddd733f8d0912b9cc5141d3d0b3f9f8dfb4d799fb1c6723382c9c2083ffbfa4ad43ff9a0e7535d32d41fd5f01da6
+  languageName: node
+  linkType: hard
+
 "proc-log@npm:^5.0.0":
   version: 5.0.0
   resolution: "proc-log@npm:5.0.0"
@@ -9476,6 +9669,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:^19.3.0":
+  version: 19.3.0
+  resolution: "react-dom@npm:19.3.0"
+  dependencies:
+    scheduler: "npm:^0.28.0"
+  peerDependencies:
+    react: ^19.3.0
+  checksum: 10/fa6c6a3d0cca3f98280017936f818a1f9e474d61d1a64a7b02bfedabbf936234dd3752ba5b7f35efa7f2264c9a073ebace56cb2521e1cbfe7a50444a43ef5690
+  languageName: node
+  linkType: hard
+
 "react-is-18@npm:react-is@^18.3.1":
   version: 18.3.1
   resolution: "react-is@npm:18.3.1"
@@ -9487,6 +9691,20 @@ __metadata:
   version: 19.2.8
   resolution: "react-is@npm:19.2.8"
   checksum: 10/09d053ff36e0ba4d47164baf9eab1c7772791f0371aa92281f0e547e0f6a5a5c8a1eb939aadd1a08b3c565958dd63ee59c746b6ac0d5ccb14ad742ac0314ab15
+  languageName: node
+  linkType: hard
+
+"react-is@npm:^17.0.1":
+  version: 17.0.2
+  resolution: "react-is@npm:17.0.2"
+  checksum: 10/73b36281e58eeb27c9cc6031301b6ae19ecdc9f18ae2d518bdb39b0ac564e65c5779405d623f1df9abf378a13858b79442480244bd579968afc1faf9a2ce5e05
+  languageName: node
+  linkType: hard
+
+"react@npm:^19.3.0":
+  version: 19.3.0
+  resolution: "react@npm:19.3.0"
+  checksum: 10/e98669f09750c41abb1bf020af67cc847e018c91a8c5413d3f40ddd737e3daef6e419bcd1521b113fda73fd667ae82d5f0e9d9e3ff462faeb82059c09e7f04b1
   languageName: node
   linkType: hard
 
@@ -9738,6 +9956,10 @@ __metadata:
     "@eslint/markdown": "npm:^8.0.3"
     "@playwright/test": "npm:1.62.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
+    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/react": "npm:^16.3.3"
+    "@types/react": "npm:^19.3.0"
+    "@types/react-dom": "npm:^19.3.0"
     "@vitest/coverage-v8": "npm:^4.1.10"
     "@vue/test-utils": "npm:^2.4.6"
     eslint: "npm:^10.8.0"
@@ -9747,6 +9969,8 @@ __metadata:
     jsdom: "npm:^30.0.0"
     lerna: "npm:^9.0.7"
     publint: "npm:^0.3.22"
+    react: "npm:^19.3.0"
+    react-dom: "npm:^19.3.0"
     tsdown: "npm:^0.22.14"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.65.0"
@@ -10082,6 +10306,13 @@ __metadata:
   dependencies:
     xmlchars: "npm:^2.2.0"
   checksum: 10/97b50daf6ca3a153e89842efa18a862e446248296622b7473c169c84c823ee8a16e4a43bac2f73f11fc8cb9168c73fbb0d73340f26552bac17970e9052367aa9
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.28.0":
+  version: 0.28.0
+  resolution: "scheduler@npm:0.28.0"
+  checksum: 10/2a936a3729df438bd42e6af7a16a62b83543796209c9d2e637f3d7b198bd5c25c5909478a9da4f66923d290e01997816338cf740587c440448863783bd33d31d
   languageName: node
   linkType: hard
 

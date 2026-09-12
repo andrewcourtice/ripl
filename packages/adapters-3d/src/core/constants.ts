@@ -1,7 +1,7 @@
 import {
     BASE_STATE_KEYS,
     SHAPE_FIELD_KEYS,
-} from '@ripl/vue';
+} from '@ripl/adapters';
 
 /**
  * The base state a 3D shape inherits, minus `zIndex`.
@@ -115,5 +115,84 @@ export const SHAPE_3D_KEYS = {
         'radius',
         'tube',
         'tubularSegments',
+    ],
+} as const satisfies Record<string, readonly string[]>;
+
+/**
+ * The definition fields every 3D shape shares: the 3D base state in place of the 2D one, the plain
+ * geometry and `scale` fields, and the painted set those fields belong to.
+ */
+export const SHAPE_3D_DEFINITION = {
+    /** The inheritable state a 3D shape carries. */
+    baseStateKeys: SHAPE_3D_STATE_KEYS,
+    /** The plain fields a 3D shape writes through an accessor rather than the state bag. */
+    fieldKeys: SHAPE_3D_FIELD_KEYS,
+    /** The fields that change how a 3D shape paints. */
+    paintedKeys: SHAPE_3D_FIELDS,
+} as const;
+
+/**
+ * The definition fields a 3D group shares. Its transform is moved out of the state keys and into
+ * the plain fields, because a group's own state is not parameterized.
+ */
+export const GROUP_3D_DEFINITION = {
+    /** The inheritable state a 3D group carries, with its transform removed. */
+    baseStateKeys: SHAPE_3D_STATE_KEYS.filter(key => !GROUP_3D_FIELD_KEYS.includes(key as never)),
+    /** The transform fields a 3D group writes through directly. */
+    fieldKeys: GROUP_3D_FIELD_KEYS,
+    /** The fields that change how a 3D group paints. */
+    paintedKeys: new Set<string>(GROUP_3D_FIELD_KEYS),
+} as const;
+
+/** Every prop a camera component accepts. */
+export const CAMERA_PROP_KEYS = [
+    'far',
+    'fov',
+    'interactions',
+    'near',
+    'position',
+    'projection',
+    'target',
+    'up',
+] as const;
+
+/** `interactions` is read once, when the camera wires up its listeners, and has no setter. */
+export const CAMERA_SYNC_KEYS = CAMERA_PROP_KEYS.filter(key => key !== 'interactions');
+
+/** The props every light accepts, whatever its type. */
+export const LIGHT_KEYS = [
+    'color',
+    'enabled',
+    'intensity',
+] as const;
+
+/** The options specific to each light type, on top of {@link LIGHT_KEYS}. */
+export const LIGHT_OPTION_KEYS = {
+    /** The options specific to an ambient light. */
+    ambient: [],
+    /** The options specific to a directional light. */
+    directional: [
+        'direction',
+        'space',
+    ],
+    /** The options specific to a hemisphere light. */
+    hemisphere: [
+        'groundColor',
+    ],
+    /** The options specific to a point light. */
+    point: [
+        'decay',
+        'distance',
+        'position',
+    ],
+    /** The options specific to a spot light. */
+    spot: [
+        'angle',
+        'decay',
+        'direction',
+        'distance',
+        'penumbra',
+        'position',
+        'space',
     ],
 } as const satisfies Record<string, readonly string[]>;

@@ -28,6 +28,11 @@ import type {
 } from '@ripl/3d';
 
 import {
+    LIGHT_KEYS,
+    LIGHT_OPTION_KEYS,
+} from '@ripl/adapters-3d';
+
+import {
     ANY_PROP,
     BOOLEAN_PROP,
     createProps,
@@ -48,13 +53,6 @@ import {
     onUnmounted,
     watch,
 } from 'vue';
-
-/** Props every light accepts. */
-const LIGHT_KEYS = [
-    'color',
-    'enabled',
-    'intensity',
-];
 
 /** Describes one light type to wrap as a component. */
 interface RiplLightDefinition {
@@ -119,49 +117,34 @@ function defineRiplLight(definition: RiplLightDefinition) {
  */
 export const RiplAmbientLight = defineRiplLight({
     name: 'RiplAmbientLight',
-    optionKeys: [],
+    optionKeys: LIGHT_OPTION_KEYS.ambient,
     create: options => createAmbientLight(options),
 }) as unknown as RiplComponent<RiplLightProps, AmbientLight>;
 
 /** Lights surfaces from above with one colour and from below with another. */
 export const RiplHemisphereLight = defineRiplLight({
     name: 'RiplHemisphereLight',
-    optionKeys: ['groundColor'],
+    optionKeys: LIGHT_OPTION_KEYS.hemisphere,
     create: options => createHemisphereLight(options),
 }) as unknown as RiplComponent<RiplHemisphereLightProps, HemisphereLight>;
 
 /** Lights every surface from one direction, as a distant source does. */
 export const RiplDirectionalLight = defineRiplLight({
     name: 'RiplDirectionalLight',
-    optionKeys: [
-        'direction',
-        'space',
-    ],
+    optionKeys: LIGHT_OPTION_KEYS.directional,
     create: options => createDirectionalLight(options),
 }) as unknown as RiplComponent<RiplDirectionalLightProps, DirectionalLight>;
 
 /** Lights outwards from a point in space, falling off with distance. */
 export const RiplPointLight = defineRiplLight({
     name: 'RiplPointLight',
-    optionKeys: [
-        'decay',
-        'distance',
-        'position',
-    ],
+    optionKeys: LIGHT_OPTION_KEYS.point,
     create: options => createPointLight(options),
 }) as unknown as RiplComponent<RiplPointLightProps, PointLight>;
 
 /** Lights a cone from a point in space, with a soft or hard edge. */
 export const RiplSpotLight = defineRiplLight({
     name: 'RiplSpotLight',
-    optionKeys: [
-        'angle',
-        'decay',
-        'direction',
-        'distance',
-        'penumbra',
-        'position',
-        'space',
-    ],
+    optionKeys: LIGHT_OPTION_KEYS.spot,
     create: options => createSpotLight(options),
 }) as unknown as RiplComponent<RiplSpotLightProps, SpotLight>;

@@ -36,9 +36,15 @@
             "@ripl/terminal": ["./packages/terminal/src/index.ts"],
             "@ripl/node": ["./packages/node/src/index.ts"],
             "@ripl/test-utils": ["./packages/test-utils/src/index.ts"],
+            "@ripl/adapters": ["./packages/adapters/src/index.ts"],
+            "@ripl/adapters-3d": ["./packages/adapters-3d/src/index.ts"],
+            "@ripl/adapters-charts": ["./packages/adapters-charts/src/index.ts"],
             "@ripl/vue": ["./adapters/vue/src/index.ts"],
             "@ripl/vue-3d": ["./adapters/vue-3d/src/index.ts"],
             "@ripl/vue-charts": ["./adapters/vue-charts/src/index.ts"],
+            "@ripl/react": ["./adapters/react/src/index.ts"],
+            "@ripl/react-3d": ["./adapters/react-3d/src/index.ts"],
+            "@ripl/react-charts": ["./adapters/react-charts/src/index.ts"],
         }
     },
     "files": [

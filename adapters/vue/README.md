@@ -159,9 +159,11 @@ A template ref on any of the components resolves to the Ripl object it wraps, ty
 | `RIPL_CONTEXT`, `RIPL_SCENE`, `RIPL_RENDERER`, `RIPL_PARENT`, `RIPL_ELEMENT`, `RIPL_TREE`, `RIPL_TRANSITION` | The injection keys the components provide. |
 | `readBoundProps`, `collectChangedProps`, `partitionProps`, `applyState`, `applyFields` | The prop pipeline. |
 
+The framework-agnostic half of that toolkit lives in [`@ripl/adapters`](../../packages/adapters), shared with the React adapters, and is re-exported here so one import covers a whole adapter.
+
 Two contracts a sibling adapter depends on:
 
-- **This package owns the `@ripl/web` import**, and with it the platform factory: `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState` and `measureText`. A sibling adapter inherits that through its dependency on `@ripl/vue` and should not add an `@ripl/web` import of its own, because a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away, whereas the value imports here cannot.
+- **`@ripl/adapters` owns the `@ripl/web` import**, and with it the platform factory: `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState` and `measureText`. A sibling adapter inherits that through its dependency on `@ripl/vue` and should not add an `@ripl/web` import of its own, because a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away, whereas the value imports here cannot.
 - **The injection keys are registry symbols** (`Symbol.for`), so two copies of this module, which the standalone IIFE builds produce, still resolve to the same key.
 
 Plugins compose in any order: `createRipl3D()` and `createRiplCharts()` install the core components themselves, and registering a name twice is a no-op.
