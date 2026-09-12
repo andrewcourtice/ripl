@@ -88,6 +88,15 @@ describe('Color', () => {
             expect(parseColor('#ff')).toBeUndefined();
         });
 
+        // Without the `#`, any run of hex digits is a colour: an element's text `content` of `136`
+        // parsed as `#136` and animated as a colour rather than as text.
+        test('Should reject a HEX color missing its leading hash', () => {
+            expect(parseColor('136')).toBeUndefined();
+            expect(parseColor('1234')).toBeUndefined();
+            expect(parseColor('112233')).toBeUndefined();
+            expect(parseColor('ff0000cc')).toBeUndefined();
+        });
+
         test('Should parse an RGB color to RGBA', () => {
             const [
                 red,
