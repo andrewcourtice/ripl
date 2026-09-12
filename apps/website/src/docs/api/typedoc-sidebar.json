@@ -1375,6 +1375,16 @@
             "link": "/docs/api/@ripl/adapters-3d/variables/SHAPE_3D_STATE_KEYS.md"
           }
         ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "collectChangedCameraProps",
+            "link": "/docs/api/@ripl/adapters-3d/functions/collectChangedCameraProps.md"
+          }
+        ]
       }
     ]
   },

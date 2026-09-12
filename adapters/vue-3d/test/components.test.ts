@@ -350,6 +350,39 @@ describe('@ripl/vue-3d', () => {
             wrapper.unmount();
         });
 
+        // A vector rebuilt by a re-render is a new array, which would otherwise overwrite the pose
+        // the pointer interactions gave the camera.
+        test('Should leave an interactively moved camera alone when its props are rebuilt', async () => {
+            const camera = shallowRef<Camera>();
+            const tick = ref(0);
+
+            const {
+                wrapper,
+            } = mountScene(() => [
+                h(RiplCamera, {
+                    ref: camera,
+                    position: [0, 2, 5],
+                    target: [0, 0, 0],
+                }),
+                h(RiplCube, {
+                    id: 'cube',
+                    size: 1,
+                    x: tick.value,
+                }),
+            ]);
+
+            camera.value!.orbit(0.4, 0.2);
+
+            const orbited = camera.value!.position;
+
+            tick.value += 1;
+            await nextTick();
+
+            expect(camera.value?.position).toEqual(orbited);
+
+            wrapper.unmount();
+        });
+
         test('Should dispose the camera when it unmounts', () => {
             const camera = shallowRef<Camera>();
             const visible = ref(true);

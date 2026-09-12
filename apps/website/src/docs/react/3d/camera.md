@@ -36,7 +36,7 @@ description: "Framing a 3D scene with <RiplCamera>, enabling orbit, pan and zoom
 
 `interactions` is read once, when the camera wires up its listeners, so changing it later has no effect. Bind it to a constant.
 
-A camera belongs to the context rather than the scene graph, so it takes no part in a `<RiplTransition>`. Its props are written straight through and coalesced onto the next microtask, which is why a vector prop rebuilt on every render costs nothing extra.
+A camera belongs to the context rather than the scene graph, so it takes no part in a `<RiplTransition>`. Its props are written straight through, and only when they change: a rebuilt vector holding the same numbers is not a change. That leaves the pointer free to orbit, pan and zoom between prop changes without the next render snapping the camera back. To move it yourself, reach for the camera through a ref or `useRiplCamera()`.
 
 ## Interactions in detail
 

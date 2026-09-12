@@ -321,6 +321,33 @@ describe('@ripl/react-3d', () => {
             view.unmount();
         });
 
+        // The demo re-renders every frame off a tick handler; rewriting the declared vectors each
+        // time would undo the orbit the pointer just applied.
+        test('Should leave an interactively moved camera alone when its props are rebuilt', () => {
+            const camera = createRef<Camera>();
+
+            const build = () => createElement(RiplCamera, {
+                ref: camera,
+                position: [0, 2, 5],
+                target: [0, 0, 0],
+            });
+
+            const {
+                view,
+                update,
+            } = mountScene(build());
+
+            camera.current!.orbit(0.4, 0.2);
+
+            const orbited = camera.current!.position;
+
+            update(build());
+
+            expect(camera.current?.position).toEqual(orbited);
+
+            view.unmount();
+        });
+
         test('Should dispose the camera when it unmounts', () => {
             const camera = createRef<Camera>();
 

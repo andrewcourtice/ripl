@@ -26,7 +26,7 @@ import type {
 
 import {
     CAMERA_PROP_KEYS,
-    CAMERA_SYNC_KEYS,
+    collectChangedCameraProps,
 } from '@ripl/adapters-3d';
 
 import {
@@ -38,6 +38,7 @@ import {
     useContext,
     useImperativeHandle,
     useLayoutEffect,
+    useRef,
 } from 'react';
 
 /**
@@ -55,13 +56,19 @@ export const RiplCamera = forwardRef<Camera, RiplCameraProps>((props, ref) => {
     const slot = useContext(RIPL_CAMERA_SLOT);
     const raw = props as RiplWritable;
 
+    const applied = useRef<RiplWritable>({});
+
     const camera = useRiplResource<Camera>(() => {
         if (!context) {
             console.warn('[@ripl/react-3d] <RiplCamera> needs a <RiplContext3D> ancestor.');
             return undefined;
         }
 
-        const created = createCamera(context, readBoundProps(raw, CAMERA_PROP_KEYS) as CameraOptions);
+        const options = readBoundProps(raw, CAMERA_PROP_KEYS);
+        const created = createCamera(context, options as CameraOptions);
+
+        applied.current = {};
+        collectChangedCameraProps(options, applied.current);
 
         slot?.(created);
 
@@ -76,11 +83,13 @@ export const RiplCamera = forwardRef<Camera, RiplCameraProps>((props, ref) => {
 
     useImperativeHandle(ref, () => camera as Camera, [camera]);
 
-    // The camera coalesces writes and flushes them on a microtask, so assigning the whole bound set
-    // is no more work than assigning the one property that changed.
+    // Only what actually changed: pointer interactions move the camera, and rewriting a vector
+    // rebuilt by a render would snap it back.
     useLayoutEffect(() => {
-        if (camera) {
-            Object.assign(camera as unknown as RiplWritable, readBoundProps(raw, CAMERA_SYNC_KEYS));
+        const changed = camera && collectChangedCameraProps(raw, applied.current);
+
+        if (changed) {
+            Object.assign(camera as unknown as RiplWritable, changed);
         }
     });
 

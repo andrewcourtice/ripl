@@ -19,6 +19,7 @@ import type {
 import {
     CAMERA_PROP_KEYS,
     CAMERA_SYNC_KEYS,
+    collectChangedCameraProps,
 } from '@ripl/adapters-3d';
 
 import {
@@ -68,9 +69,13 @@ export const RiplCamera = defineComponent({
         const context = inject(RIPL_CONTEXT_3D, undefined);
         const camera = inject(RIPL_CAMERA, undefined) ?? shallowRef<Camera>();
         const raw = props as RiplWritable;
+        const applied: RiplWritable = {};
 
         if (context?.value) {
-            camera.value = markRaw(createCamera(context.value, readBoundProps(raw, CAMERA_PROP_KEYS) as CameraOptions));
+            const options = readBoundProps(raw, CAMERA_PROP_KEYS);
+
+            camera.value = markRaw(createCamera(context.value, options as CameraOptions));
+            collectChangedCameraProps(options, applied);
         } else {
             console.warn('[@ripl/vue-3d] <ripl-camera> needs a <ripl-context-3d> ancestor.');
         }
@@ -79,13 +84,14 @@ export const RiplCamera = defineComponent({
             useExposedInstance(camera.value);
         }
 
-        // The camera coalesces writes and flushes them on a microtask, so assigning the whole bound
-        // set is no more work than assigning the one property that changed.
+        // Only what actually changed: pointer interactions move the camera, and rewriting a vector
+        // rebuilt by a render would snap it back.
         watch(() => readBoundProps(raw, CAMERA_SYNC_KEYS), next => {
             const active = camera.value as unknown as RiplWritable | undefined;
+            const changed = active && collectChangedCameraProps(next, applied);
 
-            if (active) {
-                Object.assign(active, next);
+            if (changed) {
+                Object.assign(active, changed);
             }
         });
 
