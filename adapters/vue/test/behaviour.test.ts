@@ -31,6 +31,7 @@ import {
     RiplRenderer,
     RiplScene,
     RiplTransition,
+    useRiplRenderer,
     useRiplScene,
 } from '@ripl/vue';
 
@@ -782,6 +783,120 @@ describe('@ripl/vue behaviour', () => {
 
             // A protected field on the element, so a later change must never reach the write path.
             expect(circle.value?.$state.interpolators).toBeUndefined();
+
+            wrapper.unmount();
+        });
+
+    });
+
+
+    describe('Nested contexts', () => {
+
+        test('Should not resolve the enclosing scene inside a nested context', () => {
+            const captured: {
+                outer?: Scene;
+                inner?: Scene;
+            } = {};
+
+            const Outer = defineComponent({
+                setup() {
+                    captured.outer = useRiplScene().value;
+                    return () => null;
+                },
+            });
+
+            const Inner = defineComponent({
+                setup() {
+                    captured.inner = useRiplScene().value;
+                    return () => null;
+                },
+            });
+
+            const Harness = defineComponent({
+                setup() {
+                    return () => h(RiplContext, null, {
+                        default: () => h(RiplScene, null, {
+                            default: () => [
+                                h(Outer),
+                                h(RiplContext, null, {
+                                    default: () => h(Inner),
+                                }),
+                            ],
+                        }),
+                    });
+                },
+            });
+
+            const wrapper = mount(Harness);
+
+            expect(captured.outer).toBeDefined();
+            expect(captured.inner).toBeUndefined();
+
+            wrapper.unmount();
+        });
+
+        test('Should not bind a renderer in a nested context to the enclosing scene', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const captured: { renderer?: Renderer } = {};
+
+            const Probe = defineComponent({
+                setup() {
+                    captured.renderer = useRiplRenderer().value;
+                    return () => null;
+                },
+            });
+
+            const Harness = defineComponent({
+                setup() {
+                    return () => h(RiplContext, null, {
+                        default: () => h(RiplScene, null, {
+                            default: () => h(RiplContext, null, {
+                                default: () => h(RiplRenderer, null, {
+                                    default: () => h(Probe),
+                                }),
+                            }),
+                        }),
+                    });
+                },
+            });
+
+            const wrapper = mount(Harness);
+
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('needs a <ripl-scene> ancestor'));
+            expect(captured.renderer).toBeUndefined();
+
+            wrapper.unmount();
+        });
+
+        // The barrier must be an empty ref, not the tree's own: `tree.scene` is already populated by
+        // the time a sibling renderer runs, so reading it would bind to a scene it is not inside.
+        test('Should still treat a scene as out of reach from its own sibling', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const captured: { scene?: Scene } = {};
+
+            const Probe = defineComponent({
+                setup() {
+                    captured.scene = useRiplScene().value;
+                    return () => null;
+                },
+            });
+
+            const Harness = defineComponent({
+                setup() {
+                    return () => h(RiplContext, null, {
+                        default: () => [
+                            h(RiplScene),
+                            h(Probe),
+                            h(RiplRenderer),
+                        ],
+                    });
+                },
+            });
+
+            const wrapper = mount(Harness);
+
+            expect(captured.scene).toBeUndefined();
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('needs a <ripl-scene> ancestor'));
 
             wrapper.unmount();
         });

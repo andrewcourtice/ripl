@@ -10,6 +10,8 @@ import {
 import {
     RIPL_CONTEXT,
     RIPL_PARENT,
+    RIPL_RENDERER,
+    RIPL_SCENE,
     RIPL_TREE,
 } from '../core/injection';
 
@@ -42,6 +44,8 @@ import {
 
 import type {
     Context,
+    Renderer,
+    Scene,
 } from '@ripl/web';
 
 import {
@@ -143,6 +147,10 @@ export const RiplContext = defineComponent({
         provide(RIPL_TREE, tree);
         provide(RIPL_CONTEXT, tree.context);
         provide(RIPL_PARENT, shallowRef(tree.rootGroup));
+
+        // Shadows an enclosing context's scene and renderer, which a nested context must not inherit.
+        provide(RIPL_SCENE, shallowRef<Scene>());
+        provide(RIPL_RENDERER, shallowRef<Renderer>());
 
         if (tree.context.value) {
             useExposedInstance(tree.context.value);

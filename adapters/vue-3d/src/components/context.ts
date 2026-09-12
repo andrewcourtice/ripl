@@ -30,6 +30,8 @@ import {
     NUMBER_PROP,
     RIPL_CONTEXT,
     RIPL_PARENT,
+    RIPL_RENDERER,
+    RIPL_SCENE,
     RIPL_TREE,
     useExposedInstance,
     useForwardedEvents,
@@ -38,6 +40,11 @@ import {
 import type {
     RiplComponent,
 } from '@ripl/vue';
+
+import type {
+    Renderer,
+    Scene,
+} from '@ripl/core';
 
 import type {
     Disposable,
@@ -156,6 +163,10 @@ export const RiplContext3D = defineComponent({
         // decide who can reach it; the context holds the ref and the camera component fills it in.
         provide(RIPL_CAMERA, shallowRef<Camera>());
         provide(RIPL_PARENT, shallowRef(tree.rootGroup));
+
+        // Shadows an enclosing context's scene and renderer, which a nested context must not inherit.
+        provide(RIPL_SCENE, shallowRef<Scene>());
+        provide(RIPL_RENDERER, shallowRef<Renderer>());
 
         if (context.value) {
             useExposedInstance(context.value);
