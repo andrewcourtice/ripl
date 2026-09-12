@@ -292,6 +292,18 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
     private _ribbonGroups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a chord diagram can emit. */
+    public get $events(): (keyof ChordChartEventMap)[] {
+        return [
+            'linkclick',
+            'linkenter',
+            'linkleave',
+            'segmentclick',
+            'segmententer',
+            'segmentleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);
 

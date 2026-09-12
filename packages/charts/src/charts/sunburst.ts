@@ -196,6 +196,15 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a sunburst chart can emit. */
+    public get $events(): (keyof SunburstChartEventMap<TData>)[] {
+        return [
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: SunburstChartOptions<TData>) {
         super(target, options);
 

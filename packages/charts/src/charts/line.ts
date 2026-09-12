@@ -159,6 +159,15 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
+    /** The event types a line chart can emit. */
+    public get $events(): (keyof LineChartEventMap)[] {
+        return [
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
 

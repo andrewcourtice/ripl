@@ -398,6 +398,18 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
     private _linkGroups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a sankey diagram can emit. */
+    public get $events(): (keyof SankeyChartEventMap<TData>)[] {
+        return [
+            'linkclick',
+            'linkenter',
+            'linkleave',
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: SankeyChartOptions<TData>) {
         super(target, options);
 

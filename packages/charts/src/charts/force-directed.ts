@@ -206,6 +206,18 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
     private _positions = new Map<string, { x: number;
         y: number; }>();
 
+    /** The event types a force-directed graph can emit. */
+    public get $events(): (keyof ForceDirectedChartEventMap<TData>)[] {
+        return [
+            'linkclick',
+            'linkenter',
+            'linkleave',
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: ForceDirectedChartOptions<TData>) {
         super(target, options);
 

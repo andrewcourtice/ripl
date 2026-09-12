@@ -164,6 +164,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
     private _series = new BarSeriesRenderer<TData>();
 
+    /** The event types a bar chart can emit. */
+    public get $events(): (keyof BarChartEventMap)[] {
+        return [
+            'barclick',
+            'barenter',
+            'barleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 

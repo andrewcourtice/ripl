@@ -524,7 +524,7 @@ export default tseslint.config(
     // source (see AGENTS.md → Control Flow). The docs site under `apps/website/` is exempt.
     {
         name: 'ripl/no-switch',
-        files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        files: ['packages/*/src/**/*.ts', 'adapters/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
         ignores: ['apps/website/**'],
         rules: {
             'no-restricted-syntax': ['error', {

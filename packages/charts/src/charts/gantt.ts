@@ -171,6 +171,15 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
     private _tooltip?: Tooltip;
     private _grid?: Grid;
 
+    /** The event types a gantt chart can emit. */
+    public get $events(): (keyof GanttChartEventMap)[] {
+        return [
+            'taskclick',
+            'taskenter',
+            'taskleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
         super(target, options);
 

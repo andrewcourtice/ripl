@@ -174,6 +174,15 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     private _tooltip?: Tooltip;
     private _colorLegend?: ColorLegend;
 
+    /** The event types a heatmap can emit. */
+    public get $events(): (keyof HeatmapChartEventMap)[] {
+        return [
+            'cellclick',
+            'cellenter',
+            'cellleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
         super(target, options);
 

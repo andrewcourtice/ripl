@@ -115,6 +115,15 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
     private _bars: Rect[] = [];
 
+    /** The event types a histogram can emit. */
+    public get $events(): (keyof HistogramChartEventMap)[] {
+        return [
+            'binclick',
+            'binenter',
+            'binleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: HistogramChartOptions<TData>) {
         super(target, options);
 

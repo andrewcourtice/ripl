@@ -75,6 +75,9 @@ The Canvas API is low-level: it has no concept of objects, hierarchy, or events.
 | [`@ripl/devtools`](@ripl/devtools/index.md) | Page-side devtools bridge that streams the scene graph to the browser extension for live inspection |
 | [`@ripl/dom`](@ripl/dom/index.md) | DOM utilities used internally by browser contexts |
 | [`@ripl/utilities`](@ripl/utilities/index.md) | Shared typed utility functions: type guards, collection helpers, DOM helpers |
+| [`@ripl/vue`](@ripl/vue/index.md) | Declarative Vue 3 components and compositions over the core 2D surface |
+| [`@ripl/vue-3d`](@ripl/vue-3d/index.md) | Vue components for the 3D context, shapes, camera and lights |
+| [`@ripl/vue-charts`](@ripl/vue-charts/index.md) | Vue components for all 25 chart types |
 
 The project is structured as a Yarn 4 monorepo:
 

@@ -242,6 +242,18 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
     private _yScale!: Scale;
     private _xCenter!: Scale<string>;
 
+    /** The event types a trend chart can emit. */
+    public get $events(): (keyof TrendChartEventMap)[] {
+        return [
+            'barclick',
+            'barenter',
+            'barleave',
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 

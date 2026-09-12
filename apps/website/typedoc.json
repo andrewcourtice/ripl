@@ -11,7 +11,10 @@
         "../../packages/webgpu",
         "../../packages/terminal",
         "../../packages/dom",
-        "../../packages/utilities"
+        "../../packages/utilities",
+        "../../adapters/vue",
+        "../../adapters/vue-3d",
+        "../../adapters/vue-charts"
     ],
     "out": "./src/docs/api",
     "plugin": [

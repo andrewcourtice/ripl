@@ -137,6 +137,15 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
     private _groups: Group[] = [];
 
+    /** The event types a box plot can emit. */
+    public get $events(): (keyof BoxPlotChartEventMap)[] {
+        return [
+            'boxclick',
+            'boxenter',
+            'boxleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: BoxPlotChartOptions<TData>) {
         super(target, options);
 

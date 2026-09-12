@@ -178,6 +178,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
     private _yScales: Scale[] = [];
     private _sizeScale!: Scale;
 
+    /** The event types a scatter chart can emit. */
+    public get $events(): (keyof ScatterChartEventMap)[] {
+        return [
+            'markerclick',
+            'markerenter',
+            'markerleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
         super(target, options);
 

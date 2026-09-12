@@ -149,6 +149,15 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a radial bar chart can emit. */
+    public get $events(): (keyof RadialBarChartEventMap)[] {
+        return [
+            'barclick',
+            'barenter',
+            'barleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: RadialBarChartOptions<TData>) {
         super(target, options);
 

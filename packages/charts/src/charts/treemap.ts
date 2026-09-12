@@ -209,6 +209,15 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
+    /** The event types a treemap can emit. */
+    public get $events(): (keyof TreemapChartEventMap)[] {
+        return [
+            'nodeclick',
+            'nodeenter',
+            'nodeleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
         super(target, options);
 

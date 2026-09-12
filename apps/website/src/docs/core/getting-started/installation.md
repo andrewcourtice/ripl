@@ -24,6 +24,9 @@ Ripl is split into focused packages so you only ship what you need. Drawing shap
 | `@ripl/dom` | DOM utilities used internally by browser contexts |
 | `@ripl/utilities` | Shared typed utility functions used across all packages |
 
+> [!TIP]
+> Working in Vue? `@ripl/vue` wraps all of the above as components, with `@ripl/vue-3d` and `@ripl/vue-charts` alongside it. See the [Vue docs](/docs/vue/). A React adapter is on the way.
+
 ### What to Install
 
 Most projects only need one or two packages. Here's a quick guide:

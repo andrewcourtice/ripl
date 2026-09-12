@@ -160,6 +160,15 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
     private _xScale!: Scale<string>;
     private _volumeScale!: Scale;
 
+    /** The event types a stock chart can emit. */
+    public get $events(): (keyof StockChartEventMap)[] {
+        return [
+            'candleclick',
+            'candleenter',
+            'candleleave',
+        ];
+    }
+
     constructor(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
         super(target, options);
 
