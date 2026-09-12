@@ -22,24 +22,74 @@ Click a bar to select it, hover to highlight, and use the controls to drive the 
     <ripl-context @ready="onReady" @resize="syncSize">
         <ripl-scene>
             <ripl-renderer>
-                <template v-if="plot.width > 0">
+                <template v-if="layout">
+                    <ripl-transition :update="axisPhase">
+                        <ripl-line
+                            v-for="tick in layout.ticks"
+                            :key="`grid-${tick.value}`"
+                            :x1="layout.plot.x"
+                            :y1="tick.y"
+                            :x2="layout.plot.x + layout.plot.width"
+                            :y2="tick.y"
+                            :stroke="tick.value === 0 ? AXIS_COLOR : GRID_COLOR"
+                            :line-width="1"
+                        />
+                        <ripl-text
+                            v-for="tick in layout.ticks"
+                            :key="`axis-${tick.value}`"
+                            :x="layout.plot.x - 8"
+                            :y="tick.y"
+                            :content="tick.label"
+                            :fill="TEXT_COLOR"
+                            text-align="right"
+                            text-baseline="middle"
+                        />
+                    </ripl-transition>
+
                     <ripl-transition
                         :enter="barEnter"
                         :update="barUpdate"
                         :leave="barLeave"
                     >
                         <ripl-rect
-                            v-for="bar in bars"
+                            v-for="bar in layout.bars"
                             :key="bar.key"
                             :x="bar.x"
                             :y="bar.y"
                             :width="bar.width"
                             :height="bar.height"
-                            :fill="bar.fill"
+                            :fill="fillFor(bar.key)"
                             :border-radius="[4, 4, 0, 0]"
                             @click="toggle(bar.key)"
                             @mouseenter="hovered = bar.key"
                             @mouseleave="hovered = undefined"
+                        />
+                    </ripl-transition>
+
+                    <ripl-transition
+                        :enter="labelEnter"
+                        :update="barUpdate"
+                        :leave="labelLeave"
+                    >
+                        <ripl-text
+                            v-for="bar in layout.bars"
+                            :key="`value-${bar.key}`"
+                            :x="bar.x + bar.width / 2"
+                            :y="bar.y - 8"
+                            :content="bar.valueLabel"
+                            :fill="TEXT_COLOR"
+                            text-align="center"
+                            text-baseline="bottom"
+                        />
+                        <ripl-text
+                            v-for="bar in layout.bars"
+                            :key="`month-${bar.key}`"
+                            :x="bar.x + bar.width / 2"
+                            :y="layout.plot.y + layout.plot.height + 10"
+                            :content="bar.key"
+                            :fill="TEXT_COLOR"
+                            text-align="center"
+                            text-baseline="top"
                         />
                     </ripl-transition>
                 </template>
@@ -66,14 +116,37 @@ import type {
     Context,
 } from '@ripl/web';
 
+const MARGIN = {
+    top: 28,
+    right: 16,
+    bottom: 34,
+    left: 44,
+};
+const TICK_COUNT = 5;
+
+const BAR_COLOR = '#3a86ff';
+const HOVER_COLOR = '#5c9cff';
+const SELECTED_COLOR = '#ff006e';
+const TEXT_COLOR = '#8b93a1';
+const GRID_COLOR = 'rgba(140, 150, 165, 0.35)';
+const AXIS_COLOR = 'rgba(140, 150, 165, 0.55)';
+
+const currency = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    currencyDisplay: 'narrowSymbol',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+});
+
 const data = ref([
     {
         month: 'Jan',
-        value: 82,
+        value: 8200,
     },
     {
         month: 'Feb',
-        value: 140,
+        value: 14000,
     },
 ]);
 
@@ -96,42 +169,67 @@ function onReady(value: Context) {
     syncSize();
 }
 
-const plot = computed(() => ({
-    x: 44,
-    y: 28,
-    width: Math.max(0, size.width - 60),
-    height: Math.max(0, size.height - 62),
-}));
+const layout = computed(() => {
+    const plot = {
+        x: MARGIN.left,
+        y: MARGIN.top,
+        width: Math.max(0, size.width - MARGIN.left - MARGIN.right),
+        height: Math.max(0, size.height - MARGIN.top - MARGIN.bottom),
+    };
 
-const valueScale = computed(() => scaleContinuous(
-    [0, Math.max(...data.value.map(item => item.value))],
-    [plot.value.y + plot.value.height, plot.value.y],
-    { padToTicks: 5 }
-));
-
-const categoryScale = computed(() => scaleBand(
-    data.value.map(item => item.month),
-    [plot.value.x, plot.value.x + plot.value.width],
-    {
-        innerPadding: 0.28,
-        outerPadding: 0.14,
+    if (plot.width <= 0 || plot.height <= 0) {
+        return undefined;
     }
-));
 
-const baseline = computed(() => valueScale.value(0));
+    const valueScale = scaleContinuous(
+        [0, Math.max(...data.value.map(item => item.value))],
+        [plot.y + plot.height, plot.y],
+        { padToTicks: TICK_COUNT }
+    );
 
-const bars = computed(() => data.value.map(item => ({
-    key: item.month,
-    x: categoryScale.value(item.month),
-    width: categoryScale.value.bandwidth,
-    y: valueScale.value(item.value),
-    height: baseline.value - valueScale.value(item.value),
-    fill: item.month === selected.value ? '#ff006e' : '#3a86ff',
-})));
+    const categoryScale = scaleBand(
+        data.value.map(item => item.month),
+        [plot.x, plot.x + plot.width],
+        {
+            innerPadding: 0.28,
+            outerPadding: 0.14,
+        }
+    );
+
+    const baseline = valueScale(0);
+
+    return {
+        plot,
+        baseline,
+        ticks: valueScale.ticks(TICK_COUNT).map(value => ({
+            value,
+            y: valueScale(value),
+            label: currency.format(value),
+        })),
+        bars: data.value.map(item => ({
+            key: item.month,
+            x: categoryScale(item.month),
+            width: categoryScale.bandwidth,
+            y: valueScale(item.value),
+            height: Math.max(0, baseline - valueScale(item.value)),
+            valueLabel: currency.format(item.value),
+        })),
+    };
+});
+
+const baseline = computed(() => layout.value?.baseline ?? 0);
+
+function fillFor(month: string) {
+    if (month === selected.value) {
+        return SELECTED_COLOR;
+    }
+
+    return month === hovered.value ? HOVER_COLOR : BAR_COLOR;
+}
 
 const barEnter = computed(() => (element, index, length) => ({
-    duration: 700,
-    delay: (index / length) * 400,
+    duration: 1000,
+    delay: (index / length) * 1000,
     ease: easeOutCubic,
     state: {
         y: baseline.value,
@@ -140,12 +238,12 @@ const barEnter = computed(() => (element, index, length) => ({
 }));
 
 const barUpdate = {
-    duration: 400,
+    duration: 1000,
     ease: easeOutCubic,
 };
 
 const barLeave = computed(() => ({
-    duration: 300,
+    duration: 450,
     ease: easeOutCubic,
     state: {
         y: baseline.value,
@@ -153,6 +251,27 @@ const barLeave = computed(() => ({
         opacity: 0,
     },
 }));
+
+const labelEnter = {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        opacity: 0,
+    },
+};
+
+const labelLeave = {
+    duration: 450,
+    ease: easeOutCubic,
+    state: {
+        opacity: 0,
+    },
+};
+
+const axisPhase = {
+    duration: 500,
+    ease: easeOutCubic,
+};
 
 function toggle(month: string) {
     selected.value = selected.value === month ? undefined : month;
@@ -208,8 +327,8 @@ Bars grow out of the baseline, which is the enter phase's `state`: the state an 
 
 ```ts
 const barEnter = computed(() => (element, index, length) => ({
-    duration: 700,
-    delay: (index / length) * 400,
+    duration: 1000,
+    delay: (index / length) * 1000,
     ease: easeOutCubic,
     state: {
         y: baseline.value,
@@ -233,9 +352,9 @@ Selection and hover are ordinary Vue listeners on the rect:
 ```vue
 <template>
     <ripl-rect
-        v-for="bar in bars"
+        v-for="bar in layout.bars"
         :key="bar.key"
-        :fill="bar.fill"
+        :fill="fillFor(bar.key)"
         @click="toggle(bar.key)"
         @mouseenter="hovered = bar.key"
         @mouseleave="hovered = undefined"
@@ -243,6 +362,6 @@ Selection and hover are ordinary Vue listeners on the rect:
 </template>
 ```
 
-Both feed back into `bar.fill`, so the highlight is the same reactive prop the rest of the chart uses rather than a separate code path, and it tweens through the `update` phase without any extra work.
+Both feed back into the bar's `fill`, so the highlight tweens through the `update` phase like any other change.
 
 Only the events you bind are subscribed, which matters here: binding a pointer listener is what makes an element a hit-test target. The text labels bind nothing, so they never steal a click from the bar behind them. See [Events](/docs/vue/essentials/events) for the full list and their payloads.

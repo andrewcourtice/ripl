@@ -9,22 +9,22 @@
                 >
                     <ripl-scene>
                         <ripl-renderer>
-                            <template v-if="plot.width > 0">
+                            <template v-if="layout">
                                 <ripl-transition :update="axisPhase">
                                     <ripl-line
-                                        v-for="tick in axisTicks"
+                                        v-for="tick in layout.ticks"
                                         :key="`grid-${tick.value}`"
-                                        :x1="plot.x"
+                                        :x1="layout.plot.x"
                                         :y1="tick.y"
-                                        :x2="plot.x + plot.width"
+                                        :x2="layout.plot.x + layout.plot.width"
                                         :y2="tick.y"
                                         :stroke="tick.value === 0 ? AXIS_COLOR : GRID_COLOR"
                                         :line-width="1"
                                     />
                                     <ripl-text
-                                        v-for="tick in axisTicks"
+                                        v-for="tick in layout.ticks"
                                         :key="`axis-${tick.value}`"
-                                        :x="plot.x - 8"
+                                        :x="layout.plot.x - TICK_LABEL_OFFSET"
                                         :y="tick.y"
                                         :content="tick.label"
                                         :fill="TEXT_COLOR"
@@ -40,13 +40,13 @@
                                     :leave="barLeave"
                                 >
                                     <ripl-rect
-                                        v-for="bar in bars"
+                                        v-for="bar in layout.bars"
                                         :key="bar.key"
                                         :x="bar.x"
                                         :y="bar.y"
                                         :width="bar.width"
                                         :height="bar.height"
-                                        :fill="bar.fill"
+                                        :fill="fillFor(bar.key, hovered, selected)"
                                         :border-radius="BAR_RADIUS"
                                         @click="toggle(bar.key)"
                                         @mouseenter="hovered = bar.key"
@@ -60,10 +60,10 @@
                                     :leave="labelLeave"
                                 >
                                     <ripl-text
-                                        v-for="bar in bars"
+                                        v-for="bar in layout.bars"
                                         :key="`value-${bar.key}`"
                                         :x="bar.x + bar.width / 2"
-                                        :y="bar.y - 8"
+                                        :y="bar.y - VALUE_LABEL_OFFSET"
                                         :content="bar.valueLabel"
                                         :fill="TEXT_COLOR"
                                         :font="VALUE_FONT"
@@ -71,10 +71,10 @@
                                         text-baseline="bottom"
                                     />
                                     <ripl-text
-                                        v-for="bar in bars"
+                                        v-for="bar in layout.bars"
                                         :key="`month-${bar.key}`"
                                         :x="bar.x + bar.width / 2"
-                                        :y="plot.y + plot.height + 10"
+                                        :y="layout.plot.y + layout.plot.height + MONTH_LABEL_OFFSET"
                                         :content="bar.key"
                                         :fill="TEXT_COLOR"
                                         :font="AXIS_FONT"
@@ -91,8 +91,8 @@
         <div class="ripl-example__footer">
             <RiplControlGroup>
                 <RiplButton @click="randomise">Randomise</RiplButton>
-                <RiplButton @click="addMonth">Add month</RiplButton>
-                <RiplButton @click="removeMonth">Remove month</RiplButton>
+                <RiplButton @click="add">Add month</RiplButton>
+                <RiplButton @click="remove">Remove month</RiplButton>
                 <RiplSwitch v-model="animate" label="Animate" />
                 <span class="vue-bar-chart__readout">{{ readout }}</span>
             </RiplControlGroup>
@@ -113,90 +113,35 @@ import RiplControlGroup from './ripl-control-group.vue';
 import RiplSwitch from './ripl-switch.vue';
 
 import {
+    addMonth,
+    AXIS_COLOR,
+    AXIS_DURATION,
+    AXIS_FONT,
+    BAR_RADIUS,
+    createBarLayout,
+    createData,
+    ENTER_DURATION,
+    EXIT_DURATION,
+    fillFor,
+    formatFull,
+    GRID_COLOR,
+    MONTH_LABEL_OFFSET,
+    randomiseData,
+    removeMonth,
+    TEXT_COLOR,
+    TICK_LABEL_OFFSET,
+    UPDATE_DURATION,
+    VALUE_FONT,
+    VALUE_LABEL_OFFSET,
+} from './bar-chart-demo';
+
+import {
     easeOutCubic,
-    scaleBand,
-    scaleContinuous,
-    setColorAlpha,
 } from '@ripl/web';
 
 import type {
     Context,
 } from '@ripl/web';
-
-import {
-    numberFormat,
-    numberMaxOf,
-} from '@ripl/utilities';
-
-const MONTHS = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-];
-
-const MARGIN = {
-    top: 28,
-    right: 16,
-    bottom: 34,
-    left: 44,
-};
-
-const TICK_COUNT = 5;
-const BAR_RADIUS = [4, 4, 0, 0];
-const MIN_BARS = 3;
-const BAR_COLOR = '#3a86ff';
-const SELECTED_COLOR = '#ff006e';
-
-// Mid-tones rather than the `#666` the older demos use: these hold contrast on both the light and
-// the dark page background, which canvas colours do not get from the theme for free.
-const TEXT_COLOR = '#8b93a1';
-const GRID_COLOR = 'rgba(140, 150, 165, 0.35)';
-const AXIS_COLOR = 'rgba(140, 150, 165, 0.55)';
-
-const AXIS_FONT = '11px sans-serif';
-const VALUE_FONT = '600 11px sans-serif';
-
-// `narrowSymbol`, or a non-US reader gets `US$7.4k`: the default currency display is locale-derived.
-const COMPACT_CURRENCY = {
-    style: 'currency',
-    currency: 'USD',
-    currencyDisplay: 'narrowSymbol',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-} as const;
-
-const FULL_CURRENCY = {
-    style: 'currency',
-    currency: 'USD',
-    currencyDisplay: 'narrowSymbol',
-    maximumFractionDigits: 0,
-} as const;
-
-// Mirrors ANIMATION_REFERENCE in @ripl/charts, so the adapter's demo moves like the rest of Ripl.
-const ENTER_DURATION = 1000;
-const UPDATE_DURATION = 1000;
-const EXIT_DURATION = 450;
-const AXIS_DURATION = 500;
-
-function randomValue(): number {
-    return Math.round((2 + Math.random() * 14) * 1000);
-}
-
-function createData(count: number) {
-    return MONTHS.slice(0, count).map(month => ({
-        month,
-        value: randomValue(),
-    }));
-}
 
 const data = ref(createData(7));
 const selected = ref<string>();
@@ -219,63 +164,8 @@ function onReady(value: Context) {
     syncSize();
 }
 
-const plot = computed(() => ({
-    x: MARGIN.left,
-    y: MARGIN.top,
-    width: Math.max(0, size.width - MARGIN.left - MARGIN.right),
-    height: Math.max(0, size.height - MARGIN.top - MARGIN.bottom),
-}));
-
-// The value range runs bottom-to-top because pixel y grows downward, which also puts `valueScale(0)`
-// on the axis without any special-casing.
-const valueScale = computed(() => scaleContinuous(
-    [0, numberMaxOf(data.value, item => item.value)],
-    [plot.value.y + plot.value.height, plot.value.y],
-    { padToTicks: TICK_COUNT }
-));
-
-const categoryScale = computed(() => scaleBand(
-    data.value.map(item => item.month),
-    [plot.value.x, plot.value.x + plot.value.width],
-    {
-        innerPadding: 0.28,
-        outerPadding: 0.14,
-    }
-));
-
-const baseline = computed(() => valueScale.value(0));
-
-const axisTicks = computed(() => valueScale.value.ticks(TICK_COUNT).map(value => ({
-    value,
-    y: valueScale.value(value),
-    label: numberFormat(value, COMPACT_CURRENCY),
-})));
-
-function fillFor(month: string): string {
-    if (month === selected.value) {
-        return SELECTED_COLOR;
-    }
-
-    return month === hovered.value
-        ? BAR_COLOR
-        : setColorAlpha(BAR_COLOR, 0.62);
-}
-
-const bars = computed(() => {
-    const category = categoryScale.value;
-    const value = valueScale.value;
-    const base = baseline.value;
-
-    return data.value.map(item => ({
-        key: item.month,
-        valueLabel: numberFormat(item.value, COMPACT_CURRENCY),
-        x: category(item.month),
-        width: category.bandwidth,
-        y: value(item.value),
-        height: Math.max(0, base - value(item.value)),
-        fill: fillFor(item.month),
-    }));
-});
+const layout = computed(() => createBarLayout(data.value, size));
+const baseline = computed(() => layout.value?.baseline ?? 0);
 
 const barEnter = computed(() => animate.value
     ? (element: unknown, index: number, length: number) => ({
@@ -339,7 +229,7 @@ const readout = computed(() => {
     const item = data.value.find(entry => entry.month === selected.value);
 
     return item
-        ? `${item.month}: ${numberFormat(item.value, FULL_CURRENCY)}`
+        ? `${item.month}: ${formatFull(item.value)}`
         : 'Click a bar to select it';
 });
 
@@ -348,38 +238,21 @@ function toggle(month: string) {
 }
 
 function randomise() {
-    data.value = data.value.map(item => ({
-        ...item,
-        value: randomValue(),
-    }));
+    data.value = randomiseData(data.value);
 }
 
-function addMonth() {
-    if (data.value.length >= MONTHS.length) {
-        return;
-    }
-
-    data.value = [
-        ...data.value,
-        {
-            month: MONTHS[data.value.length],
-            value: randomValue(),
-        },
-    ];
+function add() {
+    data.value = addMonth(data.value);
 }
 
-function removeMonth() {
-    if (data.value.length <= MIN_BARS) {
-        return;
-    }
+function remove() {
+    const next = removeMonth(data.value);
 
-    const removed = data.value[data.value.length - 1];
-
-    data.value = data.value.slice(0, -1);
-
-    if (selected.value === removed.month) {
+    if (selected.value && !next.some(item => item.month === selected.value)) {
         selected.value = undefined;
     }
+
+    data.value = next;
 }
 </script>
 

@@ -1,4 +1,26 @@
 import {
+    AXIS_COLOR,
+    AXIS_DURATION,
+    AXIS_FONT,
+    BAR_RADIUS,
+    createBarLayout,
+    ENTER_DURATION,
+    EXIT_DURATION,
+    fillFor,
+    GRID_COLOR,
+    MONTH_LABEL_OFFSET,
+    TEXT_COLOR,
+    TICK_LABEL_OFFSET,
+    UPDATE_DURATION,
+    VALUE_FONT,
+    VALUE_LABEL_OFFSET,
+} from '../bar-chart-demo';
+
+import type {
+    BarChartDatum,
+} from '../bar-chart-demo';
+
+import {
     RiplContext,
     RiplLine,
     RiplRect,
@@ -10,8 +32,6 @@ import {
 
 import {
     easeOutCubic,
-    scaleBand,
-    scaleContinuous,
 } from '@ripl/web';
 
 import type {
@@ -29,14 +49,6 @@ import type {
     ReactElement,
 } from 'react';
 
-/** One month's revenue. */
-export interface BarChartDatum {
-    /** The month the figure is for. */
-    month: string;
-    /** Revenue for the month. */
-    value: number;
-}
-
 /** Props accepted by {@link BarChartDemo}. */
 export interface BarChartDemoProps {
     /** The months to plot. */
@@ -49,38 +61,10 @@ export interface BarChartDemoProps {
     selected?: string;
 }
 
-const MARGIN = {
-    top: 28,
-    right: 20,
-    bottom: 32,
-    left: 56,
-};
-
-const TICK_COUNT = 5;
-const BAR_RADIUS = [4, 4, 0, 0];
-const BAR_COLOR = '#3a86ff';
-const SELECTED_COLOR = '#ff006e';
-const HOVER_COLOR = '#5c9cff';
-const TEXT_COLOR = '#8b93a1';
-const GRID_COLOR = 'rgba(140, 150, 165, 0.35)';
-const AXIS_COLOR = 'rgba(140, 150, 165, 0.55)';
-const AXIS_FONT = '11px sans-serif';
-const VALUE_FONT = '600 11px sans-serif';
-
-const COMPACT_CURRENCY = {
-    style: 'currency',
-    currency: 'USD',
-    currencyDisplay: 'narrowSymbol',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-} as const;
-
 const STYLE = {
     width: '100%',
     height: '100%',
 };
-
-const compact = new Intl.NumberFormat(undefined, COMPACT_CURRENCY);
 
 /**
  * The React bar chart demo: a complete chart built from the element components alone, with no
@@ -100,8 +84,7 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
         height: value?.height ?? 0,
     }), []);
 
-    // Measured on ready as well as on resize: React commits the host before the context is built,
-    // so the surface can already have its size and the resize that would announce one never fires.
+    // Measured on ready too: the surface can already be sized, and then no resize ever announces it.
     const onReady = useCallback((value: Context) => {
         setContext(value);
         measure(value);
@@ -109,47 +92,7 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
 
     const onResize = useCallback(() => measure(context), [context, measure]);
 
-    const plot = useMemo(() => ({
-        x: MARGIN.left,
-        y: MARGIN.top,
-        width: Math.max(0, size.width - MARGIN.left - MARGIN.right),
-        height: Math.max(0, size.height - MARGIN.top - MARGIN.bottom),
-    }), [size]);
-
-    const layout = useMemo(() => {
-        if (plot.width <= 0 || plot.height <= 0) {
-            return undefined;
-        }
-
-        const max = Math.max(...props.data.map(datum => datum.value), 1);
-
-        const valueScale = scaleContinuous([0, max], [plot.y + plot.height, plot.y], {
-            padToTicks: TICK_COUNT,
-        });
-
-        const categoryScale = scaleBand(props.data.map(datum => datum.month), [plot.x, plot.x + plot.width], {
-            innerPadding: 0.28,
-            outerPadding: 0.14,
-        });
-
-        const baseline = valueScale(0);
-
-        return {
-            baseline,
-            ticks: valueScale.ticks(TICK_COUNT).map(value => ({
-                value,
-                y: valueScale(value),
-            })),
-            bars: props.data.map(datum => ({
-                key: datum.month,
-                value: datum.value,
-                x: categoryScale(datum.month),
-                width: categoryScale.bandwidth,
-                y: valueScale(datum.value),
-                height: Math.max(0, baseline - valueScale(datum.value)),
-            })),
-        };
-    }, [props.data, plot]);
+    const layout = useMemo(() => createBarLayout(props.data, size), [props.data, size]);
 
     const phases = useMemo(() => {
         if (!props.animate || !layout) {
@@ -158,8 +101,8 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
 
         return {
             barEnter: (element: unknown, index: number, length: number) => ({
-                duration: 1000,
-                delay: (index / length) * 400,
+                duration: ENTER_DURATION,
+                delay: (index / length) * ENTER_DURATION,
                 ease: easeOutCubic,
                 state: {
                     y: layout.baseline,
@@ -167,11 +110,11 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
                 },
             }),
             barUpdate: {
-                duration: 1000,
+                duration: UPDATE_DURATION,
                 ease: easeOutCubic,
             },
             barLeave: {
-                duration: 450,
+                duration: EXIT_DURATION,
                 ease: easeOutCubic,
                 state: {
                     y: layout.baseline,
@@ -179,33 +122,32 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
                     opacity: 0,
                 },
             },
-            fade: {
-                duration: 500,
+            labelEnter: {
+                duration: ENTER_DURATION,
                 ease: easeOutCubic,
                 state: {
                     opacity: 0,
                 },
             },
-            slide: {
-                duration: 500,
+            labelLeave: {
+                duration: EXIT_DURATION,
+                ease: easeOutCubic,
+                state: {
+                    opacity: 0,
+                },
+            },
+            axis: {
+                duration: AXIS_DURATION,
                 ease: easeOutCubic,
             },
         };
     }, [props.animate, layout]);
 
-    const fillFor = (month: string) => {
-        if (month === props.selected) {
-            return SELECTED_COLOR;
-        }
-
-        return month === hovered ? HOVER_COLOR : BAR_COLOR;
-    };
-
     const grid = layout?.ticks.flatMap(tick => [
         createElement(RiplLine, {
             key: `grid:${tick.value}`,
-            x1: plot.x,
-            x2: plot.x + plot.width,
+            x1: layout.plot.x,
+            x2: layout.plot.x + layout.plot.width,
             y1: tick.y,
             y2: tick.y,
             stroke: tick.value === 0 ? AXIS_COLOR : GRID_COLOR,
@@ -213,9 +155,9 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
         }),
         createElement(RiplText, {
             key: `tick:${tick.value}`,
-            x: plot.x - 10,
+            x: layout.plot.x - TICK_LABEL_OFFSET,
             y: tick.y,
-            content: compact.format(tick.value),
+            content: tick.label,
             textAlign: 'right',
             textBaseline: 'middle',
             font: AXIS_FONT,
@@ -230,7 +172,7 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
         width: bar.width,
         height: bar.height,
         borderRadius: BAR_RADIUS,
-        fill: fillFor(bar.key),
+        fill: fillFor(bar.key, hovered, props.selected),
         onClick: () => props.onSelect(bar.key),
         onMouseenter: () => setHovered(bar.key),
         onMouseleave: () => setHovered(undefined),
@@ -240,8 +182,8 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
         createElement(RiplText, {
             key: `value:${bar.key}`,
             x: bar.x + bar.width / 2,
-            y: bar.y - 8,
-            content: compact.format(bar.value),
+            y: bar.y - VALUE_LABEL_OFFSET,
+            content: bar.valueLabel,
             textAlign: 'center',
             textBaseline: 'bottom',
             font: VALUE_FONT,
@@ -250,7 +192,7 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
         createElement(RiplText, {
             key: `month:${bar.key}`,
             x: bar.x + bar.width / 2,
-            y: layout.baseline + 16,
+            y: layout.plot.y + layout.plot.height + MONTH_LABEL_OFFSET,
             content: bar.key,
             textAlign: 'center',
             textBaseline: 'top',
@@ -266,7 +208,7 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
     }, createElement(RiplScene, null,
         createElement(RiplRenderer, null,
             createElement(RiplTransition, {
-                update: phases.slide,
+                update: phases.axis,
             }, grid),
             createElement(RiplTransition, {
                 enter: phases.barEnter,
@@ -274,8 +216,8 @@ export function BarChartDemo(props: BarChartDemoProps): ReactElement {
                 leave: phases.barLeave,
             }, bars),
             createElement(RiplTransition, {
-                enter: phases.fade,
-                update: phases.slide,
-                leave: phases.fade,
+                enter: phases.labelEnter,
+                update: phases.barUpdate,
+                leave: phases.labelLeave,
             }, labels))));
 }

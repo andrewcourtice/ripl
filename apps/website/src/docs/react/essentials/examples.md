@@ -36,6 +36,7 @@ import type {
 
 import {
     RiplContext,
+    RiplLine,
     RiplRect,
     RiplRenderer,
     RiplScene,
@@ -43,7 +44,23 @@ import {
     RiplTransition,
 } from '@ripl/react';
 
-const PADDING = 32;
+const MARGIN = { top: 28, right: 16, bottom: 34, left: 44 };
+const TICK_COUNT = 5;
+
+const BAR_COLOR = '#3a86ff';
+const HOVER_COLOR = '#5c9cff';
+const SELECTED_COLOR = '#ff006e';
+const TEXT_COLOR = '#8b93a1';
+const GRID_COLOR = 'rgba(140, 150, 165, 0.35)';
+const AXIS_COLOR = 'rgba(140, 150, 165, 0.55)';
+
+const currency = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    currencyDisplay: 'narrowSymbol',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+});
 
 export function BarChart({ data, animate }) {
     const [context, setContext] = useState<Context>();
@@ -61,97 +78,164 @@ export function BarChart({ data, animate }) {
         measure(value);
     }, [measure]);
 
-    const plot = useMemo(() => ({
-        x: PADDING,
-        y: PADDING,
-        width: Math.max(0, size.width - PADDING * 2),
-        height: Math.max(0, size.height - PADDING * 2),
-    }), [size]);
+    const layout = useMemo(() => {
+        const plot = {
+            x: MARGIN.left,
+            y: MARGIN.top,
+            width: Math.max(0, size.width - MARGIN.left - MARGIN.right),
+            height: Math.max(0, size.height - MARGIN.top - MARGIN.bottom),
+        };
 
-    const bars = useMemo(() => {
-        if (plot.width <= 0) {
-            return [];
+        if (plot.width <= 0 || plot.height <= 0) {
+            return undefined;
         }
 
-        const categories = data.map(datum => datum.month);
         const max = Math.max(...data.map(datum => datum.value));
 
-        const categoryScale = scaleBand(categories, [plot.x, plot.x + plot.width], {
+        const valueScale = scaleContinuous([0, max], [plot.y + plot.height, plot.y], {
+            padToTicks: TICK_COUNT,
+        });
+
+        const categoryScale = scaleBand(data.map(datum => datum.month), [plot.x, plot.x + plot.width], {
             innerPadding: 0.28,
             outerPadding: 0.14,
         });
 
-        const valueScale = scaleContinuous([0, max], [plot.y + plot.height, plot.y], {
-            padToTicks: 5,
-        });
-
         const baseline = valueScale(0);
 
-        return data.map(datum => ({
-            key: datum.month,
-            x: categoryScale(datum.month),
-            width: categoryScale.bandwidth,
-            y: valueScale(datum.value),
-            height: baseline - valueScale(datum.value),
-            fill: datum.month === (hovered ?? selected) ? '#ff006e' : '#3a86ff',
-        }));
-    }, [data, plot, hovered, selected]);
+        return {
+            plot,
+            baseline,
+            ticks: valueScale.ticks(TICK_COUNT).map(value => ({
+                value,
+                y: valueScale(value),
+                label: currency.format(value),
+            })),
+            bars: data.map(datum => ({
+                key: datum.month,
+                x: categoryScale(datum.month),
+                width: categoryScale.bandwidth,
+                y: valueScale(datum.value),
+                height: Math.max(0, baseline - valueScale(datum.value)),
+                valueLabel: currency.format(datum.value),
+            })),
+        };
+    }, [data, size]);
 
-    const baseline = plot.y + plot.height;
+    const phases = useMemo(() => {
+        if (!animate || !layout) {
+            return {};
+        }
 
-    const enter = useMemo(() => animate
-        ? (element, index, length) => ({
-            duration: 700,
-            delay: (index / length) * 400,
-            ease: easeOutCubic,
-            state: {
-                y: baseline,
-                height: 0,
+        return {
+            barEnter: (element, index, length) => ({
+                duration: 1000,
+                delay: (index / length) * 1000,
+                ease: easeOutCubic,
+                state: { y: layout.baseline, height: 0 },
+            }),
+            barUpdate: { duration: 1000, ease: easeOutCubic },
+            barLeave: {
+                duration: 450,
+                ease: easeOutCubic,
+                state: { y: layout.baseline, height: 0, opacity: 0 },
             },
-        })
-        : undefined, [animate, baseline]);
+            labelEnter: { duration: 1000, ease: easeOutCubic, state: { opacity: 0 } },
+            labelLeave: { duration: 450, ease: easeOutCubic, state: { opacity: 0 } },
+            axis: { duration: 500, ease: easeOutCubic },
+        };
+    }, [animate, layout]);
+
+    const fillFor = (month: string) => {
+        if (month === selected) {
+            return SELECTED_COLOR;
+        }
+
+        return month === hovered ? HOVER_COLOR : BAR_COLOR;
+    };
 
     return (
         <RiplContext onReady={onReady} onResize={() => measure(context)}>
             <RiplScene>
                 <RiplRenderer>
-                    <RiplTransition
-                        enter={enter}
-                        update={animate ? { duration: 450, ease: easeOutCubic } : undefined}
-                        leave={animate ? { duration: 300, state: { y: baseline, height: 0, opacity: 0 } } : undefined}
-                    >
-                        {bars.map(bar => (
-                            <RiplRect
-                                key={bar.key}
-                                x={bar.x}
-                                y={bar.y}
-                                width={bar.width}
-                                height={bar.height}
-                                fill={bar.fill}
-                                borderRadius={[4, 4, 0, 0]}
-                                onClick={() => setSelected(current => (current === bar.key ? undefined : bar.key))}
-                                onMouseenter={() => setHovered(bar.key)}
-                                onMouseleave={() => setHovered(undefined)}
-                            />
-                        ))}
-                    </RiplTransition>
+                    {layout && (
+                        <>
+                            <RiplTransition update={phases.axis}>
+                                {layout.ticks.map(tick => (
+                                    <RiplLine
+                                        key={`grid:${tick.value}`}
+                                        x1={layout.plot.x}
+                                        x2={layout.plot.x + layout.plot.width}
+                                        y1={tick.y}
+                                        y2={tick.y}
+                                        stroke={tick.value === 0 ? AXIS_COLOR : GRID_COLOR}
+                                        lineWidth={1}
+                                    />
+                                ))}
+                                {layout.ticks.map(tick => (
+                                    <RiplText
+                                        key={`tick:${tick.value}`}
+                                        x={layout.plot.x - 8}
+                                        y={tick.y}
+                                        content={tick.label}
+                                        textAlign="right"
+                                        textBaseline="middle"
+                                        fill={TEXT_COLOR}
+                                    />
+                                ))}
+                            </RiplTransition>
 
-                    <RiplTransition
-                        enter={animate ? { duration: 400, state: { opacity: 0 } } : undefined}
-                        update={animate ? { duration: 450 } : undefined}
-                        leave={animate ? { duration: 200, state: { opacity: 0 } } : undefined}
-                    >
-                        {bars.map(bar => (
-                            <RiplText
-                                key={bar.key}
-                                x={bar.x + bar.width / 2}
-                                y={bar.y - 8}
-                                content={bar.key}
-                                textAlign="center"
-                                fill="#8b949e"
-                            />
-                        ))}
-                    </RiplTransition>
+                            <RiplTransition
+                                enter={phases.barEnter}
+                                update={phases.barUpdate}
+                                leave={phases.barLeave}
+                            >
+                                {layout.bars.map(bar => (
+                                    <RiplRect
+                                        key={bar.key}
+                                        x={bar.x}
+                                        y={bar.y}
+                                        width={bar.width}
+                                        height={bar.height}
+                                        fill={fillFor(bar.key)}
+                                        borderRadius={[4, 4, 0, 0]}
+                                        onClick={() => setSelected(current => (current === bar.key ? undefined : bar.key))}
+                                        onMouseenter={() => setHovered(bar.key)}
+                                        onMouseleave={() => setHovered(undefined)}
+                                    />
+                                ))}
+                            </RiplTransition>
+
+                            <RiplTransition
+                                enter={phases.labelEnter}
+                                update={phases.barUpdate}
+                                leave={phases.labelLeave}
+                            >
+                                {layout.bars.map(bar => (
+                                    <RiplText
+                                        key={`value:${bar.key}`}
+                                        x={bar.x + bar.width / 2}
+                                        y={bar.y - 8}
+                                        content={bar.valueLabel}
+                                        textAlign="center"
+                                        textBaseline="bottom"
+                                        fill={TEXT_COLOR}
+                                    />
+                                ))}
+                                {layout.bars.map(bar => (
+                                    <RiplText
+                                        key={`month:${bar.key}`}
+                                        x={bar.x + bar.width / 2}
+                                        y={layout.plot.y + layout.plot.height + 10}
+                                        content={bar.key}
+                                        textAlign="center"
+                                        textBaseline="top"
+                                        fill={TEXT_COLOR}
+                                    />
+                                ))}
+                            </RiplTransition>
+                        </>
+                    )}
                 </RiplRenderer>
             </RiplScene>
         </RiplContext>
@@ -171,7 +255,7 @@ const measure = useCallback((value?: Context) => setSize({
 }), []);
 ```
 
-Measure on `onReady` as well as on `onResize`. React commits the host element before the context is built against it, so the surface can already have its size by the time you hear about it, and the resize that would have announced one never fires.
+Measure on `onReady` as well as on `onResize`, or a surface that is already sized when the chart mounts will never be measured at all.
 
 Ripl's [scales](/docs/core/advanced/scales) do the rest. A band scale spaces the categories and reports a `bandwidth` for the bar width, and a continuous scale maps values to pixels:
 
@@ -201,7 +285,7 @@ const bar = {
 
 Deriving the whole layout in a `useMemo` and mapping it once per visual layer keeps the geometry out of the markup. Note `bandwidth` is a property, not a method.
 
-Guard the plot on `plot.width > 0` all the same: a surface laid out later, or one inside a collapsed container, genuinely has no size yet, and the first real measurement then arrives with the first resize.
+Guard on `plot.width > 0` all the same. A surface inside a collapsed container has no size until it is laid out, and its first real measurement arrives with the first resize.
 
 ### Transitions
 
@@ -209,8 +293,8 @@ Bars grow out of the baseline, which is the enter phase's `state`: the state an 
 
 ```ts
 const enter = (element, index, length) => ({
-    duration: 700,
-    delay: (index / length) * 400,
+    duration: 1000,
+    delay: (index / length) * 1000,
     ease: easeOutCubic,
     state: {
         y: baseline,
@@ -221,9 +305,9 @@ const enter = (element, index, length) => ({
 
 Expressing the phase as a factory produces the staggered sweep. Each element gets its index and the total, so the delay fans out across the set. Leaving reverses it, collapsing the bars back to the baseline and fading them before they are destroyed.
 
-Memoise the phases against `baseline` so they stay current after a resize. They are also plain props, so an **Animate** toggle switches them off by passing `undefined`, after which unanimated changes apply instantly.
+Memoise the phases against the layout so they stay current after a resize. They are also plain props, so an **Animate** toggle switches them off by passing `undefined`, after which unanimated changes apply instantly.
 
-The labels sit in their own `<RiplTransition>` fading on `{ opacity: 0 }`. A scope applies its phases to every descendant, and `height` means nothing to a [text component](/docs/react/essentials/components), so the labels need a phase of their own.
+The gridlines and the labels each sit in a scope of their own. A scope applies its phases to every descendant, and `height` means nothing to a [text component](/docs/react/essentials/components), so labels fade where bars grow.
 
 See [Transitions](/docs/react/essentials/transitions) for the full phase API.
 
@@ -234,13 +318,13 @@ Selection and hover are ordinary listener props on the rect:
 ```tsx
 <RiplRect
     key={bar.key}
-    fill={bar.fill}
+    fill={fillFor(bar.key)}
     onClick={() => toggle(bar.key)}
     onMouseenter={() => setHovered(bar.key)}
     onMouseleave={() => setHovered(undefined)}
 />
 ```
 
-Both feed back into `bar.fill`, so the highlight is the same prop the rest of the chart uses rather than a separate code path, and it tweens through the `update` phase without any extra work. Inline arrows are fine here: the subscription is keyed on which events are bound, not on handler identity.
+Both feed back into the bar's `fill`, so the highlight tweens through the `update` phase like any other change. Inline arrows are fine here.
 
-Only the events you bind are subscribed, which matters: binding a pointer listener is what makes an element a hit-test target. The text labels bind nothing, so they never steal a click from the bar behind them. See [Events](/docs/react/essentials/events) for the full list and their payloads.
+Only the events you bind are subscribed, and binding a pointer listener makes an element a hit-test target. The text labels bind nothing, so they never steal a click from the bar behind them. See [Events](/docs/react/essentials/events) for the full list and their payloads.
