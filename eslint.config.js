@@ -339,7 +339,7 @@ export default tseslint.config(
     },
     {
         name: 'ripl/markdown-code-blocks',
-        files: ['**/*.md/*.ts', '**/*.md/*.js'],
+        files: ['**/*.md/*.ts', '**/*.md/*.tsx', '**/*.md/*.js'],
         plugins: {
             '@stylistic': stylistic,
             'ripl': riplPlugin,
@@ -384,6 +384,19 @@ export default tseslint.config(
             }],
             '@stylistic/array-element-newline': ['error', 'consistent'],
             'ripl/import-export-spacing': 'error',
+        },
+    },
+
+    // A JSX snippet is markup rather than a statement, so a docs fence that shows nothing but a
+    // component tree should not have to carry a trailing semicolon to read correctly.
+    {
+        name: 'ripl/markdown-jsx-blocks',
+        files: ['**/*.md/*.tsx'],
+        plugins: {
+            '@stylistic': stylistic,
+        },
+        rules: {
+            '@stylistic/semi': 'off',
         },
     },
 

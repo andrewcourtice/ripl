@@ -71,6 +71,9 @@ const SECTION_HUBS = new Set([
     'docs/vue/',
     'docs/vue/3d/',
     'docs/vue/charts/',
+    'docs/react/',
+    'docs/react/3d/',
+    'docs/react/charts/',
     'playground',
 ]);
 
@@ -238,9 +241,15 @@ export default defineConfig({
                 '@ripl/webgpu': path.resolve(__dirname, '../../../../packages/webgpu/src/index.ts'),
                 '@ripl/terminal': path.resolve(__dirname, '../../../../packages/terminal/src/index.ts'),
                 '@ripl/node': path.resolve(__dirname, '../../../../packages/node/src/index.ts'),
+                '@ripl/adapters': path.resolve(__dirname, '../../../../packages/adapters/src/index.ts'),
+                '@ripl/adapters-3d': path.resolve(__dirname, '../../../../packages/adapters-3d/src/index.ts'),
+                '@ripl/adapters-charts': path.resolve(__dirname, '../../../../packages/adapters-charts/src/index.ts'),
                 '@ripl/vue': path.resolve(__dirname, '../../../../adapters/vue/src/index.ts'),
                 '@ripl/vue-3d': path.resolve(__dirname, '../../../../adapters/vue-3d/src/index.ts'),
                 '@ripl/vue-charts': path.resolve(__dirname, '../../../../adapters/vue-charts/src/index.ts'),
+                '@ripl/react': path.resolve(__dirname, '../../../../adapters/react/src/index.ts'),
+                '@ripl/react-3d': path.resolve(__dirname, '../../../../adapters/react-3d/src/index.ts'),
+                '@ripl/react-charts': path.resolve(__dirname, '../../../../adapters/react-charts/src/index.ts'),
             },
         },
         css: {
@@ -298,6 +307,10 @@ export default defineConfig({
                             {
                                 text: 'Vue',
                                 link: '/docs/vue/',
+                            },
+                            {
+                                text: 'React',
+                                link: '/docs/react/',
                             },
                         ],
                     },
@@ -585,6 +598,80 @@ export default defineConfig({
                         {
                             text: 'Components',
                             link: '/docs/vue/charts/components',
+                        },
+                    ],
+                },
+            ],
+            '/docs/react': [
+                {
+                    text: 'Getting Started',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/react/',
+                        },
+                    ],
+                },
+                {
+                    text: 'Essentials',
+                    items: [
+                        {
+                            text: 'Rendering',
+                            link: '/docs/react/essentials/rendering',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/react/essentials/components',
+                        },
+                        {
+                            text: 'Transitions',
+                            link: '/docs/react/essentials/transitions',
+                        },
+                        {
+                            text: 'Events',
+                            link: '/docs/react/essentials/events',
+                        },
+                        {
+                            text: 'Hooks',
+                            link: '/docs/react/essentials/hooks',
+                        },
+                        {
+                            text: 'Examples',
+                            link: '/docs/react/essentials/examples',
+                        },
+                    ],
+                },
+                {
+                    text: '3D',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/react/3d/',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/react/3d/components',
+                        },
+                        {
+                            text: 'Camera',
+                            link: '/docs/react/3d/camera',
+                        },
+                        {
+                            text: 'Lighting',
+                            link: '/docs/react/3d/lighting',
+                        },
+                    ],
+                },
+                {
+                    text: 'Charts',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/react/charts/',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/react/charts/components',
                         },
                     ],
                 },

@@ -83,6 +83,14 @@ import ExampleVue3D from '../components/example-vue-3d.vue';
 
 import ExampleVueCharts from '../components/example-vue-charts.vue';
 
+import ExampleReactBarChart from '../components/example-react-bar-chart.vue';
+
+import ExampleReactQuickStart from '../components/example-react-quick-start.vue';
+
+import ExampleReact3D from '../components/example-react-3d.vue';
+
+import ExampleReactCharts from '../components/example-react-charts.vue';
+
 import {
     createRipl3D,
 } from '@ripl/vue-3d';
@@ -140,6 +148,10 @@ export default {
         app.component('example-vue-quick-start', ExampleVueQuickStart);
         app.component('example-vue-3d', ExampleVue3D);
         app.component('example-vue-charts', ExampleVueCharts);
+        app.component('example-react-bar-chart', ExampleReactBarChart);
+        app.component('example-react-quick-start', ExampleReactQuickStart);
+        app.component('example-react-3d', ExampleReact3D);
+        app.component('example-react-charts', ExampleReactCharts);
 
         enhanceAppWithTabs(app);
 
