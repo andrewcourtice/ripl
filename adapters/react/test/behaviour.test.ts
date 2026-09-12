@@ -862,6 +862,74 @@ describe('@ripl/react behaviour', () => {
             view.unmount();
         });
 
+        // A strict-mode remount is not a fresh mount as far as `appear` is concerned.
+        test('Should still skip the enter phase of an appear-less scope', () => {
+            const captured: { scene?: Scene } = {};
+
+            const Probe = () => {
+                captured.scene = useRiplScene();
+                return null;
+            };
+
+            const view = render(createElement(StrictMode, null,
+                createElement(RiplContext, null,
+                    createElement(RiplScene, null,
+                        createElement(Probe),
+                        createElement(RiplRenderer, {
+                            autoStop: false,
+                        }, createElement(RiplTransition, {
+                            appear: false,
+                            enter: {
+                                duration: 5000,
+                                state: {
+                                    opacity: 0,
+                                },
+                            },
+                        }, createElement(RiplCircle, {
+                            id: 'a',
+                            cx: 1,
+                            cy: 1,
+                            radius: 1,
+                        })))))));
+
+            expect(captured.scene?.getElementById('a')?.$state.opacity).toBeUndefined();
+
+            view.unmount();
+        });
+
+        // A scope that kept its released elements would resolve a stagger against twice the set.
+        test('Should resolve a stagger against the set that is actually mounted', () => {
+            const lengths: number[] = [];
+
+            const view = render(createElement(StrictMode, null,
+                createElement(RiplContext, null,
+                    createElement(RiplScene, null,
+                        createElement(RiplRenderer, {
+                            autoStop: false,
+                        }, createElement(RiplTransition, {
+                            enter: (_element: unknown, _index: number, length: number) => {
+                                lengths.push(length);
+
+                                return {
+                                    duration: 10,
+                                    state: {
+                                        opacity: 0,
+                                    },
+                                };
+                            },
+                        }, Array.from({ length: 3 }, (_, index) => createElement(RiplCircle, {
+                            key: index,
+                            id: `c${index}`,
+                            cx: 1,
+                            cy: 1,
+                            radius: 1,
+                        }))))))));
+
+            expect(lengths).toEqual([3, 3, 3]);
+
+            view.unmount();
+        });
+
         test('Should destroy every context it created when unmounted', () => {
             const created: Context[] = [];
             const destroyed: Context[] = [];
