@@ -1,6 +1,6 @@
 ---
 title: Rendering
-description: "How <RiplContext>, <RiplScene> and <RiplRenderer> layer up, what each one adds, and why paint order tracks JSX order despite effects running children-first."
+description: "How <RiplContext>, <RiplScene> and <RiplRenderer> layer up, what each one adds, and the two guarantees they give you."
 ---
 
 # Rendering
@@ -55,7 +55,7 @@ A context you supply is yours to destroy; one the component creates is destroyed
 
 ## `<RiplScene>`
 
-Creates a scene bound to the enclosing context and parents its subtree to it. A scene hoists the element tree into a flat instruction stream, which is what makes z-ordering, group clipping and large graphs efficient.
+Creates a scene bound to the enclosing context and parents its subtree to it. A scene hoists the element tree into a flat instruction stream, which keeps z-ordering, group clipping and large graphs efficient.
 
 A scene is also an element, so its state props cascade to every descendant that does not set its own:
 
@@ -97,13 +97,8 @@ It fires `onStart`, `onStop` and `onTick`.
 
 ## Ordering, and why it works
 
-React runs layout effects children-first, which is exactly the wrong order for attaching elements to a group. The adapter does not rely on it.
+These three components give you two guarantees.
 
-Each element renders a single hidden marker node, and React guarantees those markers land in the DOM in JSX order. The tree reads that order back and replays it onto the group, so paint order tracks the declaration however the effects happened to run. The same mechanism covers a keyed list reorder, which moves components rather than remounting them, and so produces no effects at all.
+A descendant always sees a live context, scene and renderer, so the [hooks](/docs/react/essentials/hooks) resolve without any watching or null-checking past the first render.
 
-The objects themselves divide in two:
-
-- **A context, scene or renderer owns a real resource** — a canvas, an observer, an animation loop — so each is built in a layout effect and published through state. Its children render once it exists, which is why a descendant's `useRiplScene()` always resolves. On mount that costs at most three extra passes, all of them synchronous and before paint.
-- **An element owns nothing but itself**, so it is constructed during render and only *attached* in an effect. That keeps element trees to a single pass and lets a `<RiplGroup>` exist before its children need it as a parent.
-
-Both halves are symmetric under React's development-mode double mount: anything a cleanup tore down is rebuilt rather than reused.
+And paint order matches JSX order. Reordering a keyed list moves components rather than remounting them, and the adapter picks those moves up separately, so paint order tracks the markup in that case too.

@@ -74,4 +74,4 @@ A group's transform lives outside element state, because a group's own state is 
 <RiplParametric surface={surface} uSegments={32} vSegments={32} />
 ```
 
-Comparison is by identity, so return a new function or array rather than mutating in place — and memoise it, or every render of the parent rebuilds the mesh.
+Comparison is by identity, so return a new function or array rather than mutating in place. Memoise it too, or every render of the parent rebuilds the mesh.

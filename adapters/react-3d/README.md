@@ -74,7 +74,7 @@ The four core hooks are re-exported, so one import covers a whole scene.
 
 - There is no `zIndex` on a 3D shape: it derives depth ordering from its projected position.
 - A group's transform lives outside element state, so it applies immediately and cannot be animated by a `<RiplTransition>`. Animate the children instead.
-- A context resolves at most eight lights. Binding the context's `lights` prop, even to `[]`, is what clears the default ambient-plus-directional rig.
+- A context resolves at most eight lights. Binding the context's `lights` prop, even to `[]`, clears the default ambient-plus-directional rig.
 - A camera belongs to the context rather than the scene graph, so `<RiplCamera>` can sit anywhere inside a `<RiplContext3D>` and `useRiplCamera()` reaches it from anywhere below.
 
 ## Documentation

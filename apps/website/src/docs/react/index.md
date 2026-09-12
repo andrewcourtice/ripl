@@ -22,7 +22,7 @@ npm install @ripl/react
 
 ## Quick Start
 
-There is no plugin and no global registration — React resolves components by reference, so you import the ones you use:
+There is no plugin and no global registration. Import the components you use:
 
 ```tsx
 import {
@@ -97,14 +97,6 @@ A context on its own is enough for static or lightly-updated graphics:
 ```
 
 Add a scene once you need z-ordering or many elements, and a renderer once you need animation. See [Rendering](/docs/react/essentials/rendering) for what each one changes.
-
-## Coming from the Vue adapter
-
-The two adapters share their whole framework-agnostic half, so the prop names, transition model and event payloads are identical. Three things differ, and all three are React being React:
-
-- **No plugin.** `createRipl()` has no counterpart; import each component instead.
-- **`className`, not `class`.** It still binds the element's own class list, not the marker node the component renders.
-- **PascalCase only.** There is no global registry, so there is no kebab-case tag form.
 
 ## Where to go next
 

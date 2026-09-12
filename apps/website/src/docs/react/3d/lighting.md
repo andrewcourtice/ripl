@@ -19,7 +19,7 @@ A `<RiplContext3D>` starts with a default rig of an ambient light plus a directi
 </RiplContext3D>
 ```
 
-Binding `lights`, even to an empty array as above, is what clears the default rig. Without it your lights stack on top of it, which is rarely what you want. Hoist that array to a module constant so it does not change identity on every render.
+Binding `lights`, even to an empty array as above, clears the default rig. Leave it unbound and your own lights stack on top of it. Hoist the array to a module constant so it does not change identity on every render.
 
 You can equally pass the lights themselves rather than declaring components:
 

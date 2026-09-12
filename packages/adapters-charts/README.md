@@ -14,9 +14,9 @@ You do not install this directly; it arrives as a dependency of whichever chart 
 | `CHART_PROP_ALIASES` | The options whose names a UI framework reserves, and what stands in for them. |
 | `RiplChartProps`, `RiplChartListeners`, `RiplAnyChart` | The prop and listener surfaces both adapters share. |
 
-## Four things the controller gets right
+## What the controller handles
 
-Each of these is a bug an adapter would otherwise have to rediscover:
+Each of these is a bug an adapter would otherwise have to rediscover for itself.
 
 1. **`key` is reserved.** Both Vue and React consume a `key` prop as the element key, so it never reaches the component and the chart option would silently arrive unset. It is bound as `keyBy` and renamed on the way in.
 2. **The first paint is held.** A chart renders itself on construction, and a surface with no size collapses its scales permanently, so `autoRender` is forced off and handed back on the first `resize`.

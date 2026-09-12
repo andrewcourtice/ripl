@@ -57,7 +57,7 @@ import {
 
 ## `<RiplContext3D>`
 
-Replaces `<RiplContext>`, and nothing else changes. It builds its context in a layout effect against its own host element, exactly as the 2D one does, and renders its children once that context exists.
+Replaces `<RiplContext>`, and nothing else changes.
 
 | Prop | Description |
 | --- | --- |

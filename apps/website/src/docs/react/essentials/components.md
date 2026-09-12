@@ -34,7 +34,7 @@ On top of its own state, every component accepts the full base state (`fill`, `s
 | `interpolators` | Per-property interpolator overrides, layered over the element type's own. Read once, at construction. |
 | `autoFill`, `autoStroke`, `clip`, `cachePath` | Painting flags on path-backed shapes. |
 
-`className` binds the element's class list, not the marker node the component renders, so `scene.query('.segment')` finds it:
+`className` binds the element's own class list rather than anything in the DOM, so `scene.query('.segment')` finds it:
 
 ```tsx
 <RiplCircle className={['segment', { active: isActive }]} cx={10} cy={10} radius={5} />
@@ -57,7 +57,7 @@ A prop cannot be *unset* later either: changing a bound prop back to `undefined`
 
 ## Object and array bindings
 
-Props are compared by identity, and React re-renders eagerly, so an inline `lineDash={[4, 2]}`, or an object literal handed to `data`, builds a new value on every render. The element then sees a change every time its parent re-renders, which dirties it and forces a repaint. Hoist those to a `useMemo`, a module constant, or the datum itself:
+Props are compared by identity, so an inline `lineDash={[4, 2]}`, or an object literal handed to `data`, looks like a change on every render. Hoist those to a `useMemo`, a module constant, or the datum itself:
 
 ```tsx
 const dash = useMemo(() => (emphasised ? [4, 2] : []), [emphasised]);

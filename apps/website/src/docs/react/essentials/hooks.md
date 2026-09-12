@@ -21,7 +21,7 @@ const renderer = useRiplRenderer();
 const element = useRiplElement();
 ```
 
-Each returns the Ripl object itself, not a wrapper. A provider builds its object in a layout effect and publishes it through state, and renders its children only once it exists, so a descendant always sees a resolved value:
+Each returns the Ripl object itself, not a wrapper. A descendant always sees a resolved value:
 
 ```tsx
 function Probe() {
@@ -34,7 +34,7 @@ function Probe() {
 }
 ```
 
-They are `undefined` in two cases: outside the corresponding provider, and during server rendering. Both are ordinary, so guard with `?.` rather than asserting.
+They are `undefined` outside the matching provider, and during server rendering. Both are ordinary, so guard with `?.` rather than asserting.
 
 ## `useRiplContext`
 

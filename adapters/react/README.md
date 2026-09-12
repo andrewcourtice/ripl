@@ -34,7 +34,7 @@ pnpm add @ripl/react
 
 ## Quick start
 
-There is no plugin and no global registration — import the components you use:
+There is no plugin and no global registration. Import the components you use:
 
 ```tsx
 import {
@@ -87,7 +87,7 @@ Each level adds capability, and every element picks up the highest one above it:
 
 ## Transitions
 
-`enter` is the state an element animates *from*; `leave` is the state it animates *to*; `update` is how a prop change animates. Each takes an options object or a factory called per element, which is what makes staggering work:
+`enter` is the state an element animates *from*; `leave` is the state it animates *to*; `update` is how a prop change animates. Each takes an options object, or a factory called per element to stagger them:
 
 ```tsx
 <RiplTransition
@@ -146,18 +146,18 @@ const circle = useRef<Circle>(null);
 | Export | Use |
 | --- | --- |
 | `defineRiplElement`, `elementFactory` | Wrap anything that extends `Element` as a component. |
-| `useRiplInstance`, `useRiplResource`, `useRiplLazy` | Build a Ripl object with a lifecycle React's development-mode remount cannot break. |
+| `useRiplInstance`, `useRiplResource`, `useRiplLazy` | Build a Ripl object and tie its lifetime to the component's. |
 | `useElementProps`, `useElementTransition` | Keep an element in sync with props, and run its transition phases. |
 | `useForwardedEvents` | Forward a bus's own `$events` to listener props, subscribing only to bound ones. |
 | `RIPL_CONTEXT`, `RIPL_SCENE`, `RIPL_RENDERER`, `RIPL_PARENT`, `RIPL_ELEMENT`, `RIPL_TREE`, `RIPL_TRANSITION` | The React contexts the components provide. |
 | `readElementSnapshot`, `readBoundProps`, `collectChangedProps`, `partitionProps`, `applyState`, `applyFields` | The prop pipeline. |
 
-The framework-agnostic half of that toolkit lives in [`@ripl/adapters`](../../packages/adapters), shared with the Vue adapters, and is re-exported here so one import covers a whole adapter.
+The framework-agnostic half of that toolkit lives in [`@ripl/adapters`](../../packages/adapters) and is re-exported here, so one import covers a whole adapter.
 
 Two contracts a sibling adapter depends on:
 
 - **`@ripl/adapters` owns the `@ripl/web` import**, and with it the platform factory: `requestAnimationFrame`, `devicePixelRatio`, `getDefaultState` and `measureText`. A sibling adapter inherits that through its dependency on this package and should not add an `@ripl/web` import of its own, because a bare side-effect import inside a `sideEffects: false` package can be tree-shaken away, whereas the value imports there cannot.
-- **The React contexts live in a registry keyed by `Symbol.for`**, so two copies of this module — which the standalone IIFE builds produce — still resolve to the same context.
+- **The React contexts live in a registry keyed by `Symbol.for`**, so the two copies of this module that the standalone IIFE builds produce still resolve to the same context.
 
 ## Documentation
 

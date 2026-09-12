@@ -68,7 +68,7 @@ Any phase can be a factory called per element with its index and the number of e
 </RiplTransition>
 ```
 
-Phases are resolved once every element in the scope has joined it, so `length` is the size of the whole set and a `delay` spanning `index / length` spreads across all of it. That matters more in React than it looks: layout effects run in sibling order, so an enter applied inside one would otherwise see only the siblings before it.
+Phases are resolved once every element in the scope has joined it, so `length` is the size of the whole set and a `delay` spanning `index / length` spreads across all of it.
 
 The factory also receives the element itself, so a phase can vary by datum:
 

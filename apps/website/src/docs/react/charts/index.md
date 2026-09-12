@@ -17,7 +17,7 @@ import {
 } from '@ripl/react-charts';
 ```
 
-The core `<RiplContext>` and `useRiplContext` are re-exported too, so a chart can share a page — or a context — with hand-drawn elements from one import.
+The core `<RiplContext>` and `useRiplContext` are re-exported too, so a chart can share a page, or a context, with hand-drawn elements from one import.
 
 ## A chart
 
@@ -79,14 +79,14 @@ A chart sizes itself to its root element and re-renders on resize, so give the c
 
 Every prop maps to a top-level chart option, including the furniture: `axis`, `grid`, `legend`, `tooltip`, `crosshair`, `annotations`, `navigator`, `title`, `animation`, `theme` and `padding`.
 
-How the chart merges those options gives you two rules to work to. An unbound prop is never written, so the chart keeps its own default and binding nothing is different from binding `undefined`. And a bound object replaces the whole option, since the merge is shallow and top-level:
+An unbound prop is never written, so the chart keeps its own default and binding nothing differs from binding `undefined`. A bound object replaces the whole option, since the merge is shallow and top-level:
 
 ```tsx
 {/* replaces the entire axis option rather than merging into it, so pass the whole thing */}
 <RiplBarChart axis={{ y: { ticks: 5 } }} data={data} series={series} keyBy="month" />
 ```
 
-Props are compared by identity, so hoist object and array bindings to a module constant or a `useMemo` rather than writing them inline. Otherwise every render looks like a change — and React re-renders more eagerly than you might expect.
+Props are compared by identity, so hoist object and array bindings to a module constant or a `useMemo` rather than writing them inline. Otherwise every render looks like a change.
 
 ### `keyBy`, not `key`
 

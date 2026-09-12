@@ -26,7 +26,7 @@ function onClick(payload: RiplPointerPayload) {
 />
 ```
 
-Listener names are the event name with an `on` prefix and no other casing, so they match Ripl's own: `onMousedown`, `onDragstart`, `onBarclick`. That is what lets the adapter read the list off the object rather than maintaining one by hand.
+Listener names are the event name with an `on` prefix and no other casing, so they match Ripl's own: `onMousedown`, `onDragstart`, `onBarclick`.
 
 The second argument is the full event, carrying `target`, `type`, `timestamp` and `stopPropagation()`:
 
@@ -63,7 +63,7 @@ This list is not maintained by hand. Every Ripl object declares the events it em
 
 The adapter subscribes to an event only when you actually bind a listener. This is not an optimisation: subscribing to a pointer event makes an element a hit-test target, so blanket subscription would change which element receives a click. Binding nothing leaves the element transparent to the pointer.
 
-Because of that, you might expect an inline arrow — which React rebuilds on every render — to churn the subscription. It does not: handlers are dispatched through a ref, and the subscription is keyed on *which* events are bound rather than on handler identity. Write them inline.
+The subscription is keyed on which events you bind, not on handler identity, so a fresh arrow on every render costs nothing. Write your handlers inline.
 
 Use `pointerEvents` to control which region of an element is tested:
 
