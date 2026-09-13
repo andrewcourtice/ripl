@@ -60,6 +60,7 @@ function stripDeclarationSourcemapComment(): TsdownPlugin {
  * `<script>` tag can resolve.
  */
 const PEER_DEPENDENCY_GLOBALS: Record<string, string> = {
+    react: 'React',
     vue: 'Vue',
 };
 

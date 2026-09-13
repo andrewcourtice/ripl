@@ -78,6 +78,7 @@ export interface RiplTransitionPhases {
 export class RiplTransitionScope {
 
     private _elements: Element[] = [];
+    private _settled = false;
     private readonly _getPhases: () => RiplTransitionPhases;
 
     /** Whether elements present on the initial mount run their enter phase. */
@@ -85,8 +86,26 @@ export class RiplTransitionScope {
         return this._getPhases().appear ?? true;
     }
 
+    /**
+     * Whether the scope has been through its own first mount, which is what separates an element
+     * that *appears* from one that later *enters*: only the former is governed by
+     * {@link RiplTransitionScope.appear}.
+     */
+    public get settled(): boolean {
+        return this._settled;
+    }
+
     constructor(getPhases: () => RiplTransitionPhases) {
         this._getPhases = getPhases;
+    }
+
+    /**
+     * Marks the scope's first mount complete, so every element registered from here on runs its
+     * enter phase whatever `appear` says. Call it once the elements present for the first paint
+     * have been through their own enter.
+     */
+    public settle(): void {
+        this._settled = true;
     }
 
     /** Adds an element to the scope, giving it a position for staggered phase factories. */

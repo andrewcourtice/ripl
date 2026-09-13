@@ -2,30 +2,23 @@ import {
     RIPL_CHART,
 } from './injection';
 
+import {
+    createChartController,
+    resolveChartDefinition,
+} from '@ripl/adapters-charts';
+
 import type {
     RiplAnyChart,
-} from './injection';
-
-import {
-    BASE_CHART_OPTION_KEYS,
-} from './props';
+    RiplChartController,
+    RiplChartDefinition,
+} from '@ripl/adapters-charts';
 
 import {
     hasWindow,
 } from '@ripl/dom';
 
-import type {
-    Disposable,
-} from '@ripl/utilities';
-
-import type {
-    Context,
-} from '@ripl/core';
-
 import {
-    collectChangedProps,
     createProps,
-    readBoundProps,
     RIPL_CONTEXT,
     useExposedInstance,
     useForwardedEvents,
@@ -47,48 +40,11 @@ import {
     watch,
 } from 'vue';
 
-/**
- * Chart options whose names Vue reserves, mapped to the prop name that stands in for them.
- *
- * `key` is the one that bites: Vue consumes it as the vnode key, so a `key` prop never reaches the
- * component at all and the option would silently arrive unset.
- */
-const PROP_ALIASES: Record<string, string> = {
-    key: 'keyBy',
-};
-
 /** Fills the component's root, so the chart inherits whatever size the consumer gives that root. */
 const HOST_STYLE = {
     width: '100%',
     height: '100%',
 } as const;
-
-/**
- * Adapts a typed chart factory to {@link RiplChartDefinition}'s untyped `create` hook.
- *
- * The cast is unavoidable rather than accidental: no type is a supertype of every chart, because
- * each carries its own event map into an invariant position. Confining it here keeps it out of
- * every chart definition.
- *
- * @typeParam TOptions - The chart's own options type.
- * @param create - The chart's factory function.
- * @returns A `create` hook that constructs the chart from a loose option bag.
- */
-export function chartFactory<TOptions>(create: (target: Context | HTMLElement, options: TOptions) => unknown) {
-    return (target: Context | HTMLElement, options: RiplWritable) => create(target, options as TOptions) as RiplAnyChart;
-}
-
-/** Describes one chart to wrap as a component. */
-export interface RiplChartDefinition {
-    /** The component's name, e.g. `RiplBarChart`. */
-    name: string;
-    /** The chart's own option names, on top of the options every chart accepts. */
-    optionKeys: readonly string[];
-    /** The events the chart emits, read from the class's own `$events` declaration. */
-    events: readonly string[];
-    /** Constructs the underlying chart from the target and the options bound on the component. */
-    create(target: Context | HTMLElement, options: RiplWritable): RiplAnyChart;
-}
 
 /**
  * Builds a declarative component for a Ripl chart.
@@ -107,69 +63,46 @@ export interface RiplChartDefinition {
  * const RiplBarChart = defineRiplChart({
  *     name: 'RiplBarChart',
  *     optionKeys: CHART_OPTION_KEYS.bar,
- *     create: (target, options) => createBarChart(target, options as BarChartOptions),
+ *     events: BarChart.prototype.$events as string[],
+ *     create: chartFactory<BarChartOptions>(createBarChart),
  * });
  */
 export function defineRiplChart(definition: RiplChartDefinition) {
-    const optionKeys = [
-        ...BASE_CHART_OPTION_KEYS,
-        ...definition.optionKeys,
-    ];
-
-    const propKeys = optionKeys.map(key => PROP_ALIASES[key] ?? key);
-    const aliased = optionKeys.filter(key => key in PROP_ALIASES);
-
-    /** Renames the aliased props back to the option names the chart actually reads. */
-    const toOptions = (props: RiplWritable): RiplWritable => {
-        const output = {
-            ...props,
-        };
-
-        aliased.forEach(key => {
-            const alias = PROP_ALIASES[key];
-
-            if (alias in output) {
-                output[key] = output[alias];
-                delete output[alias];
-            }
-        });
-
-        return output;
-    };
+    const resolved = resolveChartDefinition(definition);
 
     return defineComponent({
         name: definition.name,
-        props: createProps(propKeys),
+        props: createProps(resolved.propKeys),
         emits: definition.events as string[],
         setup(props, { slots, emit }) {
             const context = inject(RIPL_CONTEXT, undefined);
             const chart = shallowRef<RiplAnyChart>();
             const root = shallowRef<HTMLElement>();
             const raw = props as RiplWritable;
-            const applied = readBoundProps(raw, propKeys);
 
             // A chart destroys its context along with its scene, so it may only do that when it
             // made the context itself; an enclosing context component owns and destroys its own.
             const owned = !context?.value;
 
             let host: HTMLElement | undefined;
-            let repaint: Disposable | undefined;
+            let controller: RiplChartController | undefined;
 
-            // A chart renders itself on construction, but its surface is still detached at that
-            // point and therefore 0x0 — scales collapse and the first frame never recovers. Hold
-            // the first paint until the surface has a size, which is what `resize` announces.
-            const options = {
-                ...toOptions(applied),
-                autoRender: false,
-            };
-
-            if (context?.value) {
-                chart.value = markRaw(definition.create(context.value, options));
-            } else if (hasWindow) {
+            if (!context?.value && hasWindow) {
                 host = document.createElement('div');
                 Object.assign(host.style, HOST_STYLE);
+            }
 
-                chart.value = markRaw(definition.create(host, options));
+            const target = context?.value ?? host;
+
+            if (target) {
+                controller = createChartController({
+                    definition: resolved,
+                    target,
+                    owned,
+                    props: raw,
+                });
+
+                chart.value = markRaw(controller.chart);
             }
 
             provide(RIPL_CHART, chart);
@@ -180,48 +113,24 @@ export function defineRiplChart(definition: RiplChartDefinition) {
 
             useForwardedEvents(() => chart.value, emit);
 
-            watch(() => collectChangedProps(raw, propKeys, applied), changed => {
+            watch(() => controller?.collect(raw), changed => {
                 if (changed) {
-                    chart.value?.update(toOptions(changed));
+                    controller?.update(changed);
                 }
             });
 
             onMounted(() => {
-                const active = chart.value;
-
                 if (host && root.value) {
                     root.value.appendChild(host);
                 }
 
-                if (!active || applied.autoRender === false) {
-                    return;
-                }
-
-                repaint = active.context.once('resize', () => {
-                    // Hand rendering back to the chart now that it has a surface to render onto.
-                    (active as unknown as RiplWritable).autoRender = true;
-                    void active.render();
-                });
+                controller?.attach();
             });
 
             onUnmounted(() => {
-                const active = chart.value;
-
-                repaint?.dispose();
                 chart.value = undefined;
-
-                if (!active) {
-                    return;
-                }
-
-                if (owned) {
-                    active.destroy();
-                    return;
-                }
-
-                // `destroy` would take the context with it, and that one is not this chart's.
-                active.renderer.destroy();
-                active.scene.destroy(false);
+                controller?.destroy();
+                controller = undefined;
             });
 
             // The host is appended into this root on mount, so slot content sits beside the chart's

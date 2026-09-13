@@ -11,6 +11,9 @@ export {
     RIPL_CONTEXT_3D,
 } from './core/injection';
 
+// The shape and transform key tables live in `@ripl/adapters-3d`, shared with the React adapter;
+// they are re-exported here so one import covers a whole scene.
+
 export {
     BASE_3D_STATE_KEYS,
     GROUP_3D_FIELD_KEYS,
@@ -18,7 +21,7 @@ export {
     SHAPE_3D_FIELDS,
     SHAPE_3D_KEYS,
     SHAPE_3D_STATE_KEYS,
-} from './core/props';
+} from '@ripl/adapters-3d';
 
 // A 3D scene is driven by the core scene, renderer and transition components unchanged, so they are
 // re-exported here and one import covers a whole scene.

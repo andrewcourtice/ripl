@@ -53,6 +53,8 @@
         "build": "tsdown"
     },
     "dependencies": {
+        "@ripl/adapters": "workspace:^",
+        "@ripl/adapters-charts": "workspace:^",
         "@ripl/charts": "workspace:^",
         "@ripl/core": "workspace:^",
         "@ripl/dom": "workspace:^",

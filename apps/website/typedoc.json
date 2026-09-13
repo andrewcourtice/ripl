@@ -12,9 +12,15 @@
         "../../packages/terminal",
         "../../packages/dom",
         "../../packages/utilities",
+        "../../packages/adapters",
+        "../../packages/adapters-3d",
+        "../../packages/adapters-charts",
         "../../adapters/vue",
         "../../adapters/vue-3d",
-        "../../adapters/vue-charts"
+        "../../adapters/vue-charts",
+        "../../adapters/react",
+        "../../adapters/react-3d",
+        "../../adapters/react-charts"
     ],
     "out": "./src/docs/api",
     "plugin": [

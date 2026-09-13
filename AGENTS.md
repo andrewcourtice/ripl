@@ -32,7 +32,11 @@ packages/
 ├── web/          # Main browser entry point
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
+├── adapters*/    # Framework-agnostic building blocks shared by the UI adapters
 └── test-utils/   # Test utilities
+adapters/
+├── vue*/         # Declarative Vue 3 components and compositions
+└── react*/       # Declarative React components and hooks
 apps/website/     # Documentation site (VitePress) with demos
 ```
 

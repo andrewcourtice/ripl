@@ -42,6 +42,7 @@ import type {
 } from '@ripl/vue';
 
 import type {
+    Context,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -59,6 +60,10 @@ import {
     onUnmounted,
     provide,
     shallowRef,
+} from 'vue';
+
+import type {
+    ShallowRef,
 } from 'vue';
 
 /** Fills the component's root, so the canvas inherits whatever size the consumer gives that root. */
@@ -153,10 +158,13 @@ export const RiplContext3D = defineComponent({
             context.value.lights.add(...props.lights as Light[]);
         }
 
-        tree.context.value = context.value;
+        tree.context = context.value;
 
         provide(RIPL_TREE, tree);
-        provide(RIPL_CONTEXT, tree.context);
+
+        // A 3D context is an ordinary Ripl context, so the core components resolve it through the
+        // same key; the widening is on the ref itself, which no descendant ever writes to.
+        provide(RIPL_CONTEXT, context as ShallowRef<Context | undefined>);
         provide(RIPL_CONTEXT_3D, context);
 
         // A camera belongs to the context, not to a subtree, so the slot it is declared in must not
@@ -208,7 +216,7 @@ export const RiplContext3D = defineComponent({
             }
 
             context.value = undefined;
-            tree.context.value = undefined;
+            tree.context = undefined;
         });
 
         return () => h('div', {

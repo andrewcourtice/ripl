@@ -78,6 +78,12 @@ The Canvas API is low-level: it has no concept of objects, hierarchy, or events.
 | [`@ripl/vue`](@ripl/vue/index.md) | Declarative Vue 3 components and compositions over the core 2D surface |
 | [`@ripl/vue-3d`](@ripl/vue-3d/index.md) | Vue components for the 3D context, shapes, camera and lights |
 | [`@ripl/vue-charts`](@ripl/vue-charts/index.md) | Vue components for all 25 chart types |
+| [`@ripl/adapters`](@ripl/adapters/index.md) | Framework-agnostic building blocks shared by the UI adapters: the prop pipeline, transition scope and ordering tree |
+| [`@ripl/adapters-3d`](@ripl/adapters-3d/index.md) | Shared 3D building blocks: the shape, transform, camera and light key tables |
+| [`@ripl/adapters-charts`](@ripl/adapters-charts/index.md) | Shared chart building blocks: the option tables and the chart lifecycle controller |
+| [`@ripl/react`](@ripl/react/index.md) | Declarative React components and hooks over the core 2D surface |
+| [`@ripl/react-3d`](@ripl/react-3d/index.md) | React components for the 3D context, shapes, camera and lights |
+| [`@ripl/react-charts`](@ripl/react-charts/index.md) | React components for all 25 chart types |
 
 The project is structured as a Yarn 4 monorepo:
 
@@ -95,7 +101,11 @@ packages/
 ├── devtools/     # Page-side devtools bridge
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
+├── adapters*/    # Framework-agnostic building blocks shared by the UI adapters
 └── test-utils/   # Test utilities
+adapters/
+├── vue*/         # Declarative Vue 3 components and compositions
+└── react*/       # Declarative React components and hooks
 apps/website/     # Documentation site (VitePress) with live demos
 ```
 

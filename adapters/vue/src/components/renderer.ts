@@ -1,5 +1,4 @@
 import {
-    RENDERER_EVENTS,
     useForwardedEvents,
 } from '../core/events';
 
@@ -20,8 +19,15 @@ import {
 
 import type {
     RiplComponent,
-    RiplListener,
 } from '../types';
+
+import {
+    RENDERER_EVENTS,
+} from '@ripl/adapters';
+
+import type {
+    RiplRendererProps,
+} from '@ripl/adapters';
 
 import {
     createRenderer,
@@ -41,40 +47,6 @@ import {
     shallowRef,
     watch,
 } from 'vue';
-
-/** The payload carried by the renderer's `tick` event. */
-export interface RiplTickPayload {
-    /** Timestamp of the current frame, in milliseconds. */
-    time: number;
-    /** Elapsed time since the previous frame, in milliseconds. */
-    deltaTime: number;
-}
-
-/** Props accepted by {@link RiplRenderer}. */
-export interface RiplRendererProps {
-    /** Whether the renderer starts its animation loop on creation. Defaults to `true`. */
-    autoStart?: boolean;
-    /** Whether the loop stops when idle: no active transitions and the pointer has left. Defaults to `true`. */
-    autoStop?: boolean;
-    /** Whether transitions apply their final state immediately rather than animating. */
-    immediate?: boolean;
-    /** Debug overlays: `true` for all, or an object toggling individual overlays. */
-    debug?: boolean | RendererDebugOptions;
-    /** Fired when the animation loop starts. */
-    onStart?: RiplListener<{
-        /** Timestamp at which the loop started, in milliseconds. */
-        startTime: number;
-    }>;
-    /** Fired when the animation loop stops. */
-    onStop?: RiplListener<{
-        /** Timestamp at which the loop originally started, in milliseconds. */
-        startTime: number;
-        /** Timestamp at which the loop stopped, in milliseconds. */
-        endTime: number;
-    }>;
-    /** Fired once per animation frame. */
-    onTick?: RiplListener<RiplTickPayload>;
-}
 
 /**
  * Drives the enclosing scene with a `requestAnimationFrame` loop, and makes transitions available
@@ -119,11 +91,13 @@ export const RiplRenderer = defineComponent({
             }))
             : undefined;
 
+        const current = shallowRef(renderer);
+
         if (tree && renderer) {
-            tree.renderer.value = renderer;
+            tree.renderer = renderer;
         }
 
-        provide(RIPL_RENDERER, tree?.renderer ?? shallowRef<Renderer>());
+        provide(RIPL_RENDERER, current);
 
         watch(() => props.autoStop, value => {
             if (renderer && value !== undefined) {
@@ -145,9 +119,10 @@ export const RiplRenderer = defineComponent({
 
         onUnmounted(() => {
             renderer?.destroy();
+            current.value = undefined;
 
             if (tree) {
-                tree.renderer.value = undefined;
+                tree.renderer = undefined;
             }
         });
 

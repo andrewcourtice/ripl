@@ -8,48 +8,28 @@ import {
     BOOLEAN_PROP,
 } from '../core/props';
 
+import type {
+    RiplComponent,
+} from '../types';
+
 import {
     RiplTransitionScope,
-} from '../core/transition';
+} from '@ripl/adapters';
 
 import type {
     RiplTransitionPhase,
     RiplTransitionPhases,
-} from '../core/transition';
-
-import type {
-    RiplComponent,
-} from '../types';
+    RiplTransitionProps,
+} from '@ripl/adapters';
 
 import {
     computed,
     defineComponent,
     inject,
     markRaw,
+    onMounted,
     provide,
 } from 'vue';
-
-/** Props accepted by {@link RiplTransition}. */
-export interface RiplTransitionProps {
-    /**
-     * The state descendants animate *from* when they enter, with the options to animate by. The
-     * target is read off the element before the enter state is applied, so a property the template
-     * never bound still animates back to its inherited or default value.
-     */
-    enter?: RiplTransitionPhase;
-    /**
-     * The options used when a descendant's props change. Its own `state`, if given, is merged over
-     * the changed props to form the target.
-     */
-    update?: RiplTransitionPhase;
-    /**
-     * The state descendants animate *to* when they leave, with the options to animate by. The
-     * element is destroyed once the transition finishes.
-     */
-    leave?: RiplTransitionPhase;
-    /** Whether descendants present on the initial mount run their enter phase. Defaults to `true`. */
-    appear?: boolean;
-}
 
 /**
  * Animates the descendants it wraps as they enter, update and leave, mirroring Vue's own
@@ -93,7 +73,13 @@ export const RiplTransition = defineComponent({
             appear: props.appear,
         }));
 
-        provide(RIPL_TRANSITION, markRaw(new RiplTransitionScope(() => phases.value)));
+        const scope = markRaw(new RiplTransitionScope(() => phases.value));
+
+        provide(RIPL_TRANSITION, scope);
+
+        // Vue runs mount hooks bottom-up, so every descendant has already been through its enter
+        // phase by the time this runs, which is what `appear` is scoped to.
+        onMounted(() => scope.settle());
 
         return () => slots.default?.() ?? null;
     },

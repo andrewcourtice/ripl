@@ -4,7 +4,7 @@ import {
 
 import type {
     RiplAnyChart,
-} from '../core/injection';
+} from '@ripl/adapters-charts';
 
 import {
     inject,

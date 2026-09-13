@@ -1,5 +1,4 @@
 import {
-    CONTEXT_EVENTS,
     useForwardedEvents,
 } from '../core/events';
 
@@ -27,8 +26,15 @@ import {
 
 import type {
     RiplComponent,
-    RiplPointerListeners,
 } from '../types';
+
+import {
+    CONTEXT_EVENTS,
+} from '@ripl/adapters';
+
+import type {
+    RiplContextProps,
+} from '@ripl/adapters';
 
 import type {
     Disposable,
@@ -70,27 +76,6 @@ const GRAPH_STYLE = {
     display: 'none',
 } as const;
 
-/** Props accepted by {@link RiplContext}. */
-export interface RiplContextProps extends RiplPointerListeners {
-    /**
-     * An existing context to draw into instead of creating one. Use this to render through a
-     * backend other than canvas, or to keep a context alive across re-mounts.
-     */
-    context?: Context;
-    /** Whether the context listens for and emits pointer and drag events. Defaults to `true`. */
-    interactive?: boolean;
-    /** Minimum pointer movement, in pixels, before a drag gesture is recognised. Defaults to `3`. */
-    dragThreshold?: number;
-    /** Arbitrary metadata attached to the context. */
-    meta?: Record<string, unknown>;
-    /** Fired once the context exists and its host element is in the document. */
-    onReady?: (context: Context) => void;
-    /** Fired when the context's surface is resized. */
-    onResize?: () => void;
-    /** Fired when the context requests a repaint that no element change triggered. */
-    onRender?: () => void;
-}
-
 /**
  * Creates a Ripl rendering context and provides it to its subtree, mounting the canvas into its own
  * root element.
@@ -122,6 +107,7 @@ export const RiplContext = defineComponent({
     ],
     setup(props, { slots, emit }) {
         const tree = createRiplTree();
+        const context = shallowRef<Context>();
         const root = shallowRef<HTMLElement>();
         const graph = shallowRef<HTMLElement>();
 
@@ -130,12 +116,12 @@ export const RiplContext = defineComponent({
         let resize: Disposable | undefined;
 
         if (props.context) {
-            tree.context.value = markRaw(props.context as Context);
+            context.value = markRaw(props.context as Context);
         } else if (hasWindow) {
             host = document.createElement('div');
             Object.assign(host.style, HOST_STYLE);
 
-            tree.context.value = markRaw(createContext(host, {
+            context.value = markRaw(createContext(host, {
                 interactive: props.interactive,
                 dragThreshold: props.dragThreshold,
                 meta: props.meta,
@@ -144,22 +130,24 @@ export const RiplContext = defineComponent({
             owned = true;
         }
 
+        tree.context = context.value;
+
         provide(RIPL_TREE, tree);
-        provide(RIPL_CONTEXT, tree.context);
+        provide(RIPL_CONTEXT, context);
         provide(RIPL_PARENT, shallowRef(tree.rootGroup));
 
         // Shadows an enclosing context's scene and renderer, which a nested context must not inherit.
         provide(RIPL_SCENE, shallowRef<Scene>());
         provide(RIPL_RENDERER, shallowRef<Renderer>());
 
-        if (tree.context.value) {
-            useExposedInstance(tree.context.value);
+        if (context.value) {
+            useExposedInstance(context.value);
         }
 
-        useForwardedEvents(() => tree.context.value, emit);
+        useForwardedEvents(() => context.value, emit);
 
         onMounted(() => {
-            const context = tree.context.value;
+            const active = context.value;
 
             if (host && root.value) {
                 root.value.appendChild(host);
@@ -169,16 +157,16 @@ export const RiplContext = defineComponent({
                 tree.attach(graph.value);
             }
 
-            if (!context) {
+            if (!active) {
                 return;
             }
 
             // The surface has no size until the host lands in the document, so the first real
             // paint comes from the resize the attachment triggers, not from this frame.
-            resize = context.on('resize', () => tree.requestPaint());
+            resize = active.on('resize', () => tree.requestPaint());
             tree.requestPaint();
 
-            emit('ready', context);
+            emit('ready', active);
         });
 
         onBeforeUnmount(() => tree.dispose());
@@ -188,10 +176,11 @@ export const RiplContext = defineComponent({
             tree.destroy();
 
             if (owned) {
-                tree.context.value?.destroy();
+                context.value?.destroy();
             }
 
-            tree.context.value = undefined;
+            context.value = undefined;
+            tree.context = undefined;
         });
 
         return () => h('div', {

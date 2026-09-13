@@ -74,6 +74,8 @@ The four core compositions are re-exported, so one import covers a whole scene.
 - A group's transform lives outside element state, so it applies immediately and cannot be animated by a `<ripl-transition>`. Animate the children instead.
 - A context resolves at most eight lights. Binding the context's `lights` prop, even to `[]`, is what clears the default ambient-plus-directional rig.
 
+The shape, transform, camera and light key tables live in [`@ripl/adapters-3d`](../../packages/adapters-3d), shared with `@ripl/react-3d`, and are re-exported here.
+
 ## Documentation
 
 Full documentation lives at [ripl.run](https://www.ripl.run/docs/vue/3d/).
